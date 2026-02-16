@@ -1,5 +1,9 @@
+"use client";
+
+import { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image, { StaticImageData } from "next/image";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import new1 from "@/assets/new-1.jpg";
 import new3 from "@/assets/new-3.jpg";
 import new6 from "@/assets/new-6.jpg";
@@ -15,7 +19,7 @@ interface CollectionItem {
   badge?: string;
   colors?: string[];
   colorLabel?: string;
-  slug: string; // <--- LA CLAVE PARA LA NAVEGACIÓN
+  slug: string;
 }
 
 const items: CollectionItem[] = [
@@ -44,58 +48,129 @@ const items: CollectionItem[] = [
 ];
 
 const NewCollection = () => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 0);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  }, []);
+
+  useEffect(() => {
+    checkScroll();
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", checkScroll, { passive: true });
+    window.addEventListener("resize", checkScroll);
+    return () => {
+      el.removeEventListener("scroll", checkScroll);
+      window.removeEventListener("resize", checkScroll);
+    };
+  }, [checkScroll]);
+
+  const scroll = (direction: "left" | "right") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const cardWidth = el.querySelector("a")?.offsetWidth ?? 300;
+    const gap = 24;
+    const distance = cardWidth + gap;
+    el.scrollBy({ left: direction === "left" ? -distance : distance, behavior: "smooth" });
+  };
+
   return (
-    <section className="py-8 sm:py-10 lg:py-12 px-4 sm:px-6 lg:px-8 bg-background">
-      <h2 className="text-xl sm:text-2xl font-bold text-center tracking-wider text-foreground mb-6 sm:mb-8 lg:mb-10">
-        NUEVA COLECCIÓN
-      </h2>
-      <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
-        {items.map((item, i) => (
-          <Link
-            href={`/product/${item.slug}`}
-            key={i}
-            className="min-w-40 sm:min-w-50 lg:min-w-55 flex-1 cursor-pointer group block"
+    <section className="py-12 px-4 sm:px-6 lg:px-8 bg-background">
+      {/* --- HEADER --- */}
+      <div className="flex items-center justify-between mb-8 max-w-7xl mx-auto">
+        <h2 className="text-xl sm:text-2xl font-bold tracking-wider text-foreground uppercase">
+          NUEVA COLECCIÓN
+        </h2>
+
+        <Link
+          href="/collections/nueva-coleccion"
+          className="group flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-brand transition-colors"
+        >
+          Ver todo
+          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+        </Link>
+      </div>
+
+      {/* --- CARRUSEL --- */}
+      <div className="relative max-w-7xl mx-auto">
+        {/* Flecha izquierda */}
+        {canScrollLeft && (
+          <button
+            onClick={() => scroll("left")}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 -ml-2 sm:-ml-3 w-9 h-9 sm:w-10 sm:h-10 bg-background/90 border border-border rounded-full flex items-center justify-center shadow-md hover:bg-background transition-colors"
+            aria-label="Anterior"
           >
-            <div className="relative overflow-hidden mb-2 sm:mb-3">
-              <Image
-                src={item.image}
-                alt={item.name}
-                className="w-full aspect-3/4 object-cover group-hover:scale-105 transition-transform duration-500"
-                placeholder="blur"
-              />
-              {item.badge && (
-                <span className="absolute top-3 right-3 bg-destructive text-destructive-foreground text-xs px-3 py-1 rounded-full">
-                  {item.badge}
-                </span>
-              )}
-            </div>
-            <h3 className="text-xs font-semibold tracking-wider text-foreground mb-1 uppercase">
-              {item.name}
-            </h3>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-sm text-foreground">{item.price}</span>
-              {item.oldPrice && (
-                <span className="text-sm text-muted-foreground line-through">{item.oldPrice}</span>
-              )}
-            </div>
-            {item.colorLabel && (
-              <p className="text-xs text-muted-foreground tracking-wider mb-2">
-                COLOR: {item.colorLabel}
-              </p>
-            )}
-            {item.colors && (
-              <div className="flex gap-1.5">
-                {item.colors.map((color, ci) => (
-                  <span
-                    key={ci}
-                    className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-border"
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
+            <ChevronLeft className="w-5 h-5 text-foreground" />
+          </button>
+        )}
+
+        {/* Flecha derecha */}
+        {canScrollRight && (
+          <button
+            onClick={() => scroll("right")}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 -mr-2 sm:-mr-3 w-9 h-9 sm:w-10 sm:h-10 bg-background/90 border border-border rounded-full flex items-center justify-center shadow-md hover:bg-background transition-colors"
+            aria-label="Siguiente"
+          >
+            <ChevronRight className="w-5 h-5 text-foreground" />
+          </button>
+        )}
+
+        {/* Contenedor scrollable */}
+        <div
+          ref={scrollRef}
+          className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide"
+        >
+          {items.map((item, i) => (
+            <Link
+              href={`/product/${item.slug}`}
+              key={i}
+              className="group block cursor-pointer w-[45vw] sm:w-[40vw] md:w-[calc(25%-18px)] shrink-0"
+            >
+              <div className="relative overflow-hidden mb-3 aspect-[3/4] bg-muted">
+                <Image
+                  src={item.image}
+                  alt={item.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out"
+                  placeholder="blur"
+                />
+                {item.badge && (
+                  <span className="absolute top-2 left-2 bg-black text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider shadow-sm">
+                    {item.badge}
+                  </span>
+                )}
               </div>
-            )}
-          </Link>
-        ))}
+
+              <h3 className="text-xs sm:text-sm font-bold tracking-wider text-foreground mb-1 uppercase group-hover:text-brand transition-colors">
+                {item.name}
+              </h3>
+
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm font-medium text-foreground">{item.price}</span>
+                {item.oldPrice && (
+                  <span className="text-sm text-muted-foreground line-through">{item.oldPrice}</span>
+                )}
+              </div>
+
+              {item.colors && (
+                <div className="flex gap-1.5">
+                  {item.colors.map((color, ci) => (
+                    <span
+                      key={ci}
+                      className="w-4 h-4 rounded-full border border-border"
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+              )}
+            </Link>
+          ))}
+        </div>
       </div>
     </section>
   );

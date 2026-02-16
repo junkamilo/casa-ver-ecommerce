@@ -1,3 +1,4 @@
+
 import AnnouncementBar from "@/components/AnnouncementBar";
 import BestSellers from "@/components/BestSellers";
 import Categories from "@/components/Categories";
@@ -7,6 +8,7 @@ import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import InstagramCTA from "@/components/InstagramCTA";
 import NewCollection from "@/components/NewCollection";
+import PaymentMethodsBanner from "@/components/PaymentMethodsBanner";
 import Testimonials from "@/components/Testimonials";
 import ValueProps from "@/components/ValueProps";
 import Image from "next/image";
@@ -18,10 +20,11 @@ export default function Home() {
       <Header />
       <HeroSection />
       <BestSellers />
+      <NewCollection />
       <Categories />
       <ElevaTuLook />
       <ValueProps />
-      <NewCollection />
+      <PaymentMethodsBanner />
       <Testimonials />
       <InstagramCTA />
       <Footer />

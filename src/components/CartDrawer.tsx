@@ -97,18 +97,18 @@ const CartDrawer = () => {
 
         {/* 3. Footer de Totales */}
         {items.length > 0 && (
-          <div className="p-5 border-t border-border bg-background">
+          <div className="p-5 border-t-2 border-accent bg-background">
             <div className="flex justify-between items-center mb-4 text-sm">
               <span className="text-foreground font-medium">Total estimado</span>
-              <span className="text-xl font-bold text-foreground">${subtotal.toLocaleString()} COP</span>
+              <span className="text-xl font-bold text-primary">${subtotal.toLocaleString()} COP</span>
             </div>
             <p className="text-[10px] text-muted-foreground mb-4 text-center">
               Los impuestos y los gastos de envío se calculan en la página de pago.
             </p>
             <Link
               href="/checkout"
-              onClick={closeCart} // Cerramos el drawer al irnos
-              className="block w-full bg-[#c19a6b] hover:bg-[#a88659] text-white font-bold py-4 rounded text-center uppercase tracking-wider text-sm transition-colors shadow-sm"
+              onClick={closeCart}
+              className="block w-full gold-gradient text-white font-bold py-4 rounded text-center uppercase tracking-wider text-sm transition-all shadow-gold active:scale-[0.98]"
             >
               Pagar
             </Link>

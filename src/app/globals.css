@@ -12,69 +12,105 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 10%;
 
-    --primary: 25 45% 55%;
+    /* PRIMARY = Verde Casa Verde #154734 */
+    --primary: 157 55% 18%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 30 10% 95%;
+    /* SECONDARY = Crema Hueso #F9F9F7 */
+    --secondary: 60 20% 97%;
     --secondary-foreground: 0 0% 10%;
 
-    --muted: 30 10% 96%;
+    --muted: 60 10% 96%;
     --muted-foreground: 0 0% 45%;
 
-    --accent: 25 45% 55%;
+    /* ACCENT = Dorado/Bronce #C19A6B */
+    --accent: 31 42% 59%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 25 45% 55%;
+    --border: 60 5% 90%;
+    --input: 60 5% 90%;
+    --ring: 157 55% 18%;
 
     --radius: 0rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-
-    --brand: 25 45% 55%;
+    /* Brand Verde variantes */
+    --brand: 157 55% 18%;
     --brand-foreground: 0 0% 100%;
-    --surface-light: 30 10% 96%;
+    --brand-light: 157 50% 24%;
+    --brand-dark: 157 58% 14%;
+
+    /* Gold variantes */
+    --gold: 31 42% 59%;
+    --gold-foreground: 0 0% 100%;
+    --gold-light: 31 52% 66%;
+    --gold-dark: 31 33% 50%;
+
+    /* Superficie crema */
+    --surface-light: 60 20% 97%;
+
+    /* Sidebar alineado con marca */
+    --sidebar-background: 157 55% 18%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 31 42% 59%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 157 50% 24%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 157 50% 24%;
+    --sidebar-ring: 31 42% 59%;
   }
 
   .dark {
-    --background: 0 0% 5%;
-    --foreground: 0 0% 95%;
-    --card: 0 0% 8%;
-    --card-foreground: 0 0% 95%;
-    --popover: 0 0% 8%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 25 45% 55%;
+    --background: 157 15% 5%;
+    --foreground: 60 10% 95%;
+
+    --card: 157 15% 8%;
+    --card-foreground: 60 10% 95%;
+
+    --popover: 157 15% 8%;
+    --popover-foreground: 60 10% 95%;
+
+    --primary: 157 45% 28%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 95%;
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
-    --accent: 25 45% 55%;
+
+    --secondary: 157 10% 15%;
+    --secondary-foreground: 60 10% 95%;
+
+    --muted: 157 10% 15%;
+    --muted-foreground: 60 5% 65%;
+
+    --accent: 31 42% 55%;
     --accent-foreground: 0 0% 100%;
+
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 95%;
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 25 45% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+
+    --border: 157 10% 20%;
+    --input: 157 10% 20%;
+    --ring: 157 45% 28%;
+
+    --brand: 157 45% 28%;
+    --brand-foreground: 0 0% 100%;
+    --brand-light: 157 40% 35%;
+    --brand-dark: 157 50% 20%;
+
+    --gold: 31 42% 55%;
+    --gold-foreground: 0 0% 100%;
+    --gold-light: 31 50% 62%;
+    --gold-dark: 31 35% 45%;
+
+    --surface-light: 157 10% 10%;
+
+    --sidebar-background: 157 15% 8%;
+    --sidebar-foreground: 60 10% 95%;
+    --sidebar-primary: 31 42% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 157 10% 15%;
+    --sidebar-accent-foreground: 60 10% 95%;
+    --sidebar-border: 157 10% 20%;
+    --sidebar-ring: 31 42% 55%;
   }
 }
 
@@ -89,11 +125,77 @@
 }
 
 @layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
   .scrolling-text {
     animation: scroll-left 20s linear infinite;
   }
   @keyframes scroll-left {
     0% { transform: translateX(0); }
     100% { transform: translateX(-50%); }
+  }
+
+  /* Gradiente dorado premium para CTAs */
+  .gold-gradient {
+    background: linear-gradient(135deg, hsl(31 42% 59%), hsl(31 52% 66%));
+  }
+  .gold-gradient:hover {
+    background: linear-gradient(135deg, hsl(31 33% 50%), hsl(31 42% 59%));
+  }
+
+  /* Gradiente verde marca */
+  .brand-gradient {
+    background: linear-gradient(135deg, hsl(157 55% 18%), hsl(157 50% 24%));
+  }
+
+  /* Sombra premium con tinte verde */
+  .shadow-premium {
+    box-shadow: 0 1px 3px 0 rgba(21, 71, 52, 0.04),
+                0 4px 12px 0 rgba(21, 71, 52, 0.06);
+  }
+  .shadow-premium-hover {
+    box-shadow: 0 4px 16px 0 rgba(21, 71, 52, 0.08),
+                0 8px 24px 0 rgba(21, 71, 52, 0.10);
+  }
+
+  /* Brillo dorado bajo CTAs */
+  .shadow-gold {
+    box-shadow: 0 4px 14px -2px rgba(193, 154, 107, 0.35);
+  }
+
+  /* Shimmer dorado para texto especial */
+  .text-gold-shimmer {
+    background: linear-gradient(90deg, hsl(31 42% 59%), hsl(31 52% 66%), hsl(31 42% 59%));
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 3s linear infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  /* Acento dorado debajo de títulos de sección */
+  .title-accent::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 2px;
+    background: hsl(31 42% 59%);
+    margin-top: 8px;
+  }
+  .title-accent-center::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 2px;
+    background: hsl(31 42% 59%);
+    margin: 8px auto 0;
   }
 }

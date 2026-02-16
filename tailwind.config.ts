@@ -50,6 +50,14 @@ export default {
         brand: {
           DEFAULT: "hsl(var(--brand))",
           foreground: "hsl(var(--brand-foreground))",
+          light: "hsl(var(--brand-light))",
+          dark: "hsl(var(--brand-dark))",
+        },
+        gold: {
+          DEFAULT: "hsl(var(--gold))",
+          foreground: "hsl(var(--gold-foreground))",
+          light: "hsl(var(--gold-light))",
+          dark: "hsl(var(--gold-dark))",
         },
         "surface-light": "hsl(var(--surface-light))",
         sidebar: {
@@ -64,9 +72,14 @@ export default {
         },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        lg: "calc(var(--radius) + 8px)",
+        md: "calc(var(--radius) + 4px)",
+        sm: "calc(var(--radius) + 2px)",
+      },
+      boxShadow: {
+        premium: "0 1px 3px 0 rgba(21,71,52,0.04), 0 4px 12px 0 rgba(21,71,52,0.06)",
+        "premium-lg": "0 4px 16px 0 rgba(21,71,52,0.08), 0 8px 24px 0 rgba(21,71,52,0.10)",
+        gold: "0 4px 14px -2px rgba(193,154,107,0.35)",
       },
       keyframes: {
         "accordion-down": {

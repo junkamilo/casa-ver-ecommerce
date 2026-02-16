@@ -39,7 +39,6 @@ export default function ProductPage() {
   const { addToCart } = useCart();
   const [showAddedNotification, setShowAddedNotification] = useState(false);
 
-  // Estado para los acordeones (Cuál está abierto)
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
 
   const toggleAccordion = (section: string) => {
@@ -51,9 +50,9 @@ export default function ProductPage() {
       <AnnouncementBar />
       <Header />
 
-      {/* TOAST: Producto agregado al carrito */}
+      {/* TOAST: Producto agregado */}
       <div
-        className={`fixed top-4 right-4 z-200 flex items-center gap-3 bg-white border border-border shadow-lg rounded-lg px-4 py-3 transition-all duration-500 ${showAddedNotification
+        className={`fixed top-4 right-4 z-[200] flex items-center gap-3 bg-white border border-border shadow-lg rounded-lg px-4 py-3 transition-all duration-500 ${showAddedNotification
             ? "opacity-100 translate-y-0"
             : "opacity-0 -translate-y-4 pointer-events-none"
           }`}
@@ -69,7 +68,6 @@ export default function ProductPage() {
         </div>
       </div>
 
-      {/* --- BREADCRUMBS --- */}
       <div className="container mx-auto px-4 py-3 sm:py-4 text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">
         <Link href="/" className="hover:text-foreground">INICIO</Link> /
         <Link href="/tienda" className="hover:text-foreground mx-1">TIENDA</Link> /
@@ -79,9 +77,8 @@ export default function ProductPage() {
       <main className="container mx-auto px-4 pb-10 sm:pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-16">
 
-          {/* --- COLUMNA IZQUIERDA: GALERÍA --- */}
+          {/* GALERÍA */}
           <div className="flex flex-col-reverse lg:flex-row gap-3 sm:gap-4">
-            {/* Miniaturas */}
             <div className="flex lg:flex-col gap-2 sm:gap-3 overflow-x-auto lg:overflow-visible py-2 lg:py-0 scrollbar-hide">
               {product.gallery.map((img, i) => (
                 <button
@@ -94,8 +91,6 @@ export default function ProductPage() {
                 </button>
               ))}
             </div>
-
-            {/* Imagen Principal */}
             <div className="relative w-full aspect-[3/4] lg:aspect-[4/5] bg-muted overflow-hidden">
               <Image
                 src={product.gallery[selectedImage]}
@@ -107,16 +102,17 @@ export default function ProductPage() {
             </div>
           </div>
 
-          {/* --- COLUMNA DERECHA: INFORMACIÓN --- */}
+          {/* INFORMACIÓN */}
           <div className="flex flex-col">
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-2 uppercase tracking-wide">
               {product.name}
             </h1>
+            
+            {/* --- CORRECCIÓN AQUÍ: Agregamos "es-CO" --- */}
             <p className="text-lg sm:text-xl font-medium text-foreground mb-3 sm:mb-4">
-              ${product.price.toLocaleString()}
+              ${product.price.toLocaleString("es-CO")}
             </p>
 
-            {/* Estrellas */}
             <div className="flex items-center gap-2 mb-4 sm:mb-6">
               <div className="flex text-[#c19a6b]">
                 {[...Array(5)].map((_, i) => (
@@ -126,18 +122,33 @@ export default function ProductPage() {
               <span className="text-xs sm:text-sm text-muted-foreground">{product.reviews} reseña</span>
             </div>
 
-            {/* Social Proof */}
-            <div className="bg-muted/30 p-2.5 sm:p-3 rounded-lg flex items-center gap-2 sm:gap-3 mb-6 sm:mb-8 border border-border/50">
+            <div className="bg-muted/30 p-2.5 sm:p-3 rounded-lg flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6 border border-border/50">
               <div className="flex -space-x-2 shrink-0">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gray-300 border-2 border-background overflow-hidden relative">
-                    {/* Placeholder Avatar */}
-                  </div>
+                  <div key={i} className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gray-300 border-2 border-background overflow-hidden relative" />
                 ))}
               </div>
               <p className="text-[10px] sm:text-xs text-foreground">
                 <strong>Aleja, Mariana</strong> y <strong>800+ personas más</strong> están comprando nuestras prendas!
               </p>
+            </div>
+
+            {/* WIDGET ADDI REAL */}
+            <div className="flex items-center gap-3 mb-6 p-2.5 rounded-lg border border-gray-200 bg-[#F9FAFB]">
+               <div className="w-8 h-8 rounded-full bg-[#2F6BFF] flex items-center justify-center shrink-0 shadow-sm">
+                  <span className="text-white font-bold text-lg leading-none mt-0.5" style={{ fontFamily: 'Arial, sans-serif'}}>a</span>
+               </div>
+               <p className="text-xs sm:text-sm text-gray-600 leading-snug">
+                 Paga con <span className="font-bold text-[#2F6BFF]">Addi</span> en <span className="font-bold text-gray-900">hasta 6 cuotas</span>. 
+                 <a 
+                    href="https://co.addi.com/" 
+                    target="_blank"             
+                    rel="noopener noreferrer"   
+                    className="ml-1 underline text-[#2F6BFF] hover:text-[#0041bd] transition-colors font-medium cursor-pointer"
+                 >
+                    Pide un cupo
+                 </a>
+               </p>
             </div>
 
             {/* Selector de Color */}
@@ -161,7 +172,6 @@ export default function ProductPage() {
             {/* Botones de Compra */}
             <div className="flex flex-col gap-2.5 sm:gap-3 mb-6 sm:mb-8">
               <div className="flex gap-3 sm:gap-4">
-                {/* Contador */}
                 <div className="flex items-center border border-border rounded h-11 sm:h-12 w-28 sm:w-32">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -178,7 +188,6 @@ export default function ProductPage() {
                   </button>
                 </div>
 
-                {/**Agregar al carrito */}
                 <button
                   onClick={() => {
                     addToCart(product, quantity, selectedColor);
@@ -191,7 +200,6 @@ export default function ProductPage() {
                 </button>
               </div>
 
-              
               <Link
                 href="/checkout"
                 className="block w-full bg-[#c19a6b] hover:bg-[#a88659] text-white font-bold py-4 rounded text-center uppercase tracking-wider text-sm transition-colors shadow-sm"
@@ -200,26 +208,22 @@ export default function ProductPage() {
               </Link>
             </div>
 
-            {/* Iconos de Pago (Estilo Tarjeta Blanca) */}
+            {/* Iconos de Pago */}
             <div className="flex justify-center gap-2 mb-6 sm:mb-8">
-              {/* Simulamos las tarjetitas blancas de la foto */}
               {["GPay", "Apple", "PayPal", "Master", "Visa", "PSE"].map((item, i) => (
                 <div key={i} className="h-6 w-10 sm:h-7 sm:w-12 bg-white border border-gray-200 rounded flex items-center justify-center shadow-sm">
-                  {/* Aquí irían los logos SVG reales, usamos texto pequeño por ahora */}
                   <span className="text-[6px] sm:text-[8px] font-bold text-gray-600">{item}</span>
                 </div>
               ))}
             </div>
 
-            {/* Descripción Simple */}
             <div className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-6">
               <p>{product.description}</p>
               <p className="mt-3 sm:mt-4 font-medium text-foreground">talla única</p>
             </div>
 
-            {/* --- ACORDEONES (Envío, Pago, Cuidados) --- */}
+            {/* Acordeones */}
             <div className="border-t border-border">
-              {/* Acordeón Envío */}
               <div className="border-b border-border">
                 <button
                   onClick={() => toggleAccordion('envio')}
@@ -238,7 +242,6 @@ export default function ProductPage() {
                 </div>
               </div>
 
-              {/* Acordeón Métodos de Pago */}
               <div className="border-b border-border">
                 <button
                   onClick={() => toggleAccordion('pago')}
@@ -257,7 +260,6 @@ export default function ProductPage() {
                 </div>
               </div>
 
-              {/* Acordeón Cuidados */}
               <div className="border-b border-border">
                 <button
                   onClick={() => toggleAccordion('cuidados')}
