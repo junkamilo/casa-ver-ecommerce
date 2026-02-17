@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
+import { hash } from "bcryptjs";
 
 export async function POST(request: Request) {
   try {
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     }
 
     // 3. Encriptar contraseña
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await hash(password, 10);
 
     // 4. Crear usuario en Neon
     const newUser = await prisma.user.create({
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
   } catch (error) {
     return NextResponse.json(
-      { message: "Error en el servidor", error },
+      { message: "Error en el servidor" },
       { status: 500 }
     );
   }

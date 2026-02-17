@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
+import { compare } from "bcryptjs";
 
 const handler = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -36,7 +36,7 @@ const handler = NextAuth({
           throw new Error("Por favor inicia sesión con Google");
         }
 
-        const matchPassword = await bcrypt.compare(password, user.password);
+        const matchPassword = await compare(password, user.password);
 
         if (!matchPassword) throw new Error("Contraseña incorrecta");
 
