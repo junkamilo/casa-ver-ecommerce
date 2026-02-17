@@ -1,16 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['res.cloudinary.com', 'images.unsplash.com'],
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'lh3.googleusercontent.com', // Permite imágenes de Google
+        hostname: 'res.cloudinary.com',
       },
       {
         protocol: 'https',
-        hostname: 'lh3.google.com', // A veces Google usa este dominio también
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.google.com',
       },
     ],
   },
