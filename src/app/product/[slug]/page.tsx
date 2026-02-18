@@ -11,38 +11,119 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AnnouncementBar from "@/components/AnnouncementBar";
 
-// --- IMÁGENES DE EJEMPLO ---
 import mainImage from "@/assets/product-1.jpg";
 import thumb1 from "@/assets/product-2.jpg";
 import thumb2 from "@/assets/product-3.jpg";
 import thumb3 from "@/assets/product-4.jpg";
 import { useCart } from "@/context/CartContext";
+import { StaticImageData } from "next/image";
 
-const product = {
-  name: "SET SHORT BODY CAMISETA",
-  price: 140000,
-  description: "Es de nuestra línea premium 🍑 Tacto frío, el tejido es de la mejor calidad del mercado, tiene push up más resistente, ya que tiene elástico interno, son cero transparentes y no te dan calor. Talla única.",
-  rating: 5,
-  reviews: 1,
-  colors: [
-    { name: "AZUL BEBÉ", hex: "#a8d4f0" },
-    { name: "CAFÉ", hex: "#8b6f5e" },
-    { name: "BEIGE", hex: "#d4c4a8" },
-  ],
-  gallery: [mainImage, thumb1, thumb2, thumb3, mainImage],
-};
+const ALL_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] as const;
+
+interface ProductVariant {
+  name: string;
+  type: string;
+  price: number;
+  description: string;
+  rating: number;
+  reviews: number;
+  colors: { name: string; hex: string }[];
+  sizes: string[];
+  gallery: StaticImageData[];
+}
+
+const allVariants: ProductVariant[] = [
+  {
+    name: "SET SHORT BODY CAMISETA",
+    type: "Short",
+    price: 140000,
+    description: "Es de nuestra línea premium. Tacto frío, el tejido es de la mejor calidad del mercado, tiene push up más resistente, ya que tiene elástico interno, son cero transparentes y no te dan calor.",
+    rating: 5,
+    reviews: 1,
+    colors: [
+      { name: "AZUL BEBÉ", hex: "#a8d4f0" },
+      { name: "CAFÉ", hex: "#8b6f5e" },
+      { name: "BEIGE", hex: "#d4c4a8" },
+    ],
+    sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+    gallery: [mainImage, thumb1, thumb2, thumb3, mainImage],
+  },
+  {
+    name: "SET PANTALÓN BODY CAMISETA",
+    type: "Pantalón",
+    price: 160000,
+    description: "Mismo tejido tacto frío premium. Versión pantalón largo, ideal para un look más formal pero igual de cómodo. Push up más resistente con elástico interno.",
+    rating: 5,
+    reviews: 1,
+    colors: [
+      { name: "AZUL BEBÉ", hex: "#a8d4f0" },
+      { name: "CAFÉ", hex: "#8b6f5e" },
+      { name: "BEIGE", hex: "#d4c4a8" },
+    ],
+    sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+    gallery: [thumb2, thumb3, mainImage, thumb1],
+  },
+  {
+    name: "SET BERMUDA BODY CAMISETA",
+    type: "Bermuda",
+    price: 150000,
+    description: "Mismo tejido tacto frío premium. Versión bermuda, el largo perfecto entre short y pantalón. Push up más resistente con elástico interno.",
+    rating: 5,
+    reviews: 1,
+    colors: [
+      { name: "AZUL BEBÉ", hex: "#a8d4f0" },
+      { name: "CAFÉ", hex: "#8b6f5e" },
+      { name: "NEGRO", hex: "#222222" },
+    ],
+    sizes: ["S", "M", "L", "XL", "XXL"],
+    gallery: [thumb3, thumb1, thumb2, mainImage],
+  },
+  {
+    name: "SET CAPRI BODY CAMISETA",
+    type: "Capri",
+    price: 155000,
+    description: "Mismo tejido tacto frío premium. Versión capri, ideal para un look casual y fresco. Push up más resistente con elástico interno.",
+    rating: 5,
+    reviews: 1,
+    colors: [
+      { name: "CAFÉ", hex: "#8b6f5e" },
+      { name: "BEIGE", hex: "#d4c4a8" },
+    ],
+    sizes: ["S", "M", "L", "XL"],
+    gallery: [thumb1, mainImage, thumb2, thumb3],
+  },
+];
 
 export default function ProductPage() {
+  const [activeVariant, setActiveVariant] = useState(0);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [selectedColor, setSelectedColor] = useState(product.colors[1]);
+  const [selectedColor, setSelectedColor] = useState(allVariants[0].colors[1]);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const { addToCart } = useCart();
   const [showAddedNotification, setShowAddedNotification] = useState(false);
-
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
+
+  const current = allVariants[activeVariant];
+
+  const switchVariant = (index: number) => {
+    if (index === activeVariant) return;
+    setActiveVariant(index);
+    setSelectedImage(0);
+    setSelectedColor(allVariants[index].colors[0]);
+    setSelectedSize(null);
+    setQuantity(1);
+  };
 
   const toggleAccordion = (section: string) => {
     setOpenAccordion(openAccordion === section ? null : section);
+  };
+
+  const handleAddToCart = () => {
+    if (!selectedSize) return;
+    addToCart({ ...current, gallery: current.gallery }, quantity, selectedColor, selectedSize);
+    setShowAddedNotification(true);
+    setTimeout(() => setShowAddedNotification(false), 2000);
   };
 
   return (
@@ -50,7 +131,7 @@ export default function ProductPage() {
       <AnnouncementBar />
       <Header />
 
-      {/* TOAST: Producto agregado */}
+      {/* TOAST */}
       <div
         className={`fixed top-4 right-4 z-[200] flex items-center gap-3 bg-white border border-border shadow-lg rounded-lg px-4 py-3 transition-all duration-500 ${showAddedNotification
             ? "opacity-100 translate-y-0"
@@ -71,16 +152,16 @@ export default function ProductPage() {
       <div className="container mx-auto px-4 py-3 sm:py-4 text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">
         <Link href="/" className="hover:text-foreground">INICIO</Link> /
         <Link href="/tienda" className="hover:text-foreground mx-1">TIENDA</Link> /
-        <span className="text-foreground font-semibold ml-1">{product.name}</span>
+        <span className="text-foreground font-semibold ml-1">{current.name}</span>
       </div>
 
       <main className="container mx-auto px-4 pb-10 sm:pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-16">
 
-          {/* GALERÍA */}
-          <div className="flex flex-col-reverse lg:flex-row gap-3 sm:gap-4">
+          {/* GALERÍA - altura fija */}
+          <div className="flex flex-col-reverse lg:flex-row gap-3 sm:gap-4 lg:sticky lg:top-4 lg:self-start">
             <div className="flex lg:flex-col gap-2 sm:gap-3 overflow-x-auto lg:overflow-visible py-2 lg:py-0 scrollbar-hide">
-              {product.gallery.map((img, i) => (
+              {current.gallery.map((img, i) => (
                 <button
                   key={i}
                   onClick={() => setSelectedImage(i)}
@@ -91,10 +172,10 @@ export default function ProductPage() {
                 </button>
               ))}
             </div>
-            <div className="relative w-full aspect-[3/4] lg:aspect-[4/5] bg-muted overflow-hidden">
+            <div className="relative w-full max-h-[500px] sm:max-h-[580px] lg:max-h-[620px] aspect-[3/4] bg-muted overflow-hidden">
               <Image
-                src={product.gallery[selectedImage]}
-                alt={product.name}
+                src={current.gallery[selectedImage]}
+                alt={current.name}
                 fill
                 className="object-cover"
                 priority
@@ -105,12 +186,11 @@ export default function ProductPage() {
           {/* INFORMACIÓN */}
           <div className="flex flex-col">
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-2 uppercase tracking-wide">
-              {product.name}
+              {current.name}
             </h1>
-            
-            {/* --- CORRECCIÓN AQUÍ: Agregamos "es-CO" --- */}
+
             <p className="text-lg sm:text-xl font-medium text-foreground mb-3 sm:mb-4">
-              ${product.price.toLocaleString("es-CO")}
+              ${current.price.toLocaleString("es-CO")}
             </p>
 
             <div className="flex items-center gap-2 mb-4 sm:mb-6">
@@ -119,7 +199,7 @@ export default function ProductPage() {
                   <Star key={i} className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />
                 ))}
               </div>
-              <span className="text-xs sm:text-sm text-muted-foreground">{product.reviews} reseña</span>
+              <span className="text-xs sm:text-sm text-muted-foreground">{current.reviews} reseña</span>
             </div>
 
             <div className="bg-muted/30 p-2.5 sm:p-3 rounded-lg flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6 border border-border/50">
@@ -133,22 +213,47 @@ export default function ProductPage() {
               </p>
             </div>
 
-            {/* WIDGET ADDI REAL */}
+            {/* WIDGET ADDI */}
             <div className="flex items-center gap-3 mb-6 p-2.5 rounded-lg border border-gray-200 bg-[#F9FAFB]">
                <div className="w-8 h-8 rounded-full bg-[#2F6BFF] flex items-center justify-center shrink-0 shadow-sm">
                   <span className="text-white font-bold text-lg leading-none mt-0.5" style={{ fontFamily: 'Arial, sans-serif'}}>a</span>
                </div>
                <p className="text-xs sm:text-sm text-gray-600 leading-snug">
-                 Paga con <span className="font-bold text-[#2F6BFF]">Addi</span> en <span className="font-bold text-gray-900">hasta 6 cuotas</span>. 
-                 <a 
-                    href="https://co.addi.com/" 
-                    target="_blank"             
-                    rel="noopener noreferrer"   
+                 Paga con <span className="font-bold text-[#2F6BFF]">Addi</span> en <span className="font-bold text-gray-900">hasta 6 cuotas</span>.
+                 <a
+                    href="https://co.addi.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="ml-1 underline text-[#2F6BFF] hover:text-[#0041bd] transition-colors font-medium cursor-pointer"
                  >
                     Pide un cupo
                  </a>
                </p>
+            </div>
+
+            {/* ===== SELECTOR DE VARIANTE (Short / Pantalón / Bermuda / Capri) ===== */}
+            <div className="mb-4 sm:mb-6">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">
+                TIPO: <span className="text-foreground">{current.type}</span>
+              </span>
+              <div className="flex gap-2 flex-wrap">
+                {allVariants.map((v, i) => (
+                  <button
+                    key={v.type}
+                    onClick={() => switchVariant(i)}
+                    className={`relative flex items-center gap-2 px-3 py-2 border rounded-lg transition-all ${
+                      activeVariant === i
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-border hover:border-foreground text-foreground"
+                    }`}
+                  >
+                    <div className="relative w-8 h-8 rounded overflow-hidden bg-muted shrink-0">
+                      <Image src={v.gallery[0]} alt={v.type} fill className="object-cover" />
+                    </div>
+                    <span className="text-xs font-semibold uppercase">{v.type}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Selector de Color */}
@@ -157,7 +262,7 @@ export default function ProductPage() {
                 COLOR: <span className="text-foreground">{selectedColor.name}</span>
               </span>
               <div className="flex gap-2.5 sm:gap-3 mt-2 sm:mt-3">
-                {product.colors.map((color) => (
+                {current.colors.map((color) => (
                   <button
                     key={color.name}
                     onClick={() => setSelectedColor(color)}
@@ -166,6 +271,34 @@ export default function ProductPage() {
                     style={{ backgroundColor: color.hex }}
                   />
                 ))}
+              </div>
+            </div>
+
+            {/* Selector de Talla */}
+            <div className="mb-4 sm:mb-6">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                TALLA: <span className="text-foreground">{selectedSize || "Selecciona una talla"}</span>
+              </span>
+              <div className="flex flex-wrap gap-2 mt-2 sm:mt-3">
+                {ALL_SIZES.map((size) => {
+                  const available = current.sizes.includes(size);
+                  return (
+                    <button
+                      key={size}
+                      onClick={() => available && setSelectedSize(size)}
+                      disabled={!available}
+                      className={`min-w-12 h-10 px-3 border text-sm font-medium transition-all
+                        ${selectedSize === size
+                          ? "border-foreground bg-foreground text-background"
+                          : available
+                            ? "border-border hover:border-foreground text-foreground"
+                            : "border-border/40 text-muted-foreground/40 line-through cursor-not-allowed"
+                        }`}
+                    >
+                      {size}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -189,14 +322,20 @@ export default function ProductPage() {
                 </div>
 
                 <button
-                  onClick={() => {
-                    addToCart(product, quantity, selectedColor);
-                    setShowAddedNotification(true);
-                    setTimeout(() => setShowAddedNotification(false), 2000);
-                  }}
-                  className="flex-1 bg-[#c19a6b] hover:bg-[#a88659] text-white font-semibold uppercase tracking-wider text-xs sm:text-sm rounded transition-colors h-11 sm:h-12 active:scale-95 duration-100"
+                  onClick={handleAddToCart}
+                  disabled={!selectedSize}
+                  className={`flex-1 font-semibold uppercase tracking-wider text-xs sm:text-sm rounded transition-colors h-11 sm:h-12 active:scale-95 duration-100
+                    ${selectedSize
+                      ? "bg-[#c19a6b] hover:bg-[#a88659] text-white"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    }`}
                 >
-                  {showAddedNotification ? "✓ Agregado al carrito" : "Agregar al carrito"}
+                  {!selectedSize
+                    ? "Selecciona una talla"
+                    : showAddedNotification
+                      ? "✓ Agregado al carrito"
+                      : "Agregar al carrito"
+                  }
                 </button>
               </div>
 
@@ -218,8 +357,7 @@ export default function ProductPage() {
             </div>
 
             <div className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-6">
-              <p>{product.description}</p>
-              <p className="mt-3 sm:mt-4 font-medium text-foreground">talla única</p>
+              <p>{current.description}</p>
             </div>
 
             {/* Acordeones */}
@@ -313,7 +451,7 @@ export default function ProductPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
             {[thumb1, thumb2, thumb3, mainImage].map((img, i) => (
               <Link href="#" key={i} className="cursor-pointer group block">
-                <div className="relative aspect-[3/4] mb-2 sm:mb-3 overflow-hidden">
+                <div className="relative aspect-3/4 mb-2 sm:mb-3 overflow-hidden">
                   <Image src={img} alt="Recomendado" fill className="object-cover group-hover:scale-105 transition-transform" />
                 </div>
                 <h3 className="text-[10px] sm:text-xs font-bold uppercase">Producto Recomendado {i + 1}</h3>
@@ -328,7 +466,6 @@ export default function ProductPage() {
           <h2 className="text-center text-lg sm:text-xl font-bold mb-8 sm:mb-10">Reseñas de Clientes</h2>
 
           <div className="flex flex-col md:flex-row gap-8 sm:gap-10 max-w-4xl mx-auto">
-            {/* Resumen Izquierdo */}
             <div className="flex-1 flex flex-col items-center justify-center md:border-r border-border md:pr-8">
               <div className="flex text-[#c19a6b] mb-2">
                 {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />)}
@@ -356,7 +493,6 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* Botón Escribir Reseña */}
             <div className="flex-1 flex items-center justify-center md:pl-8">
               <button className="bg-black text-white px-6 sm:px-8 py-2.5 sm:py-3 text-xs sm:text-sm font-bold uppercase hover:opacity-80 transition-opacity">
                 Escribir una reseña

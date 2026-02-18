@@ -5,17 +5,18 @@ import { StaticImageData } from "next/image";
 
 // Definimos cómo se ve un producto en el carrito
 export interface CartItem {
-  id: string; // Usaremos el slug + color para que sea único
+  id: string;
   name: string;
   price: number;
   image: StaticImageData | string;
   color: string;
+  size: string;
   quantity: number;
 }
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (product: any, quantity: number, color: any) => void;
+  addToCart: (product: any, quantity: number, color: any, size?: string) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, delta: number) => void;
   cartCount: number;
@@ -37,28 +38,28 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   // Calcular dinero total
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-  const addToCart = (product: any, qty: number, color: any) => {
-    const itemId = `${product.name}-${color.name}`;
-    
+  const addToCart = (product: any, qty: number, color: any, size?: string) => {
+    const sizeLabel = size || "Única";
+    const itemId = `${product.name}-${color.name}-${sizeLabel}`;
+
     setItems(currentItems => {
       const existingItem = currentItems.find(item => item.id === itemId);
-      
+
       if (existingItem) {
-        // Si ya existe, solo sumamos la cantidad
-        return currentItems.map(item => 
-          item.id === itemId 
+        return currentItems.map(item =>
+          item.id === itemId
             ? { ...item, quantity: item.quantity + qty }
             : item
         );
       }
-      
-      // Si es nuevo, lo agregamos (Usamos la primera imagen de la galería)
+
       return [...currentItems, {
         id: itemId,
         name: product.name,
         price: product.price,
-        image: product.gallery[0], // Tomamos la foto principal
+        image: product.gallery?.[0] || product.image,
         color: color.name,
+        size: sizeLabel,
         quantity: qty
       }];
     });

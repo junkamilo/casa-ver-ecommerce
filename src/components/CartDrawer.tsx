@@ -59,7 +59,7 @@ const CartDrawer = () => {
                       <span className="text-sm font-semibold">${(item.price * item.quantity).toLocaleString()}</span>
                     </div>
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
-                      {item.color}
+                      {item.color} {item.size ? `· ${item.size}` : ""}
                     </p>
                     <p className="text-xs text-muted-foreground mb-3">${item.price.toLocaleString()}</p>
                   </div>
