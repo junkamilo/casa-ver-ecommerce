@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { megaMenuData, TEXT_BRAND, HOVER_BRAND } from "./constants";
+import { HOVER_BRAND, megaMenuData, TEXT_BRAND } from "../constants/constants";
+
 
 interface Props {
   visible: boolean;

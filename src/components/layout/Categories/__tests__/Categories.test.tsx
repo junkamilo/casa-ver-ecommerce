@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import Categories from "../index";
-import { CATEGORIES } from "../constants";
+import { CATEGORIES } from "../constants/constants";
 
 jest.mock("next/link", () => {
   const MockLink = ({ children, href }: { children: React.ReactNode; href: string }) => (

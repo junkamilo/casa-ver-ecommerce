@@ -1,4 +1,4 @@
-import { megaMenuData, BRAND_GREEN, BRAND_GOLD } from "../constants";
+import { megaMenuData, BRAND_GREEN, BRAND_GOLD } from "../constants/constants";
 
 describe("Header constants", () => {
   it("BRAND_GREEN es el verde corporativo", () => {

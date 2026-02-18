@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Search, User, ShoppingBag, Shield } from "lucide-react";
 import UserMenu from "@/components/UserMenu";
-import { TEXT_BRAND, HOVER_BRAND, BRAND_GOLD } from "./constants";
+import { TEXT_BRAND, HOVER_BRAND, BRAND_GOLD } from "../constants/constants";
 
 interface Props {
   isAdmin: boolean;

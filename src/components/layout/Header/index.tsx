@@ -10,7 +10,7 @@ import CartDrawer from "@/components/CartDrawer";
 import { useCart } from "@/context/CartContext";
 import logoIcon from "@/assets/logo-icon.png";
 
-import { TEXT_BRAND, HOVER_BRAND, BRAND_GREEN } from "./constants";
+import { TEXT_BRAND, HOVER_BRAND, BRAND_GREEN } from "./constants/constants";
 import MegaMenu from "./components/MegaMenu";
 import MobileMenu from "./components/MobileMenu";
 import NavActions from "./components/NavActions";

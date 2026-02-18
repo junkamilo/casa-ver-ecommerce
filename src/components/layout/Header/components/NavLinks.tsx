@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { TEXT_BRAND, HOVER_BRAND, BORDER_BRAND } from "./constants";
+import { TEXT_BRAND, HOVER_BRAND, BORDER_BRAND } from "../constants/constants";
 
 interface Props {
   isCategoriesActive: boolean;

@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
-import { SCROLL_SPEED } from "../constants";
+import { SCROLL_SPEED } from "../constants/constants";
+
 
 export function useAutoScroll() {
   const scrollRef = useRef<HTMLDivElement>(null);

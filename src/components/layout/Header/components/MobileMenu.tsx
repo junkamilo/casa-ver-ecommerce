@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Search, User, Shield } from "lucide-react";
-import { megaMenuData, HOVER_BRAND, BORDER_BRAND, TEXT_BRAND } from "./constants";
+import { megaMenuData, HOVER_BRAND, BORDER_BRAND, TEXT_BRAND } from "../constants/constants";
 
 interface Props {
   isAdmin: boolean;

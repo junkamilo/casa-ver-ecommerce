@@ -1,8 +1,9 @@
 "use client";
 
-import { TESTIMONIALS } from "./constants";
+
 import { useAutoScroll } from "./hooks/useAutoScroll";
 import TestimonialCard from "./components/TestimonialCard";
+import { TESTIMONIALS } from "./constants/constants";
 
 const Testimonials = () => {
   const { scrollRef, setIsPaused } = useAutoScroll();

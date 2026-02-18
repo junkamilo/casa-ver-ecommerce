@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
-import { CATEGORIES } from "./constants";
+import { CATEGORIES } from "./constants/constants";
 import { useCarousel } from "./hooks/useCarousel";
 import CategoryCard from "./components/CategoryCard";
 
