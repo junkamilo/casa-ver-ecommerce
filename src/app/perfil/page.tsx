@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import Header from "@/components/Header";
+
 import Footer from "@/components/Footer";
 import {
   User,
@@ -24,6 +24,7 @@ import {
   Save,
   ShieldCheck,
 } from "lucide-react";
+import Header from "@/components/layout/Header";
 
 interface UserProfile {
   id: string;
