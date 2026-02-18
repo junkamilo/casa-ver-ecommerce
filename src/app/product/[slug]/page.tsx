@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Star, Check, ShoppingBag } from "lucide-react";
-import Header from "@/components/Header";
+
 import Footer from "@/components/Footer";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import { useCart } from "@/context/CartContext";
@@ -24,6 +24,7 @@ import thumb1 from "@/assets/product-2.jpg";
 import thumb2 from "@/assets/product-3.jpg";
 import thumb3 from "@/assets/product-4.jpg";
 import mainImage from "@/assets/product-1.jpg";
+import Header from "@/components/layout/Header";
 
 export default function ProductPage() {
   const [activeVariant, setActiveVariant] = useState(0);

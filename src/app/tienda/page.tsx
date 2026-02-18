@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image, { StaticImageData } from "next/image";
 import { ChevronUp, LayoutGrid, List, SlidersHorizontal, X } from "lucide-react";
 import AnnouncementBar from "@/components/AnnouncementBar";
-import Header from "@/components/Header";
+
 import Footer from "@/components/Footer";
 import product1 from "@/assets/product-1.jpg";
 import product2 from "@/assets/product-2.jpg";
@@ -14,6 +14,7 @@ import product5 from "@/assets/product-5.jpg";
 import new1 from "@/assets/new-1.jpg";
 import new3 from "@/assets/new-3.jpg";
 import new6 from "@/assets/new-6.jpg";
+import Header from "@/components/layout/Header";
 
 interface Product {
     image: StaticImageData;

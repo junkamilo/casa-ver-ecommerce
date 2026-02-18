@@ -4,7 +4,7 @@ import { useState, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, LayoutGrid, List, ChevronUp, SlidersHorizontal, X } from "lucide-react";
-import Header from "@/components/Header";
+
 import Footer from "@/components/Footer";
 import AnnouncementBar from "@/components/AnnouncementBar";
 
@@ -16,6 +16,7 @@ import product4 from "@/assets/product-4.jpg";
 import new1 from "@/assets/new-1.jpg";
 import new3 from "@/assets/new-3.jpg";
 import new6 from "@/assets/new-6.jpg";
+import Header from "@/components/layout/Header";
 
 // Simulamos productos de la colección
 const collectionProducts = [
