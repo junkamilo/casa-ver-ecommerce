@@ -18,13 +18,15 @@ import {
   X,
   Store,
   Shield,
-  UserCog
+  UserCog,
+  Tag
 } from "lucide-react";
 
 // Navegación
 const adminNav = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Inventario", href: "/admin/productos", icon: Package },
+  { label: "Categorías", href: "/admin/categorias", icon: Tag },
   { label: "Pedidos", href: "/admin/pedidos", icon: ClipboardList },
   { label: "Reportes", href: "/admin/estadisticas", icon: BarChart3 },
   { label: "Admins", href: "/admin/administradores", icon: Shield },

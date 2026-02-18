@@ -7,19 +7,52 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  name          String?
-  password      String?
-  role          String    @default("USER")
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  accounts      Account[]
-  sessions      Session[]
+// ============================================================
+// ENUMS (Configuración Global)
+// ============================================================
+
+enum Role {
+  USER
+  ADMIN
 }
+
+enum ProductStatus {
+  ACTIVE    // Visible en la tienda
+  INACTIVE  // Oculto
+  DRAFT     // Borrador
+}
+
+enum Size {
+  XS
+  S
+  M
+  L
+  XL
+  XXL
+  ONESIZE
+}
+
+enum OrderStatus {
+  PENDING     // Creada, esperando pago
+  PROCESSING  // Webhook recibido, validando
+  PAID        // Pago confirmado
+  SHIPPED     // En camino
+  DELIVERED   // Entregado
+  CANCELLED   // Cancelada
+  FAILED      // Pago fallido
+}
+
+enum PaymentMethod {
+  BOLD
+  ADDI
+  NEQUI
+  BANCOLOMBIA
+  DAVIPLATA
+}
+
+// ============================================================
+// AUTENTICACIÓN & USUARIOS (NextAuth + Perfil Cliente)
+// ============================================================
 
 model Account {
   id                String  @id @default(cuid())
@@ -27,17 +60,18 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?
-  access_token      String?
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?
+  id_token          String? @db.Text
   session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@map("accounts")
 }
 
 model Session {
@@ -45,74 +79,299 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("sessions")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          Role      @default(USER)
+  phone         String?
+  
+  // Relaciones
+  accounts      Account[]
+  sessions      Session[]
+  addresses     Address[]
+  orders        Order[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("users")
+}
+
+model Address {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName      String
+  phone         String
+  department    String
+  city          String
+  address       String
+  addressDetail String?
+  zipCode       String?
+  isDefault     Boolean  @default(false)
+
+  orders        Order[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("addresses")
+}
+
+// ============================================================
+// CATÁLOGO DE PRODUCTOS
+// ============================================================
+
+model Category {
+  id            String     @id @default(cuid())
+  name          String
+  slug          String     @unique
+  description   String?
+  image         String?
+  order         Int        @default(0)
+
+  // Subcategorías (Recursividad)
+  parentId      String?
+  parent        Category?  @relation("CategoryToSubcategory", fields: [parentId], references: [id])
+  subcategories Category[] @relation("CategoryToSubcategory")
+
+  products      Product[]
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@map("categories")
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  description String?
-  price       Decimal  @db.Decimal(10, 2)
-  images      String[]
-  active      Boolean  @default(true)
-  categoryId  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String         @id @default(cuid())
+  name            String
+  slug            String         @unique
+  description     String         @db.Text
+  basePrice       Decimal        @db.Decimal(10, 2)
+  comparePrice    Decimal?       @db.Decimal(10, 2) // Precio tachado (oferta)
+
+  categoryId      String
+  category        Category       @relation(fields: [categoryId], references: [id])
+
+  status          ProductStatus  @default(DRAFT)
+  isFeatured      Boolean        @default(false)
+  isNew           Boolean        @default(false)
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  // Datos Adicionales
+  material        String?
+  careInfo        String?        @db.Text
   
-  category    Category? @relation(fields: [categoryId], references: [id])
-  variants    ProductVariant[]
-  orderItems  OrderItem[]
+  // Relaciones Clave
+  images          ProductImage[] // Imágenes generales o por defecto
+  colors          ProductColor[] // Definición de colores disponibles
+  variants        ProductVariant[] // Inventario real (SKUs)
+  orderItems      OrderItem[]
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([slug])
+  @@map("products")
+}
+
+// ============================================================
+// VARIANTES & IMÁGENES (Lógica de Colores)
+// ============================================================
+
+model ProductColor {
+  id        String         @id @default(cuid())
+  productId String
+  product   Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  name      String         // Ej: "Verde Militar"
+  hexCode   String         // Ej: "#4B5320"
+
+  // Las imágenes se atan al color. Si selecciono "Verde", cargo estas fotos.
+  images    ProductImage[] 
+  variants  ProductVariant[]
+
+  @@unique([productId, name])
+  @@map("product_colors")
+}
+
+model ProductImage {
+  id        String        @id @default(cuid())
+  productId String
+  product   Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  url       String
+  altText   String?
+  order     Int           @default(0)
+
+  // Relación opcional: Si es null, es imagen general. Si tiene colorId, es específica.
+  colorId   String?
+  color     ProductColor? @relation(fields: [colorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime      @default(now())
+
+  @@index([productId])
+  @@map("product_images")
 }
 
 model ProductVariant {
-  id        String   @id @default(cuid())
-  productId String
-  size      String?
-  color     String?
-  sku       String   @unique
-  stock     Int      @default(0)
-  price     Decimal? @db.Decimal(10, 2)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id            String             @id @default(cuid())
+  productId     String
+  product       Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  colorId       String
+  color         ProductColor       @relation(fields: [colorId], references: [id], onDelete: Cascade)
+
+  size          Size
+  sku           String             @unique // Identificador único de inventario
+  priceOverride Decimal?           @db.Decimal(10, 2) // Opcional: Si la XXL vale más
+
+  // Gestión de Inventario
+  stock         Int                @default(0)
+  minStock      Int                @default(2) // Alerta de stock bajo
+  reserved      Int                @default(0) // Stock temporalmente en carritos
+
+  isActive      Boolean            @default(true)
+
+  orderItems    OrderItem[]
+  reservations  StockReservation[]
+
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@unique([productId, colorId, size]) // Evita duplicados de la misma combinación
+  @@map("product_variants")
 }
 
-model Category {
-  id        String    @id @default(cuid())
-  name      String
-  slug      String    @unique
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  
-  products  Product[]
+// ============================================================
+// SISTEMA DE RESERVAS & PAGOS
+// ============================================================
+
+model StockReservation {
+  id        String         @id @default(cuid())
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  quantity  Int
+  expiresAt DateTime       // Se libera automáticamente después de 15 min
+  released  Boolean        @default(false)
+
+  createdAt DateTime       @default(now())
+
+  @@index([expiresAt])
+  @@map("stock_reservations")
 }
 
 model Order {
-  id              String   @id @default(cuid())
-  orderNumber     String   @unique
-  customerEmail   String
-  customerName    String
-  shippingAddress Json
-  total           Decimal  @db.Decimal(10, 2)
-  status          String   @default("PENDING")
-  paymentMethod   String
-  transactionId   String?  @unique
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                 String        @id @default(cuid())
+  orderNumber        String        @unique // Secuencial amigable "ORD-001"
   
-  items           OrderItem[]
+  userId             String
+  user               User          @relation(fields: [userId], references: [id])
+
+  // Snapshot de Dirección (Para que no cambie si el usuario edita su perfil)
+  addressId          String?
+  address            Address?      @relation(fields: [addressId], references: [id])
+  shippingName       String
+  shippingAddress    String
+  shippingCity       String
+  shippingDepartment String
+  shippingPhone      String
+
+  // Montos
+  subtotal           Decimal       @db.Decimal(10, 2)
+  shippingCost       Decimal       @db.Decimal(10, 2) @default(0)
+  discount           Decimal       @db.Decimal(10, 2) @default(0)
+  total              Decimal       @db.Decimal(10, 2)
+
+  // Estado y Pago
+  status             OrderStatus   @default(PENDING)
+  paymentMethod      PaymentMethod
+  
+  // Bold / Addi Integración
+  transactionId      String?       @unique // UUID idempotente enviado a pasarela
+  paymentId          String?       // ID retornado por Bold/Addi al confirmar
+
+  // Logística
+  trackingNumber     String?
+  trackingUrl        String?
+
+  items              OrderItem[]
+  webhookLogs        WebhookLog[]
+
+  paidAt             DateTime?
+  shippedAt          DateTime?
+  deliveredAt        DateTime?
+  cancelledAt        DateTime?
+
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("orders")
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
-  orderId   String
-  productId String
-  quantity  Int
-  price     Decimal @db.Decimal(10, 2)
+  id          String         @id @default(cuid())
+  orderId     String
+  order       Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId   String
+  product     Product        @relation(fields: [productId], references: [id])
+
+  variantId   String
+  variant     ProductVariant @relation(fields: [variantId], references: [id])
+
+  // Snapshot del ítem (Nombre, precio, etc. congelados al momento de compra)
+  name        String
+  sku         String
+  colorName   String
+  size        Size
+  price       Decimal        @db.Decimal(10, 2)
+  quantity    Int
+  total       Decimal        @db.Decimal(10, 2)
+  imageUrl    String?        // Foto principal de la variante
+
+  @@map("order_items")
+}
+
+// ============================================================
+// LOGS Y SEGURIDAD (Webhooks)
+// ============================================================
+
+model WebhookLog {
+  id           String   @id @default(cuid())
+  orderId      String?
+  order        Order?   @relation(fields: [orderId], references: [id])
+
+  provider     String   // "BOLD", "ADDI"
+  eventType    String?  // "payment.approved", etc.
+  payload      Json     // Respuesta completa JSON
+  signature    String?  // Para validar seguridad
   
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id])
+  status       Int      // Código HTTP respuesta (200, 400, etc)
+  errorMessage String?
+  attempt      Int      @default(1)
+
+  createdAt    DateTime @default(now())
+
+  @@index([orderId])
+  @@map("webhook_logs")
 }
