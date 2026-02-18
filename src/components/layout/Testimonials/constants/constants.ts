@@ -1,4 +1,5 @@
-import { TestimonialItem } from "./types/types";
+import { TestimonialItem } from "../types/types";
+
 
 export const SCROLL_SPEED = 0.5; // px per frame
 
