@@ -82,26 +82,82 @@ export default {
         gold: "0 4px 14px -2px rgba(193,154,107,0.35)",
       },
       keyframes: {
-        "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+        marquee: {
+          '0%': { transform: 'translate3d(0, 0, 0)' },
+          '100%': { transform: 'translate3d(-50%, 0, 0)' },
         },
-        "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+        // Íconos flotan suavemente — efecto vivo y premium
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%':  { transform: 'translateY(-3px)' },
+        },
+        // Halo dorado que pulsa alrededor de los íconos
+        'glow-pulse': {
+          '0%, 100%': { opacity: '0.35', transform: 'scale(0.9)' },
+          '50%':       { opacity: '0.85', transform: 'scale(1.4)' },
+        },
+        // Diamante separador que parpadea con brillo
+        'diamond-breathe': {
+          '0%, 100%': { opacity: '0.5', transform: 'rotate(45deg) scale(0.85)' },
+          '50%':       { opacity: '1',   transform: 'rotate(45deg) scale(1.2)' },
+        },
+        // Barra de luz dorada que cruza la pantalla — firma de lujo
+        'shine-sweep': {
+          '0%':   { left: '-15%', opacity: '0' },
+          '4%':   { opacity: '1' },
+          '22%':  { left: '115%', opacity: '0' },
+          '100%': { left: '115%', opacity: '0' },
+        },
+        // Línea de borde dorada superior que pulsa
+        'border-shimmer': {
+          '0%, 100%': { opacity: '0.4' },
+          '50%':       { opacity: '1' },
+        },
+        // Texto "CASA VERDE" — el dorado aparece una vez, descansa en verde
+        // 0–40%: reposo (verde puro) | 40–60%: barrido dorado | 60–100%: reposo
+        'text-shimmer': {
+          '0%':   { backgroundPosition: '0% center' },
+          '40%':  { backgroundPosition: '0% center' },
+          '60%':  { backgroundPosition: '200% center' },
+          '100%': { backgroundPosition: '200% center' },
+        },
+        // Menú móvil — entra deslizando desde arriba con elasticidad
+        'menu-slide': {
+          '0%':   { transform: 'translateY(-10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)',     opacity: '1' },
+        },
+        // Hero — línea de scroll que viaja hacia abajo en el indicador lateral
+        'scroll-line': {
+          '0%':   { top: '-40%', opacity: '0' },
+          '20%':  { opacity: '1' },
+          '80%':  { opacity: '1' },
+          '100%': { top: '130%', opacity: '0' },
+        },
+        // Hero — barra activa del indicador de slide se llena de izquierda a derecha
+        'progress-fill': {
+          '0%':   { width: '0%' },
+          '85%':  { width: '100%' },
+          '100%': { width: '100%' },
+        },
+        // Hero — texto de copia entra flotando suavemente (variante hero)
+        'hero-in': {
+          '0%':   { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
+        // 80s = scroll ultra-elegante, marca premium
+        marquee:           'marquee 80s linear infinite',
+        float:             'float 3.5s ease-in-out infinite',
+        'glow-pulse':      'glow-pulse 2.5s ease-in-out infinite',
+        'diamond-breathe': 'diamond-breathe 2s ease-in-out infinite',
+        'shine-sweep':     'shine-sweep 9s ease-in-out infinite',
+        'border-shimmer':  'border-shimmer 3s ease-in-out infinite',
+        'text-shimmer':    'text-shimmer 14s ease-in-out infinite',
+        'menu-slide':      'menu-slide 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'scroll-line':     'scroll-line 2s ease-in-out infinite',
+        'progress-fill':   'progress-fill 5s linear infinite',
+        'hero-in':         'hero-in 0.8s ease-out forwards',
       },
     },
   },

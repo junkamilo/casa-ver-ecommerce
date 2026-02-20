@@ -7,16 +7,19 @@ interface CarouselArrowProps {
 
 const CarouselArrow = ({ direction, onClick }: CarouselArrowProps) => {
   const isLeft = direction === "left";
+  
   return (
     <button
       onClick={onClick}
-      className={`absolute ${isLeft ? "left-0 -ml-2 sm:-ml-3" : "right-0 -mr-2 sm:-mr-3"} top-1/2 -translate-y-1/2 z-10 w-9 h-9 sm:w-10 sm:h-10 bg-background/90 border border-border rounded-full flex items-center justify-center shadow-md hover:bg-background transition-colors`}
+      className={`absolute ${
+        isLeft ? "left-0 -translate-x-1/2" : "right-0 translate-x-1/2"
+      } top-[40%] -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/80 backdrop-blur-md border border-[#154734]/10 flex items-center justify-center text-[#154734] hover:bg-[#154734] hover:text-white transition-all duration-400 shadow-[0_8px_30px_rgb(0,0,0,0.08)] opacity-0 group-hover/carousel:opacity-100 group-hover/carousel:translate-x-0 cursor-pointer`}
       aria-label={isLeft ? "Anterior" : "Siguiente"}
     >
       {isLeft ? (
-        <ChevronLeft className="w-5 h-5 text-foreground" />
+        <ChevronLeft className="w-5 h-5 stroke-[1.5]" />
       ) : (
-        <ChevronRight className="w-5 h-5 text-foreground" />
+        <ChevronRight className="w-5 h-5 stroke-[1.5]" />
       )}
     </button>
   );
