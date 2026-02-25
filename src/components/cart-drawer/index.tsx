@@ -20,7 +20,7 @@ const CartDrawer = () => {
         <CartHeader cartCount={cartCount} onClose={closeCart} />
 
         <CartItemList
-          items={items}
+          items={items as any}
           onRemove={removeFromCart}
           onUpdateQty={updateQuantity}
           onClose={closeCart}
