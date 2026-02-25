@@ -4,8 +4,8 @@ import { CartFooter } from "../components/CartFooter";
 // Mock de next/link
 jest.mock("next/link", () => ({
   __esModule: true,
-  default: ({ children, href, onClick }: any) => (
-    <a href={href} onClick={onClick}>
+  default: ({ children, href, onClick, className }: any) => (
+    <a href={href} onClick={onClick} className={className}>
       {children}
     </a>
   ),
@@ -17,7 +17,7 @@ describe("CartFooter", () => {
       <CartFooter subtotal={100000} itemCount={0} onCheckout={jest.fn()} />
     );
 
-    expect(container.firstChild?.childNodes.length).toBe(0);
+    expect(container.firstChild).toBeNull();
   });
 
   it("renderiza cuando hay items", () => {
@@ -29,7 +29,7 @@ describe("CartFooter", () => {
   it("muestra el subtotal correctamente", () => {
     render(<CartFooter subtotal={250000} itemCount={1} onCheckout={jest.fn()} />);
 
-    expect(screen.getByText("$250,000 COP")).toBeInTheDocument();
+    expect(screen.getByText("$250.000 COP")).toBeInTheDocument();
   });
 
   it("muestra el mensaje de impuestos y envío", () => {
@@ -67,7 +67,7 @@ describe("CartFooter", () => {
   it("formate el subtotal con puntos separadores de miles", () => {
     render(<CartFooter subtotal={1234567} itemCount={1} onCheckout={jest.fn()} />);
 
-    expect(screen.getByText("$1,234,567 COP")).toBeInTheDocument();
+    expect(screen.getByText("$1.234.567 COP")).toBeInTheDocument();
   });
 
   it("tiene estilo gold-gradient en el botón", () => {

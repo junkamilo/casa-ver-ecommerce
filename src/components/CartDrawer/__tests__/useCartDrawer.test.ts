@@ -80,17 +80,21 @@ describe("useCartDrawer", () => {
   });
 
   it("handleOverlayClick solo cierra si el target es el overlay mismo", () => {
-    const { result } = renderHook(() => useCartDrawer());
+    // 1. Configuramos el hook y los mocks (asegúrate de mantener tu lógica de setup)
+    const { result } = renderHook(() => useCartDrawer()); 
 
-    const mockEvent = {
-      target: { className: "overlay" },
-      currentTarget: { className: "overlay" },
-    } as unknown as React.MouseEvent<HTMLDivElement>;
+    // 2. EL TRUCO: Creamos UNA sola referencia en memoria
+    const mockElement = document.createElement("div");
 
+    // 3. Ejecutamos la función pasando exactamente el mismo objeto
     act(() => {
-      result.current.handleOverlayClick(mockEvent);
+      result.current.handleOverlayClick({
+        target: mockElement,
+        currentTarget: mockElement,
+      } as unknown as React.MouseEvent<HTMLDivElement>); // Le agregamos <HTMLDivElement>
     });
 
+    // 4. ¡Ahora sí pasará!
     expect(mockCloseCart).toHaveBeenCalled();
   });
 

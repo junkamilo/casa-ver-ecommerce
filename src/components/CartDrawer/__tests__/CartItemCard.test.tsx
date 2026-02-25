@@ -65,7 +65,7 @@ describe("CartItemCard", () => {
       />
     );
 
-    expect(screen.getByText("$50,000")).toBeInTheDocument();
+    expect(screen.getByText("$50.000")).toBeInTheDocument();
   });
 
   it("renderiza el precio total (precio * cantidad)", () => {
@@ -77,7 +77,7 @@ describe("CartItemCard", () => {
       />
     );
 
-    expect(screen.getByText("$100,000")).toBeInTheDocument();
+    expect(screen.getByText("$100.000")).toBeInTheDocument();
   });
 
   it("llamará onRemove con el id correcto cuando se hace click en eliminar", () => {

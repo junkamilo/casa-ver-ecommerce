@@ -74,7 +74,7 @@ describe("CartDrawer Integration Tests", () => {
     expect(screen.getByText("3")).toBeInTheDocument();
 
     // Verifica el subtotal
-    expect(screen.getByText("$200,000 COP")).toBeInTheDocument();
+    expect(screen.getByText("$200.000 COP")).toBeInTheDocument();
   });
 
   it("muestra estado vacío cuando no hay items", () => {
@@ -178,7 +178,9 @@ describe("CartDrawer Integration Tests", () => {
 
     render(<CartDrawer />);
 
-    const closeButton = screen.getByLabelText("Cerrar carrito");
+    const closeButton = screen
+      .getAllByLabelText("Cerrar carrito")
+      .find((el) => el.tagName === "BUTTON")!;
     fireEvent.click(closeButton);
 
     expect(mockCloseCart).toHaveBeenCalled();
@@ -232,7 +234,7 @@ describe("CartDrawer Integration Tests", () => {
     render(<CartDrawer />);
 
     // Verifica el precio total (50000 * 3 = 150000)
-    expect(screen.getByText("$150,000")).toBeInTheDocument();
+    expect(screen.getByText("$150.000")).toBeInTheDocument();
   });
 
   it("no renderiza nada cuando el carrito está cerrado", () => {
@@ -249,6 +251,6 @@ describe("CartDrawer Integration Tests", () => {
     });
 
     const { container } = render(<CartDrawer />);
-    expect(container.firstChild?.childNodes.length).toBe(0);
+    expect(container.firstChild).toBeNull();
   });
 });

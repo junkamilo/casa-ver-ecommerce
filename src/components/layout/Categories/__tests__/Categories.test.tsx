@@ -19,7 +19,7 @@ jest.mock("next/image", () => {
 describe("Categories", () => {
   it("renders the section title", () => {
     render(<Categories />);
-    expect(screen.getByText("CATEGORÍAS")).toBeInTheDocument();
+    expect(screen.getByText("Nuestros Estilos")).toBeInTheDocument();
   });
 
   it("renders the 'Ver todo' link pointing to /collections", () => {
