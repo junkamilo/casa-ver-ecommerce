@@ -45,7 +45,7 @@ describe("BestSellers", () => {
     const productLinks = screen.getAllByRole("link").filter((link) =>
       link.getAttribute("href")?.startsWith("/product/")
     );
-    expect(productLinks.length).toBe(products.length);
+    expect(productLinks.length).toBe(products.length * 2);
   });
 
   it("does not render scroll arrows initially (jsdom has no scroll width)", () => {

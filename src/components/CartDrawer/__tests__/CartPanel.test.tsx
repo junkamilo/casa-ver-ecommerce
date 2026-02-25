@@ -8,7 +8,7 @@ describe("CartPanel", () => {
         <div>Content</div>
       </CartPanel>
     );
-    expect(container.firstChild?.childNodes.length).toBe(0);
+    expect(container.firstChild).toBeNull();
   });
 
   it("renderiza si está abierto", () => {

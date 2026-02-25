@@ -4,12 +4,12 @@ import { CartOverlay } from "../components/CartOverlay";
 describe("CartOverlay", () => {
   it("no renderiza si no está abierto", () => {
     const { container } = render(<CartOverlay isOpen={false} onClose={jest.fn()} />);
-    expect(container.firstChild?.childNodes.length).toBe(0);
+    expect(container.firstChild).toBeNull();
   });
 
   it("renderiza si está abierto", () => {
     const { container } = render(<CartOverlay isOpen={true} onClose={jest.fn()} />);
-    expect(container.querySelector(".bg-black/40")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cerrar carrito" })).toBeInTheDocument();
   });
 
   it("llama onClose cuando se hace click", () => {

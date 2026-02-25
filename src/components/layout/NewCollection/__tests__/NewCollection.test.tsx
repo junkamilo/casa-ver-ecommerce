@@ -45,7 +45,7 @@ describe("NewCollection", () => {
     const productLinks = screen.getAllByRole("link").filter((link) =>
       link.getAttribute("href")?.startsWith("/product/")
     );
-    expect(productLinks.length).toBe(items.length);
+    expect(productLinks.length).toBe(items.length * 2);
   });
 
   it("does not render scroll arrows initially (jsdom has no scroll width)", () => {

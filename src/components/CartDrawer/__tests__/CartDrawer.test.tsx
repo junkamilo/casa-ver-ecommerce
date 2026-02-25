@@ -88,7 +88,7 @@ describe("CartDrawer", () => {
     });
 
     const { container } = render(<CartDrawer />);
-    expect(container.firstChild?.childNodes.length).toBe(0);
+    expect(container.firstChild).toBeNull();
   });
 
   it("renderiza cuando isOpen es true", () => {
@@ -132,6 +132,6 @@ describe("CartDrawer", () => {
     const { container } = render(<CartDrawer />);
     const wrapper = container.querySelector(".fixed");
     expect(wrapper).toHaveClass("inset-0");
-    expect(wrapper).toHaveClass("z-\\[100\\]");
+    expect(wrapper).toHaveClass("z-[100]");
   });
 });

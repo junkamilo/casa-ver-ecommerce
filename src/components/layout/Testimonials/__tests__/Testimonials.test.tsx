@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import Testimonials from "../index";
-import { TESTIMONIALS } from "../constants";
+import { TESTIMONIALS } from "../constants/constants";
 
 describe("Testimonials", () => {
   it("renders the section title", () => {
