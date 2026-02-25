@@ -3,9 +3,9 @@ import product2 from "@/assets/product-2.jpg";
 import product3 from "@/assets/product-3.jpg";
 import product4 from "@/assets/product-4.jpg";
 import product5 from "@/assets/product-5.jpg";
-import { ProductCard } from "./types/types";
+import { ProductItem } from "@/components/shared/ProductCarousel/types";
 
-export const products: ProductCard[] = [
+export const products: ProductItem[] = [
   {
     image: product1,
     name: "SET SHORT BODY CAMISETA",

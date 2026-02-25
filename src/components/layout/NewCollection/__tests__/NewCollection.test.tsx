@@ -17,14 +17,19 @@ jest.mock("next/image", () => {
 });
 
 describe("NewCollection", () => {
-  it("renders the section title", () => {
+  it("renders the section eyebrow", () => {
     render(<NewCollection />);
-    expect(screen.getByText("NUEVA COLECCIÓN")).toBeInTheDocument();
+    expect(screen.getByText("Lanzamientos")).toBeInTheDocument();
   });
 
-  it("renders the 'Ver todo' link pointing to /collections/nueva-coleccion", () => {
+  it("renders the italic title part", () => {
     render(<NewCollection />);
-    const link = screen.getByRole("link", { name: /ver todo/i });
+    expect(screen.getByText("Colección")).toBeInTheDocument();
+  });
+
+  it("renders the 'VER TODO' link pointing to /collections/nueva-coleccion", () => {
+    render(<NewCollection />);
+    const link = screen.getByRole("link", { name: /VER TODO/i });
     expect(link).toHaveAttribute("href", "/collections/nueva-coleccion");
   });
 

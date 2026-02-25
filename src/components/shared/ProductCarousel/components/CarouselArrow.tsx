@@ -7,7 +7,7 @@ interface CarouselArrowProps {
 
 const CarouselArrow = ({ direction, onClick }: CarouselArrowProps) => {
   const isLeft = direction === "left";
-  
+
   return (
     <button
       onClick={onClick}
