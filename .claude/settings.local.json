@@ -8,7 +8,13 @@
       "Bash(ls:*)",
       "Bash(npm install:*)",
       "Bash(npm test:*)",
-      "Bash(npx jest:*)"
+      "Bash(npx jest:*)",
+      "Bash(\"c:/MIGRACION/casa-verde-ecommerce-nextjs/src/components/layout/BestSellers/index.tsx\":*)",
+      "Bash(\"c:/MIGRACION/casa-verde-ecommerce-nextjs/src/components/layout/BestSellers/data.ts\":*)",
+      "Bash(\"c:/MIGRACION/casa-verde-ecommerce-nextjs/src/components/layout/NewCollection/index.tsx\":*)",
+      "Bash(\"c:/MIGRACION/casa-verde-ecommerce-nextjs/src/components/layout/NewCollection/data.ts\":*)",
+      "Bash(\"c:/MIGRACION/casa-verde-ecommerce-nextjs/src/components/layout/BestSellers/__tests__/BestSellers.test.tsx\":*)",
+      "Bash(\"c:/MIGRACION/casa-verde-ecommerce-nextjs/src/components/layout/NewCollection/__tests__/NewCollection.test.tsx\":*)"
     ]
   }
 }

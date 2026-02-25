@@ -4,9 +4,9 @@ import new6 from "@/assets/new-6.jpg";
 import product1 from "@/assets/product-1.jpg";
 import product3 from "@/assets/product-3.jpg";
 import product4 from "@/assets/product-4.jpg";
-import { CollectionItem } from "./types/types";
+import { ProductItem } from "@/components/shared/ProductCarousel/types";
 
-export const items: CollectionItem[] = [
+export const items: ProductItem[] = [
   {
     image: new1,
     name: "SET PANT BUSO LÍNEAS",

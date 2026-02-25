@@ -1,37 +1,21 @@
 "use client";
 
+import ProductCarousel from "@/components/shared/ProductCarousel";
+import { SectionConfig } from "@/components/shared/ProductCarousel/types";
 import { products } from "./data";
-import { useCarousel } from "./hooks/useCarousel";
-import SectionHeader from "./components/SectionHeader";
-import CarouselArrow from "./components/CarouselArrow";
-import ProductCard from "./components/ProductCard";
 
-const BestSellers = () => {
-  const { scrollRef, canScrollLeft, canScrollRight, scroll } = useCarousel();
-
-  return (
-    <section className="py-12 px-4 sm:px-6 lg:px-8 bg-background">
-      <SectionHeader />
-
-      <div className="relative max-w-7xl mx-auto">
-        {canScrollLeft && (
-          <CarouselArrow direction="left" onClick={() => scroll("left")} />
-        )}
-        {canScrollRight && (
-          <CarouselArrow direction="right" onClick={() => scroll("right")} />
-        )}
-
-        <div
-          ref={scrollRef}
-          className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide"
-        >
-          {products.map((product) => (
-            <ProductCard key={product.slug} product={product} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+const config: SectionConfig = {
+  eyebrow: "Descubre",
+  titleStart: "Los Más",
+  titleItalic: "Deseados",
+  linkHref: "/collections/mas-vendidos",
+  linkText: "VER COLECCIÓN",
+  bgColor: "bg-[#FAFAFA]",
+  decorNumber: "02",
+  decorAlign: "right",
+  badgeVariant: "white",
 };
+
+const BestSellers = () => <ProductCarousel config={config} items={products} />;
 
 export default BestSellers;

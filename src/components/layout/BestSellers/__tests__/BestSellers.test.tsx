@@ -17,14 +17,19 @@ jest.mock("next/image", () => {
 });
 
 describe("BestSellers", () => {
-  it("renders the section title", () => {
+  it("renders the section eyebrow", () => {
     render(<BestSellers />);
-    expect(screen.getByText("MÁS VENDIDOS")).toBeInTheDocument();
+    expect(screen.getByText("Descubre")).toBeInTheDocument();
   });
 
-  it("renders the 'Ver todo' link pointing to /collections/mas-vendidos", () => {
+  it("renders the italic title part", () => {
     render(<BestSellers />);
-    const link = screen.getByRole("link", { name: /ver todo/i });
+    expect(screen.getByText("Deseados")).toBeInTheDocument();
+  });
+
+  it("renders the 'VER COLECCIÓN' link pointing to /collections/mas-vendidos", () => {
+    render(<BestSellers />);
+    const link = screen.getByRole("link", { name: /VER COLECCIÓN/i });
     expect(link).toHaveAttribute("href", "/collections/mas-vendidos");
   });
 
