@@ -20,9 +20,12 @@ export function useCarousel() {
     if (!el) return;
     el.addEventListener("scroll", checkScroll, { passive: true });
     window.addEventListener("resize", checkScroll);
+    const ro = new ResizeObserver(checkScroll);
+    ro.observe(el);
     return () => {
       el.removeEventListener("scroll", checkScroll);
       window.removeEventListener("resize", checkScroll);
+      ro.disconnect();
     };
   }, [checkScroll]);
 

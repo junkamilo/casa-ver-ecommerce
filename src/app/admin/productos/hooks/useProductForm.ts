@@ -15,11 +15,8 @@ export function useProductForm() {
   const [isNew, setIsNew] = useState(false);
   const [material, setMaterial] = useState("");
   const [careInfo, setCareInfo] = useState("");
-  const [metaTitle, setMetaTitle] = useState("");
-  const [metaDescription, setMetaDescription] = useState("");
   const [generalImages, setGeneralImages] = useState<string[]>([]);
   const [colors, setColors] = useState<ColorForm[]>([]);
-  const [showSEO, setShowSEO] = useState(false);
   const [showMaterial, setShowMaterial] = useState(false);
 
   const reset = () => {
@@ -33,11 +30,8 @@ export function useProductForm() {
     setIsNew(false);
     setMaterial("");
     setCareInfo("");
-    setMetaTitle("");
-    setMetaDescription("");
     setGeneralImages([]);
     setColors([]);
-    setShowSEO(false);
     setShowMaterial(false);
   };
 
@@ -53,11 +47,8 @@ export function useProductForm() {
     setIsNew(data.isNew);
     setMaterial(data.material || "");
     setCareInfo(data.careInfo || "");
-    setMetaTitle(data.metaTitle || "");
-    setMetaDescription(data.metaDescription || "");
     setGeneralImages(data.generalImages || []);
     if (data.material || data.careInfo) setShowMaterial(true);
-    if (data.metaTitle || data.metaDescription) setShowSEO(true);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setColors(
@@ -95,8 +86,6 @@ export function useProductForm() {
     isNew,
     material,
     careInfo,
-    metaTitle,
-    metaDescription,
     generalImages,
     colors: colors
       .filter((c) => c.name.trim())
@@ -114,7 +103,8 @@ export function useProductForm() {
       })),
   });
 
-  const addColor = () => setColors((prev) => [...prev, newColorForm()]);
+  const addColor = (name: string, hexCode: string) =>
+    setColors((prev) => [...prev, newColorForm(name, hexCode)]);
 
   const removeColor = (tempId: string) =>
     setColors((prev) => prev.filter((c) => c.tempId !== tempId));
@@ -171,11 +161,8 @@ export function useProductForm() {
     isNew, setIsNew,
     material, setMaterial,
     careInfo, setCareInfo,
-    metaTitle, setMetaTitle,
-    metaDescription, setMetaDescription,
     generalImages, setGeneralImages,
     colors,
-    showSEO, setShowSEO,
     showMaterial, setShowMaterial,
     reset,
     loadFromProduct,

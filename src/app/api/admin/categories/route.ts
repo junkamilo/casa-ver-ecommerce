@@ -10,6 +10,9 @@ export async function GET() {
         name: true,
         slug: true,
         description: true,
+        image: true,
+        bannerImage: true,
+        isActive: true,
         _count: {
           select: { products: true },
         },
@@ -25,7 +28,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, description } = body;
+    const { name, description, image, bannerImage } = body;
 
     if (!name) return new NextResponse("Name is required", { status: 400 });
 
@@ -48,6 +51,8 @@ export async function POST(req: Request) {
         name,
         slug,
         description,
+        image: image || null,
+        bannerImage: bannerImage || null,
       },
     });
 
@@ -58,20 +63,75 @@ export async function POST(req: Request) {
   }
 }
 
-export async function DELETE(req: Request) {
+export async function PATCH(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
     if (!id) return new NextResponse("ID required", { status: 400 });
 
-    await prisma.category.delete({
-      where: { id },
+    const body = await req.json();
+
+    if (body.action === "toggle") {
+      const category = await prisma.category.findUnique({
+        where: { id },
+        include: { _count: { select: { products: true } } },
+      });
+
+      if (!category) return new NextResponse("Not found", { status: 404 });
+
+      if (category.isActive && category._count.products > 0) {
+        return NextResponse.json(
+          {
+            error: "has_products",
+            count: category._count.products,
+            name: category.name,
+          },
+          { status: 409 }
+        );
+      }
+
+      const updated = await prisma.category.update({
+        where: { id },
+        data: { isActive: !category.isActive },
+      });
+
+      return NextResponse.json(updated);
+    }
+
+    const { name, description, image, bannerImage } = body;
+
+    if (!name) return new NextResponse("Name is required", { status: 400 });
+
+    const slug = name
+      .toLowerCase()
+      .trim()
+      .replace(/[\s\W-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+    const existing = await prisma.category.findFirst({
+      where: { slug, NOT: { id } },
     });
 
-    return NextResponse.json({ success: true });
+    if (existing) {
+      return new NextResponse("Esta categoría ya existe", { status: 409 });
+    }
+
+    const updated = await prisma.category.update({
+      where: { id },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: {
+        name,
+        slug,
+        description: description || null,
+        image: image || null,
+        bannerImage: bannerImage || null,
+      } as any,
+    });
+
+    return NextResponse.json(updated);
   } catch (error) {
-    console.error("[CATEGORIES_DELETE]", error);
+    console.error("[CATEGORIES_PATCH]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

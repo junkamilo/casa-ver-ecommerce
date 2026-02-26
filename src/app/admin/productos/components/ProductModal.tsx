@@ -4,7 +4,6 @@ import GeneralInfoSection from "./form/GeneralInfoSection";
 import ImagesSection from "./form/ImagesSection";
 import ColorsSection from "./form/ColorsSection";
 import MaterialSection from "./form/MaterialSection";
-import SeoSection from "./form/SeoSection";
 
 interface Props {
   editingId: string | null;
@@ -25,16 +24,13 @@ interface Props {
   isNew: boolean; setIsNew: (v: boolean) => void;
   material: string; setMaterial: (v: string) => void;
   careInfo: string; setCareInfo: (v: string) => void;
-  metaTitle: string; setMetaTitle: (v: string) => void;
-  metaDescription: string; setMetaDescription: (v: string) => void;
   generalImages: string[];
   setGeneralImages: React.Dispatch<React.SetStateAction<string[]>>;
   colors: ColorForm[];
-  showSEO: boolean; setShowSEO: (v: boolean) => void;
   showMaterial: boolean; setShowMaterial: (v: boolean) => void;
 
   // color helpers
-  addColor: () => void;
+  addColor: (name: string, hexCode: string) => void;
   removeColor: (tempId: string) => void;
   updateColor: (tempId: string, field: keyof ColorForm, value: string | string[]) => void;
   addColorImage: (tempId: string, url: string) => void;
@@ -59,11 +55,8 @@ export default function ProductModal({
   isNew, setIsNew,
   material, setMaterial,
   careInfo, setCareInfo,
-  metaTitle, setMetaTitle,
-  metaDescription, setMetaDescription,
   generalImages, setGeneralImages,
   colors,
-  showSEO, setShowSEO,
   showMaterial, setShowMaterial,
   addColor,
   removeColor,
@@ -135,13 +128,6 @@ export default function ProductModal({
                 onToggle={() => setShowMaterial(!showMaterial)}
                 material={material} onMaterial={setMaterial}
                 careInfo={careInfo} onCareInfo={setCareInfo}
-              />
-
-              <SeoSection
-                show={showSEO}
-                onToggle={() => setShowSEO(!showSEO)}
-                metaTitle={metaTitle} onMetaTitle={setMetaTitle}
-                metaDescription={metaDescription} onMetaDescription={setMetaDescription}
               />
             </div>
 

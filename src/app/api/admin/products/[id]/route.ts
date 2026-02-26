@@ -101,11 +101,15 @@ export async function PATCH(
       isNew,
       material,
       careInfo,
-      metaTitle,
-      metaDescription,
       generalImages,
       colors,
     } = body;
+
+    // SEO auto-generado desde nombre y descripción
+    const autoMetaTitle = name ? name.trim().slice(0, 60) : undefined;
+    const autoMetaDescription = description != null
+      ? description.replace(/\s+/g, " ").trim().slice(0, 160)
+      : undefined;
 
     const slug = name
       ? name
@@ -137,8 +141,8 @@ export async function PATCH(
           isNew,
           material: material || null,
           careInfo: careInfo || null,
-          metaTitle: metaTitle || null,
-          metaDescription: metaDescription || null,
+          metaTitle: autoMetaTitle || null,
+          metaDescription: autoMetaDescription || null,
         },
       });
 

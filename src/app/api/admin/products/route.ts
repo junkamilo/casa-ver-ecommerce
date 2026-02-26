@@ -73,8 +73,6 @@ export async function POST(req: NextRequest) {
       isNew,
       material,
       careInfo,
-      metaTitle,
-      metaDescription,
       generalImages,
       colors,
     } = body;
@@ -82,6 +80,13 @@ export async function POST(req: NextRequest) {
     if (!name || !basePrice || !categoryId) {
       return new NextResponse("Faltan datos requeridos (nombre, precio, categoría)", { status: 400 });
     }
+
+    // SEO auto-generado desde nombre y descripción
+    const autoMetaTitle = name.trim().slice(0, 60);
+    const autoMetaDescription = (description || "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 160);
 
     const slug =
       name
@@ -107,8 +112,8 @@ export async function POST(req: NextRequest) {
           isNew: isNew || false,
           material: material || null,
           careInfo: careInfo || null,
-          metaTitle: metaTitle || null,
-          metaDescription: metaDescription || null,
+          metaTitle: autoMetaTitle || null,
+          metaDescription: autoMetaDescription || null,
         },
       });
 
