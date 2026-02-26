@@ -20,9 +20,26 @@ export default function AdminCategorias() {
     setName,
     description,
     setDescription,
+    image,
+    setImage,
+    bannerImage,
+    setBannerImage,
     toast,
     handleSubmit,
-    handleDelete,
+    editingCategory,
+    editName,
+    setEditName,
+    editDescription,
+    setEditDescription,
+    editImage,
+    setEditImage,
+    editBannerImage,
+    setEditBannerImage,
+    editSubmitting,
+    openEditModal,
+    closeEditModal,
+    handleEditSubmit,
+    handleToggleActive,
   } = useCategoryManager();
 
   return (
@@ -33,7 +50,12 @@ export default function AdminCategorias() {
 
       <CategorySearch value={search} onChange={setSearch} />
 
-      <CategoryGrid loading={loading} filtered={filtered} onDelete={handleDelete} />
+      <CategoryGrid
+        loading={loading}
+        filtered={filtered}
+        onEdit={openEditModal}
+        onToggleActive={handleToggleActive}
+      />
 
       <CategoryModal
         isOpen={showModal}
@@ -44,6 +66,27 @@ export default function AdminCategorias() {
         setName={setName}
         description={description}
         setDescription={setDescription}
+        image={image}
+        setImage={setImage}
+        bannerImage={bannerImage}
+        setBannerImage={setBannerImage}
+        mode="create"
+      />
+
+      <CategoryModal
+        isOpen={!!editingCategory}
+        onClose={closeEditModal}
+        submitting={editSubmitting}
+        onSubmit={handleEditSubmit}
+        name={editName}
+        setName={setEditName}
+        description={editDescription}
+        setDescription={setEditDescription}
+        image={editImage}
+        setImage={setEditImage}
+        bannerImage={editBannerImage}
+        setBannerImage={setEditBannerImage}
+        mode="edit"
       />
     </div>
   );

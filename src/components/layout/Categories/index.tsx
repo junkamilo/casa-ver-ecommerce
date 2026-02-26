@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { CATEGORIES } from "./constants/constants"; // Ajusta tu ruta
-import { useCarousel } from "./hooks/useCarousel"; // Ajusta tu ruta
-import CategoryCard from "./components/CategoryCard"; // Ajusta tu ruta
+import { useCarousel } from "./hooks/useCarousel";
+import { useCategories } from "./hooks/useCategories";
+import CategoryCard from "./components/CategoryCard";
 
 const BRAND_GOLD = "#C19A6B";
-const BRAND_GREEN = "#154734";
 
 const Categories = () => {
   const { scrollRef, canScrollLeft, canScrollRight, scroll } = useCarousel();
+  const { categories, loading } = useCategories();
 
   return (
     <section className="relative py-24 px-4 sm:px-6 lg:px-8 bg-[#FAFAFA] border-t border-[#C19A6B]/10 overflow-hidden">
@@ -85,9 +85,16 @@ const Categories = () => {
             className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide pb-8 px-1"
             style={{ scrollBehavior: "smooth" }}
           >
-            {CATEGORIES.map((cat, i) => (
-              <CategoryCard key={i} {...cat} />
-            ))}
+            {loading
+              ? null
+              : categories.map((cat) => (
+                  <CategoryCard
+                    key={cat.id}
+                    image={cat.image ?? ""}
+                    label={cat.name}
+                    slug={cat.slug}
+                  />
+                ))}
           </div>
         </div>
 

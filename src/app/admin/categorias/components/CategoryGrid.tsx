@@ -5,10 +5,11 @@ import type { Category } from "../types/types";
 interface CategoryGridProps {
   loading: boolean;
   filtered: Category[];
-  onDelete: (id: string) => void;
+  onEdit: (category: Category) => void;
+  onToggleActive: (category: Category) => void;
 }
 
-const CategoryGrid = ({ loading, filtered, onDelete }: CategoryGridProps) => {
+const CategoryGrid = ({ loading, filtered, onEdit, onToggleActive }: CategoryGridProps) => {
   if (loading) {
     return (
       <div className="py-20 flex justify-center">
@@ -20,7 +21,12 @@ const CategoryGrid = ({ loading, filtered, onDelete }: CategoryGridProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {filtered.map((cat) => (
-        <CategoryCard key={cat.id} category={cat} onDelete={onDelete} />
+        <CategoryCard
+          key={cat.id}
+          category={cat}
+          onEdit={onEdit}
+          onToggleActive={onToggleActive}
+        />
       ))}
 
       {filtered.length === 0 && (

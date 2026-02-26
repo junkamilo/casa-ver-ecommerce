@@ -1,8 +1,8 @@
 import Link from "next/link";
-import Image, { StaticImageData } from "next/image";
+import Image from "next/image";
 
 interface CategoryCardProps {
-  image: StaticImageData | string;
+  image: string;
   label: string;
   slug: string;
 }
@@ -20,7 +20,6 @@ const CategoryCard = ({ image, label, slug }: CategoryCardProps) => (
       fill
       className="object-cover object-center group-hover:scale-110 transition-transform duration-[1500ms] ease-[cubic-bezier(0.25,1,0.5,1)]"
       sizes="(max-width: 640px) 65vw, (max-width: 768px) 40vw, 25vw"
-      placeholder="blur"
     />
 
     {/* Velo Degradado Inferior (Para que el texto blanco siempre se lea bien) */}

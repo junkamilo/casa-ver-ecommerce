@@ -6,7 +6,6 @@ import { SIZES } from "../../constants";
 interface Props {
   color: ColorForm;
   disabled: boolean;
-  onUpdate: (tempId: string, field: keyof ColorForm, value: string | string[]) => void;
   onRemove: (tempId: string) => void;
   onAddImage: (tempId: string, url: string) => void;
   onRemoveImage: (tempId: string, url: string) => void;
@@ -16,7 +15,6 @@ interface Props {
 export default function ColorCard({
   color,
   disabled,
-  onUpdate,
   onRemove,
   onAddImage,
   onRemoveImage,
@@ -24,21 +22,13 @@ export default function ColorCard({
 }: Props) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-      {/* Header */}
+      {/* Header — solo muestra nombre y swatch, sin inputs */}
       <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center gap-3">
-        <input
-          type="color"
-          value={color.hexCode}
-          onChange={(e) => onUpdate(color.tempId, "hexCode", e.target.value)}
-          className="w-8 h-8 rounded-lg border border-gray-300 cursor-pointer p-0.5"
+        <span
+          className="w-8 h-8 rounded-lg border border-black/10 shrink-0"
+          style={{ backgroundColor: color.hexCode }}
         />
-        <input
-          type="text"
-          value={color.name}
-          onChange={(e) => onUpdate(color.tempId, "name", e.target.value)}
-          placeholder="Nombre del color (ej: Verde Militar)"
-          className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:border-[#C19A6B] outline-none"
-        />
+        <span className="flex-1 text-sm font-semibold text-gray-700">{color.name}</span>
         <span className="text-xs text-gray-400 font-mono">{color.hexCode}</span>
         <button
           type="button"
