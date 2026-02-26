@@ -50,7 +50,7 @@ function ImageZone({ image, setImage, aspectClass }: ImageZoneProps) {
   return (
     <CldUploadWidget
       uploadPreset={UPLOAD_PRESET}
-      options={WIDGET_OPTIONS}
+      options={WIDGET_OPTIONS as any}
       onSuccess={handleSuccess}
     >
       {({ open }) =>
