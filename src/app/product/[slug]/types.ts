@@ -23,6 +23,7 @@ export interface UIColor {
 export interface UIProduct {
   id: string;
   name: string;
+  slug: string;
   description: string;
   basePrice: number;
   comparePrice: number | null;
@@ -31,6 +32,9 @@ export interface UIProduct {
   videoUrl: string | null;
   generalImages: string[];
   colors: UIColor[];
+  rating: number;
+  numReviews: number;
+  stock: number;
 }
 
 export interface RecommendedProduct {

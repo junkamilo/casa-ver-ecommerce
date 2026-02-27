@@ -99,6 +99,7 @@ model User {
   sessions      Session[]
   addresses     Address[]
   orders        Order[]
+  reviews       Review[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -179,11 +180,20 @@ model Product {
   careInfo        String?        @db.Text
   videoUrl        String?
   
+  // Calificaciones
+  rating          Float          @default(0)
+  numReviews      Int            @default(0)
+
+  // Conjunto (Set) de piezas
+  isSet           Boolean        @default(false)
+
   // Relaciones Clave
   images          ProductImage[] // Imágenes generales o por defecto
   colors          ProductColor[] // Definición de colores disponibles
   variants        ProductVariant[] // Inventario real (SKUs)
+  items           ProductItem[]  // Solo cuando isSet=true
   orderItems      OrderItem[]
+  reviews         Review[]
 
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -260,6 +270,70 @@ model ProductVariant {
 
   @@unique([productId, colorId, size]) // Evita duplicados de la misma combinación
   @@map("product_variants")
+}
+
+// ============================================================
+// CONJUNTOS (Sets) — Piezas de un producto compuesto
+// ============================================================
+
+model ProductItem {
+  id        String             @id @default(cuid())
+  productId String
+  product   Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  name      String             // Ej: "Short", "Pantalón"
+  price     Decimal?           @db.Decimal(10, 2) // Precio propio (opcional)
+  videoUrl  String?
+  order     Int                @default(0)
+
+  colors    ProductItemColor[]
+
+  createdAt DateTime           @default(now())
+
+  @@index([productId])
+  @@map("product_items")
+}
+
+model ProductItemColor {
+  id      String               @id @default(cuid())
+  itemId  String
+  item    ProductItem          @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  name    String               // Ej: "Verde Militar"
+  hexCode String               // Ej: "#4B5320"
+
+  images   ProductItemImage[]
+  variants ProductItemVariant[]
+
+  @@unique([itemId, name])
+  @@map("product_item_colors")
+}
+
+model ProductItemImage {
+  id      String           @id @default(cuid())
+  colorId String
+  color   ProductItemColor @relation(fields: [colorId], references: [id], onDelete: Cascade)
+
+  url     String
+  altText String?
+  order   Int              @default(0)
+
+  @@index([colorId])
+  @@map("product_item_images")
+}
+
+model ProductItemVariant {
+  id       String           @id @default(cuid())
+  colorId  String
+  color    ProductItemColor @relation(fields: [colorId], references: [id], onDelete: Cascade)
+
+  size     Size
+  sku      String           @unique
+  stock    Int              @default(0)
+  isActive Boolean          @default(true)
+
+  @@unique([colorId, size])
+  @@map("product_item_variants")
 }
 
 // ============================================================
@@ -353,6 +427,29 @@ model OrderItem {
   imageUrl    String?        // Foto principal de la variante
 
   @@map("order_items")
+}
+
+// ============================================================
+// RESEÑAS & CALIFICACIONES
+// ============================================================
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  rating    Int      // 1-5
+  comment   String?  @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+  @@index([productId])
+  @@map("reviews")
 }
 
 // ============================================================

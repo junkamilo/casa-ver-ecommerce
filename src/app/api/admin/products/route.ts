@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
       isNew,
       material,
       careInfo,
-      generalImages,
+      videoUrl,
       colors,
       sizes,
     } = body;
@@ -113,24 +113,13 @@ export async function POST(req: NextRequest) {
           isNew: isNew || false,
           material: material || null,
           careInfo: careInfo || null,
+          videoUrl: videoUrl || null,
           metaTitle: autoMetaTitle || null,
           metaDescription: autoMetaDescription || null,
         },
       });
 
-      // 2. Imágenes generales
-      if (generalImages && generalImages.length > 0) {
-        await tx.productImage.createMany({
-          data: generalImages.map((url: string, i: number) => ({
-            productId: product.id,
-            url,
-            altText: name,
-            order: i,
-          })),
-        });
-      }
-
-      // 3. Colores × Tallas → variantes con stock distribuido
+      // 2. Colores × Tallas → variantes con stock distribuido
       const selectedColors: { name: string; hexCode: string }[] = colors || [];
       const selectedSizes: string[] = sizes || [];
       const globalStock = typeof stock === "number" ? stock : 0;
@@ -149,6 +138,18 @@ export async function POST(req: NextRequest) {
             hexCode: colorData.hexCode || "#000000",
           },
         });
+
+        if (colorData.images?.length > 0) {
+          await tx.productImage.createMany({
+            data: colorData.images.map((url: string, i: number) => ({
+              productId: product.id,
+              colorId: color.id,
+              url,
+              altText: colorData.name,
+              order: i,
+            })),
+          });
+        }
 
         for (const size of selectedSizes) {
           const sku = `${slug}-${colorData.name.toLowerCase().replace(/\s+/g, "-")}-${size.toLowerCase()}`;

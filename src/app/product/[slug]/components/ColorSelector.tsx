@@ -1,3 +1,5 @@
+"use client";
+
 import { UIColor } from "../types";
 
 interface Props {
@@ -8,22 +10,56 @@ interface Props {
 
 export default function ColorSelector({ colors, selected, onSelect }: Props) {
   return (
-    <div className="mb-4 sm:mb-6">
-      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-        COLOR: <span className="text-foreground">{selected?.name ?? ""}</span>
-      </span>
-      <div className="flex gap-2.5 sm:gap-3 mt-2 sm:mt-3">
-        {colors.map((color) => (
-          <button
-            key={color.id}
-            onClick={() => onSelect(color)}
-            aria-label={color.name}
-            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-border relative flex items-center justify-center transition-transform hover:scale-110 ${
-              selected?.id === color.id ? "ring-2 ring-offset-2 ring-foreground" : ""
-            }`}
-            style={{ backgroundColor: color.hex }}
-          />
-        ))}
+    <div>
+      {/* Etiqueta editorial */}
+      <div className="flex items-baseline justify-between mb-4">
+        <span className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
+          Tono Seleccionado
+        </span>
+        <span
+          className="text-base sm:text-lg text-[#154734] italic capitalize transition-all duration-300"
+          style={{ fontFamily: "Georgia, serif" }}
+        >
+          {selected?.name ?? "Elige un tono"}
+        </span>
+      </div>
+
+      {/* Muestras */}
+      <div className="flex flex-wrap gap-4 sm:gap-5">
+        {colors.map((color) => {
+          const isSelected = selected?.id === color.id;
+          return (
+            <button
+              key={color.id}
+              onClick={() => onSelect(color)}
+              aria-label={`Seleccionar color ${color.name}`}
+              aria-pressed={isSelected}
+              className="relative flex items-center justify-center group outline-none focus-visible:ring-2 focus-visible:ring-[#C19A6B] focus-visible:ring-offset-2 rounded-full"
+            >
+              {/* Anillo de selección animado */}
+              <span
+                className={`absolute inset-0 rounded-full border transition-all duration-500 ease-out ${
+                  isSelected
+                    ? "border-[#C19A6B] scale-[1.35] opacity-100"
+                    : "border-transparent scale-100 opacity-0 group-hover:scale-[1.2] group-hover:border-gray-300 group-hover:opacity-100"
+                }`}
+              />
+              {/* Círculo de color */}
+              <span
+                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full shadow-inner transition-transform duration-300 ${
+                  isSelected ? "scale-100" : "scale-95 group-hover:scale-100"
+                }`}
+                style={{
+                  backgroundColor: color.hex,
+                  border:
+                    color.hex.toLowerCase() === "#ffffff"
+                      ? "1px solid #E5E7EB"
+                      : "1px solid rgba(0,0,0,0.06)",
+                }}
+              />
+            </button>
+          );
+        })}
       </div>
     </div>
   );

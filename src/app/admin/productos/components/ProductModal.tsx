@@ -1,9 +1,10 @@
-import { X, Save, Loader2 } from "lucide-react";
-import { Category, SelectedColor } from "../types";
+import { X, Save, Loader2, LayoutGrid } from "lucide-react";
+import { Category, SelectedColor, SetItemForm } from "../types";
 import GeneralInfoSection from "./form/GeneralInfoSection";
-import ImagesSection from "./form/ImagesSection";
 import ColorsSection from "./form/ColorsSection";
 import MaterialSection from "./form/MaterialSection";
+import VideoSection from "./form/VideoSection";
+import SetItemsSection from "./form/SetItemsSection";
 
 interface Props {
   editingId: string | null;
@@ -24,13 +25,23 @@ interface Props {
   isNew: boolean; setIsNew: (v: boolean) => void;
   material: string; setMaterial: (v: string) => void;
   careInfo: string; setCareInfo: (v: string) => void;
-  generalImages: string[];
-  setGeneralImages: React.Dispatch<React.SetStateAction<string[]>>;
   selectedColors: SelectedColor[];
   selectedSizes: string[];
   showMaterial: boolean; setShowMaterial: (v: boolean) => void;
+  videoUrl: string; setVideoUrl: (v: string) => void;
   toggleColor: (name: string, hexCode: string) => void;
   toggleSize: (size: string) => void;
+  setColorImages: (colorName: string, images: string[]) => void;
+
+  // Set
+  isSet: boolean; setIsSet: (v: boolean) => void;
+  setItems: SetItemForm[];
+  addSetItem: () => void;
+  removeSetItem: (localId: string) => void;
+  updateSetItem: (localId: string, updates: Partial<SetItemForm>) => void;
+  toggleSetItemColor: (localId: string, name: string, hexCode: string) => void;
+  toggleSetItemSize: (localId: string, size: string) => void;
+  setSetItemColorImages: (localId: string, colorName: string, images: string[]) => void;
 }
 
 export default function ProductModal({
@@ -51,12 +62,21 @@ export default function ProductModal({
   isNew, setIsNew,
   material, setMaterial,
   careInfo, setCareInfo,
-  generalImages, setGeneralImages,
   selectedColors,
   selectedSizes,
   showMaterial, setShowMaterial,
+  videoUrl, setVideoUrl,
   toggleColor,
   toggleSize,
+  setColorImages,
+  isSet, setIsSet,
+  setItems,
+  addSetItem,
+  removeSetItem,
+  updateSetItem,
+  toggleSetItemColor,
+  toggleSetItemSize,
+  setSetItemColorImages,
 }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -99,20 +119,63 @@ export default function ProductModal({
                 categories={categories}
               />
 
-              <ImagesSection
-                images={generalImages}
-                disabled={submitting}
-                onAdd={(urls) => setGeneralImages((prev) => [...prev, ...urls])}
-                onRemove={(url) => setGeneralImages((prev) => prev.filter((i) => i !== url))}
-              />
+              {/* Toggle: ¿Es un conjunto? */}
+              <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-5 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-[#154734]/10 flex items-center justify-center">
+                    <LayoutGrid className="w-5 h-5 text-[#154734]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-800">Producto compuesto (Conjunto)</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Activa para agregar piezas individuales (ej: Short + Pantalón)
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsSet(!isSet)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                    isSet ? "bg-[#154734]" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      isSet ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
 
-              <ColorsSection
-                selectedColors={selectedColors}
-                selectedSizes={selectedSizes}
-                disabled={submitting}
-                onToggleColor={toggleColor}
-                onToggleSize={toggleSize}
-              />
+              {/* Sección condicional según tipo */}
+              {isSet ? (
+                <SetItemsSection
+                  items={setItems}
+                  disabled={submitting}
+                  onAdd={addSetItem}
+                  onRemove={removeSetItem}
+                  onUpdate={updateSetItem}
+                  onToggleColor={toggleSetItemColor}
+                  onToggleSize={toggleSetItemSize}
+                  onSetColorImages={setSetItemColorImages}
+                />
+              ) : (
+                <>
+                  <ColorsSection
+                    selectedColors={selectedColors}
+                    selectedSizes={selectedSizes}
+                    disabled={submitting}
+                    onToggleColor={toggleColor}
+                    onToggleSize={toggleSize}
+                    onSetColorImages={setColorImages}
+                  />
+                  <VideoSection
+                    videoUrl={videoUrl}
+                    onVideoUrl={setVideoUrl}
+                    disabled={submitting}
+                  />
+                </>
+              )}
 
               <MaterialSection
                 show={showMaterial}

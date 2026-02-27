@@ -43,19 +43,23 @@ export default function AdminCategorias() {
   } = useCategoryManager();
 
   return (
-    <div className="space-y-8 p-6 bg-gray-50 min-h-screen font-sans">
+    <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-[#C19A6B]/20">
       <CategoryToast toast={toast} />
 
-      <CategoryPageHeader onNew={() => setShowModal(true)} />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
+        
+        <CategoryPageHeader onNew={() => setShowModal(true)} />
 
-      <CategorySearch value={search} onChange={setSearch} />
+        <CategorySearch value={search} onChange={setSearch} />
 
-      <CategoryGrid
-        loading={loading}
-        filtered={filtered}
-        onEdit={openEditModal}
-        onToggleActive={handleToggleActive}
-      />
+        <CategoryGrid
+          loading={loading}
+          filtered={filtered}
+          onEdit={openEditModal}
+          onToggleActive={handleToggleActive}
+        />
+
+      </main>
 
       <CategoryModal
         isOpen={showModal}

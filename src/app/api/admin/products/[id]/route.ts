@@ -18,6 +18,7 @@ export async function GET(
         images: { orderBy: { order: "asc" } },
         colors: {
           include: {
+            images: { orderBy: { order: "asc" } },
             variants: true,
           },
         },
@@ -53,6 +54,7 @@ export async function GET(
       metaDescription: product.metaDescription,
       material: product.material,
       careInfo: product.careInfo,
+      videoUrl: product.videoUrl,
       generalImages: product.images
         .filter((img) => !img.colorId)
         .map((img) => img.url),
@@ -60,6 +62,7 @@ export async function GET(
         id: c.id,
         name: c.name,
         hexCode: c.hexCode,
+        images: c.images.map((img) => img.url),
       })),
       sizes: allSizes,
     };
@@ -106,7 +109,7 @@ export async function PATCH(
       isNew,
       material,
       careInfo,
-      generalImages,
+      videoUrl,
       colors,
       sizes,
     } = body;
@@ -146,24 +149,13 @@ export async function PATCH(
           isNew,
           material: material || null,
           careInfo: careInfo || null,
+          videoUrl: videoUrl !== undefined ? (videoUrl || null) : undefined,
           metaTitle: autoMetaTitle || null,
           metaDescription: autoMetaDescription || null,
         },
       });
 
-      // 4. Recrear imágenes generales
-      if (generalImages && generalImages.length > 0) {
-        await tx.productImage.createMany({
-          data: generalImages.map((url: string, i: number) => ({
-            productId: id,
-            url,
-            altText: name || product.name,
-            order: i,
-          })),
-        });
-      }
-
-      // 5. Recrear colores × tallas → variantes con stock distribuido
+      // 4. Recrear colores × tallas → variantes con stock distribuido
       const selectedColors: { name: string; hexCode: string }[] = colors || [];
       const selectedSizes: string[] = sizes || [];
       const globalStock = typeof stock === "number" ? stock : 0;
@@ -183,6 +175,18 @@ export async function PATCH(
             hexCode: colorData.hexCode || "#000000",
           },
         });
+
+        if (colorData.images?.length > 0) {
+          await tx.productImage.createMany({
+            data: colorData.images.map((url: string, i: number) => ({
+              productId: id,
+              colorId: color.id,
+              url,
+              altText: colorData.name,
+              order: i,
+            })),
+          });
+        }
 
         for (const size of selectedSizes) {
           const sku = `${slugForSku}-${colorData.name.toLowerCase().replace(/\s+/g, "-")}-${size.toLowerCase()}`;

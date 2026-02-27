@@ -9,66 +9,79 @@ interface CategoryCardProps {
 
 const CategoryCard = ({ category, onEdit, onToggleActive }: CategoryCardProps) => (
   <div
-    className={`bg-white p-5 rounded-2xl border shadow-sm hover:shadow-md transition-shadow relative ${
-      !category.isActive ? "opacity-60 border-gray-200" : "border-gray-200"
+    className={`group bg-white rounded-3xl overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
+      !category.isActive ? "opacity-60 border-gray-200 grayscale-[0.2]" : "border-[#C19A6B]/10 shadow-sm"
     }`}
   >
-    <div className="absolute top-3 right-3">
-      <span
-        className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
-          category.isActive
-            ? "bg-green-100 text-green-700"
-            : "bg-gray-100 text-gray-500"
-        }`}
-      >
-        {category.isActive ? "Activa" : "Inactiva"}
-      </span>
-    </div>
-
-    <div className="flex gap-3 pr-16">
+    {/* Imagen / Banner Superior */}
+    <div className="relative h-32 bg-[#FAFAFA] border-b border-gray-100 overflow-hidden flex items-center justify-center">
       {category.image ? (
-        <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-gray-100">
+        <>
           <img
             src={category.image}
             alt={category.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
           />
-        </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        </>
       ) : (
-        <div className="p-3 bg-green-50 rounded-xl text-[#154734] self-start shrink-0">
-          <FolderOpen className="w-6 h-6" />
+        <div className="absolute inset-0 flex items-center justify-center bg-[#154734]/5">
+          <FolderOpen className="w-10 h-10 text-[#C19A6B]/40" />
         </div>
       )}
-      <div className="min-w-0">
-        <h3 className="font-bold text-gray-900 text-lg truncate">{category.name}</h3>
-        <p className="text-xs text-gray-400 font-mono mt-1">/{category.slug}</p>
+
+      {/* Badge Flotante */}
+      <div className="absolute top-4 right-4">
+        <span
+          className={`text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest shadow-sm backdrop-blur-md ${
+            category.isActive
+              ? "bg-white/90 text-[#154734]"
+              : "bg-black/50 text-white"
+          }`}
+        >
+          {category.isActive ? "Activa" : "Oculta"}
+        </span>
       </div>
     </div>
 
-    <div className="mt-4 pt-4 border-t border-gray-100">
-      <p className="text-sm text-gray-500 mb-3 line-clamp-2">
-        {category.description || "Sin descripción"}
+    {/* Contenido */}
+    <div className="p-6">
+      <div className="mb-4">
+        <h3 
+          className="text-2xl text-[#154734] truncate"
+          style={{ fontFamily: "Georgia, serif" }}
+        >
+          {category.name}
+        </h3>
+      </div>
+
+      <p className="text-sm text-gray-500 mb-6 line-clamp-2 font-light leading-relaxed min-h-[2.5rem]">
+        {category.description || "Sin descripción asignada para esta colección."}
       </p>
-      <div className="flex items-center justify-between">
-        <span className="bg-[#C19A6B]/10 text-[#C19A6B] px-2 py-1 rounded-md text-xs font-bold border border-[#C19A6B]/20">
+
+      {/* Footer de la tarjeta */}
+      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+        <span className="bg-[#FAFAFA] text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#C19A6B]" />
           {category._count?.products || 0} Productos
         </span>
-        <div className="flex gap-1">
+
+        <div className="flex gap-2">
           <button
             onClick={() => onEdit(category)}
-            className="p-2 text-gray-400 hover:text-[#154734] hover:bg-green-50 rounded-lg transition-colors"
-            title="Editar categoría"
+            className="p-2.5 text-gray-400 hover:text-[#C19A6B] hover:bg-[#C19A6B]/10 rounded-xl transition-all"
+            title="Editar colección"
           >
             <Pencil className="w-4 h-4" />
           </button>
           <button
             onClick={() => onToggleActive(category)}
-            className={`p-2 rounded-lg transition-colors ${
+            className={`p-2.5 rounded-xl transition-all ${
               category.isActive
-                ? "text-gray-400 hover:text-amber-600 hover:bg-amber-50"
-                : "text-gray-400 hover:text-green-600 hover:bg-green-50"
+                ? "text-gray-400 hover:text-red-600 hover:bg-red-50"
+                : "text-gray-400 hover:text-[#154734] hover:bg-[#154734]/10"
             }`}
-            title={category.isActive ? "Desactivar categoría" : "Activar categoría"}
+            title={category.isActive ? "Ocultar colección" : "Mostrar colección"}
           >
             {category.isActive ? (
               <EyeOff className="w-4 h-4" />
