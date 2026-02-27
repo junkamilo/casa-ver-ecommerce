@@ -1,8 +1,7 @@
 import Image from "next/image";
-import { StaticImageData } from "next/image";
 
 interface Props {
-  gallery: StaticImageData[];
+  gallery: string[];
   selectedImage: number;
   productName: string;
   onSelect: (index: number) => void;
@@ -14,11 +13,13 @@ export default function ProductGallery({
   productName,
   onSelect,
 }: Props) {
+  if (!gallery.length) return null;
+
   return (
     <div className="flex flex-col-reverse lg:flex-row gap-3 sm:gap-4 lg:sticky lg:top-4 lg:self-start">
       {/* Thumbnails */}
       <div className="flex lg:flex-col gap-2 sm:gap-3 overflow-x-auto lg:overflow-visible py-2 lg:py-0 scrollbar-hide">
-        {gallery.map((img, i) => (
+        {gallery.map((url, i) => (
           <button
             key={i}
             onClick={() => onSelect(i)}
@@ -28,13 +29,13 @@ export default function ProductGallery({
                 : "border-transparent hover:border-border"
             }`}
           >
-            <Image src={img} alt={`Vista ${i}`} fill className="object-cover" />
+            <Image src={url} alt={`Vista ${i + 1}`} fill className="object-cover" />
           </button>
         ))}
       </div>
 
       {/* Main image */}
-      <div className="relative w-full max-h-[500px] sm:max-h-[580px] lg:max-h-[620px] aspect-[3/4] bg-muted overflow-hidden">
+      <div className="relative w-full max-h-125 sm:max-h-145 lg:max-h-155 aspect-3/4 bg-muted overflow-hidden">
         <Image
           src={gallery[selectedImage]}
           alt={productName}

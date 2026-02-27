@@ -1,20 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
-import { Trash2, Images } from "lucide-react";
+import { useState } from "react";
+import { Trash2, PlusCircle, PlayCircle } from "lucide-react";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-declare global {
-  interface Window {
-    cloudinary: any;
-  }
+const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".ogg", ".mkv"];
+
+function isVideo(url: string): boolean {
+  const clean = url.split("?")[0].toLowerCase();
+  return VIDEO_EXTENSIONS.some((ext) => clean.endsWith(ext));
 }
 
-interface ImageUploadProps {
+interface MediaUploadProps {
   value: string[];
   disabled?: boolean;
-  onChange: (url: string) => void;
+  onChange: (urls: string[]) => void;
   onRemove: (url: string) => void;
   maxImages?: number;
 }
@@ -25,96 +24,97 @@ export default function ImageUpload({
   onChange,
   onRemove,
   maxImages = 5,
-}: ImageUploadProps) {
-  const widgetRef = useRef<any>(null);
-  const [scriptReady, setScriptReady] = useState(false);
+}: MediaUploadProps) {
+  const [inputUrl, setInputUrl] = useState("");
 
-  // Cargar script del widget
-  useEffect(() => {
-    if (document.querySelector('script[src*="media-library.cloudinary.com"]')) {
-      setScriptReady(true);
-      return;
+  const handleAdd = () => {
+    const url = inputUrl.trim();
+    if (!url || !url.startsWith("http") || value.includes(url) || value.length >= maxImages) return;
+    onChange([url]);
+    setInputUrl("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAdd();
     }
-    const script = document.createElement("script");
-    script.src = "https://media-library.cloudinary.com/global/all.js";
-    script.async = true;
-    script.onload = () => setScriptReady(true);
-    document.body.appendChild(script);
-  }, []);
-
-  // Crear / recrear widget cuando cambia value (para actualizar max_files)
-  useEffect(() => {
-    if (!scriptReady || !window.cloudinary) return;
-
-    widgetRef.current = window.cloudinary.createMediaLibrary(
-      {
-        cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-        api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-        multiple: true,
-        max_files: maxImages - value.length,
-      },
-      {
-        insertHandler: (data: { assets: { secure_url: string }[] }) => {
-          data.assets.forEach((asset) => {
-            if (value.length < maxImages && !value.includes(asset.secure_url)) {
-              onChange(asset.secure_url);
-            }
-          });
-        },
-      }
-    );
-  }, [scriptReady, value, maxImages, onChange]);
-
-  const openWidget = () => {
-    if (widgetRef.current) widgetRef.current.show();
   };
 
   const remaining = maxImages - value.length;
+  const validItems = value.filter((url) => url && typeof url === "string" && url.startsWith("http"));
 
   return (
     <div className="space-y-3">
-      {/* Botón abrir Media Library */}
+      {/* Input de URL */}
       {remaining > 0 && !disabled && (
-        <button
-          type="button"
-          onClick={openWidget}
-          disabled={!scriptReady}
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#154734] text-white rounded-lg hover:bg-[#154734]/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Images className="w-4 h-4" />
-          {scriptReady ? "Seleccionar desde Cloudinary" : "Cargando widget..."}
-        </button>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={inputUrl}
+            onChange={(e) => setInputUrl(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="https://... (.jpg, .png, .mp4, .webm…)"
+            className="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#154734]/30 focus:border-[#154734]"
+          />
+          <button
+            type="button"
+            onClick={handleAdd}
+            disabled={!inputUrl.trim()}
+            className="flex items-center gap-1.5 px-4 py-2 bg-[#154734] text-white text-sm font-medium rounded-lg hover:bg-[#154734]/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+          >
+            <PlusCircle className="w-4 h-4" />
+            Añadir archivo
+          </button>
+        </div>
       )}
 
       {/* Contador */}
       <div className="flex items-center justify-between text-xs text-gray-500">
-        <span>{value.length} de {maxImages} imágenes</span>
+        <span>{value.length} de {maxImages} archivos</span>
         {value.length > 0 && (
           <span className="text-[#C19A6B] font-medium">
-            La primera imagen será la portada
+            El primer archivo será la portada
           </span>
         )}
       </div>
 
-      {/* Grid de imágenes */}
-      {value.length > 0 && (
+      {/* Grid de previsualización */}
+      {validItems.length > 0 && (
         <div className="flex flex-wrap gap-3">
-          {value.map((url, index) => (
+          {validItems.map((url, index) => (
             <div
               key={url}
-              className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-200 group hover:border-[#C19A6B] transition-colors"
+              className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-200 group hover:border-[#C19A6B] transition-colors bg-gray-100"
             >
-              <Image
-                src={url}
-                alt={`Imagen ${index + 1}`}
-                fill
-                className="object-cover"
-              />
+              {isVideo(url) ? (
+                <>
+                  <video
+                    src={url}
+                    muted
+                    loop
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
+                    <PlayCircle className="w-7 h-7 text-white drop-shadow" />
+                  </div>
+                </>
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={url}
+                  alt={`Imagen ${index + 1}`}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              )}
+
               {index === 0 && (
                 <span className="absolute bottom-0 left-0 right-0 bg-[#154734]/80 text-white text-[9px] font-bold text-center py-0.5">
                   PORTADA
                 </span>
               )}
+
               <button
                 type="button"
                 onClick={() => onRemove(url)}

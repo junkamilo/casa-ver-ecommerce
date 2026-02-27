@@ -1,4 +1,4 @@
-import { ALL_SIZES } from "../data";
+import { ALL_SIZES } from "../constants";
 
 interface Props {
   availableSizes: string[];

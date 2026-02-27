@@ -15,17 +15,9 @@ export interface Category {
   name: string;
 }
 
-export interface VariantForm {
-  stock: string;
-  priceOverride: string;
-}
-
-export interface ColorForm {
-  tempId: string;
+export interface SelectedColor {
   name: string;
   hexCode: string;
-  images: string[];
-  variants: Record<string, VariantForm>;
 }
 
 export type ToastState = { type: "success" | "error"; message: string } | null;

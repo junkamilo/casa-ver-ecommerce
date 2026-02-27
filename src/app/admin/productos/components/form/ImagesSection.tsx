@@ -3,7 +3,7 @@ import ImageUpload from "@/components/ui/image-upload";
 interface Props {
   images: string[];
   disabled: boolean;
-  onAdd: (url: string) => void;
+  onAdd: (urls: string[]) => void;
   onRemove: (url: string) => void;
 }
 

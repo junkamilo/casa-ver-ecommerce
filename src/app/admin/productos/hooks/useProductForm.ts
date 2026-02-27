@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { ColorForm, VariantForm } from "../types";
-import { SIZES, newColorForm } from "../constants";
+import { SelectedColor } from "../types";
 
 export function useProductForm() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [basePrice, setBasePrice] = useState("");
   const [comparePrice, setComparePrice] = useState("");
+  const [stock, setStock] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [status, setStatus] = useState("ACTIVE");
   const [isFeatured, setIsFeatured] = useState(false);
@@ -16,7 +16,8 @@ export function useProductForm() {
   const [material, setMaterial] = useState("");
   const [careInfo, setCareInfo] = useState("");
   const [generalImages, setGeneralImages] = useState<string[]>([]);
-  const [colors, setColors] = useState<ColorForm[]>([]);
+  const [selectedColors, setSelectedColors] = useState<SelectedColor[]>([]);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [showMaterial, setShowMaterial] = useState(false);
 
   const reset = () => {
@@ -24,6 +25,7 @@ export function useProductForm() {
     setDescription("");
     setBasePrice("");
     setComparePrice("");
+    setStock("");
     setCategoryId("");
     setStatus("ACTIVE");
     setIsFeatured(false);
@@ -31,7 +33,8 @@ export function useProductForm() {
     setMaterial("");
     setCareInfo("");
     setGeneralImages([]);
-    setColors([]);
+    setSelectedColors([]);
+    setSelectedSizes([]);
     setShowMaterial(false);
   };
 
@@ -41,6 +44,7 @@ export function useProductForm() {
     setDescription(data.description || "");
     setBasePrice(data.basePrice?.toString() || "");
     setComparePrice(data.comparePrice?.toString() || "");
+    setStock(data.stock?.toString() || "");
     setCategoryId(data.categoryId);
     setStatus(data.status);
     setIsFeatured(data.isFeatured);
@@ -50,29 +54,11 @@ export function useProductForm() {
     setGeneralImages(data.generalImages || []);
     if (data.material || data.careInfo) setShowMaterial(true);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    setColors(
+    setSelectedColors(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      data.colors.map((c: any) => ({
-        tempId: c.id || crypto.randomUUID(),
-        name: c.name,
-        hexCode: c.hexCode,
-        images: c.images || [],
-        variants: Object.fromEntries(
-          SIZES.map((s) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const v = c.variants.find((vr: any) => vr.size === s);
-            return [
-              s,
-              {
-                stock: v ? v.stock.toString() : "",
-                priceOverride: v?.priceOverride ? v.priceOverride.toString() : "",
-              },
-            ];
-          })
-        ),
-      }))
+      (data.colors || []).map((c: any) => ({ name: c.name, hexCode: c.hexCode }))
     );
+    setSelectedSizes(data.sizes || []);
   };
 
   const buildPayload = () => ({
@@ -80,6 +66,7 @@ export function useProductForm() {
     description,
     basePrice: parseFloat(basePrice),
     comparePrice: comparePrice ? parseFloat(comparePrice) : null,
+    stock: stock ? parseInt(stock) : 0,
     categoryId,
     status,
     isFeatured,
@@ -87,67 +74,20 @@ export function useProductForm() {
     material,
     careInfo,
     generalImages,
-    colors: colors
-      .filter((c) => c.name.trim())
-      .map((c) => ({
-        name: c.name.trim(),
-        hexCode: c.hexCode,
-        images: c.images,
-        variants: Object.entries(c.variants)
-          .filter(([, v]) => v.stock && parseInt(v.stock) > 0)
-          .map(([size, v]) => ({
-            size,
-            stock: parseInt(v.stock),
-            priceOverride: v.priceOverride ? parseFloat(v.priceOverride) : null,
-          })),
-      })),
+    colors: selectedColors,
+    sizes: selectedSizes,
   });
 
-  const addColor = (name: string, hexCode: string) =>
-    setColors((prev) => [...prev, newColorForm(name, hexCode)]);
-
-  const removeColor = (tempId: string) =>
-    setColors((prev) => prev.filter((c) => c.tempId !== tempId));
-
-  const updateColor = (tempId: string, field: keyof ColorForm, value: string | string[]) =>
-    setColors((prev) =>
-      prev.map((c) => (c.tempId === tempId ? { ...c, [field]: value } : c))
+  const toggleColor = (name: string, hexCode: string) =>
+    setSelectedColors((prev) =>
+      prev.some((c) => c.name === name)
+        ? prev.filter((c) => c.name !== name)
+        : [...prev, { name, hexCode }]
     );
 
-  const addColorImage = (tempId: string, url: string) =>
-    setColors((prev) =>
-      prev.map((c) =>
-        c.tempId === tempId ? { ...c, images: [...c.images, url] } : c
-      )
-    );
-
-  const removeColorImage = (tempId: string, url: string) =>
-    setColors((prev) =>
-      prev.map((c) =>
-        c.tempId === tempId
-          ? { ...c, images: c.images.filter((i) => i !== url) }
-          : c
-      )
-    );
-
-  const updateVariant = (
-    tempId: string,
-    size: string,
-    field: keyof VariantForm,
-    value: string
-  ) =>
-    setColors((prev) =>
-      prev.map((c) =>
-        c.tempId === tempId
-          ? {
-              ...c,
-              variants: {
-                ...c.variants,
-                [size]: { ...c.variants[size], [field]: value },
-              },
-            }
-          : c
-      )
+  const toggleSize = (size: string) =>
+    setSelectedSizes((prev) =>
+      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
     );
 
   return {
@@ -155,6 +95,7 @@ export function useProductForm() {
     description, setDescription,
     basePrice, setBasePrice,
     comparePrice, setComparePrice,
+    stock, setStock,
     categoryId, setCategoryId,
     status, setStatus,
     isFeatured, setIsFeatured,
@@ -162,16 +103,13 @@ export function useProductForm() {
     material, setMaterial,
     careInfo, setCareInfo,
     generalImages, setGeneralImages,
-    colors,
+    selectedColors,
+    selectedSizes,
     showMaterial, setShowMaterial,
     reset,
     loadFromProduct,
     buildPayload,
-    addColor,
-    removeColor,
-    updateColor,
-    addColorImage,
-    removeColorImage,
-    updateVariant,
+    toggleColor,
+    toggleSize,
   };
 }

@@ -1,18 +1,28 @@
-import { StaticImageData } from "next/image";
-
-export interface ProductColor {
+export interface UIColor {
+  id: string;
   name: string;
   hex: string;
+  images: string[];
+  availableSizes: string[];
 }
 
-export interface ProductVariant {
+export interface UIProduct {
+  id: string;
   name: string;
-  type: string;
-  price: number;
   description: string;
-  rating: number;
-  reviews: number;
-  colors: ProductColor[];
-  sizes: string[];
-  gallery: StaticImageData[];
+  basePrice: number;
+  comparePrice: number | null;
+  material: string | null;
+  careInfo: string | null;
+  videoUrl: string | null;
+  generalImages: string[];
+  colors: UIColor[];
+}
+
+export interface RecommendedProduct {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  imageUrl: string | null;
 }

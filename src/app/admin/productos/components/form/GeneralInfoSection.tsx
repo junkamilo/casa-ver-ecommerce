@@ -5,6 +5,7 @@ interface Props {
   description: string; onDescription: (v: string) => void;
   basePrice: string; onBasePrice: (v: string) => void;
   comparePrice: string; onComparePrice: (v: string) => void;
+  stock: string; onStock: (v: string) => void;
   categoryId: string; onCategory: (v: string) => void;
   status: string; onStatus: (v: string) => void;
   isFeatured: boolean; onFeatured: (v: boolean) => void;
@@ -26,6 +27,7 @@ export default function GeneralInfoSection({
   description, onDescription,
   basePrice, onBasePrice,
   comparePrice, onComparePrice,
+  stock, onStock,
   categoryId, onCategory,
   status, onStatus,
   isFeatured, onFeatured,
@@ -60,9 +62,9 @@ export default function GeneralInfoSection({
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-gray-700">Precio Base (COP) *</label>
+          <label className="text-sm font-semibold text-gray-700">Precio (COP) *</label>
           <input
             type="number"
             value={basePrice}
@@ -80,6 +82,18 @@ export default function GeneralInfoSection({
             value={comparePrice}
             onChange={(e) => onComparePrice(e.target.value)}
             placeholder="120000"
+            min="0"
+            className={inputCls}
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-gray-700">Stock Total *</label>
+          <input
+            type="number"
+            value={stock}
+            onChange={(e) => onStock(e.target.value)}
+            placeholder="0"
+            required
             min="0"
             className={inputCls}
           />

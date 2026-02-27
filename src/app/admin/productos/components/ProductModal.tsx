@@ -1,5 +1,5 @@
 import { X, Save, Loader2 } from "lucide-react";
-import { Category, ColorForm, VariantForm } from "../types";
+import { Category, SelectedColor } from "../types";
 import GeneralInfoSection from "./form/GeneralInfoSection";
 import ImagesSection from "./form/ImagesSection";
 import ColorsSection from "./form/ColorsSection";
@@ -13,11 +13,11 @@ interface Props {
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
 
-  // form fields (forwarded from useProductForm)
   name: string; setName: (v: string) => void;
   description: string; setDescription: (v: string) => void;
   basePrice: string; setBasePrice: (v: string) => void;
   comparePrice: string; setComparePrice: (v: string) => void;
+  stock: string; setStock: (v: string) => void;
   categoryId: string; setCategoryId: (v: string) => void;
   status: string; setStatus: (v: string) => void;
   isFeatured: boolean; setIsFeatured: (v: boolean) => void;
@@ -26,16 +26,11 @@ interface Props {
   careInfo: string; setCareInfo: (v: string) => void;
   generalImages: string[];
   setGeneralImages: React.Dispatch<React.SetStateAction<string[]>>;
-  colors: ColorForm[];
+  selectedColors: SelectedColor[];
+  selectedSizes: string[];
   showMaterial: boolean; setShowMaterial: (v: boolean) => void;
-
-  // color helpers
-  addColor: (name: string, hexCode: string) => void;
-  removeColor: (tempId: string) => void;
-  updateColor: (tempId: string, field: keyof ColorForm, value: string | string[]) => void;
-  addColorImage: (tempId: string, url: string) => void;
-  removeColorImage: (tempId: string, url: string) => void;
-  updateVariant: (tempId: string, size: string, field: keyof VariantForm, value: string) => void;
+  toggleColor: (name: string, hexCode: string) => void;
+  toggleSize: (size: string) => void;
 }
 
 export default function ProductModal({
@@ -49,6 +44,7 @@ export default function ProductModal({
   description, setDescription,
   basePrice, setBasePrice,
   comparePrice, setComparePrice,
+  stock, setStock,
   categoryId, setCategoryId,
   status, setStatus,
   isFeatured, setIsFeatured,
@@ -56,14 +52,11 @@ export default function ProductModal({
   material, setMaterial,
   careInfo, setCareInfo,
   generalImages, setGeneralImages,
-  colors,
+  selectedColors,
+  selectedSizes,
   showMaterial, setShowMaterial,
-  addColor,
-  removeColor,
-  updateColor,
-  addColorImage,
-  removeColorImage,
-  updateVariant,
+  toggleColor,
+  toggleSize,
 }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -98,6 +91,7 @@ export default function ProductModal({
                 description={description} onDescription={setDescription}
                 basePrice={basePrice} onBasePrice={setBasePrice}
                 comparePrice={comparePrice} onComparePrice={setComparePrice}
+                stock={stock} onStock={setStock}
                 categoryId={categoryId} onCategory={setCategoryId}
                 status={status} onStatus={setStatus}
                 isFeatured={isFeatured} onFeatured={setIsFeatured}
@@ -108,19 +102,16 @@ export default function ProductModal({
               <ImagesSection
                 images={generalImages}
                 disabled={submitting}
-                onAdd={(url) => setGeneralImages((prev) => [...prev, url])}
+                onAdd={(urls) => setGeneralImages((prev) => [...prev, ...urls])}
                 onRemove={(url) => setGeneralImages((prev) => prev.filter((i) => i !== url))}
               />
 
               <ColorsSection
-                colors={colors}
+                selectedColors={selectedColors}
+                selectedSizes={selectedSizes}
                 disabled={submitting}
-                onAdd={addColor}
-                onRemove={removeColor}
-                onUpdate={updateColor}
-                onAddImage={addColorImage}
-                onRemoveImage={removeColorImage}
-                onUpdateVariant={updateVariant}
+                onToggleColor={toggleColor}
+                onToggleSize={toggleSize}
               />
 
               <MaterialSection
