@@ -1,60 +1,48 @@
-import { Check, Palette } from "lucide-react";
-import { ColorForm, VariantForm } from "../../types";
-import { PRESET_COLORS } from "../../constants";
-import ColorCard from "./ColorCard";
+import { Check } from "lucide-react";
+import { SelectedColor } from "../../types";
+import { PRESET_COLORS, SIZES } from "../../constants";
 
 interface Props {
-  colors: ColorForm[];
+  selectedColors: SelectedColor[];
+  selectedSizes: string[];
   disabled: boolean;
-  onAdd: (name: string, hexCode: string) => void;
-  onRemove: (tempId: string) => void;
-  onUpdate: (tempId: string, field: keyof ColorForm, value: string | string[]) => void;
-  onAddImage: (tempId: string, url: string) => void;
-  onRemoveImage: (tempId: string, url: string) => void;
-  onUpdateVariant: (tempId: string, size: string, field: keyof VariantForm, value: string) => void;
+  onToggleColor: (name: string, hexCode: string) => void;
+  onToggleSize: (size: string) => void;
 }
 
-export default function ColorsSection({
-  colors,
-  disabled,
-  onAdd,
-  onRemove,
-  onAddImage,
-  onRemoveImage,
-  onUpdateVariant,
-}: Props) {
-  const isSelected = (presetName: string) =>
-    colors.some((c) => c.name === presetName);
+const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+  <h3 className="text-sm font-bold text-[#154734] border-l-4 border-[#C19A6B] pl-3 uppercase tracking-wide">
+    {children}
+  </h3>
+);
 
-  const toggle = (name: string, hex: string) => {
-    if (disabled) return;
-    const existing = colors.find((c) => c.name === name);
-    if (existing) {
-      onRemove(existing.tempId);
-    } else {
-      onAdd(name, hex);
-    }
-  };
+export default function ColorsSection({
+  selectedColors,
+  selectedSizes,
+  disabled,
+  onToggleColor,
+  onToggleSize,
+}: Props) {
+  const isColorSelected = (name: string) =>
+    selectedColors.some((c) => c.name === name);
 
   return (
     <section className="space-y-4">
-      <h3 className="text-sm font-bold text-[#154734] border-l-4 border-[#C19A6B] pl-3 uppercase tracking-wide">
-        Colores, Tallas y Stock
-      </h3>
+      <SectionTitle>Colores y Tallas</SectionTitle>
 
-      {/* Paleta de colores predefinidos */}
+      {/* Color picker */}
       <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-3">
-        <p className="text-xs text-gray-500 font-medium">
-          Selecciona los colores que tiene esta prenda:
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          Colores disponibles
         </p>
         <div className="flex flex-wrap gap-2">
           {PRESET_COLORS.map((preset) => {
-            const selected = isSelected(preset.name);
+            const selected = isColorSelected(preset.name);
             return (
               <button
                 key={preset.name}
                 type="button"
-                onClick={() => toggle(preset.name, preset.hex)}
+                onClick={() => onToggleColor(preset.name, preset.hex)}
                 disabled={disabled}
                 title={preset.name}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${
@@ -75,27 +63,31 @@ export default function ColorsSection({
         </div>
       </div>
 
-      {/* Placeholder cuando no hay colores */}
-      {colors.length === 0 && (
-        <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-300 text-gray-400 text-sm">
-          <Palette className="w-8 h-8 mx-auto mb-2 opacity-50" />
-          <p>Selecciona al menos un color para agregar tallas y stock</p>
+      {/* Size picker */}
+      <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-3">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          Tallas disponibles
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {SIZES.map((size) => {
+            const active = selectedSizes.includes(size);
+            return (
+              <button
+                key={size}
+                type="button"
+                disabled={disabled}
+                onClick={() => onToggleSize(size)}
+                className={`px-4 py-2 rounded-lg border text-sm font-bold transition-all ${
+                  active
+                    ? "bg-[#154734] text-white border-[#154734]"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {size}
+              </button>
+            );
+          })}
         </div>
-      )}
-
-      {/* Cards de colores seleccionados */}
-      <div className="space-y-4">
-        {colors.map((color) => (
-          <ColorCard
-            key={color.tempId}
-            color={color}
-            disabled={disabled}
-            onRemove={onRemove}
-            onAddImage={onAddImage}
-            onRemoveImage={onRemoveImage}
-            onUpdateVariant={onUpdateVariant}
-          />
-        ))}
       </div>
     </section>
   );

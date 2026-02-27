@@ -32,16 +32,6 @@ export const PRESET_COLORS = [
   { name: "Terracota",     hex: "#C0652B" },
 ] as const;
 
-export const newColorForm = (name: string, hexCode: string) => ({
-  tempId: crypto.randomUUID(),
-  name,
-  hexCode,
-  images: [] as string[],
-  variants: Object.fromEntries(
-    SIZES.map((s) => [s, { stock: "", priceOverride: "" }])
-  ),
-});
-
 export const formatPrice = (val: number) =>
   new Intl.NumberFormat("es-CO", {
     style: "currency",

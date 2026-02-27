@@ -18,7 +18,6 @@ export async function GET(
         images: { orderBy: { order: "asc" } },
         colors: {
           include: {
-            images: { orderBy: { order: "asc" } },
             variants: true,
           },
         },
@@ -29,6 +28,15 @@ export async function GET(
       return new NextResponse("Producto no encontrado", { status: 404 });
     }
 
+    const totalStock = product.colors.reduce(
+      (sum, c) => sum + c.variants.reduce((s, v) => s + v.stock, 0),
+      0
+    );
+
+    const allSizes = [
+      ...new Set(product.colors.flatMap((c) => c.variants.map((v) => v.size))),
+    ];
+
     const mapped = {
       id: product.id,
       name: product.name,
@@ -36,6 +44,7 @@ export async function GET(
       description: product.description,
       basePrice: Number(product.basePrice),
       comparePrice: product.comparePrice ? Number(product.comparePrice) : null,
+      stock: totalStock,
       categoryId: product.categoryId,
       status: product.status,
       isFeatured: product.isFeatured,
@@ -51,13 +60,8 @@ export async function GET(
         id: c.id,
         name: c.name,
         hexCode: c.hexCode,
-        images: c.images.map((img) => img.url),
-        variants: c.variants.map((v) => ({
-          size: v.size,
-          stock: v.stock,
-          priceOverride: v.priceOverride ? Number(v.priceOverride) : null,
-        })),
       })),
+      sizes: allSizes,
     };
 
     return NextResponse.json(mapped);
@@ -95,6 +99,7 @@ export async function PATCH(
       description,
       basePrice,
       comparePrice,
+      stock,
       categoryId,
       status,
       isFeatured,
@@ -103,9 +108,9 @@ export async function PATCH(
       careInfo,
       generalImages,
       colors,
+      sizes,
     } = body;
 
-    // SEO auto-generado desde nombre y descripción
     const autoMetaTitle = name ? name.trim().slice(0, 60) : undefined;
     const autoMetaDescription = description != null
       ? description.replace(/\s+/g, " ").trim().slice(0, 160)
@@ -158,47 +163,39 @@ export async function PATCH(
         });
       }
 
-      // 5. Recrear colores, sus imágenes y variantes
-      if (colors && colors.length > 0) {
-        for (const colorData of colors) {
-          if (!colorData.name) continue;
+      // 5. Recrear colores × tallas → variantes con stock distribuido
+      const selectedColors: { name: string; hexCode: string }[] = colors || [];
+      const selectedSizes: string[] = sizes || [];
+      const globalStock = typeof stock === "number" ? stock : 0;
+      const totalVariants = selectedColors.length * selectedSizes.length;
+      const baseStockPerVariant = totalVariants > 0 ? Math.floor(globalStock / totalVariants) : 0;
+      const remainder = totalVariants > 0 ? globalStock % totalVariants : 0;
+      const slugForSku = slug || product.slug;
+      let variantIdx = 0;
 
-          const color = await tx.productColor.create({
+      for (const colorData of selectedColors) {
+        if (!colorData.name) continue;
+
+        const color = await tx.productColor.create({
+          data: {
+            productId: id,
+            name: colorData.name,
+            hexCode: colorData.hexCode || "#000000",
+          },
+        });
+
+        for (const size of selectedSizes) {
+          const sku = `${slugForSku}-${colorData.name.toLowerCase().replace(/\s+/g, "-")}-${size.toLowerCase()}`;
+          await tx.productVariant.create({
             data: {
               productId: id,
-              name: colorData.name,
-              hexCode: colorData.hexCode || "#000000",
+              colorId: color.id,
+              size: size as "XS" | "S" | "M" | "L" | "XL" | "XXL" | "ONESIZE",
+              sku,
+              stock: baseStockPerVariant + (variantIdx < remainder ? 1 : 0),
             },
           });
-
-          if (colorData.images && colorData.images.length > 0) {
-            await tx.productImage.createMany({
-              data: colorData.images.map((url: string, i: number) => ({
-                productId: id,
-                colorId: color.id,
-                url,
-                altText: `${name || product.name} - ${colorData.name}`,
-                order: i,
-              })),
-            });
-          }
-
-          if (colorData.variants && colorData.variants.length > 0) {
-            for (const variant of colorData.variants) {
-              if (!variant.stock || variant.stock <= 0) continue;
-              const sku = `${slug || product.slug}-${colorData.name.toLowerCase().replace(/\s+/g, "-")}-${variant.size.toLowerCase()}`;
-              await tx.productVariant.create({
-                data: {
-                  productId: id,
-                  colorId: color.id,
-                  size: variant.size,
-                  sku,
-                  stock: variant.stock,
-                  priceOverride: variant.priceOverride || null,
-                },
-              });
-            }
-          }
+          variantIdx++;
         }
       }
 

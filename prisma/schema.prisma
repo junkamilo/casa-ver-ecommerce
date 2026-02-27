@@ -177,6 +177,7 @@ model Product {
   // Datos Adicionales
   material        String?
   careInfo        String?        @db.Text
+  videoUrl        String?
   
   // Relaciones Clave
   images          ProductImage[] // Imágenes generales o por defecto

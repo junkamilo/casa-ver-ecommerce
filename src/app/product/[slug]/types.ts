@@ -1,9 +1,4 @@
-import { StaticImageData } from "next/image";
-
-export interface ProductColor {
-  name: string;
-  hex: string;
-}
+import type { StaticImageData } from "next/image";
 
 export interface ProductVariant {
   name: string;
@@ -12,7 +7,36 @@ export interface ProductVariant {
   description: string;
   rating: number;
   reviews: number;
-  colors: ProductColor[];
+  colors: { name: string; hex: string }[];
   sizes: string[];
-  gallery: StaticImageData[];
+  gallery: (StaticImageData | string)[];
+}
+
+export interface UIColor {
+  id: string;
+  name: string;
+  hex: string;
+  images: string[];
+  availableSizes: string[];
+}
+
+export interface UIProduct {
+  id: string;
+  name: string;
+  description: string;
+  basePrice: number;
+  comparePrice: number | null;
+  material: string | null;
+  careInfo: string | null;
+  videoUrl: string | null;
+  generalImages: string[];
+  colors: UIColor[];
+}
+
+export interface RecommendedProduct {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  imageUrl: string | null;
 }

@@ -1,18 +1,15 @@
-import type { StaticImageData } from "next/image";
-
 export interface CollectionProduct {
-  image: StaticImageData;
+  mediaUrl: string | null;
   name: string;
   price: number;
   oldPrice?: number;
   badge?: string;
   slug: string;
-  colorLabel?: string;
-  colors?: string[];
+  colors?: { name: string; hexCode: string }[];
 }
 
 export interface CategoryData {
   name: string;
-  description?: string;
-  bannerImage?: string;
+  description?: string | null;
+  bannerImage?: string | null;
 }
