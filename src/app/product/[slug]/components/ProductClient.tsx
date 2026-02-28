@@ -30,13 +30,15 @@ interface Props {
   isAuthenticated: boolean;
 }
 
+const isVideoUrl = (url: string) => /\.(mp4|mov|avi|webm|mkv|ogg)$/i.test(url);
+
 export default function ProductClient({
   product,
   recommended,
   existingReview,
   isAuthenticated,
 }: Props) {
-  // 1. ESTADOS PRINCIPALES
+  // ─── Estado principal ────────────────────────────────────────────────────
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState<UIColor | null>(
     product.colors[0] ?? null
@@ -46,85 +48,89 @@ export default function ProductClient({
   const [showAddedNotification, setShowAddedNotification] = useState(false);
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
 
+  // 'main' = producto principal, cualquier otro string = item.id de subcategoría
+  const [activeView, setActiveView] = useState<string>("main");
+
   const { addToCart } = useCart();
 
-  // 🔥 2. LÓGICA DE SINCRONIZACIÓN BIDIRECCIONAL 🔥
+  // ─── Datos activos según la vista seleccionada ──────────────────────────
+  const activeItem = activeView === "main"
+    ? null
+    : (product.items.find((i) => i.id === activeView) ?? null);
 
-  const isVideoUrl = (url: string) => /\.(mp4|mov|avi|webm|mkv|ogg)$/i.test(url);
+  const activeColors      = activeItem ? activeItem.colors      : product.colors;
+  const activeVideoUrl    = activeItem ? activeItem.videoUrl     : product.videoUrl;
+  const activePrice       = activeItem ? (activeItem.price ?? product.basePrice) : product.basePrice;
+  const activeStock       = activeItem ? activeItem.stock        : product.stock;
+  const activeDescription = activeItem
+    ? (activeItem.description ?? product.description)
+    : product.description;
 
-  // A. Creamos la Galería Maestra (Junta todas las fotos y recuerda su color)
+  // Galería: cuando se ve una subcategoría no se muestran las imágenes generales del padre
+  const activeGeneralImages = activeItem ? [] : product.generalImages;
+
+  // ─── Galería maestra (reconstruida cuando cambia la vista activa) ────────
   const masterGallery = useMemo(() => {
     const items: { url: string; color: UIColor | null }[] = [];
-
-    // Solo imágenes generales (sin videos)
-    product.generalImages
+    activeGeneralImages
       .filter((url) => !isVideoUrl(url))
       .forEach((url) => items.push({ url, color: null }));
-
-    // Solo imágenes de color (sin videos)
-    product.colors.forEach((color) => {
+    activeColors.forEach((color) => {
       color.images
         .filter((url) => !isVideoUrl(url))
         .forEach((url) => items.push({ url, color }));
     });
-
     return items;
-  }, [product]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeGeneralImages, activeColors]);
 
-  // Extraemos solo las URLs para pasárselas a tu componente ProductGallery
-  const galleryUrls = masterGallery.map(item => item.url);
+  const galleryUrls = masterGallery.map((item) => item.url);
 
-  // B. Cuando el usuario hace clic en una bolita de COLOR
+  // ─── Handlers ────────────────────────────────────────────────────────────
+
+  const handleViewSelect = (view: string) => {
+    setActiveView(view);
+    const item = view === "main"
+      ? null
+      : (product.items.find((i) => i.id === view) ?? null);
+    setSelectedColor(item ? (item.colors[0] ?? null) : (product.colors[0] ?? null));
+    setSelectedSize(null);
+    setSelectedImage(0);
+  };
+
   const handleColorSelect = (color: UIColor) => {
     setSelectedColor(color);
-    setSelectedSize(null); // Reiniciamos la talla por precaución de stock
-
-    // Buscamos la primera foto de este color en la galería maestra
-    const firstImageIndex = masterGallery.findIndex(item => item.color?.id === color.id);
-    if (firstImageIndex !== -1) {
-      setSelectedImage(firstImageIndex); // Movemos el carrusel a esa foto
-    }
+    setSelectedSize(null);
+    const firstIdx = masterGallery.findIndex((item) => item.color?.id === color.id);
+    if (firstIdx !== -1) setSelectedImage(firstIdx);
   };
 
-  // C. Cuando el usuario hace clic en una miniatura de la GALERÍA
   const handleImageSelect = (index: number) => {
     setSelectedImage(index);
-    
-    // Vemos de qué color es la foto que seleccionó
     const associatedColor = masterGallery[index].color;
-    
-    // Si la foto tiene un color y es distinto al actual, cambiamos el selector de color automáticamente
     if (associatedColor && associatedColor.id !== selectedColor?.id) {
       setSelectedColor(associatedColor);
-      setSelectedSize(null); 
+      setSelectedSize(null);
     }
   };
 
-  // 3. FUNCIONES DE INTERACCIÓN
   const handleAddToCart = () => {
     if (!selectedSize || !selectedColor) return;
-    
+    const cartName = product.isSet && activeItem
+      ? `${product.name} — ${activeItem.name}`
+      : product.name;
     addToCart(
-      {
-        name: product.name,
-        price: product.basePrice,
-        gallery: galleryUrls,
-        image: galleryUrls[0] ?? "",
-      },
+      { name: cartName, price: activePrice, gallery: galleryUrls, image: galleryUrls[0] ?? "" },
       quantity,
       { name: selectedColor.name, hex: selectedColor.hex },
       selectedSize
     );
-    
     setShowAddedNotification(true);
     setTimeout(() => setShowAddedNotification(false), 2000);
   };
 
   const scrollToReviews = () => {
-    const reviewsSection = document.getElementById("seccion-resenas");
-    if (reviewsSection) {
-      reviewsSection.scrollIntoView({ behavior: "smooth" });
-    }
+    document.getElementById("seccion-resenas")?.scrollIntoView({ behavior: "smooth" });
   };
 
   const toggleAccordion = (key: string) => {
@@ -134,13 +140,11 @@ export default function ProductClient({
   return (
     <div className="bg-white selection:bg-[#C19A6B]/20 min-h-screen">
 
-      {/* Toast — Añadido a la bolsa */}
+      {/* Toast */}
       <div
         aria-live="polite"
         className={`fixed top-6 right-6 z-100 flex items-center gap-4 bg-[#154734] text-white shadow-2xl rounded-xl px-5 py-4 transition-all duration-500 ${
-          showAddedNotification
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 -translate-y-8 pointer-events-none"
+          showAddedNotification ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-8 pointer-events-none"
         }`}
       >
         <div className="bg-white/20 rounded-full p-2 backdrop-blur-sm">
@@ -155,24 +159,18 @@ export default function ProductClient({
         </div>
       </div>
 
-      {/* Breadcrumb editorial */}
+      {/* Breadcrumb */}
       <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100/50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-3 sm:py-4 text-[10px] sm:text-xs text-gray-400 uppercase tracking-[0.2em] font-medium flex items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide">
-          <Link href="/" className="hover:text-[#C19A6B] transition-colors shrink-0">
-            Inicio
-          </Link>
+          <Link href="/" className="hover:text-[#C19A6B] transition-colors shrink-0">Inicio</Link>
           <span className="text-gray-300">/</span>
-          <Link href="/tienda" className="hover:text-[#C19A6B] transition-colors shrink-0">
-            Tienda
-          </Link>
+          <Link href="/tienda" className="hover:text-[#C19A6B] transition-colors shrink-0">Tienda</Link>
           <span className="text-gray-300">/</span>
           <span className="text-[#154734] font-bold shrink-0">{product.name}</span>
         </div>
       </nav>
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-8 pb-16 sm:pt-12 sm:pb-24 lg:pb-32">
-
-        {/* Layout 60/40 */}
         <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 xl:gap-20 items-start">
 
           {/* Galería — 60% */}
@@ -181,7 +179,7 @@ export default function ProductClient({
               gallery={galleryUrls}
               selectedImage={selectedImage}
               productName={product.name}
-              onSelect={handleImageSelect} // Pasamos la función que detecta el color
+              onSelect={handleImageSelect}
             />
           </div>
 
@@ -198,7 +196,7 @@ export default function ProductClient({
               </h1>
               <div className="flex items-end gap-3">
                 <p className="text-2xl sm:text-3xl font-medium text-gray-900">
-                  {formatPrice(product.basePrice)}
+                  {formatPrice(activePrice)}
                 </p>
                 {product.comparePrice && (
                   <p className="text-base text-gray-400 line-through mb-1">
@@ -206,19 +204,16 @@ export default function ProductClient({
                   </p>
                 )}
               </div>
-              {product.stock === 0 ? (
-                <p className="text-xs font-semibold uppercase tracking-widest text-red-500 mt-2">
-                  Agotado
-                </p>
+              {activeStock === 0 ? (
+                <p className="text-xs font-semibold uppercase tracking-widest text-red-500 mt-2">Agotado</p>
               ) : (
                 <p className="text-xs text-gray-400 mt-2">
-                  Stock disponible:{" "}
-                  <span className="font-semibold text-gray-600">{product.stock}</span>
+                  Stock disponible: <span className="font-semibold text-gray-600">{activeStock}</span>
                 </p>
               )}
             </div>
 
-            {/* Rating clickeable */}
+            {/* Rating */}
             <button
               type="button"
               onClick={scrollToReviews}
@@ -229,9 +224,7 @@ export default function ProductClient({
                   <Star
                     key={star}
                     className={`w-4 h-4 transition-transform duration-200 group-hover:scale-110 ${
-                      star <= Math.round(product.rating)
-                        ? "fill-current"
-                        : "fill-none text-gray-300"
+                      star <= Math.round(product.rating) ? "fill-current" : "fill-none text-gray-300"
                     }`}
                   />
                 ))}
@@ -239,8 +232,7 @@ export default function ProductClient({
               <span className="text-[11px] uppercase tracking-widest text-gray-500 group-hover:text-[#154734] transition-colors">
                 {product.numReviews > 0 ? (
                   <span className="underline decoration-gray-300 group-hover:decoration-[#154734] underline-offset-4">
-                    {product.rating.toFixed(1)} · {product.numReviews} reseña
-                    {product.numReviews !== 1 ? "s" : ""}
+                    {product.rating.toFixed(1)} · {product.numReviews} reseña{product.numReviews !== 1 ? "s" : ""}
                   </span>
                 ) : (
                   "Sin calificaciones aún"
@@ -252,23 +244,14 @@ export default function ProductClient({
             <div className="bg-[#FAFAFA] border border-gray-100 p-4 rounded-xl flex items-center gap-4 mb-8">
               <div className="flex -space-x-3 shrink-0">
                 {[15, 16, 17].map((n) => (
-                  <div
-                    key={n}
-                    className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white overflow-hidden shadow-sm"
-                  >
-                    <img
-                      src={`https://i.pravatar.cc/100?img=${n}`}
-                      alt=""
-                      aria-hidden="true"
-                      className="w-full h-full object-cover"
-                    />
+                  <div key={n} className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white overflow-hidden shadow-sm">
+                    <img src={`https://i.pravatar.cc/100?img=${n}`} alt="" aria-hidden="true" className="w-full h-full object-cover" />
                   </div>
                 ))}
               </div>
               <p className="text-xs text-gray-600 leading-relaxed font-light">
                 <strong className="text-[#154734] font-semibold">Aleja, Mariana</strong> y{" "}
-                <strong className="text-[#154734] font-semibold">800+ mujeres</strong> ya
-                lucen esta prenda.
+                <strong className="text-[#154734] font-semibold">800+ mujeres</strong> ya lucen esta prenda.
               </p>
             </div>
 
@@ -280,17 +263,11 @@ export default function ProductClient({
               className="flex items-center gap-4 mb-8 p-4 rounded-xl border border-gray-100 bg-white hover:border-[#2F6BFF]/30 transition-all duration-300 group"
             >
               <div className="w-10 h-10 rounded-full bg-[#2F6BFF] flex items-center justify-center shrink-0 shadow-sm group-hover:shadow-md transition-shadow">
-                <span
-                  className="text-white font-bold text-xl leading-none"
-                  style={{ fontFamily: "Arial, sans-serif" }}
-                >
-                  a
-                </span>
+                <span className="text-white font-bold text-xl leading-none" style={{ fontFamily: "Arial, sans-serif" }}>a</span>
               </div>
               <div className="flex-1">
                 <p className="text-xs sm:text-sm text-gray-600 leading-snug">
-                  Llévalo hoy, paga después con{" "}
-                  <strong className="text-[#2F6BFF]">Addi</strong> hasta en 6 cuotas.
+                  Llévalo hoy, paga después con <strong className="text-[#2F6BFF]">Addi</strong> hasta en 6 cuotas.
                 </p>
                 <span className="inline-block text-[11px] text-[#2F6BFF] font-bold mt-1 uppercase tracking-wider group-hover:underline">
                   Conoce tu cupo aquí
@@ -298,18 +275,63 @@ export default function ProductClient({
               </div>
             </a>
 
-            {/* Descripción */}
-            <div className="prose prose-sm prose-gray mb-10">
-              <p className="text-gray-600 leading-loose font-light">{product.description}</p>
+            {/* ── TABS: Producto principal + Subcategorías ──────────────── */}
+            {product.isSet && product.items.length > 0 && (
+              <div className="mb-8">
+                <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-gray-400 mb-3">
+                  Elige lo que quieres ver
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {/* Tab del producto principal */}
+                  <button
+                    type="button"
+                    onClick={() => handleViewSelect("main")}
+                    className={`px-5 py-2.5 rounded-xl border text-sm font-bold transition-all duration-200 ${
+                      activeView === "main"
+                        ? "bg-[#154734] text-white border-[#154734] shadow-md shadow-[#154734]/20"
+                        : "bg-white text-gray-700 border-gray-300 hover:border-[#154734] hover:text-[#154734]"
+                    }`}
+                  >
+                    {product.name}
+                    {product.stock === 0 && (
+                      <span className="ml-2 text-[10px] font-normal opacity-60">(agotado)</span>
+                    )}
+                  </button>
+
+                  {/* Tabs de subcategorías */}
+                  {product.items.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => handleViewSelect(item.id)}
+                      className={`px-5 py-2.5 rounded-xl border text-sm font-bold transition-all duration-200 ${
+                        activeView === item.id
+                          ? "bg-[#154734] text-white border-[#154734] shadow-md shadow-[#154734]/20"
+                          : "bg-white text-gray-700 border-gray-300 hover:border-[#154734] hover:text-[#154734]"
+                      }`}
+                    >
+                      {item.name}
+                      {item.stock === 0 && (
+                        <span className="ml-2 text-[10px] font-normal opacity-60">(agotado)</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Descripción — reactiva al tab activo */}
+            <div className="prose prose-sm prose-gray mb-8">
+              <p className="text-gray-600 leading-loose font-light">{activeDescription}</p>
             </div>
 
-            {/* Selectores */}
+            {/* Selectores de color y talla */}
             <div className="space-y-8 mb-10">
-              {product.colors.length > 0 && (
+              {activeColors.length > 0 && (
                 <ColorSelector
-                  colors={product.colors}
+                  colors={activeColors}
                   selected={selectedColor}
-                  onSelect={handleColorSelect} // Pasamos la función que detecta la galería
+                  onSelect={handleColorSelect}
                 />
               )}
               <SizeSelector
@@ -324,22 +346,22 @@ export default function ProductClient({
               <div className="flex gap-3">
                 <QuantityPicker
                   quantity={quantity}
-                  stock={product.stock}
+                  stock={activeStock}
                   onDecrease={() => setQuantity(Math.max(1, quantity - 1))}
                   onIncrease={() => {
-                    if (quantity < product.stock) setQuantity((prev) => prev + 1);
+                    if (quantity < activeStock) setQuantity((prev) => prev + 1);
                   }}
                 />
                 <button
                   onClick={handleAddToCart}
-                  disabled={!selectedSize || product.stock === 0}
+                  disabled={!selectedSize || activeStock === 0}
                   className={`flex-1 font-bold uppercase tracking-widest text-xs sm:text-sm rounded-lg transition-all h-14 duration-300 ${
-                    selectedSize && product.stock > 0
+                    selectedSize && activeStock > 0
                       ? "bg-[#154734] hover:bg-[#0f3424] text-white shadow-lg shadow-[#154734]/20 hover:shadow-[#154734]/40 active:scale-[0.98]"
                       : "bg-gray-100 text-gray-400 cursor-not-allowed"
                   }`}
                 >
-                  {product.stock === 0
+                  {activeStock === 0
                     ? "Producto Agotado"
                     : !selectedSize
                     ? "Selecciona una talla"
@@ -360,10 +382,7 @@ export default function ProductClient({
             {/* Métodos de pago */}
             <div className="flex flex-wrap justify-center gap-3 mb-10 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500">
               {["GPay", "Apple", "PayPal", "Master", "Visa", "PSE"].map((item) => (
-                <div
-                  key={item}
-                  className="h-8 px-3 bg-white border border-gray-200 rounded flex items-center justify-center"
-                >
+                <div key={item} className="h-8 px-3 bg-white border border-gray-200 rounded flex items-center justify-center">
                   <span className="text-[10px] font-bold text-gray-500">{item}</span>
                 </div>
               ))}
@@ -379,8 +398,8 @@ export default function ProductClient({
           </div>
         </div>
 
-        {/* Sección de video editorial */}
-        {product.videoUrl && (
+        {/* Video editorial — reactivo al tab activo */}
+        {activeVideoUrl && (
           <div className="mt-24 sm:mt-32 mb-16">
             <div className="flex items-center justify-center mb-10 gap-4">
               <span className="h-px w-16 bg-linear-to-r from-transparent to-[#C19A6B]" />
@@ -408,7 +427,7 @@ export default function ProductClient({
 
               <div className="flex-1 w-full flex justify-center md:justify-end z-10">
                 <div className="w-full max-w-[320px] xl:max-w-90 aspect-9/16 bg-gray-100 rounded-2xl overflow-hidden shadow-2xl border-4 border-white transition-transform duration-700 hover:scale-[1.02]">
-                  <ProductVideo url={product.videoUrl} />
+                  <ProductVideo url={activeVideoUrl} />
                 </div>
               </div>
 

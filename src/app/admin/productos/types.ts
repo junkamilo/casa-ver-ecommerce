@@ -24,6 +24,7 @@ export interface SelectedColor {
 export interface SetItemForm {
   localId: string;
   name: string;
+  description: string;
   price: string;
   videoUrl: string;
   stock: string;

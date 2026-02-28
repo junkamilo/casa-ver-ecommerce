@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/layout/Header";
 import ProductClient from "./components/ProductClient";
-import { UIProduct, RecommendedProduct } from "./types";
+import { UIProduct, UIProductItem, RecommendedProduct } from "./types";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -21,7 +21,10 @@ export default async function ProductPage({ params }: Props) {
     : null;
   const userId = dbUser?.id ?? null;
 
-  const product = await prisma.product.findUnique({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = prisma as any;
+
+  const product = await db.product.findUnique({
     where: { slug, status: "ACTIVE" },
     include: {
       images: { orderBy: { order: "asc" } },
@@ -32,6 +35,20 @@ export default async function ProductPage({ params }: Props) {
             where: { isActive: true },
             select: { size: true, stock: true },
             orderBy: { size: "asc" },
+          },
+        },
+      },
+      items: {
+        orderBy: { order: "asc" },
+        include: {
+          colors: {
+            include: {
+              images: { orderBy: { order: "asc" } },
+              variants: {
+                where: { isActive: true },
+                select: { size: true, stock: true },
+              },
+            },
           },
         },
       },
@@ -55,7 +72,6 @@ export default async function ProductPage({ params }: Props) {
 
   if (!product) notFound();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const userReview = userId
     ? ((await (prisma.review as any).findUnique({
         where: { userId_productId: { userId, productId: product.id } },
@@ -63,22 +79,39 @@ export default async function ProductPage({ params }: Props) {
       })) as { rating: number; comment: string | null } | null)
     : null;
 
-  const allGeneralImages = product.images
-    .filter((img) => !img.colorId)
-    .map((img) => img.url);
+  const isVideoUrl = (url: string) => /\.(mp4|mov|avi|webm|mkv|ogg)$/i.test(url);
 
-  const isVideoUrl = (url: string) =>
-    /\.(mp4|mov|avi|webm|mkv|ogg)$/i.test(url);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const allGeneralImages: string[] = product.images
+    .filter((img: any) => !img.colorId)
+    .map((img: any) => img.url);
 
-  const dbVideoUrl = (product as any).videoUrl as string | null;
-  const videoUrlFromImages = !dbVideoUrl
-    ? (allGeneralImages.find(isVideoUrl) ?? null)
-    : null;
-  const resolvedVideoUrl = dbVideoUrl ?? videoUrlFromImages;
+  const dbVideoUrl = product.videoUrl as string | null;
+  const resolvedVideoUrl = dbVideoUrl ?? (allGeneralImages.find(isVideoUrl) ?? null);
 
-  const totalStock = product.colors.reduce(
-    (acc, color) => acc + color.variants.reduce((s, v) => s + v.stock, 0),
-    0
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapUIColor = (color: any) => ({
+    id: color.id,
+    name: color.name,
+    hex: color.hexCode,
+    images: (color.images as any[]).map((img) => img.url).filter((u: string) => !isVideoUrl(u)),
+    availableSizes: (color.variants as any[]).filter((v) => v.stock > 0).map((v) => v.size as string),
+  });
+
+  const uiItems: UIProductItem[] = (product.items as any[] ?? []).map((item) => ({
+    id: item.id,
+    name: item.name,
+    description: item.description ?? null,
+    price: item.price ? Number(item.price) : null,
+    videoUrl: item.videoUrl ?? null,
+    stock: (item.colors as any[]).reduce(
+      (acc: number, c: any) => acc + (c.variants as any[]).reduce((s: number, v: any) => s + v.stock, 0), 0
+    ),
+    colors: (item.colors as any[]).map(mapUIColor),
+  }));
+
+  const totalStock = (product.colors as any[]).reduce(
+    (acc: number, color: any) => acc + (color.variants as any[]).reduce((s: number, v: any) => s + v.stock, 0), 0
   );
 
   const uiProduct: UIProduct = {
@@ -92,35 +125,26 @@ export default async function ProductPage({ params }: Props) {
     careInfo: product.careInfo,
     videoUrl: resolvedVideoUrl,
     generalImages: allGeneralImages.filter((url) => !isVideoUrl(url)),
-    colors: product.colors.map((color) => ({
-      id: color.id,
-      name: color.name,
-      hex: color.hexCode,
-      images: color.images.map((img) => img.url).filter((url) => !isVideoUrl(url)),
-      availableSizes: color.variants.filter((v) => v.stock > 0).map((v) => v.size as string),
-    })),
-    rating: (product as any).rating ?? 0,
-    numReviews: (product as any).numReviews ?? 0,
+    colors: (product.colors as any[]).map(mapUIColor),
+    rating: product.rating ?? 0,
+    numReviews: product.numReviews ?? 0,
     stock: totalStock,
+    isSet: product.isSet ?? false,
+    items: uiItems,
   };
 
-  const recommended: RecommendedProduct[] = product.category.products.map(
-    (p) => ({
-      id: p.id,
-      name: p.name,
-      slug: p.slug,
-      price: Number(p.basePrice),
-      imageUrl: p.images[0]?.url ?? null,
-    })
-  );
+  const recommended: RecommendedProduct[] = (product.category.products as any[]).map((p) => ({
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    price: Number(p.basePrice),
+    imageUrl: p.images[0]?.url ?? null,
+  }));
 
   return (
-    // INNOVACIÓN DE LAYOUT: Fondo blanco puro, flexbox para estructurar el footer y color de selección dorado
     <div className="min-h-screen flex flex-col bg-white selection:bg-[#C19A6B]/20">
       <AnnouncementBar />
       <Header />
-      
-      {/* El flex-1 asegura que el contenido principal empuje el footer hacia abajo */}
       <div className="flex-1 w-full">
         <ProductClient
           product={uiProduct}
@@ -129,7 +153,6 @@ export default async function ProductPage({ params }: Props) {
           isAuthenticated={!!userEmail}
         />
       </div>
-      
       <Footer />
     </div>
   );

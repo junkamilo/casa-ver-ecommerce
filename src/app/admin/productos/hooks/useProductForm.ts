@@ -6,6 +6,7 @@ import { SelectedColor, SetItemForm } from "../types";
 const newSetItem = (): SetItemForm => ({
   localId: crypto.randomUUID(),
   name: "",
+  description: "",
   price: "",
   videoUrl: "",
   stock: "0",
@@ -30,7 +31,7 @@ export function useProductForm() {
   const [showMaterial, setShowMaterial] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
 
-  // Conjuntos
+  // Subcategorías
   const [isSet, setIsSet] = useState(false);
   const [setItems, setSetItems] = useState<SetItemForm[]>([]);
 
@@ -68,33 +69,35 @@ export function useProductForm() {
     setMaterial(data.material || "");
     setCareInfo(data.careInfo || "");
     if (data.material || data.careInfo) setShowMaterial(true);
+    setVideoUrl(data.videoUrl || "");
     setIsSet(data.isSet || false);
+
+    // Parent product colors/sizes always loaded regardless of isSet
+    setSelectedColors(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (data.colors || []).map((c: any) => ({ name: c.name, hexCode: c.hexCode, images: c.images || [] }))
+    );
+    setSelectedSizes(data.sizes || []);
 
     if (data.isSet && data.items?.length > 0) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setSetItems(data.items.map((item: any) => ({
         localId: crypto.randomUUID(),
         name: item.name || "",
+        description: item.description || "",
         price: item.price?.toString() || "",
         videoUrl: item.videoUrl || "",
         stock: item.stock?.toString() || "0",
         colors: (item.colors || []).map((c: any) => ({ name: c.name, hexCode: c.hexCode, images: c.images || [] })),
         sizes: item.sizes || [],
       })));
-      setSelectedColors([]);
-      setSelectedSizes([]);
     } else {
-      setSelectedColors(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (data.colors || []).map((c: any) => ({ name: c.name, hexCode: c.hexCode, images: c.images || [] }))
-      );
-      setSelectedSizes(data.sizes || []);
       setSetItems([]);
     }
-
-    setVideoUrl(data.videoUrl || "");
   };
 
+  // Parent product fields are ALWAYS included in payload regardless of isSet.
+  // When isSet=true, subcategory items are added on top.
   const buildPayload = () => ({
     name,
     description,
@@ -107,13 +110,14 @@ export function useProductForm() {
     isNew,
     material,
     careInfo,
-    videoUrl: isSet ? null : (videoUrl || null),
+    videoUrl: videoUrl || null,
     isSet,
-    colors: isSet ? [] : selectedColors,
-    sizes: isSet ? [] : selectedSizes,
+    colors: selectedColors,
+    sizes: selectedSizes,
     items: isSet
       ? setItems.map((item) => ({
           name: item.name,
+          description: item.description || null,
           price: item.price ? parseFloat(item.price) : null,
           videoUrl: item.videoUrl || null,
           stock: item.stock ? parseInt(item.stock) : 0,
@@ -123,7 +127,7 @@ export function useProductForm() {
       : [],
   });
 
-  // Helpers colores producto simple
+  // Helpers colores producto principal
   const toggleColor = (name: string, hexCode: string) =>
     setSelectedColors((prev) =>
       prev.some((c) => c.name === name)
@@ -141,7 +145,7 @@ export function useProductForm() {
       prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
     );
 
-  // Helpers set items
+  // Helpers subcategorías
   const addSetItem = () =>
     setSetItems((prev) => [...prev, newSetItem()]);
 
