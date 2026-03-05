@@ -25,7 +25,7 @@ export async function saveReview(
 
   const parsed = reviewSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0].message };
+    return { success: false, error: parsed.error.issues[0].message };
   }
 
   const { rating, comment } = parsed.data;
@@ -45,7 +45,8 @@ export async function saveReview(
     _count: { rating: true },
   });
 
-  await prisma.product.update({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (prisma as any).product.update({
     where: { id: productId },
     data: {
       rating: agg._avg.rating ?? 0,
