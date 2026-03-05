@@ -34,7 +34,15 @@ async function getCollectionData(slug: string): Promise<{
           select: { url: true },
         },
         colors: {
-          select: { name: true, hexCode: true },
+          select: {
+            name: true,
+            hexCode: true,
+            images: {
+              orderBy: { order: "asc" },
+              take: 1,
+              select: { url: true },
+            },
+          },
           take: 4,
         },
       },
@@ -42,7 +50,7 @@ async function getCollectionData(slug: string): Promise<{
     });
 
     const products: CollectionProduct[] = raw.map((p) => ({
-      mediaUrl: p.images[0]?.url ?? null,
+      mediaUrl: p.images[0]?.url ?? p.colors[0]?.images[0]?.url ?? null,
       name: p.name,
       slug: p.slug,
       price: Number(p.basePrice),

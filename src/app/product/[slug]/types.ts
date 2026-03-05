@@ -20,9 +20,20 @@ export interface UIColor {
   availableSizes: string[];
 }
 
+export interface UIProductItem {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number | null;
+  videoUrl: string | null;
+  colors: UIColor[];
+  stock: number;
+}
+
 export interface UIProduct {
   id: string;
   name: string;
+  slug: string;
   description: string;
   basePrice: number;
   comparePrice: number | null;
@@ -31,6 +42,11 @@ export interface UIProduct {
   videoUrl: string | null;
   generalImages: string[];
   colors: UIColor[];
+  rating: number;
+  numReviews: number;
+  stock: number;
+  isSet: boolean;
+  items: UIProductItem[];
 }
 
 export interface RecommendedProduct {

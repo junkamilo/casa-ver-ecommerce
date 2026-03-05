@@ -58,41 +58,41 @@ function ImageZone({ image, setImage, aspectClass }: ImageZoneProps) {
           <button
             type="button"
             onClick={() => open()}
-            className={`w-full flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl hover:border-[#C19A6B] hover:bg-[#C19A6B]/5 transition-all group ${aspectClass}`}
+            className={`w-full flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl hover:border-[#C19A6B] hover:bg-[#FAFAFA] transition-all group ${aspectClass}`}
           >
-            <UploadCloud className="w-7 h-7 text-gray-400 group-hover:text-[#C19A6B] mb-1.5 transition-colors" />
-            <span className="text-xs font-medium text-gray-500 group-hover:text-[#C19A6B] transition-colors">
-              Haz clic para subir
+            <div className="w-10 h-10 rounded-full bg-[#154734]/5 flex items-center justify-center mb-3 group-hover:bg-[#C19A6B]/10 transition-colors">
+              <UploadCloud className="w-5 h-5 text-[#154734] group-hover:text-[#C19A6B] transition-colors" />
+            </div>
+            <span className="text-xs font-bold text-[#154734] group-hover:text-[#C19A6B] transition-colors uppercase tracking-widest">
+              Subir Foto
             </span>
-            <span className="text-[10px] text-gray-400 mt-0.5">
-              JPG, PNG, WEBP — máx. 5MB
-            </span>
+            <span className="text-[10px] text-gray-400 mt-1">JPG, PNG — máx. 5MB</span>
           </button>
         ) : (
           <div
-            className={`relative rounded-xl overflow-hidden border border-gray-200 group ${aspectClass}`}
+            className={`relative rounded-2xl overflow-hidden border border-gray-100 shadow-sm group ${aspectClass}`}
           >
             <img
               src={image}
               alt="Vista previa"
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3 backdrop-blur-[2px]">
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4 backdrop-blur-sm">
               <button
                 type="button"
                 onClick={() => open()}
-                className="p-2 bg-white text-gray-700 hover:text-[#C19A6B] rounded-full shadow-lg hover:scale-110 transition-all"
+                className="p-3 bg-white text-[#154734] hover:text-[#C19A6B] rounded-full shadow-xl hover:scale-110 transition-all"
                 title="Cambiar imagen"
               >
-                <UploadCloud className="w-4 h-4" />
+                <UploadCloud className="w-5 h-5" />
               </button>
               <button
                 type="button"
                 onClick={() => setImage("")}
-                className="p-2 bg-white text-gray-700 hover:text-red-600 rounded-full shadow-lg hover:scale-110 transition-all"
+                className="p-3 bg-white text-gray-700 hover:text-red-600 rounded-full shadow-xl hover:scale-110 transition-all"
                 title="Eliminar imagen"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -136,93 +136,100 @@ const CategoryModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-[#154734]/80 backdrop-blur-md transition-opacity"
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white">
+      <div className="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+        <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-[#FAFAFA]">
           <h2
-            className="text-xl font-bold text-[#154734]"
+            className="text-2xl text-[#154734] italic"
             style={{ fontFamily: "Georgia, serif" }}
           >
-            {mode === "edit" ? "Editar Categoría" : "Nueva Categoría"}
+            {mode === "edit" ? "Editar Colección" : "Nueva Colección"}
           </h2>
-          <button type="button" onClick={onClose}>
-            <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+          <button 
+            type="button" 
+            onClick={onClose}
+            className="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 hover:text-[#C19A6B] transition-colors"
+          >
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         <form
           onSubmit={onSubmit}
-          className="p-6 space-y-5 max-h-[80vh] overflow-y-auto"
+          className="p-8 space-y-8 max-h-[75vh] overflow-y-auto"
         >
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">Nombre</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ej: Ropa Deportiva"
-              required
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10 outline-none transition-all"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">
-              Descripción (Opcional)
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Breve descripción de la categoría..."
-              rows={2}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10 outline-none resize-none transition-all"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
-                <ImageIcon className="w-3.5 h-3.5 text-[#154734]" />
-                Imagen Card
-              </label>
-              <p className="text-[10px] text-gray-400">Se muestra en el inicio</p>
-              <ImageZone image={image} setImage={setImage} aspectClass="h-28" />
+          {/* Textos */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-xs font-black uppercase tracking-widest text-gray-500">Nombre de la Colección</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ej: Prendas Inferiores"
+                required
+                className="w-full px-5 py-3.5 bg-[#FAFAFA] rounded-xl border border-gray-200 focus:bg-white focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10 outline-none transition-all text-[#154734] font-medium"
+              />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
-                <Layout className="w-3.5 h-3.5 text-[#154734]" />
-                Imagen Banner
-              </label>
-              <p className="text-[10px] text-gray-400">Portada de la colección</p>
-              <ImageZone
-                image={bannerImage}
-                setImage={setBannerImage}
-                aspectClass="h-28"
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-xs font-black uppercase tracking-widest text-gray-500">Descripción Editorial</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Un breve texto que inspire a tus clientes..."
+                rows={3}
+                className="w-full px-5 py-3.5 bg-[#FAFAFA] rounded-xl border border-gray-200 focus:bg-white focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10 outline-none resize-none transition-all text-gray-600 font-light"
               />
             </div>
           </div>
 
-          <div className="pt-4 flex justify-end gap-3 border-t border-gray-100">
+          {/* Zonas de Imagen */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-gray-100">
+            <div className="space-y-3">
+              <label className="text-xs font-black uppercase tracking-widest text-[#154734] flex items-center gap-2">
+                <ImageIcon className="w-4 h-4 text-[#C19A6B]" />
+                Miniatura (Card)
+              </label>
+              <p className="text-[11px] text-gray-400 font-light leading-relaxed">Esta imagen representará la categoría en la grilla principal. Formato cuadrado recomendado.</p>
+              <ImageZone image={image} setImage={setImage} aspectClass="h-40" />
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-xs font-black uppercase tracking-widest text-[#154734] flex items-center gap-2">
+                <Layout className="w-4 h-4 text-[#C19A6B]" />
+                Banner Editorial
+              </label>
+              <p className="text-[11px] text-gray-400 font-light leading-relaxed">Imagen panorámica (ancha) que se mostrará en la cabecera cuando el cliente entre a ver las prendas.</p>
+              <ImageZone
+                image={bannerImage}
+                setImage={setBannerImage}
+                aspectClass="h-40"
+              />
+            </div>
+          </div>
+
+          {/* Acciones */}
+          <div className="pt-8 flex flex-col-reverse sm:flex-row justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+              className="px-6 py-3.5 text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors w-full sm:w-auto"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="px-5 py-2.5 text-sm font-bold text-white bg-[#154734] hover:bg-[#103a2a] rounded-xl shadow-md hover:shadow-lg flex items-center gap-2 disabled:opacity-50 transition-all"
+              className="px-8 py-3.5 text-xs font-bold uppercase tracking-widest text-white bg-[#154734] hover:bg-[#103a2a] rounded-xl shadow-lg hover:shadow-[#154734]/30 flex items-center justify-center gap-2 disabled:opacity-50 transition-all w-full sm:w-auto"
             >
               {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {mode === "edit" ? "Guardar Cambios" : "Crear Categoría"}
+              {mode === "edit" ? "Guardar Cambios" : "Crear Colección"}
             </button>
           </div>
         </form>

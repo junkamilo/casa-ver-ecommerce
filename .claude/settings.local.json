@@ -16,7 +16,14 @@
       "Bash(\"c:/MIGRACION/casa-verde-ecommerce-nextjs/src/components/layout/BestSellers/__tests__/BestSellers.test.tsx\":*)",
       "Bash(\"c:/MIGRACION/casa-verde-ecommerce-nextjs/src/components/layout/NewCollection/__tests__/NewCollection.test.tsx\":*)",
       "Bash(npx prisma migrate dev --name add_category_isactive)",
-      "Bash(npx prisma db push)"
+      "Bash(npx prisma db push)",
+      "Bash(xargs grep -l \"NextAuth\\\\|authOptions\\\\|export.*auth\")",
+      "Bash(npx prisma migrate dev --name add_product_sets)",
+      "Bash(git show HEAD:src/app/product/[slug]/components/BenefitsSection.tsx)",
+      "Bash(npx prisma migrate dev --name add_description_to_product_item)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(npx prisma migrate dev --name add_sub_product_model)",
+      "Bash(npx tsc --noEmit --project tsconfig.json)"
     ]
   }
 }

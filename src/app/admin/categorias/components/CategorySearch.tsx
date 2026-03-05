@@ -6,17 +6,17 @@ interface CategorySearchProps {
 }
 
 const CategorySearch = ({ value, onChange }: CategorySearchProps) => (
-  <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-    <div className="relative w-full md:max-w-md">
-      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-      <input
-        type="text"
-        placeholder="Buscar categoría..."
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full pl-11 pr-4 py-3 bg-gray-50 border-transparent focus:bg-white border focus:border-[#C19A6B] rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-[#C19A6B]/10 transition-all"
-      />
+  <div className="relative w-full max-w-xl mb-10 group">
+    <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+      <Search className="w-5 h-5 text-gray-400 group-focus-within:text-[#C19A6B] transition-colors" />
     </div>
+    <input
+      type="text"
+      placeholder="Buscar colección o categoría..."
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full pl-14 pr-6 py-4 bg-white border border-gray-100 rounded-2xl text-sm focus:outline-none focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10 transition-all shadow-sm hover:shadow-md text-[#154734] font-medium placeholder:font-normal placeholder:text-gray-400"
+    />
   </div>
 );
 

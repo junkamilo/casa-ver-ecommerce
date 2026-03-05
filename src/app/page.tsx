@@ -9,6 +9,7 @@ import Categories from "@/components/layout/Categories";
 import Header from "@/components/layout/Header";
 import NewCollection from "@/components/layout/NewCollection";
 import Testimonials from "@/components/layout/Testimonials";
+import { TESTIMONIALS } from "@/components/layout/Testimonials/constants/constants";
 import PaymentMethodsBanner from "@/components/PaymentMethodsBanner";
 import ValueProps from "@/components/ValueProps";
 
@@ -24,7 +25,7 @@ export default function Home() {
       <ElevaTuLook />
       <ValueProps />
       <PaymentMethodsBanner />
-      <Testimonials />
+      <Testimonials comments={TESTIMONIALS} />
       <InstagramCTA />
       <Footer />
     </div>

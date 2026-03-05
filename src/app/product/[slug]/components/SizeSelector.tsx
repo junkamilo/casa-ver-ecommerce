@@ -1,3 +1,5 @@
+"use client";
+
 import { ALL_SIZES } from "../constants";
 
 interface Props {
@@ -8,28 +10,55 @@ interface Props {
 
 export default function SizeSelector({ availableSizes, selectedSize, onSelect }: Props) {
   return (
-    <div className="mb-4 sm:mb-6">
-      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-        TALLA:{" "}
-        <span className="text-foreground">{selectedSize || "Selecciona una talla"}</span>
-      </span>
-      <div className="flex flex-wrap gap-2 mt-2 sm:mt-3">
+    <div>
+      {/* Etiqueta editorial y guía de tallas */}
+      <div className="flex items-baseline justify-between mb-4">
+        <span className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
+          Talla Seleccionada
+        </span>
+        <div className="flex items-center gap-3">
+          <span
+            className="text-base sm:text-lg text-[#154734] italic font-medium transition-all duration-300"
+            style={{ fontFamily: "Georgia, serif" }}
+          >
+            {selectedSize || "Elige una talla"}
+          </span>
+        </div>
+      </div>
+
+      {/* Botones de talla */}
+      <div className="flex flex-wrap gap-2 sm:gap-3">
         {ALL_SIZES.map((size) => {
           const available = availableSizes.includes(size);
+          const isSelected = selectedSize === size;
+
           return (
             <button
               key={size}
               onClick={() => available && onSelect(size)}
               disabled={!available}
-              className={`min-w-12 h-10 px-3 border text-sm font-medium transition-all ${
-                selectedSize === size
-                  ? "border-foreground bg-foreground text-background"
+              aria-label={`Seleccionar talla ${size}`}
+              aria-pressed={isSelected}
+              className={`relative min-w-14 h-12 px-4 rounded-xl border text-sm font-bold tracking-widest transition-all duration-300 ease-out overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C19A6B] focus-visible:ring-offset-2 ${
+                isSelected
+                  ? "border-[#154734] bg-[#154734] text-white shadow-md scale-105"
                   : available
-                  ? "border-border hover:border-foreground text-foreground"
-                  : "border-border/40 text-muted-foreground/40 line-through cursor-not-allowed"
+                  ? "border-gray-200 bg-white text-gray-600 hover:border-[#C19A6B] hover:text-[#154734] hover:shadow-sm"
+                  : "border-gray-100 bg-[#FAFAFA] text-gray-300 cursor-not-allowed"
               }`}
             >
-              {size}
+              <span className="relative z-10">{size}</span>
+
+              {/* Línea diagonal "Agotado" */}
+              {!available && (
+                <svg
+                  className="absolute inset-0 w-full h-full text-gray-200 z-0 pointer-events-none"
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                >
+                  <line x1="0" y1="100" x2="100" y2="0" stroke="currentColor" strokeWidth="1.5" />
+                </svg>
+              )}
             </button>
           );
         })}

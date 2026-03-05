@@ -1,6 +1,7 @@
 import { Check } from "lucide-react";
 import { SelectedColor } from "../../types";
 import { PRESET_COLORS, SIZES } from "../../constants";
+import ImageUpload from "@/components/ui/image-upload";
 
 interface Props {
   selectedColors: SelectedColor[];
@@ -8,6 +9,7 @@ interface Props {
   disabled: boolean;
   onToggleColor: (name: string, hexCode: string) => void;
   onToggleSize: (size: string) => void;
+  onSetColorImages: (colorName: string, images: string[]) => void;
 }
 
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
@@ -22,6 +24,7 @@ export default function ColorsSection({
   disabled,
   onToggleColor,
   onToggleSize,
+  onSetColorImages,
 }: Props) {
   const isColorSelected = (name: string) =>
     selectedColors.some((c) => c.name === name);
@@ -62,6 +65,36 @@ export default function ColorsSection({
           })}
         </div>
       </div>
+
+      {/* Imágenes por color */}
+      {selectedColors.length > 0 && (
+        <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-4">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Imágenes por color
+          </p>
+          {selectedColors.map((color) => (
+            <div key={color.name} className="bg-white rounded-lg border border-gray-200 p-3 space-y-3">
+              <div className="flex items-center gap-2">
+                <span
+                  className="w-4 h-4 rounded-full border border-black/10 shrink-0"
+                  style={{ backgroundColor: color.hexCode }}
+                />
+                <span className="text-sm font-semibold text-gray-700">{color.name}</span>
+                <span className="text-xs text-gray-400 ml-1">
+                  ({color.images.length} foto{color.images.length !== 1 ? "s" : ""})
+                </span>
+              </div>
+              <ImageUpload
+                value={color.images}
+                disabled={disabled}
+                onChange={(urls) => onSetColorImages(color.name, [...color.images, ...urls])}
+                onRemove={(url) => onSetColorImages(color.name, color.images.filter((i) => i !== url))}
+                maxImages={8}
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Size picker */}
       <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-3">

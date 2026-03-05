@@ -1,5 +1,7 @@
 export interface TestimonialItem {
   rating: number;
-  text: string;
+  comment: string;
   name: string;
+  avatarUrl?: string;
+  date?: string;
 }
