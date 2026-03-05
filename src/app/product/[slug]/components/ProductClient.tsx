@@ -10,13 +10,14 @@ import ColorSelector from "./ColorSelector";
 import SizeSelector from "./SizeSelector";
 import QuantityPicker from "./QuantityPicker";
 import ProductAccordion from "./ProductAccordion";
-import BenefitsSection from "./BenefitsSection";
 import ReviewsSection from "./ReviewsSection";
 import RecommendedProducts from "./RecommendedProducts";
 import ProductVideo from "./ProductVideo";
+import Testimonials from "@/components/layout/Testimonials";
 
 import { UIProduct, UIColor, RecommendedProduct } from "../types";
 import { formatPrice } from "../constants";
+import type { TestimonialItem } from "@/components/layout/Testimonials/types/types";
 
 interface ExistingReview {
   rating: number;
@@ -28,6 +29,7 @@ interface Props {
   recommended: RecommendedProduct[];
   existingReview: ExistingReview | null;
   isAuthenticated: boolean;
+  reviews: TestimonialItem[];
 }
 
 const isVideoUrl = (url: string) => /\.(mp4|mov|avi|webm|mkv|ogg)$/i.test(url);
@@ -37,6 +39,7 @@ export default function ProductClient({
   recommended,
   existingReview,
   isAuthenticated,
+  reviews,
 }: Props) {
   // ─── Estado principal ────────────────────────────────────────────────────
   const [selectedImage, setSelectedImage] = useState(0);
@@ -58,10 +61,10 @@ export default function ProductClient({
     ? null
     : (product.items.find((i) => i.id === activeView) ?? null);
 
-  const activeColors      = activeItem ? activeItem.colors      : product.colors;
-  const activeVideoUrl    = activeItem ? activeItem.videoUrl     : product.videoUrl;
-  const activePrice       = activeItem ? (activeItem.price ?? product.basePrice) : product.basePrice;
-  const activeStock       = activeItem ? activeItem.stock        : product.stock;
+  const activeColors = activeItem ? activeItem.colors : product.colors;
+  const activeVideoUrl = activeItem ? activeItem.videoUrl : product.videoUrl;
+  const activePrice = activeItem ? (activeItem.price ?? product.basePrice) : product.basePrice;
+  const activeStock = activeItem ? activeItem.stock : product.stock;
   const activeDescription = activeItem
     ? (activeItem.description ?? product.description)
     : product.description;
@@ -81,7 +84,7 @@ export default function ProductClient({
         .forEach((url) => items.push({ url, color }));
     });
     return items;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeGeneralImages, activeColors]);
 
   const galleryUrls = masterGallery.map((item) => item.url);
@@ -143,9 +146,8 @@ export default function ProductClient({
       {/* Toast */}
       <div
         aria-live="polite"
-        className={`fixed top-6 right-6 z-100 flex items-center gap-4 bg-[#154734] text-white shadow-2xl rounded-xl px-5 py-4 transition-all duration-500 ${
-          showAddedNotification ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-8 pointer-events-none"
-        }`}
+        className={`fixed top-6 right-6 z-100 flex items-center gap-4 bg-[#154734] text-white shadow-2xl rounded-xl px-5 py-4 transition-all duration-500 ${showAddedNotification ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-8 pointer-events-none"
+          }`}
       >
         <div className="bg-white/20 rounded-full p-2 backdrop-blur-sm">
           <Check className="w-5 h-5 text-white" />
@@ -223,9 +225,8 @@ export default function ProductClient({
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
-                    className={`w-4 h-4 transition-transform duration-200 group-hover:scale-110 ${
-                      star <= Math.round(product.rating) ? "fill-current" : "fill-none text-gray-300"
-                    }`}
+                    className={`w-4 h-4 transition-transform duration-200 group-hover:scale-110 ${star <= Math.round(product.rating) ? "fill-current" : "fill-none text-gray-300"
+                      }`}
                   />
                 ))}
               </div>
@@ -286,11 +287,10 @@ export default function ProductClient({
                   <button
                     type="button"
                     onClick={() => handleViewSelect("main")}
-                    className={`px-5 py-2.5 rounded-xl border text-sm font-bold transition-all duration-200 ${
-                      activeView === "main"
+                    className={`px-5 py-2.5 rounded-xl border text-sm font-bold transition-all duration-200 ${activeView === "main"
                         ? "bg-[#154734] text-white border-[#154734] shadow-md shadow-[#154734]/20"
                         : "bg-white text-gray-700 border-gray-300 hover:border-[#154734] hover:text-[#154734]"
-                    }`}
+                      }`}
                   >
                     {product.name}
                     {product.stock === 0 && (
@@ -304,11 +304,10 @@ export default function ProductClient({
                       key={item.id}
                       type="button"
                       onClick={() => handleViewSelect(item.id)}
-                      className={`px-5 py-2.5 rounded-xl border text-sm font-bold transition-all duration-200 ${
-                        activeView === item.id
+                      className={`px-5 py-2.5 rounded-xl border text-sm font-bold transition-all duration-200 ${activeView === item.id
                           ? "bg-[#154734] text-white border-[#154734] shadow-md shadow-[#154734]/20"
                           : "bg-white text-gray-700 border-gray-300 hover:border-[#154734] hover:text-[#154734]"
-                      }`}
+                        }`}
                     >
                       {item.name}
                       {item.stock === 0 && (
@@ -355,19 +354,18 @@ export default function ProductClient({
                 <button
                   onClick={handleAddToCart}
                   disabled={!selectedSize || activeStock === 0}
-                  className={`flex-1 font-bold uppercase tracking-widest text-xs sm:text-sm rounded-lg transition-all h-14 duration-300 ${
-                    selectedSize && activeStock > 0
+                  className={`flex-1 font-bold uppercase tracking-widest text-xs sm:text-sm rounded-lg transition-all h-14 duration-300 ${selectedSize && activeStock > 0
                       ? "bg-[#154734] hover:bg-[#0f3424] text-white shadow-lg shadow-[#154734]/20 hover:shadow-[#154734]/40 active:scale-[0.98]"
                       : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  }`}
+                    }`}
                 >
                   {activeStock === 0
                     ? "Producto Agotado"
                     : !selectedSize
-                    ? "Selecciona una talla"
-                    : showAddedNotification
-                    ? "✓ Agregado"
-                    : "Agregar a la Bolsa"}
+                      ? "Selecciona una talla"
+                      : showAddedNotification
+                        ? "✓ Agregado"
+                        : "Agregar a la Bolsa"}
                 </button>
               </div>
 
@@ -398,50 +396,60 @@ export default function ProductClient({
           </div>
         </div>
 
+        {/* 1. Componente de Sección de Video en ProductClient.tsx */}
+
         {/* Video editorial — reactivo al tab activo */}
         {activeVideoUrl && (
-          <div className="mt-24 sm:mt-32 mb-16">
-            <div className="flex items-center justify-center mb-10 gap-4">
-              <span className="h-px w-16 bg-linear-to-r from-transparent to-[#C19A6B]" />
-              <span className="text-xs font-black tracking-[0.4em] uppercase text-[#C19A6B] flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5" />
-                Lookbook
-              </span>
-              <span className="h-px w-16 bg-linear-to-l from-transparent to-[#C19A6B]" />
+          <div className="mt-24 sm:mt-32 mb-16 mx-4 sm:mx-6 lg:mx-8 xl:mx-12 relative bg-[#154734] border border-[#C19A6B]/20 rounded-[2.5rem] sm:rounded-[3rem] shadow-[0_20px_50px_-15px_rgba(21,71,52,0.4)] overflow-hidden flex flex-col md:flex-row items-center justify-between gap-10 lg:gap-16 p-8 sm:p-12 lg:p-16 group isolate transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(21,71,52,0.5)]">
+
+            {/* Decoración de fondo */}
+            <div
+              className="absolute inset-0 opacity-[0.05] pointer-events-none"
+              style={{ backgroundImage: "radial-gradient(#C19A6B 1.5px, transparent 1.5px)", backgroundSize: "32px 32px" }}
+            />
+            <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-[#C19A6B]/20 to-transparent rounded-bl-full pointer-events-none -z-10 transition-transform duration-1000 group-hover:scale-110" />
+
+            <div className="flex-1 text-center md:text-left z-10 w-full">
+              <div className="flex items-center justify-center md:justify-start gap-4 mb-6">
+                <span className="h-px w-10 sm:w-12 bg-gradient-to-r from-transparent to-[#C19A6B]" />
+                <span className="text-[10px] sm:text-xs font-black tracking-[0.4em] uppercase text-[#C19A6B] flex items-center gap-2 drop-shadow-sm">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Lookbook Exclusivo
+                </span>
+                <span className="h-px w-10 sm:w-12 bg-gradient-to-l from-transparent to-[#C19A6B] md:hidden" />
+              </div>
+
+              <h2
+                className="text-4xl sm:text-5xl lg:text-6xl text-white mb-6 leading-[1.1] tracking-tight"
+                style={{ fontFamily: "Georgia, serif" }}
+              >
+                Movimiento <br />
+                <span className="italic text-[#C19A6B]">&amp; Fluidez</span>
+              </h2>
+
+              <p className="text-gray-300 font-light leading-relaxed max-w-md mx-auto md:mx-0 text-sm sm:text-base border-l-2 border-[#C19A6B]/50 pl-4">
+                Descubre cómo esta prenda se adapta a tu cuerpo. Diseñada para brindarte
+                comodidad absoluta sin perder la elegancia en cada uno de tus pasos.
+              </p>
             </div>
 
-            <div className="relative bg-[#FAFAFA] border border-[#C19A6B]/10 rounded-4xl p-8 sm:p-16 flex flex-col md:flex-row items-center gap-12 lg:gap-24 overflow-hidden">
-              <div className="flex-1 text-center md:text-left z-10">
-                <h2
-                  className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl text-[#154734] mb-6 leading-[1.1] tracking-tight"
-                  style={{ fontFamily: "Georgia, serif" }}
-                >
-                  Movimiento <br />
-                  <span className="italic text-[#C19A6B]">&amp; Fluidez</span>
-                </h2>
-                <p className="text-gray-500 font-light leading-relaxed max-w-md mx-auto md:mx-0 text-base sm:text-lg">
-                  Descubre cómo esta prenda se adapta a tu cuerpo. Diseñada para brindarte
-                  comodidad absoluta sin perder la elegancia en cada uno de tus pasos.
-                </p>
+            {/* Contenedor del video con altura controlada para evitar desbordes visuales */}
+            <div className="flex-1 w-full flex justify-center md:justify-end z-10">
+              <div className="relative w-full max-w-[240px] sm:max-w-[280px] lg:max-w-[320px] aspect-[3/4] sm:aspect-[4/5] max-h-[480px] bg-white rounded-[2rem] overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.3)] border border-[#C19A6B]/30 transition-all duration-700 ease-in-out hover:-translate-y-2 hover:shadow-[0_25px_50px_rgba(193,154,107,0.25)] hover:border-[#C19A6B]/60">
+                <ProductVideo url={activeVideoUrl} />
               </div>
+            </div>
 
-              <div className="flex-1 w-full flex justify-center md:justify-end z-10">
-                <div className="w-full max-w-[320px] xl:max-w-90 aspect-9/16 bg-gray-100 rounded-2xl overflow-hidden shadow-2xl border-4 border-white transition-transform duration-700 hover:scale-[1.02]">
-                  <ProductVideo url={activeVideoUrl} />
-                </div>
-              </div>
-
-              <div className="absolute top-1/2 right-0 text-[200px] text-[#154734]/2 font-serif leading-none -translate-y-1/2 pointer-events-none select-none">
-                C.V.
-              </div>
+            <div className="absolute top-1/2 right-10 text-[180px] sm:text-[250px] lg:text-[300px] text-white/5 font-serif leading-none -translate-y-1/2 pointer-events-none select-none transition-transform duration-1000 group-hover:scale-105">
+              C.V.
             </div>
           </div>
         )}
 
         {/* Secciones finales */}
         <div className="mt-24 space-y-24">
-          <BenefitsSection />
           <RecommendedProducts products={recommended} />
+          <Testimonials comments={reviews} />
           <div id="seccion-resenas" className="scroll-mt-32">
             <ReviewsSection
               productId={product.id}

@@ -1,4 +1,5 @@
 import { Category } from "../../types";
+import { ProductFormErrors } from "../../schema";
 
 interface Props {
   name: string; onName: (v: string) => void;
@@ -8,10 +9,20 @@ interface Props {
   isFeatured: boolean; onFeatured: (v: boolean) => void;
   isNew: boolean; onNew: (v: boolean) => void;
   categories: Category[];
+  errors?: ProductFormErrors;
 }
 
-const inputCls =
-  "w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10 outline-none text-sm";
+const inputCls = (hasError = false) =>
+  `w-full px-4 py-2.5 rounded-lg border ${
+    hasError
+      ? "border-red-400 focus:border-red-400 focus:ring-red-100"
+      : "border-gray-200 focus:border-[#C19A6B] focus:ring-[#C19A6B]/10"
+  } focus:ring-4 outline-none text-sm transition-colors`;
+
+function FieldError({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return <p className="text-red-500 text-sm mt-1">{msg}</p>;
+}
 
 export default function GeneralInfoSection({
   name, onName,
@@ -21,6 +32,7 @@ export default function GeneralInfoSection({
   isFeatured, onFeatured,
   isNew, onNew,
   categories,
+  errors = {},
 }: Props) {
   return (
     <div className="space-y-4">
@@ -33,9 +45,9 @@ export default function GeneralInfoSection({
           value={name}
           onChange={(e) => onName(e.target.value)}
           placeholder="Ej: Conjunto Lino Premium"
-          required
-          className={inputCls}
+          className={inputCls(!!errors.name)}
         />
+        <FieldError msg={errors.name} />
       </div>
 
       <div className="space-y-1.5">
@@ -47,12 +59,12 @@ export default function GeneralInfoSection({
           value={description}
           onChange={(e) => onDescription(e.target.value)}
           placeholder="Describe el producto..."
-          required
-          className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10 outline-none resize-none text-sm"
+          className={`${inputCls(!!errors.description)} resize-none`}
         />
+        <FieldError msg={errors.description} />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
             Categoría *
@@ -60,14 +72,14 @@ export default function GeneralInfoSection({
           <select
             value={categoryId}
             onChange={(e) => onCategory(e.target.value)}
-            required
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10 bg-white outline-none text-sm"
+            className={`${inputCls(!!errors.categoryId)} bg-white`}
           >
             <option value="">Seleccionar...</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
+          <FieldError msg={errors.categoryId} />
         </div>
         <div className="space-y-1.5">
           <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
@@ -76,7 +88,7 @@ export default function GeneralInfoSection({
           <select
             value={status}
             onChange={(e) => onStatus(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10 bg-white outline-none text-sm"
+            className={`${inputCls()} bg-white`}
           >
             <option value="ACTIVE">Activo</option>
             <option value="INACTIVE">Inactivo</option>
@@ -85,7 +97,7 @@ export default function GeneralInfoSection({
         </div>
       </div>
 
-      <div className="flex gap-6 pt-1">
+      <div className="flex flex-wrap gap-6 pt-1">
         {[
           { label: "Producto Destacado", value: isFeatured, onChange: onFeatured },
           { label: "Marcar como Nuevo", value: isNew, onChange: onNew },

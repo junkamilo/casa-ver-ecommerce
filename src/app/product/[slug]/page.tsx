@@ -7,6 +7,7 @@ import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/layout/Header";
 import ProductClient from "./components/ProductClient";
 import { UIProduct, UIProductItem, RecommendedProduct } from "./types";
+import type { TestimonialItem } from "@/components/layout/Testimonials/types/types";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -52,6 +53,12 @@ export default async function ProductPage({ params }: Props) {
           },
         },
       },
+      reviews: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: { select: { name: true } },
+        },
+      },
       category: {
         include: {
           products: {
@@ -62,6 +69,15 @@ export default async function ProductPage({ params }: Props) {
                 where: { colorId: null },
                 take: 1,
                 orderBy: { order: "asc" },
+              },
+              colors: {
+                take: 1,
+                include: {
+                  images: {
+                    take: 1,
+                    orderBy: { order: "asc" },
+                  },
+                },
               },
             },
           },
@@ -138,7 +154,17 @@ export default async function ProductPage({ params }: Props) {
     name: p.name,
     slug: p.slug,
     price: Number(p.basePrice),
-    imageUrl: p.images[0]?.url ?? null,
+    imageUrl: p.images[0]?.url ?? p.colors[0]?.images[0]?.url ?? null,
+  }));
+
+  const productReviews: TestimonialItem[] = (product.reviews as any[]).map((r) => ({
+    rating: r.rating as number,
+    comment: (r.comment as string | null) ?? "",
+    name: (r.user?.name as string | null) ?? "Clienta",
+    date: new Date(r.createdAt as string).toLocaleDateString("es-CO", {
+      year: "numeric",
+      month: "short",
+    }),
   }));
 
   return (
@@ -151,6 +177,7 @@ export default async function ProductPage({ params }: Props) {
           recommended={recommended}
           existingReview={userReview}
           isAuthenticated={!!userEmail}
+          reviews={productReviews}
         />
       </div>
       <Footer />

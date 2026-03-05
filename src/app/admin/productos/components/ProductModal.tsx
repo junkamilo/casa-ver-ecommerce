@@ -1,7 +1,14 @@
+import { useState } from "react";
 import {
   X, Save, Loader2, Info, LayoutGrid, Tag, Package, Video,
 } from "lucide-react";
 import { Category, SelectedColor, SetItemForm } from "../types";
+import {
+  productFormSchema,
+  setItemFormSchema,
+  ProductFormErrors,
+  ItemFormErrors,
+} from "../schema";
 import GeneralInfoSection from "./form/GeneralInfoSection";
 import ColorsSection from "./form/ColorsSection";
 import MaterialSection from "./form/MaterialSection";
@@ -68,8 +75,17 @@ function BlockHeader({
   );
 }
 
-const inputCls =
-  "w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10 outline-none text-sm";
+function FieldError({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return <p className="text-red-500 text-sm mt-1">{msg}</p>;
+}
+
+const inputCls = (hasError = false) =>
+  `w-full px-4 py-2.5 rounded-lg border ${
+    hasError
+      ? "border-red-400 focus:border-red-400 focus:ring-red-100"
+      : "border-gray-200 focus:border-[#C19A6B] focus:ring-[#C19A6B]/10"
+  } focus:ring-4 outline-none text-sm transition-colors`;
 
 export default function ProductModal({
   editingId,
@@ -105,11 +121,73 @@ export default function ProductModal({
   toggleSetItemSize,
   setSetItemColorImages,
 }: Props) {
+  const [errors, setErrors] = useState<ProductFormErrors>({});
+  const [itemErrors, setItemErrors] = useState<ItemFormErrors>({});
+
+  const handleValidatedSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const productResult = productFormSchema.safeParse({
+      name,
+      description,
+      basePrice,
+      comparePrice: comparePrice || undefined,
+      stock,
+      categoryId,
+      videoUrl: videoUrl || undefined,
+    });
+
+    const newErrors: ProductFormErrors = {};
+    if (!productResult.success) {
+      for (const issue of productResult.error.issues) {
+        const field = issue.path[0] as keyof ProductFormErrors;
+        if (field && !newErrors[field]) newErrors[field] = issue.message;
+      }
+    }
+
+    const newItemErrors: ItemFormErrors = {};
+    if (isSet) {
+      for (const item of setItems) {
+        const itemResult = setItemFormSchema.safeParse({
+          name: item.name,
+          price: item.price || undefined,
+          comparePrice: item.comparePrice || undefined,
+          videoUrl: item.videoUrl || undefined,
+        });
+        if (!itemResult.success) {
+          const errs: ItemFormErrors[string] = {};
+          for (const issue of itemResult.error.issues) {
+            const field = issue.path[0] as keyof ItemFormErrors[string];
+            if (field && !errs[field]) errs[field] = issue.message;
+          }
+          newItemErrors[item.localId] = errs;
+        }
+      }
+    }
+
+    setErrors(newErrors);
+    setItemErrors(newItemErrors);
+
+    const isValid =
+      Object.keys(newErrors).length === 0 &&
+      Object.keys(newItemErrors).length === 0;
+
+    if (isValid) {
+      onSubmit(e);
+    }
+  };
+
+  const handleClose = () => {
+    setErrors({});
+    setItemErrors({});
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={handleClose}
       />
 
       <div className="relative w-full max-w-4xl bg-[#F8F9FA] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200">
@@ -129,7 +207,7 @@ export default function ProductModal({
               </span>
             )}
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+          <button onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
             <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
@@ -140,7 +218,7 @@ export default function ProductModal({
             <Loader2 className="w-8 h-8 animate-spin text-[#154734]" />
           </div>
         ) : (
-          <form onSubmit={onSubmit} className="flex-1 overflow-y-auto">
+          <form onSubmit={handleValidatedSubmit} className="flex-1 overflow-y-auto">
             <div className="p-6 space-y-5">
 
               {/* ╔══════════════════════════════════════╗
@@ -160,6 +238,7 @@ export default function ProductModal({
                   isFeatured={isFeatured} onFeatured={setIsFeatured}
                   isNew={isNew} onNew={setIsNew}
                   categories={categories}
+                  errors={errors}
                 />
               </div>
 
@@ -197,7 +276,7 @@ export default function ProductModal({
                 </div>
 
                 {/* Indicador visual del modo activo */}
-                <div className={`mt-4 flex gap-3 transition-all duration-300`}>
+                <div className="mt-4 flex gap-3 transition-all duration-300">
                   <div className={`flex-1 rounded-xl border-2 px-4 py-3 text-center transition-all ${
                     !isSet
                       ? "border-[#154734] bg-[#154734]/5"
@@ -239,7 +318,7 @@ export default function ProductModal({
                 />
                 <div className="space-y-6">
                   {/* Precio y Stock */}
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
                         Precio (COP) *
@@ -249,10 +328,10 @@ export default function ProductModal({
                         value={basePrice}
                         onChange={(e) => setBasePrice(e.target.value)}
                         placeholder="89900"
-                        required
                         min="0"
-                        className={inputCls}
+                        className={inputCls(!!errors.basePrice)}
                       />
+                      <FieldError msg={errors.basePrice} />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
@@ -264,8 +343,9 @@ export default function ProductModal({
                         onChange={(e) => setComparePrice(e.target.value)}
                         placeholder="120000"
                         min="0"
-                        className={inputCls}
+                        className={inputCls(!!errors.comparePrice)}
                       />
+                      <FieldError msg={errors.comparePrice} />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
@@ -276,10 +356,10 @@ export default function ProductModal({
                         value={stock}
                         onChange={(e) => setStock(e.target.value)}
                         placeholder="0"
-                        required
                         min="0"
-                        className={inputCls}
+                        className={inputCls(!!errors.stock)}
                       />
+                      <FieldError msg={errors.stock} />
                     </div>
                   </div>
 
@@ -307,6 +387,7 @@ export default function ProductModal({
                       onVideoUrl={setVideoUrl}
                       disabled={submitting}
                     />
+                    <FieldError msg={errors.videoUrl} />
                   </div>
                 </div>
               </div>
@@ -325,6 +406,7 @@ export default function ProductModal({
                   <SetItemsSection
                     items={setItems}
                     disabled={submitting}
+                    itemErrors={itemErrors}
                     onAdd={addSetItem}
                     onRemove={removeSetItem}
                     onUpdate={updateSetItem}
@@ -336,7 +418,7 @@ export default function ProductModal({
               )}
 
               {/* ╔══════════════════════════════════════╗
-                  ║  BLOQUE 4 — Material y Cuidado       ║
+                  ║  BLOQUE 5 — Material y Cuidado       ║
                   ╚══════════════════════════════════════╝ */}
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
                 <MaterialSection
@@ -358,7 +440,7 @@ export default function ProductModal({
               <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={handleClose}
                   className="px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   Cancelar

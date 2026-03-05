@@ -26,6 +26,7 @@ export interface SetItemForm {
   name: string;
   description: string;
   price: string;
+  comparePrice: string;
   videoUrl: string;
   stock: string;
   colors: SelectedColor[];
