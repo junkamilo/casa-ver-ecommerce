@@ -173,20 +173,21 @@ export default function ProductClient({
       </nav>
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-8 pb-16 sm:pt-12 sm:pb-24 lg:pb-32">
-        <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 xl:gap-20 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-10 lg:gap-16 xl:gap-20">
 
-          {/* Galería — 60% */}
-          <div className="w-full lg:w-[60%]">
+          {/* Galería — sticky mientras scrolleas los detalles */}
+          <div className="self-start lg:sticky lg:top-24 xl:top-28">
             <ProductGallery
               gallery={galleryUrls}
               selectedImage={selectedImage}
               productName={product.name}
               onSelect={handleImageSelect}
+              activeColorHex={selectedColor?.hex}
             />
           </div>
 
-          {/* Detalles — 40% sticky */}
-          <div className="w-full lg:w-[40%] flex flex-col lg:sticky lg:top-24 xl:top-28">
+          {/* Detalles — scroll natural */}
+          <div className="flex flex-col">
 
             {/* Nombre y Precio */}
             <div className="mb-5">

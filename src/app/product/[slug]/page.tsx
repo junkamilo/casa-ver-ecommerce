@@ -130,6 +130,13 @@ export default async function ProductPage({ params }: Props) {
     (acc: number, color: any) => acc + (color.variants as any[]).reduce((s: number, v: any) => s + v.stock, 0), 0
   );
 
+  const liveReviews = product.reviews as any[];
+  const liveNumReviews = liveReviews.length;
+  const liveRating =
+    liveNumReviews > 0
+      ? liveReviews.reduce((sum: number, r: any) => sum + (r.rating as number), 0) / liveNumReviews
+      : 0;
+
   const uiProduct: UIProduct = {
     id: product.id,
     name: product.name,
@@ -142,8 +149,8 @@ export default async function ProductPage({ params }: Props) {
     videoUrl: resolvedVideoUrl,
     generalImages: allGeneralImages.filter((url) => !isVideoUrl(url)),
     colors: (product.colors as any[]).map(mapUIColor),
-    rating: product.rating ?? 0,
-    numReviews: product.numReviews ?? 0,
+    rating: liveRating,
+    numReviews: liveNumReviews,
     stock: totalStock,
     isSet: product.isSet ?? false,
     items: uiItems,

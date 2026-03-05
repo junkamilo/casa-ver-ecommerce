@@ -2,7 +2,8 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Star, CheckCircle, MessageSquareQuote } from "lucide-react";
 import { saveReview } from "../actions";
 
@@ -24,12 +25,18 @@ export default function ReviewForm({
   existing,
   isAuthenticated,
 }: Props) {
+  const router = useRouter();
   const [hover, setHover] = useState(0);
   const [rating, setRating] = useState(existing?.rating ?? 0);
   const [comment, setComment] = useState(existing?.comment ?? "");
   const [error, setError] = useState("");
   const [toast, setToast] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setRating(existing?.rating ?? 0);
+    setComment(existing?.comment ?? "");
+  }, [existing]);
 
   const showToast = () => {
     setToast(true);
@@ -50,6 +57,7 @@ export default function ReviewForm({
       });
       if (result.success) {
         showToast();
+        router.refresh();
       } else {
         setError(result.error ?? "Error al guardar la reseña");
       }

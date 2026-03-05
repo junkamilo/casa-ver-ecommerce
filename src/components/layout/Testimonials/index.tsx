@@ -15,7 +15,7 @@ interface Props {
 const Testimonials = ({ comments }: Props) => {
   const { scrollRef, setIsPaused } = useAutoScroll();
   const items = comments ?? TESTIMONIALS;
-  const doubled = [...items, ...items];
+  const doubled = items.length >= 4 ? [...items, ...items] : items;
 
   return (
     <section className="mx-4 sm:mx-6 lg:mx-8 xl:mx-12 relative rounded-[2.5rem] sm:rounded-[3rem] p-[3px] sm:p-[4px] overflow-hidden group shadow-[0_20px_50px_-15px_rgba(21,71,52,0.3)] hover:shadow-[0_30px_60px_-15px_rgba(21,71,52,0.4)] transition-shadow duration-700">
