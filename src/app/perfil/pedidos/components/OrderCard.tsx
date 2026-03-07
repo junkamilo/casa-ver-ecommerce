@@ -1,4 +1,7 @@
-import { ChevronDown, Package, MapPin, Truck } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { ChevronDown, Package, MapPin, Truck, CheckCircle2 } from "lucide-react";
 import { Order } from "../types";
 import { formatOrderDate, formatOrderPrice } from "../constants";
 import { OrderStatusBadge } from "./OrderStatusBadge";
@@ -8,9 +11,28 @@ interface Props {
   order: Order;
   isExpanded: boolean;
   onToggle: () => void;
+  onDelivered?: (id: string) => void;
 }
 
-export function OrderCard({ order, isExpanded, onToggle }: Props) {
+export function OrderCard({ order, isExpanded, onToggle, onDelivered }: Props) {
+  const [status, setStatus] = useState(order.status);
+  const [confirming, setConfirming] = useState(false);
+
+  async function handleConfirmDelivery() {
+    setConfirming(true);
+    try {
+      const res = await fetch(`/api/profile/orders/${order.id}/confirm-delivery`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        setStatus("DELIVERED");
+        onDelivered?.(order.id);
+      }
+    } finally {
+      setConfirming(false);
+    }
+  }
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       {/* Header row */}
@@ -26,7 +48,7 @@ export function OrderCard({ order, isExpanded, onToggle }: Props) {
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm font-bold text-gray-900">{order.orderNumber}</span>
-              <OrderStatusBadge status={order.status} />
+              <OrderStatusBadge status={status} />
             </div>
             <p className="text-xs text-gray-500 mt-0.5">{formatOrderDate(order.createdAt)}</p>
           </div>
@@ -76,6 +98,20 @@ export function OrderCard({ order, isExpanded, onToggle }: Props) {
               </div>
             )}
           </div>
+
+          {/* Confirmar entrega */}
+          {status === "SHIPPED" && (
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <button
+                onClick={handleConfirmDelivery}
+                disabled={confirming}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#154734] text-white text-sm font-bold rounded-lg hover:bg-[#103a2a] transition-colors disabled:opacity-60"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                {confirming ? "Confirmando..." : "Confirmar que recibí mi pedido"}
+              </button>
+            </div>
+          )}
 
           {/* Total */}
           <div className="mt-4 flex justify-end">

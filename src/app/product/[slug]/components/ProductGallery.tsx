@@ -7,6 +7,7 @@ interface Props {
   selectedImage: number;
   productName: string;
   onSelect: (index: number) => void;
+  activeColorHex?: string;
 }
 
 export default function ProductGallery({
@@ -14,11 +15,12 @@ export default function ProductGallery({
   selectedImage,
   productName,
   onSelect,
+  activeColorHex,
 }: Props) {
   if (!gallery.length) return null;
 
   return (
-    <div className="flex flex-col-reverse lg:flex-row gap-4 sm:gap-5 lg:sticky lg:top-32">
+    <div className="flex flex-col-reverse lg:flex-row gap-4 sm:gap-5">
 
       {/* Miniaturas */}
       <div className="flex lg:flex-col gap-2 sm:gap-3 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden py-2 lg:py-0 scrollbar-hide lg:w-20 xl:w-24 shrink-0 lg:max-h-150 xl:max-h-175">
@@ -47,11 +49,28 @@ export default function ProductGallery({
         })}
       </div>
 
-      {/* Imagen principal */}
-      <div className="relative w-full aspect-4/5 sm:aspect-3/4 xl:aspect-2/3 bg-[#FAFAFA] rounded-2xl overflow-hidden shadow-sm border border-gray-100 group cursor-crosshair">
+      {/* Imagen principal — contenedor con glow exterior dinámico */}
+      <div
+        className="relative w-full aspect-4/5 sm:aspect-3/4 xl:aspect-2/3 bg-[#FAFAFA] rounded-2xl overflow-hidden shadow-sm border border-gray-100 group cursor-crosshair"
+        style={{
+          transition: "box-shadow 700ms ease-in-out",
+          boxShadow: activeColorHex
+            ? `0 0 0 1px ${activeColorHex}30, 0 8px 40px ${activeColorHex}35, 0 2px 12px ${activeColorHex}25`
+            : "0 1px 3px 0 rgb(0 0 0 / 0.1)",
+        }}
+      >
+
+        {/* Capa de tinte de color — backgroundColor transiciona nativamente */}
+        <div
+          className="absolute inset-0 z-0 pointer-events-none"
+          style={{
+            backgroundColor: activeColorHex ? `${activeColorHex}22` : "transparent",
+            transition: "background-color 700ms ease-in-out",
+          }}
+        />
 
         {/* Skeleton de carga */}
-        <div className="absolute inset-0 bg-linear-to-tr from-[#FAFAFA] to-gray-50 animate-pulse" />
+        <div className="absolute inset-0 bg-linear-to-tr from-[#FAFAFA] to-gray-50 animate-pulse z-1" />
 
         <Image
           src={gallery[selectedImage]}

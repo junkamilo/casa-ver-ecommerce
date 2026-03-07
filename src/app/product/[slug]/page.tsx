@@ -34,7 +34,7 @@ export default async function ProductPage({ params }: Props) {
           images: { orderBy: { order: "asc" } },
           variants: {
             where: { isActive: true },
-            select: { size: true, stock: true },
+            select: { id: true, sku: true, size: true, stock: true },
             orderBy: { size: "asc" },
           },
         },
@@ -47,7 +47,7 @@ export default async function ProductPage({ params }: Props) {
               images: { orderBy: { order: "asc" } },
               variants: {
                 where: { isActive: true },
-                select: { size: true, stock: true },
+                select: { id: true, sku: true, size: true, stock: true },
               },
             },
           },
@@ -106,13 +106,17 @@ export default async function ProductPage({ params }: Props) {
   const resolvedVideoUrl = dbVideoUrl ?? (allGeneralImages.find(isVideoUrl) ?? null);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mapUIColor = (color: any) => ({
-    id: color.id,
-    name: color.name,
-    hex: color.hexCode,
-    images: (color.images as any[]).map((img) => img.url).filter((u: string) => !isVideoUrl(u)),
-    availableSizes: (color.variants as any[]).filter((v) => v.stock > 0).map((v) => v.size as string),
-  });
+  const mapUIColor = (color: any) => {
+    const activeVariants = (color.variants as any[]).filter((v) => v.stock > 0);
+    return {
+      id: color.id,
+      name: color.name,
+      hex: color.hexCode,
+      images: (color.images as any[]).map((img) => img.url).filter((u: string) => !isVideoUrl(u)),
+      availableSizes: activeVariants.map((v) => v.size as string),
+      variants: activeVariants.map((v) => ({ size: v.size as string, variantId: v.id as string, sku: v.sku as string })),
+    };
+  };
 
   const uiItems: UIProductItem[] = (product.items as any[] ?? []).map((item) => ({
     id: item.id,
@@ -130,6 +134,13 @@ export default async function ProductPage({ params }: Props) {
     (acc: number, color: any) => acc + (color.variants as any[]).reduce((s: number, v: any) => s + v.stock, 0), 0
   );
 
+  const liveReviews = product.reviews as any[];
+  const liveNumReviews = liveReviews.length;
+  const liveRating =
+    liveNumReviews > 0
+      ? liveReviews.reduce((sum: number, r: any) => sum + (r.rating as number), 0) / liveNumReviews
+      : 0;
+
   const uiProduct: UIProduct = {
     id: product.id,
     name: product.name,
@@ -142,8 +153,8 @@ export default async function ProductPage({ params }: Props) {
     videoUrl: resolvedVideoUrl,
     generalImages: allGeneralImages.filter((url) => !isVideoUrl(url)),
     colors: (product.colors as any[]).map(mapUIColor),
-    rating: product.rating ?? 0,
-    numReviews: product.numReviews ?? 0,
+    rating: liveRating,
+    numReviews: liveNumReviews,
     stock: totalStock,
     isSet: product.isSet ?? false,
     items: uiItems,

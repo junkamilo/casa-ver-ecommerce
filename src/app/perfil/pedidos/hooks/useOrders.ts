@@ -1,6 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Order, OrderFilter } from "../types";
-import { MOCK_ORDERS } from "../mockData";
 
 export interface UseOrdersResult {
   orders: Order[];
@@ -14,12 +13,18 @@ export interface UseOrdersResult {
 }
 
 export function useOrders(): UseOrdersResult {
+  const [orders, setOrders] = useState<Order[]>([]);
   const [activeFilter, setActiveFilter] = useState<OrderFilter>("ALL");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [isLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // In production this would be replaced by a fetch call
-  const orders = MOCK_ORDERS;
+  useEffect(() => {
+    fetch("/api/profile/orders")
+      .then((res) => res.json())
+      .then((data) => setOrders(Array.isArray(data) ? data : []))
+      .catch(() => setOrders([]))
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const filteredOrders = useMemo(() => {
     if (activeFilter === "ALL") return orders;

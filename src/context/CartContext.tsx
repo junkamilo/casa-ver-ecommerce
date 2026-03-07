@@ -3,9 +3,11 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 import { StaticImageData } from "next/image";
 
-// Definimos cómo se ve un producto en el carrito
 export interface CartItem {
   id: string;
+  variantId: string;    // ID de la variante en BD (requerido para crear la orden)
+  productId: string;    // ID del producto padre en BD
+  sku: string;          // SKU de la variante
   name: string;
   price: number;
   image: StaticImageData | string;
@@ -40,30 +42,33 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const addToCart = (product: any, qty: number, color: any, size?: string) => {
     const sizeLabel = size || "Única";
-    const itemId = `${product.name}-${color.name}-${sizeLabel}`;
+    const itemId = `${product.id ?? product.name}-${color.id ?? color.name}-${sizeLabel}`;
 
-    setItems(currentItems => {
-      const existingItem = currentItems.find(item => item.id === itemId);
+    setItems((currentItems) => {
+      const existingItem = currentItems.find((item) => item.id === itemId);
 
       if (existingItem) {
-        return currentItems.map(item =>
-          item.id === itemId
-            ? { ...item, quantity: item.quantity + qty }
-            : item
+        return currentItems.map((item) =>
+          item.id === itemId ? { ...item, quantity: item.quantity + qty } : item
         );
       }
 
-      return [...currentItems, {
-        id: itemId,
-        name: product.name,
-        price: product.price,
-        image: product.gallery?.[0] || product.image,
-        color: color.name,
-        size: sizeLabel,
-        quantity: qty
-      }];
+      return [
+        ...currentItems,
+        {
+          id: itemId,
+          variantId: product.variantId ?? color.variantId ?? "",
+          productId: product.id ?? "",
+          sku: product.sku ?? color.sku ?? "",
+          name: product.name,
+          price: product.price,
+          image: product.gallery?.[0] || product.image,
+          color: color.name,
+          size: sizeLabel,
+          quantity: qty,
+        },
+      ];
     });
-
   };
 
   const removeFromCart = (id: string) => {

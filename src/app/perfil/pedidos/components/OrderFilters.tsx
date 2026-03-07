@@ -11,9 +11,7 @@ export function OrderFilters({ active, onChange, countByStatus }: Props) {
   return (
     <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
       {VISIBLE_FILTERS.map((filter) => {
-        const count = countByStatus[filter];
-        if (!count && filter !== "ALL") return null;
-
+        const count = countByStatus[filter] ?? 0;
         const isActive = active === filter;
 
         return (
@@ -27,7 +25,7 @@ export function OrderFilters({ active, onChange, countByStatus }: Props) {
             }`}
           >
             {ORDER_FILTER_LABELS[filter]}
-            {count !== undefined && (
+            {count > 0 && (
               <span
                 className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] ${
                   isActive ? "bg-white/20" : "bg-gray-100 text-gray-500"

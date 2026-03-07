@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Star, Check, ShoppingBag, Sparkles } from "lucide-react";
 
 import { useCart } from "@/context/CartContext";
@@ -55,6 +56,7 @@ export default function ProductClient({
   const [activeView, setActiveView] = useState<string>("main");
 
   const { addToCart } = useCart();
+  const router = useRouter();
 
   // ─── Datos activos según la vista seleccionada ──────────────────────────
   const activeItem = activeView === "main"
@@ -117,19 +119,46 @@ export default function ProductClient({
     }
   };
 
-  const handleAddToCart = () => {
-    if (!selectedSize || !selectedColor) return;
+  const buildCartProduct = () => {
+    if (!selectedSize || !selectedColor) return null;
+    const variant = selectedColor.variants.find((v) => v.size === selectedSize);
     const cartName = product.isSet && activeItem
       ? `${product.name} — ${activeItem.name}`
       : product.name;
+    return {
+      id: product.id,
+      variantId: variant?.variantId ?? "",
+      sku: variant?.sku ?? "",
+      name: cartName,
+      price: activePrice,
+      gallery: galleryUrls,
+      image: galleryUrls[0] ?? "",
+    };
+  };
+
+  const handleAddToCart = () => {
+    const cartProduct = buildCartProduct();
+    if (!cartProduct || !selectedColor) return;
     addToCart(
-      { name: cartName, price: activePrice, gallery: galleryUrls, image: galleryUrls[0] ?? "" },
+      cartProduct,
       quantity,
       { name: selectedColor.name, hex: selectedColor.hex },
-      selectedSize
+      selectedSize!
     );
     setShowAddedNotification(true);
     setTimeout(() => setShowAddedNotification(false), 2000);
+  };
+
+  const handleBuyNow = () => {
+    const cartProduct = buildCartProduct();
+    if (!cartProduct || !selectedColor) return;
+    addToCart(
+      cartProduct,
+      quantity,
+      { name: selectedColor.name, hex: selectedColor.hex },
+      selectedSize!
+    );
+    router.push("/checkout");
   };
 
   const scrollToReviews = () => {
@@ -173,20 +202,21 @@ export default function ProductClient({
       </nav>
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-8 pb-16 sm:pt-12 sm:pb-24 lg:pb-32">
-        <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 xl:gap-20 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-10 lg:gap-16 xl:gap-20">
 
-          {/* Galería — 60% */}
-          <div className="w-full lg:w-[60%]">
+          {/* Galería — sticky mientras scrolleas los detalles */}
+          <div className="self-start lg:sticky lg:top-24 xl:top-28">
             <ProductGallery
               gallery={galleryUrls}
               selectedImage={selectedImage}
               productName={product.name}
               onSelect={handleImageSelect}
+              activeColorHex={selectedColor?.hex}
             />
           </div>
 
-          {/* Detalles — 40% sticky */}
-          <div className="w-full lg:w-[40%] flex flex-col lg:sticky lg:top-24 xl:top-28">
+          {/* Detalles — scroll natural */}
+          <div className="flex flex-col">
 
             {/* Nombre y Precio */}
             <div className="mb-5">
@@ -369,12 +399,18 @@ export default function ProductClient({
                 </button>
               </div>
 
-              <Link
-                href="/checkout"
-                className="w-full bg-[#C19A6B] hover:bg-[#b0885a] text-white font-bold py-4 rounded-lg text-center uppercase tracking-widest text-sm transition-all duration-300 shadow-md hover:shadow-xl hover:shadow-[#C19A6B]/25 active:scale-[0.98]"
+              <button
+                type="button"
+                onClick={handleBuyNow}
+                disabled={!selectedSize || activeStock === 0}
+                className={`w-full font-bold py-4 rounded-lg uppercase tracking-widest text-sm transition-all duration-300 ${
+                  selectedSize && activeStock > 0
+                    ? "bg-[#C19A6B] hover:bg-[#b0885a] text-white shadow-md hover:shadow-xl hover:shadow-[#C19A6B]/25 active:scale-[0.98]"
+                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                }`}
               >
-                Comprar Ahora
-              </Link>
+                {activeStock === 0 ? "Producto Agotado" : !selectedSize ? "Selecciona una talla" : "Comprar Ahora"}
+              </button>
             </div>
 
             {/* Métodos de pago */}
