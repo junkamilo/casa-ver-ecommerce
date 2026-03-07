@@ -1,13 +1,35 @@
-import { X, User, Package, MapPin, CreditCard, Calendar } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { X, User, Package, MapPin, CreditCard, Calendar, ChevronDown } from "lucide-react";
 import { getStatusStyles, formatPrice } from "../constants";
+import { updateOrderStatus } from "@/app/actions/orders";
 import type { Order } from "../types";
+
+const ADMIN_STATUSES = ["Pendiente", "Procesando", "Pagado", "Enviado", "Cancelado", "Fallido"];
 
 interface PedidoDetailModalProps {
   order: Order;
   onClose: () => void;
+  onStatusUpdated: (orderNumber: string, newStatus: string) => void;
 }
 
-export function PedidoDetailModal({ order, onClose }: PedidoDetailModalProps) {
+export function PedidoDetailModal({ order, onClose, onStatusUpdated }: PedidoDetailModalProps) {
+  const [selectedStatus, setSelectedStatus] = useState(order.status);
+  const [saving, setSaving] = useState(false);
+
+  const isDirty = selectedStatus !== order.status;
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      await updateOrderStatus(order.id, selectedStatus);
+      onStatusUpdated(order.id, selectedStatus);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in duration-200">
       <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[95vh] sm:max-h-[90vh] flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
@@ -35,13 +57,41 @@ export function PedidoDetailModal({ order, onClose }: PedidoDetailModalProps) {
         <div className="p-6 overflow-y-auto space-y-6 bg-gray-50/30">
 
           {/* Estado y Total */}
-          <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Total a Pagar</p>
-              <p className="text-2xl font-bold text-[#154734]">{formatPrice(order.total)}</p>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Total a Pagar</p>
+                <p className="text-2xl font-bold text-[#154734]">{formatPrice(order.total)}</p>
+              </div>
+              <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusStyles(order.status)}`}>
+                {order.status}
+              </span>
             </div>
-            <div className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusStyles(order.status)}`}>
-              {order.status}
+
+            {/* Cambio de estado */}
+            <div className="pt-2 border-t border-gray-100">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Cambiar Estado</p>
+              <div className="relative">
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 pr-8 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#154734]/30 focus:border-[#154734] cursor-pointer"
+                >
+                  {ADMIN_STATUSES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              </div>
+              {isDirty && (
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="mt-2 w-full py-2 bg-[#154734] text-white text-sm font-bold rounded-lg hover:bg-[#103a2a] transition-colors disabled:opacity-60"
+                >
+                  {saving ? "Guardando..." : "Guardar cambio"}
+                </button>
+              )}
             </div>
           </div>
 

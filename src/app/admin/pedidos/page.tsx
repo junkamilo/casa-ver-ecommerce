@@ -20,7 +20,17 @@ export default function AdminPedidos() {
     detailOrder,
     setDetailOrder,
     filteredOrders,
+    loading,
+    handleStatusUpdated,
   } = usePedidos();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-[#154734] border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 sm:space-y-8 p-3 sm:p-6 bg-gray-50 min-h-screen font-sans">
@@ -41,7 +51,7 @@ export default function AdminPedidos() {
         onViewDetail={setDetailOrder}
       />
       {detailOrder && (
-        <PedidoDetailModal order={detailOrder} onClose={() => setDetailOrder(null)} />
+        <PedidoDetailModal order={detailOrder} onClose={() => setDetailOrder(null)} onStatusUpdated={handleStatusUpdated} />
       )}
     </div>
   );

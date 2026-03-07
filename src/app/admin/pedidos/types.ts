@@ -11,6 +11,9 @@ export interface Order {
   phone: string;
   items: OrderItem[];
   total: number;
+  subtotal?: number;
+  shippingCost?: number;
+  discount?: number;
   status: string;
   paymentMethod: string;
   date: string;

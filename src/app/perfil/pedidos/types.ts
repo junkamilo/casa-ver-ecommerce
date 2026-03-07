@@ -1,10 +1,11 @@
 export type OrderStatus =
   | "PENDING"
-  | "CONFIRMED"
   | "PROCESSING"
+  | "PAID"
   | "SHIPPED"
   | "DELIVERED"
-  | "CANCELLED";
+  | "CANCELLED"
+  | "FAILED";
 
 export type OrderFilter = "ALL" | OrderStatus;
 

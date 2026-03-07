@@ -12,12 +12,19 @@ export interface ProductVariant {
   gallery: (StaticImageData | string)[];
 }
 
+export interface UIColorVariant {
+  size: string;
+  variantId: string;
+  sku: string;
+}
+
 export interface UIColor {
   id: string;
   name: string;
   hex: string;
   images: string[];
   availableSizes: string[];
+  variants: UIColorVariant[];
 }
 
 export interface UIProductItem {
