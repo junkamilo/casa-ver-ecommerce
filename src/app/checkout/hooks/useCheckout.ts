@@ -31,7 +31,7 @@ export const checkoutSchema = z.object({
   city: z.string().min(2, "Ciudad requerida"),
   department: z.string().min(2, "Departamento requerido"),
   paymentMethod: z.enum(["MERCADOPAGO"]),
-  billingSameAsShipping: z.boolean().default(true),
+  billingSameAsShipping: z.boolean(),
   couponCode: z.string().optional(),
 });
 
