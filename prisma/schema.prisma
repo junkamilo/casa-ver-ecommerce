@@ -139,11 +139,8 @@ model Category {
   id            String     @id @default(cuid())
   name          String
   slug          String     @unique
-  description   String?
   image         String?
-  bannerImage   String?
   isActive      Boolean    @default(true)
-  order         Int        @default(0)
 
   // Subcategorías (Recursividad)
   parentId      String?

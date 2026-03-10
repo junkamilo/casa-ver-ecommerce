@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { Trash2, PlusCircle, PlayCircle } from "lucide-react";
+import { useRef, useState } from "react";
+import { Trash2, Upload, Loader2, PlayCircle } from "lucide-react";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 
 const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".ogg", ".mkv"];
 
 function isVideo(url: string): boolean {
   const clean = url.split("?")[0].toLowerCase();
-  return VIDEO_EXTENSIONS.some((ext) => clean.endsWith(ext));
+  return VIDEO_EXTENSIONS.some((ext) => clean.endsWith(ext)) || clean.includes("/video/");
 }
 
 interface MediaUploadProps {
@@ -25,88 +26,108 @@ export default function ImageUpload({
   onRemove,
   maxImages = 5,
 }: MediaUploadProps) {
-  const [inputUrl, setInputUrl] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState<{ id: string; previewUrl: string; isVideo: boolean }[]>([]);
 
-  const handleAdd = () => {
-    const url = inputUrl.trim();
-    if (!url || !url.startsWith("http") || value.includes(url) || value.length >= maxImages) return;
-    onChange([url]);
-    setInputUrl("");
+  const remaining = maxImages - value.length - uploading.length;
+
+  const handleFiles = async (files: FileList) => {
+    const toUpload = Array.from(files).slice(0, Math.max(0, remaining));
+    if (!toUpload.length) return;
+
+    const pending = toUpload.map((file) => ({
+      id: crypto.randomUUID(),
+      previewUrl: URL.createObjectURL(file),
+      isVideo: file.type.startsWith("video"),
+      file,
+    }));
+
+    setUploading((prev) => [
+      ...prev,
+      ...pending.map(({ id, previewUrl, isVideo }) => ({ id, previewUrl, isVideo })),
+    ]);
+
+    const results = await Promise.allSettled(
+      pending.map(async ({ id, file, previewUrl }) => {
+        const resourceType = file.type.startsWith("video") ? "video" : "image";
+        const url = await uploadToCloudinary(file, resourceType);
+        URL.revokeObjectURL(previewUrl);
+        setUploading((prev) => prev.filter((u) => u.id !== id));
+        return url;
+      })
+    );
+
+    const uploadedUrls = results
+      .filter((r): r is PromiseFulfilledResult<string> => r.status === "fulfilled")
+      .map((r) => r.value);
+
+    if (uploadedUrls.length) onChange(uploadedUrls);
+
+    // Clean up failed previews
+    results.forEach((r, i) => {
+      if (r.status === "rejected") {
+        URL.revokeObjectURL(pending[i].previewUrl);
+        setUploading((prev) => prev.filter((u) => u.id !== pending[i].id));
+      }
+    });
   };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAdd();
-    }
-  };
-
-  const remaining = maxImages - value.length;
-  const validItems = value.filter((url) => url && typeof url === "string" && url.startsWith("http"));
 
   return (
     <div className="space-y-3">
-      {/* Input de URL */}
       {remaining > 0 && !disabled && (
-        <div className="flex gap-2">
+        <>
           <input
-            type="text"
-            value={inputUrl}
-            onChange={(e) => setInputUrl(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="https://... (.jpg, .png, .mp4, .webm…)"
-            className="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#154734]/30 focus:border-[#154734]"
+            ref={inputRef}
+            type="file"
+            multiple
+            accept="image/*,video/*,.heic,.heif"
+            className="sr-only"
+            onChange={(e) => {
+              if (e.target.files) handleFiles(e.target.files);
+              e.target.value = "";
+            }}
           />
           <button
             type="button"
-            onClick={handleAdd}
-            disabled={!inputUrl.trim()}
-            className="flex items-center gap-1.5 px-4 py-2 bg-[#154734] text-white text-sm font-medium rounded-lg hover:bg-[#154734]/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+            onClick={() => inputRef.current?.click()}
+            className="w-full flex flex-col items-center gap-2 p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-[#154734] hover:bg-[#154734]/5 transition-colors text-gray-500 hover:text-[#154734]"
           >
-            <PlusCircle className="w-4 h-4" />
-            Añadir archivo
+            <Upload className="w-5 h-5" />
+            <span className="text-xs font-medium">
+              Subir archivos{" "}
+              <span className="font-normal text-gray-400">(JPG, PNG, HEIC, MP4, MOV…)</span>
+            </span>
+            <span className="text-[10px] text-gray-400">
+              Puedes seleccionar varios a la vez · máx {maxImages}
+            </span>
           </button>
-        </div>
+        </>
       )}
 
-      {/* Contador */}
       <div className="flex items-center justify-between text-xs text-gray-500">
-        <span>{value.length} de {maxImages} archivos</span>
+        <span>{value.length + uploading.length} de {maxImages} archivos</span>
         {value.length > 0 && (
-          <span className="text-[#C19A6B] font-medium">
-            El primer archivo será la portada
-          </span>
+          <span className="text-[#C19A6B] font-medium">El primer archivo será la portada</span>
         )}
       </div>
 
-      {/* Grid de previsualización */}
-      {validItems.length > 0 && (
+      {(value.length > 0 || uploading.length > 0) && (
         <div className="flex flex-wrap gap-3">
-          {validItems.map((url, index) => (
+          {value.map((url, index) => (
             <div
               key={url}
               className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-200 group hover:border-[#C19A6B] transition-colors bg-gray-100"
             >
               {isVideo(url) ? (
                 <>
-                  <video
-                    src={url}
-                    muted
-                    loop
-                    playsInline
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
+                  <video src={url} muted loop playsInline className="absolute inset-0 w-full h-full object-cover" />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
                     <PlayCircle className="w-7 h-7 text-white drop-shadow" />
                   </div>
                 </>
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={url}
-                  alt={`Imagen ${index + 1}`}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
+                <img src={url} alt={`Archivo ${index + 1}`} className="absolute inset-0 w-full h-full object-cover" />
               )}
 
               {index === 0 && (
@@ -123,6 +144,23 @@ export default function ImageUpload({
               >
                 <Trash2 className="w-3 h-3" />
               </button>
+            </div>
+          ))}
+
+          {uploading.map(({ id, previewUrl, isVideo: isVid }) => (
+            <div
+              key={id}
+              className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-[#154734]/30 bg-gray-100"
+            >
+              {isVid ? (
+                <video src={previewUrl} muted className="absolute inset-0 w-full h-full object-cover opacity-40" />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={previewUrl} alt="Subiendo…" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+              )}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Loader2 className="w-6 h-6 text-[#154734] animate-spin" />
+              </div>
             </div>
           ))}
         </div>

@@ -17,7 +17,7 @@ async function getCollectionData(
   slug: string,
   filters: CollectionFilters
 ): Promise<{
-  category: { name: string; description?: string | null; bannerImage?: string | null } | null;
+  category: { name: string } | null;
   products: CollectionProduct[];
   filterOptions: FilterOptions;
 }> {
@@ -26,7 +26,7 @@ async function getCollectionData(
   try {
     const category = await prisma.category.findUnique({
       where: { slug, isActive: true },
-      select: { name: true, description: true, bannerImage: true },
+      select: { name: true },
     });
 
     if (!category) return empty;
@@ -166,8 +166,6 @@ export default async function CollectionPage({
           {/* Hero Section */}
           <CollectionHero
             title={title}
-            description={category?.description}
-            imageUrl={category?.bannerImage ?? undefined}
           />
 
           {/* Grilla de Productos */}

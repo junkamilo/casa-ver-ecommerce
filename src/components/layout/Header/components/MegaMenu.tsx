@@ -1,17 +1,19 @@
 import Link from "next/link";
-import { HOVER_BRAND, megaMenuData, TEXT_BRAND } from "../constants/constants";
+import { HOVER_BRAND, TEXT_BRAND } from "../constants/constants";
+import type { NavCategory } from "../types";
 
 interface Props {
   visible: boolean;
+  categories: NavCategory[];
   onEnter: () => void;
   onLeave: () => void;
   onClose: () => void;
 }
 
 // Delays escalonados para que cada columna entre con un pequeño retraso
-const COLUMN_DELAYS = ["0ms", "60ms", "120ms", "180ms"];
+const COLUMN_DELAYS = ["0ms", "60ms", "120ms", "180ms", "240ms", "300ms"];
 
-export default function MegaMenu({ visible, onEnter, onLeave, onClose }: Props) {
+export default function MegaMenu({ visible, categories, onEnter, onLeave, onClose }: Props) {
   return (
     <div
       className={`hidden lg:block absolute top-full left-0 w-full bg-background/97 backdrop-blur-xl border-b border-border/30 shadow-premium-lg transition-all duration-350 ease-out z-40 overflow-hidden ${
@@ -45,31 +47,54 @@ export default function MegaMenu({ visible, onEnter, onLeave, onClose }: Props) 
       />
 
       <div className="container mx-auto px-8 py-10 relative">
-        <div className="grid grid-cols-4 gap-8">
-          {megaMenuData.map((column, colIdx) => (
+        {/* ── Estado vacío ── */}
+        {categories.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-6 gap-2">
+            <span
+              className="w-5 h-5 rounded-full border-2 border-[#C19A6B]/40 border-t-[#C19A6B] animate-spin"
+              aria-hidden="true"
+            />
+            <p className="italic text-sm text-[#C19A6B]/70">
+              Colecciones en preparación.
+            </p>
+          </div>
+        )}
+
+        <div
+          className="grid gap-8"
+          style={{
+            gridTemplateColumns: categories.length > 0
+              ? `repeat(${Math.min(categories.length, 6)}, minmax(0, 1fr))`
+              : "1fr",
+          }}
+        >
+          {categories.map((category, colIdx) => (
             <div
-              key={column.title}
+              key={category.id}
               className={`flex flex-col gap-4 transition-all duration-400 ease-out ${
                 visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
               }`}
-              style={{ transitionDelay: visible ? COLUMN_DELAYS[colIdx] : "0ms" }}
+              style={{ transitionDelay: visible ? COLUMN_DELAYS[colIdx] ?? "0ms" : "0ms" }}
             >
-              {/* Título de columna con línea dorada superior */}
+              {/* Título de columna (Categoría Principal) */}
               <div>
                 <div className="h-px w-8 bg-linear-to-r from-[#C19A6B] to-[#C19A6B]/20 mb-3" />
-                <h3
-                  className={`text-xs font-bold tracking-[0.2em] ${TEXT_BRAND} uppercase pb-2`}
+                <Link
+                  href={`/collections/${category.slug}`}
+                  className={`text-xs font-bold tracking-[0.2em] ${TEXT_BRAND} uppercase pb-2 hover:text-[#C19A6B] transition-colors duration-200`}
+                  onClick={onClose}
                 >
-                  {column.title}
-                </h3>
+                  {category.name.toUpperCase()}
+                </Link>
               </div>
 
+              {/* Subcategorías */}
               <div className="flex flex-col gap-3">
-                {column.items.map((item) => (
+                {category.subcategories.map((sub) => (
                   <Link
-                    key={item.slug}
-                    href={`/collections/${item.slug}`}
-                    className={`relative group flex items-center gap-2 text-sm text-foreground/80 ${HOVER_BRAND} transition-all duration-200 pl-3`}
+                    key={sub.id}
+                    href={`/collections/${sub.slug}`}
+                    className={`relative group flex items-center gap-2 text-sm text-gray-500 font-normal hover:text-[#C19A6B] transition-colors duration-300 pl-3`}
                     onClick={onClose}
                   >
                     {/* Barra dorada izquierda que aparece en hover */}
@@ -82,8 +107,8 @@ export default function MegaMenu({ visible, onEnter, onLeave, onClose }: Props) 
                       className="w-1 h-1 rounded-full bg-[#C19A6B]/0 group-hover:bg-[#C19A6B] transition-all duration-200 shrink-0"
                       aria-hidden="true"
                     />
-                    <span className="group-hover:translate-x-0.5 transition-transform duration-200">
-                      {item.name}
+                    <span className="group-hover:translate-x-0.5 transition-transform duration-200 text-sm">
+                      {sub.name}
                     </span>
                   </Link>
                 ))}

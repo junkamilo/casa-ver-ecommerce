@@ -18,23 +18,15 @@ export default function AdminCategorias() {
     submitting,
     name,
     setName,
-    description,
-    setDescription,
     image,
     setImage,
-    bannerImage,
-    setBannerImage,
     toast,
     handleSubmit,
     editingCategory,
     editName,
     setEditName,
-    editDescription,
-    setEditDescription,
     editImage,
     setEditImage,
-    editBannerImage,
-    setEditBannerImage,
     editSubmitting,
     openEditModal,
     closeEditModal,
@@ -68,12 +60,8 @@ export default function AdminCategorias() {
         onSubmit={handleSubmit}
         name={name}
         setName={setName}
-        description={description}
-        setDescription={setDescription}
         image={image}
         setImage={setImage}
-        bannerImage={bannerImage}
-        setBannerImage={setBannerImage}
         mode="create"
       />
 
@@ -84,12 +72,8 @@ export default function AdminCategorias() {
         onSubmit={handleEditSubmit}
         name={editName}
         setName={setEditName}
-        description={editDescription}
-        setDescription={setEditDescription}
         image={editImage}
         setImage={setEditImage}
-        bannerImage={editBannerImage}
-        setBannerImage={setEditBannerImage}
         mode="edit"
       />
     </div>

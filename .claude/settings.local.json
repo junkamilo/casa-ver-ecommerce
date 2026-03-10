@@ -26,7 +26,9 @@
       "Bash(npx tsc --noEmit --project tsconfig.json)",
       "Bash(npx prisma migrate deploy)",
       "Bash(node -e \"require\\(''mercadopago''\\); console.log\\(''OK''\\)\")",
-      "Bash(npx prisma migrate dev --name add_mercadopago_payment_method)"
+      "Bash(npx prisma migrate dev --name add_mercadopago_payment_method)",
+      "Bash(npx prisma migrate dev --name remove_category_banner_image)",
+      "Bash(npx prisma migrate dev --name remove_category_description_order)"
     ]
   }
 }

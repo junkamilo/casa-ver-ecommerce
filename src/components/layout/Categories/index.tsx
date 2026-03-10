@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCarousel } from "./hooks/useCarousel";
 import { useCategories } from "./hooks/useCategories";
 import CategoryCard from "./components/CategoryCard";
+import CategoryCarouselSkeleton from "@/components/ui/skeletons/CategoryCarouselSkeleton";
 
 const BRAND_GOLD = "#C19A6B";
 
@@ -48,46 +49,61 @@ const Categories = () => {
         {/* ── CARRUSEL ── */}
         <div className="relative group/carousel mt-12">
 
-          {/* BOTÓN IZQUIERDO */}
-          {canScrollLeft && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                scroll("left");
-              }}
-              // 🔥 SOLUCIÓN AQUÍ: z-[100], left-4 (para que no se corte), y -translate-x-4 para una entrada elegante
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-[100] w-12 h-12 rounded-full bg-white/90 backdrop-blur-md border border-[#154734]/10 flex items-center justify-center text-[#154734] hover:bg-[#154734] hover:text-white transition-all duration-400 shadow-xl opacity-0 -translate-x-4 group-hover/carousel:opacity-100 group-hover/carousel:translate-x-0 cursor-pointer"
-              aria-label="Anterior"
-            >
-              <ChevronLeft className="w-6 h-6 stroke-[1.5]" />
-            </button>
+          {/* ── Estado de carga: skeleton ── */}
+          {loading && <CategoryCarouselSkeleton count={4} />}
+
+          {/* ── Estado vacío ── */}
+          {!loading && categories.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-8 gap-3">
+              <span
+                className="w-6 h-6 rounded-full border-2 border-[#C19A6B]/40 border-t-[#C19A6B] animate-spin"
+                aria-hidden="true"
+              />
+              <p className="italic text-sm text-[#C19A6B]/80 text-center">
+                Pronto agregaremos nuevas categorías y colecciones.
+              </p>
+            </div>
           )}
 
-          {/* BOTÓN DERECHO */}
-          {canScrollRight && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                scroll("right");
-              }}
-              // 🔥 SOLUCIÓN AQUÍ: z-[100], right-4, y translate-x-4
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-[100] w-12 h-12 rounded-full bg-white/90 backdrop-blur-md border border-[#154734]/10 flex items-center justify-center text-[#154734] hover:bg-[#154734] hover:text-white transition-all duration-400 shadow-xl opacity-0 translate-x-4 group-hover/carousel:opacity-100 group-hover/carousel:translate-x-0 cursor-pointer"
-              aria-label="Siguiente"
-            >
-              <ChevronRight className="w-6 h-6 stroke-[1.5]" />
-            </button>
-          )}
+          {/* ── Estado con datos ── */}
+          {!loading && categories.length > 0 && (
+            <>
+              {/* BOTÓN IZQUIERDO */}
+              {canScrollLeft && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    scroll("left");
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-100 w-12 h-12 rounded-full bg-white/90 backdrop-blur-md border border-[#154734]/10 flex items-center justify-center text-[#154734] hover:bg-[#154734] hover:text-white transition-all duration-400 shadow-xl opacity-0 -translate-x-4 group-hover/carousel:opacity-100 group-hover/carousel:translate-x-0 cursor-pointer"
+                  aria-label="Anterior"
+                >
+                  <ChevronLeft className="w-6 h-6 stroke-[1.5]" />
+                </button>
+              )}
 
-          <div
-            ref={scrollRef}
-            className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide pb-8 px-1"
-            style={{ scrollBehavior: "smooth" }}
-          >
-            {loading
-              ? null
-              : categories.map((cat) => (
+              {/* BOTÓN DERECHO */}
+              {canScrollRight && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    scroll("right");
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-100 w-12 h-12 rounded-full bg-white/90 backdrop-blur-md border border-[#154734]/10 flex items-center justify-center text-[#154734] hover:bg-[#154734] hover:text-white transition-all duration-400 shadow-xl opacity-0 translate-x-4 group-hover/carousel:opacity-100 group-hover/carousel:translate-x-0 cursor-pointer"
+                  aria-label="Siguiente"
+                >
+                  <ChevronRight className="w-6 h-6 stroke-[1.5]" />
+                </button>
+              )}
+
+              <div
+                ref={scrollRef}
+                className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide pb-8 px-1"
+                style={{ scrollBehavior: "smooth" }}
+              >
+                {categories.map((cat) => (
                   <CategoryCard
                     key={cat.id}
                     image={cat.image ?? ""}
@@ -95,7 +111,9 @@ const Categories = () => {
                     slug={cat.slug}
                   />
                 ))}
-          </div>
+              </div>
+            </>
+          )}
         </div>
 
       </div>

@@ -2,9 +2,7 @@ export interface Category {
   id: string;
   name: string;
   slug: string;
-  description?: string;
   image?: string;
-  bannerImage?: string;
   isActive: boolean;
   _count?: {
     products: number;
