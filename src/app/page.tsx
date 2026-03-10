@@ -3,7 +3,6 @@ import AnnouncementBar from "@/components/AnnouncementBar";
 import ElevaTuLook from "@/components/ElevaTuLook";
 import Footer from "@/components/Footer";
 import HeroSection from "@/components/HeroSection";
-import InstagramCTA from "@/components/InstagramCTA";
 import BestSellers from "@/components/layout/BestSellers";
 import Categories from "@/components/layout/Categories";
 import Header from "@/components/layout/Header";
@@ -26,7 +25,6 @@ export default function Home() {
       <ValueProps />
       <PaymentMethodsBanner />
       <Testimonials comments={TESTIMONIALS} />
-      <InstagramCTA />
       <Footer />
     </div>
   );

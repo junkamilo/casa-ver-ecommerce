@@ -1,25 +1,81 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import Footer from "@/components/Footer";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/layout/Header";
 import CollectionHero from "./components/CollectionHero";
 import CollectionClient from "./components/CollectionClient";
-import type { CollectionProduct } from "./types";
+import type { CollectionProduct, FilterOptions } from "./types";
 
-async function getCollectionData(slug: string): Promise<{
+interface CollectionFilters {
+  minPrice?: string;
+  maxPrice?: string;
+  color?: string;
+}
+
+async function getCollectionData(
+  slug: string,
+  filters: CollectionFilters
+): Promise<{
   category: { name: string; description?: string | null; bannerImage?: string | null } | null;
   products: CollectionProduct[];
+  filterOptions: FilterOptions;
 }> {
+  const empty = { category: null, products: [], filterOptions: { availableColors: [], maxPriceDb: 0 } };
+
   try {
     const category = await prisma.category.findUnique({
       where: { slug, isActive: true },
       select: { name: true, description: true, bannerImage: true },
     });
 
-    if (!category) return { category: null, products: [] };
+    if (!category) return empty;
 
-    const raw = await prisma.product.findMany({
+    // --- Build dynamic where clause ---
+    const where: Prisma.ProductWhereInput = {
+      category: { slug },
+      status: "ACTIVE",
+    };
+
+    const minPrice = filters.minPrice ? parseFloat(filters.minPrice) : undefined;
+    const maxPrice = filters.maxPrice ? parseFloat(filters.maxPrice) : undefined;
+
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      where.basePrice = {
+        ...(minPrice !== undefined && { gte: minPrice }),
+        ...(maxPrice !== undefined && { lte: maxPrice }),
+      };
+    }
+
+    // color param is stored without "#" in URL
+    if (filters.color) {
+      where.colors = { some: { hexCode: `#${filters.color}` } };
+    }
+
+    // --- Fetch sidebar option data (unfiltered, same category) ---
+    const allForFilters = await prisma.product.findMany({
       where: { category: { slug }, status: "ACTIVE" },
+      select: {
+        basePrice: true,
+        colors: { select: { name: true, hexCode: true } },
+      },
+    });
+
+    const colorMap = new Map<string, string>();
+    let maxPriceDb = 0;
+    for (const p of allForFilters) {
+      const price = Number(p.basePrice);
+      if (price > maxPriceDb) maxPriceDb = price;
+      for (const c of p.colors) {
+        colorMap.set(c.hexCode, c.name);
+      }
+    }
+
+    const availableColors = Array.from(colorMap.entries()).map(([hexCode, name]) => ({ hexCode, name }));
+
+    // --- Fetch filtered products ---
+    const raw = await prisma.product.findMany({
+      where,
       select: {
         name: true,
         slug: true,
@@ -30,7 +86,7 @@ async function getCollectionData(slug: string): Promise<{
         images: {
           where: { colorId: null },
           orderBy: { order: "asc" },
-          take: 1,
+          take: 2,
           select: { url: true },
         },
         colors: {
@@ -43,7 +99,6 @@ async function getCollectionData(slug: string): Promise<{
               select: { url: true },
             },
           },
-          take: 4,
         },
       },
       orderBy: { createdAt: "desc" },
@@ -51,6 +106,7 @@ async function getCollectionData(slug: string): Promise<{
 
     const products: CollectionProduct[] = raw.map((p) => ({
       mediaUrl: p.images[0]?.url ?? p.colors[0]?.images[0]?.url ?? null,
+      hoverMediaUrl: p.images[1]?.url ?? p.colors[1]?.images[0]?.url ?? null,
       name: p.name,
       slug: p.slug,
       price: Number(p.basePrice),
@@ -62,43 +118,69 @@ async function getCollectionData(slug: string): Promise<{
         : p.isFeatured
         ? "Destacado"
         : undefined,
-      colors: p.colors.length > 0 ? p.colors : undefined,
+      colors:
+        p.colors.length > 0
+          ? p.colors.map((c) => ({ name: c.name, hexCode: c.hexCode, imageUrl: c.images[0]?.url ?? null }))
+          : undefined,
     }));
 
-    return { category, products };
+    return { category, products, filterOptions: { availableColors, maxPriceDb } };
   } catch {
-    return { category: null, products: [] };
+    return empty;
   }
 }
 
 export default async function CollectionPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<CollectionFilters>;
 }) {
   const { slug } = await params;
-  const { category, products } = await getCollectionData(slug);
+  const filters = await searchParams;
+  const { category, products, filterOptions } = await getCollectionData(slug, filters);
   const title = category?.name?.toUpperCase() ?? slug.replace(/-/g, " ").toUpperCase();
 
   return (
-    <div className="bg-background min-h-screen flex flex-col">
-      <AnnouncementBar />
-      <Header />
+    <div className="min-h-screen flex flex-col bg-[#FAFAFA] selection:bg-[#C19A6B]/20 relative overflow-hidden">
 
-      <main className="flex-1 container mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        <CollectionHero
-          title={title}
-          description={category?.description}
-          imageUrl={category?.bannerImage ?? undefined}
-        />
+      {/* Fondo decorativo global sutil */}
+      <div
+        className="fixed inset-0 opacity-[0.02] pointer-events-none z-0"
+        style={{ backgroundImage: "radial-gradient(#154734 1px, transparent 1px)", backgroundSize: "40px 40px" }}
+      />
 
-        <div className="flex flex-col mb-8">
+      <div className="relative z-20">
+        <AnnouncementBar />
+        <Header />
+      </div>
+
+      <main className="flex-1 w-full flex flex-col pt-6 pb-24 sm:pt-10 sm:pb-32 relative z-10">
+
+        <div className="w-full max-w-[100rem] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+
+          {/* Título oculto para SEO */}
           <h1 className="sr-only">{title}</h1>
-          <CollectionClient products={products} />
+
+          {/* Hero Section */}
+          <CollectionHero
+            title={title}
+            description={category?.description}
+            imageUrl={category?.bannerImage ?? undefined}
+          />
+
+          {/* Grilla de Productos */}
+          <div className="mt-12 sm:mt-16 lg:mt-24 w-full">
+            <CollectionClient products={products} filterOptions={filterOptions} />
+          </div>
+
         </div>
       </main>
 
-      <Footer />
+      <div className="relative z-20">
+        <Footer />
+      </div>
     </div>
   );
 }
