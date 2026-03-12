@@ -1,100 +1,240 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
+import { ChevronLeft, ChevronRight, Play, Maximize2, X } from "lucide-react";
 
 interface Props {
   gallery: string[];
+  videoUrl?: string | null;
   selectedImage: number;
   productName: string;
   onSelect: (index: number) => void;
   activeColorHex?: string;
 }
 
+function normalizeVideoUrl(url: string) {
+  return url.replace(/\.(mov|avi|webm|mkv)(\?.*)?$/, ".mp4$2");
+}
+
 export default function ProductGallery({
   gallery,
+  videoUrl,
   selectedImage,
   productName,
   onSelect,
   activeColorHex,
 }: Props) {
-  if (!gallery.length) return null;
+  const media = [...gallery, ...(videoUrl ? [videoUrl] : [])];
+  const [currentIndex, setCurrentIndex] = useState(selectedImage);
+  const [isZoomOpen, setIsZoomOpen] = useState(false);
+
+  useEffect(() => {
+    setCurrentIndex(selectedImage);
+  }, [selectedImage]);
+
+  // Bloquear scroll del body cuando el modal está abierto
+  useEffect(() => {
+    if (isZoomOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [isZoomOpen]);
+
+  if (!media.length) return null;
+
+  const goTo = (index: number) => {
+    const next = (index + media.length) % media.length;
+    setCurrentIndex(next);
+    if (next < gallery.length) onSelect(next);
+  };
+
+  const handleThumbnail = (i: number) => {
+    setCurrentIndex(i);
+    if (i < gallery.length) onSelect(i);
+  };
+
+  const currentMedia = media[currentIndex];
+  const isCurrentVideo = !!(videoUrl && currentMedia === videoUrl);
 
   return (
-    <div className="flex flex-col-reverse lg:flex-row gap-4 sm:gap-5">
+    <>
+      <div className="flex flex-col-reverse lg:flex-row gap-4 sm:gap-5">
 
-      {/* Miniaturas */}
-      <div className="flex lg:flex-col gap-2 sm:gap-3 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden py-2 lg:py-0 scrollbar-hide lg:w-20 xl:w-24 shrink-0 lg:max-h-150 xl:max-h-175">
-        {gallery.map((url, i) => {
-          const isSelected = selectedImage === i;
-          return (
-            <button
-              key={i}
-              onClick={() => onSelect(i)}
-              aria-label={`Ver imagen ${i + 1} de ${productName}`}
-              className={`relative w-16 h-20 sm:w-20 sm:h-28 lg:w-full lg:h-28 xl:h-32 shrink-0 rounded-xl overflow-hidden transition-all duration-500 ease-out focus:outline-none ${
-                isSelected
-                  ? "ring-2 ring-[#C19A6B] ring-offset-2 opacity-100 shadow-sm"
-                  : "opacity-55 grayscale-30 hover:opacity-100 hover:grayscale-0 hover:shadow-md hover:ring-1 hover:ring-[#C19A6B]/40 hover:ring-offset-1"
-              }`}
-            >
-              <Image
-                src={url}
-                alt={`Miniatura ${i + 1} de ${productName}`}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 80px, 120px"
-              />
-            </button>
-          );
-        })}
-      </div>
+        {/* Miniaturas */}
+        <div className="flex lg:flex-col gap-2 sm:gap-3 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden py-2 lg:py-0 scrollbar-hide lg:w-20 xl:w-24 shrink-0 lg:max-h-175 xl:max-h-200">
+          {media.map((url, i) => {
+            const isSelected = currentIndex === i;
+            const isVideo = !!(videoUrl && url === videoUrl);
+            return (
+              <button
+                key={i}
+                onClick={() => handleThumbnail(i)}
+                aria-label={isVideo ? `Ver video de ${productName}` : `Ver imagen ${i + 1} de ${productName}`}
+                className={`relative w-16 h-20 sm:w-20 sm:h-28 lg:w-full lg:h-28 xl:h-32 shrink-0 rounded-xl overflow-hidden transition-all duration-500 ease-out focus:outline-none ${
+                  isSelected
+                    ? "ring-2 ring-[#C19A6B] ring-offset-2 opacity-100 shadow-sm"
+                    : "opacity-55 grayscale-30 hover:opacity-100 hover:grayscale-0 hover:shadow-md hover:ring-1 hover:ring-[#C19A6B]/40 hover:ring-offset-1"
+                }`}
+              >
+                {isVideo ? (
+                  <>
+                    <video
+                      src={normalizeVideoUrl(url)}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                      <div className="w-7 h-7 rounded-full bg-white/90 flex items-center justify-center shadow-md">
+                        <Play className="w-3.5 h-3.5 text-[#154734] fill-[#154734] ml-0.5" />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <Image
+                    src={url}
+                    alt={`Miniatura ${i + 1} de ${productName}`}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 80px, 120px"
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
 
-      {/* Imagen principal — contenedor con glow exterior dinámico */}
-      <div
-        className="relative w-full aspect-4/5 sm:aspect-3/4 xl:aspect-2/3 bg-[#FAFAFA] rounded-2xl overflow-hidden shadow-sm border border-gray-100 group cursor-crosshair"
-        style={{
-          transition: "box-shadow 700ms ease-in-out",
-          boxShadow: activeColorHex
-            ? `0 0 0 1px ${activeColorHex}30, 0 8px 40px ${activeColorHex}35, 0 2px 12px ${activeColorHex}25`
-            : "0 1px 3px 0 rgb(0 0 0 / 0.1)",
-        }}
-      >
-
-        {/* Capa de tinte de color — backgroundColor transiciona nativamente */}
+        {/* Imagen/Video principal */}
         <div
-          className="absolute inset-0 z-0 pointer-events-none"
+          className="relative w-full aspect-3/4 bg-[#FAFAFA] rounded-2xl overflow-hidden shadow-sm border border-gray-100 group cursor-crosshair"
           style={{
-            backgroundColor: activeColorHex ? `${activeColorHex}22` : "transparent",
-            transition: "background-color 700ms ease-in-out",
+            transition: "box-shadow 700ms ease-in-out",
+            boxShadow: activeColorHex
+              ? `0 0 0 1px ${activeColorHex}30, 0 8px 40px ${activeColorHex}35, 0 2px 12px ${activeColorHex}25`
+              : "0 1px 3px 0 rgb(0 0 0 / 0.1)",
           }}
-        />
+        >
+          {/* Capa de tinte de color */}
+          {!isCurrentVideo && (
+            <div
+              className="absolute inset-0 z-0 pointer-events-none"
+              style={{
+                backgroundColor: activeColorHex ? `${activeColorHex}22` : "transparent",
+                transition: "background-color 700ms ease-in-out",
+              }}
+            />
+          )}
 
-        {/* Skeleton de carga */}
-        <div className="absolute inset-0 bg-linear-to-tr from-[#FAFAFA] to-gray-50 animate-pulse z-1" />
+          {/* Medio principal */}
+          {isCurrentVideo ? (
+            <video
+              key={currentMedia}
+              src={normalizeVideoUrl(currentMedia)}
+              autoPlay
+              loop
+              muted
+              playsInline
+              controls
+              preload="auto"
+              className="absolute inset-0 w-full h-full object-cover z-10"
+            />
+          ) : (
+            <Image
+              src={currentMedia}
+              alt={productName}
+              fill
+              priority
+              className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03] z-10"
+              sizes="(max-width: 1024px) 100vw, 60vw"
+            />
+          )}
 
-        <Image
-          src={gallery[selectedImage]}
-          alt={productName}
-          fill
-          priority
-          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03] z-10"
-          sizes="(max-width: 1024px) 100vw, 60vw"
-        />
+          {/* Flechas de navegación */}
+          {media.length > 1 && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); goTo(currentIndex - 1); }}
+                aria-label="Medio anterior"
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 flex items-center justify-center shadow-md transition-all duration-200 hover:bg-[#154734] hover:border-[#154734] hover:text-white text-gray-700 opacity-0 group-hover:opacity-100"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); goTo(currentIndex + 1); }}
+                aria-label="Siguiente medio"
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 flex items-center justify-center shadow-md transition-all duration-200 hover:bg-[#154734] hover:border-[#154734] hover:text-white text-gray-700 opacity-0 group-hover:opacity-100"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </>
+          )}
 
-        {/* Contador de imágenes — mobile */}
-        <div className="absolute bottom-4 left-4 z-20 lg:hidden">
-          <span className="bg-black/30 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
-            {selectedImage + 1} / {gallery.length}
-          </span>
-        </div>
+          {/* Botón de zoom — esquina superior derecha */}
+          {!isCurrentVideo && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setIsZoomOpen(true); }}
+              aria-label="Ampliar imagen"
+              className="absolute top-3 right-3 z-20 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 flex items-center justify-center shadow-md transition-all duration-200 hover:bg-[#154734] hover:border-[#154734] hover:text-white text-gray-600 opacity-0 group-hover:opacity-100"
+            >
+              <Maximize2 className="w-4 h-4" />
+            </button>
+          )}
 
-        {/* Marca de agua sutil */}
-        <div className="absolute bottom-4 right-4 z-20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-          <span className="text-[10px] uppercase tracking-[0.3em] font-black text-white mix-blend-difference drop-shadow-md">
-            Casa Verde
-          </span>
+          {/* Contador — mobile */}
+          <div className="absolute bottom-4 left-4 z-20 lg:hidden">
+            <span className="bg-black/30 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
+              {currentIndex + 1} / {media.length}
+            </span>
+          </div>
+
+          {/* Marca de agua — solo en imágenes */}
+          {!isCurrentVideo && (
+            <div className="absolute bottom-4 right-4 z-20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <span className="text-[10px] uppercase tracking-[0.3em] font-black text-white mix-blend-difference drop-shadow-md">
+                Casa Verde
+              </span>
+            </div>
+          )}
         </div>
       </div>
-    </div>
+
+      {/* Modal de Zoom — portal al body para escapar cualquier stacking context */}
+      {isZoomOpen && createPortal(
+        <div
+          className="fixed inset-0 z-9999 flex items-center justify-center bg-black/95 backdrop-blur-sm"
+          onClick={() => setIsZoomOpen(false)}
+        >
+          {/* Botón cerrar */}
+          <button
+            onClick={(e) => { e.stopPropagation(); setIsZoomOpen(false); }}
+            aria-label="Cerrar zoom"
+            className="absolute top-6 right-6 z-10000 text-white/70 hover:text-white bg-black/50 hover:bg-black/80 p-3 rounded-full transition-all cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {/* Imagen en zoom */}
+          <div
+            className="relative w-full h-full max-w-[95vw] max-h-[90vh] flex items-center justify-center p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Image
+              src={currentMedia}
+              alt={productName}
+              fill
+              className="object-contain"
+              sizes="95vw"
+              priority
+            />
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
   );
 }

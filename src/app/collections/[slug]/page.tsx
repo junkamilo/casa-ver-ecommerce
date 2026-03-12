@@ -84,9 +84,8 @@ async function getCollectionData(
         isFeatured: true,
         isNew: true,
         images: {
-          where: { colorId: null },
           orderBy: { order: "asc" },
-          take: 2,
+          take: 8,
           select: { url: true },
         },
         colors: {
@@ -105,8 +104,7 @@ async function getCollectionData(
     });
 
     const products: CollectionProduct[] = raw.map((p) => ({
-      mediaUrl: p.images[0]?.url ?? p.colors[0]?.images[0]?.url ?? null,
-      hoverMediaUrl: p.images[1]?.url ?? p.colors[1]?.images[0]?.url ?? null,
+      images: p.images.map((i) => i.url),
       name: p.name,
       slug: p.slug,
       price: Number(p.basePrice),

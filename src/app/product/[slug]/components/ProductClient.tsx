@@ -208,6 +208,7 @@ export default function ProductClient({
           <div className="self-start lg:sticky lg:top-24 xl:top-28">
             <ProductGallery
               gallery={galleryUrls}
+              videoUrl={activeVideoUrl}
               selectedImage={selectedImage}
               productName={product.name}
               onSelect={handleImageSelect}
