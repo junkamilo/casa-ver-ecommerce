@@ -26,7 +26,6 @@ export function useProductForm() {
   const [isFeatured, setIsFeatured] = useState(false);
   const [isNew, setIsNew] = useState(false);
   const [material, setMaterial] = useState("");
-  const [careInfo, setCareInfo] = useState("");
   const [selectedColors, setSelectedColors] = useState<SelectedColor[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [showMaterial, setShowMaterial] = useState(false);
@@ -47,7 +46,6 @@ export function useProductForm() {
     setIsFeatured(false);
     setIsNew(false);
     setMaterial("");
-    setCareInfo("");
     setSelectedColors([]);
     setSelectedSizes([]);
     setShowMaterial(false);
@@ -68,8 +66,7 @@ export function useProductForm() {
     setIsFeatured(data.isFeatured);
     setIsNew(data.isNew);
     setMaterial(data.material || "");
-    setCareInfo(data.careInfo || "");
-    if (data.material || data.careInfo) setShowMaterial(true);
+    if (data.material) setShowMaterial(true);
     setVideoUrl(data.videoUrl || "");
     setIsSet(data.isSet || false);
 
@@ -111,7 +108,6 @@ export function useProductForm() {
     isFeatured,
     isNew,
     material,
-    careInfo,
     videoUrl: videoUrl || null,
     isSet,
     colors: selectedColors,
@@ -209,7 +205,6 @@ export function useProductForm() {
     isFeatured, setIsFeatured,
     isNew, setIsNew,
     material, setMaterial,
-    careInfo, setCareInfo,
     selectedColors,
     selectedSizes,
     showMaterial, setShowMaterial,

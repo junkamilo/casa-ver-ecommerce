@@ -1,4 +1,4 @@
-import { formatPrice, getStockStatus, SIZES, newColorForm } from "../constants";
+import { formatPrice, getStockStatus, SIZES } from "../constants";
 
 describe("formatPrice", () => {
   it("formatea precio en pesos colombianos", () => {
@@ -45,25 +45,5 @@ describe("SIZES", () => {
     expect(SIZES).toContain("XL");
     expect(SIZES).toContain("XXL");
     expect(SIZES).toContain("ONESIZE");
-  });
-});
-
-describe("newColorForm", () => {
-  it("genera un formulario de color con id único", () => {
-    const a = newColorForm();
-    const b = newColorForm();
-    expect(a.tempId).not.toBe(b.tempId);
-  });
-
-  it("inicializa todas las tallas en el formulario", () => {
-    const color = newColorForm();
-    SIZES.forEach((size) => {
-      expect(color.variants[size]).toBeDefined();
-      expect(color.variants[size].stock).toBe("");
-    });
-  });
-
-  it("inicializa con color negro por defecto", () => {
-    expect(newColorForm().hexCode).toBe("#000000");
   });
 });

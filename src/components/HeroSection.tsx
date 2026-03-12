@@ -45,7 +45,7 @@ const HeroSection = () => {
     <section className="relative w-full h-[88vh] min-h-[540px] max-h-[980px] overflow-hidden select-none bg-black">
 
       {/* ══════════════════════════════════════════════
-          IMÁGENES DEL CARRUSEL — Efecto Slide Lateral (NUEVO)
+          IMÁGENES DEL CARRUSEL — Efecto Slide Lateral
       ══════════════════════════════════════════════ */}
       <div 
         className="absolute inset-0 flex transition-transform duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)]"

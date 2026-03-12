@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       name, description, basePrice, comparePrice, stock,
-      categoryId, status, isFeatured, isNew, material, careInfo,
+      categoryId, status, isFeatured, isNew, material,
       videoUrl, isSet, colors, sizes, items, subProducts,
     } = body;
 
@@ -110,7 +110,6 @@ export async function POST(req: NextRequest) {
           isFeatured: isFeatured || false,
           isNew: isNew || false,
           material: material || null,
-          careInfo: careInfo || null,
           videoUrl: videoUrl || null,
           isSet: isSet || false,
           metaTitle: name.trim().slice(0, 60),

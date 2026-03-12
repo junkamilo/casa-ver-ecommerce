@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import OrderSummaryPanel from "../components/OrderSummaryPanel";
-import type { CheckoutItem } from "../types/types";
+import type { CheckoutItem, CouponState } from "../types/types";
 
 jest.mock("next/image", () => {
   const MockImage = ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />;
@@ -9,16 +9,48 @@ jest.mock("next/image", () => {
 });
 
 const mockItems: CheckoutItem[] = [
-  { id: "1", name: "Silla Bambú", price: 120000, image: "/silla.jpg", color: "Natural", size: "Único", quantity: 2 },
-  { id: "2", name: "Mesa Ratán", price: 80000, image: "/mesa.jpg", color: "Miel", size: "M", quantity: 1 },
+  {
+    id: "1",
+    variantId: "var-1",
+    productId: "prod-1",
+    sku: "SKU-001",
+    name: "Silla Bambú",
+    price: 120000,
+    image: "/silla.jpg",
+    color: "Natural",
+    size: "Único",
+    quantity: 2,
+  },
+  {
+    id: "2",
+    variantId: "var-2",
+    productId: "prod-2",
+    sku: "SKU-002",
+    name: "Mesa Ratán",
+    price: 80000,
+    image: "/mesa.jpg",
+    color: "Miel",
+    size: "M",
+    quantity: 1,
+  },
 ];
+
+const defaultCoupon: CouponState = {
+  code: "",
+  status: "idle",
+  discountPercentage: 0,
+};
 
 describe("OrderSummaryPanel", () => {
   const defaultProps = {
     items: mockItems,
     subtotal: 320000,
     shippingCost: 18000,
+    discount: 0,
     total: 338000,
+    coupon: defaultCoupon,
+    onApplyCoupon: jest.fn().mockResolvedValue(undefined),
+    onRemoveCoupon: jest.fn(),
   };
 
   it("renders section heading", () => {

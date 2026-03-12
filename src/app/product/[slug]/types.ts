@@ -45,7 +45,6 @@ export interface UIProduct {
   basePrice: number;
   comparePrice: number | null;
   material: string | null;
-  careInfo: string | null;
   videoUrl: string | null;
   generalImages: string[];
   colors: UIColor[];

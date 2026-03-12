@@ -5,6 +5,7 @@ import {
   ORDER_FILTER_LABELS,
   VISIBLE_FILTERS,
 } from "../constants";
+import type { OrderStatus } from "../types";
 
 describe("formatOrderPrice", () => {
   it("formatea un precio en pesos colombianos", () => {
@@ -37,7 +38,7 @@ describe("formatOrderDate", () => {
 });
 
 describe("ORDER_STATUS_CONFIG", () => {
-  const statuses = ["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"] as const;
+  const statuses: OrderStatus[] = ["PENDING", "PROCESSING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "FAILED"];
 
   it.each(statuses)("tiene configuración para el estado %s", (status) => {
     expect(ORDER_STATUS_CONFIG[status]).toBeDefined();
@@ -74,10 +75,6 @@ describe("ORDER_FILTER_LABELS", () => {
 describe("VISIBLE_FILTERS", () => {
   it("contiene el filtro ALL", () => {
     expect(VISIBLE_FILTERS).toContain("ALL");
-  });
-
-  it("no contiene CONFIRMED (no se muestra en la UI)", () => {
-    expect(VISIBLE_FILTERS).not.toContain("CONFIRMED");
   });
 
   it("contiene los filtros principales de UI", () => {

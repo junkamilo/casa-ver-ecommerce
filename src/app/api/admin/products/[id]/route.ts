@@ -62,7 +62,6 @@ export async function GET(
       metaTitle: product.metaTitle,
       metaDescription: product.metaDescription,
       material: product.material,
-      careInfo: product.careInfo,
       videoUrl: product.videoUrl,
       generalImages: product.images
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -135,7 +134,7 @@ export async function PATCH(
 
     const {
       name, description, basePrice, comparePrice, stock,
-      categoryId, status, isFeatured, isNew, material, careInfo,
+      categoryId, status, isFeatured, isNew, material,
       videoUrl, isSet, colors, sizes, items, subProducts,
     } = body;
 
@@ -173,7 +172,6 @@ export async function PATCH(
           isFeatured,
           isNew,
           material: material || null,
-          careInfo: careInfo || null,
           videoUrl: videoUrl !== undefined ? (videoUrl || null) : undefined,
           isSet: isSet ?? false,
           metaTitle: name ? name.trim().slice(0, 60) : undefined,

@@ -1,19 +1,30 @@
 "use client";
 
-import { ChevronDown, Truck, CreditCard, Shirt, Package } from "lucide-react";
+import { ChevronDown, Truck, CreditCard, Shirt } from "lucide-react";
+
+const CARE_INSTRUCTIONS = [
+  "Lavar a mano o en ciclo suave.",
+  "No retorcer para evitar deformar la prenda.",
+  "Secar a la sombra y en superficie plana o colgado.",
+  "No usar secadora para conservar la textura y el color del tejido.",
+  "Usar jabón suave; evitar detergentes fuertes o con blanqueador.",
+  "Lavar por separado o con prendas de colores similares.",
+  "No dejar en remojo por tiempos prolongados.",
+  "Planchar a temperatura baja o media, preferiblemente por el revés.",
+  "Evitar el contacto directo con superficies ásperas o accesorios que puedan generar fricción.",
+  "Guardar en un lugar fresco y seco.",
+];
 
 interface Props {
   openKey: string | null;
   onToggle: (key: string) => void;
-  careInfo?: string | null;
-  material?: string | null;
 }
 
-export default function ProductAccordion({ openKey, onToggle, careInfo, material }: Props) {
+export default function ProductAccordion({ openKey, onToggle }: Props) {
   const items = [
     {
       key: "envio",
-      icon: <Truck className="w-[18px] h-[18px]" strokeWidth={1.5} />,
+      icon: <Truck className="w-4.5 h-4.5" strokeWidth={1.5} />,
       title: "Envíos y Entregas",
       content: (
         <p className="leading-relaxed">
@@ -27,7 +38,7 @@ export default function ProductAccordion({ openKey, onToggle, careInfo, material
     },
     {
       key: "pago",
-      icon: <CreditCard className="w-[18px] h-[18px]" strokeWidth={1.5} />,
+      icon: <CreditCard className="w-4.5 h-4.5" strokeWidth={1.5} />,
       title: "Métodos de Pago",
       content: (
         <p className="leading-relaxed">
@@ -37,35 +48,14 @@ export default function ProductAccordion({ openKey, onToggle, careInfo, material
         </p>
       ),
     },
-    ...(material
-      ? [
-          {
-            key: "material",
-            icon: <Package className="w-[18px] h-[18px]" strokeWidth={1.5} />,
-            title: "Materiales",
-            content: <p className="leading-relaxed">{material}</p>,
-          },
-        ]
-      : []),
     {
       key: "cuidados",
-      icon: <Shirt className="w-[18px] h-[18px]" strokeWidth={1.5} />,
+      icon: <Shirt className="w-4.5 h-4.5" strokeWidth={1.5} />,
       title: "Cuidados de la Prenda",
-      content: careInfo ? (
-        <p className="whitespace-pre-line leading-relaxed">{careInfo}</p>
-      ) : (
-        <ul className="space-y-2.5">
-          {[
-            "Lavar a mano o en ciclo delicado.",
-            "Utilizar agua fría para mantener el color y textura.",
-            "Evitar blanqueadores y suavizantes agresivos.",
-            "Secar a la sombra, evitando el uso de secadora.",
-            "No planchar directamente sobre la tela.",
-          ].map((item) => (
-            <li key={item} className="flex items-start gap-2.5">
-              <span className="text-[#C19A6B] mt-0.5 shrink-0">•</span>
-              <span>{item}</span>
-            </li>
+      content: (
+        <ul className="list-disc list-inside text-gray-600 space-y-2 text-sm">
+          {CARE_INSTRUCTIONS.map((item) => (
+            <li key={item}>{item}</li>
           ))}
         </ul>
       ),

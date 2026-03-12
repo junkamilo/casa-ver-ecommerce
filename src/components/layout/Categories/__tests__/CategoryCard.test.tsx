@@ -1,6 +1,5 @@
 import { render, screen } from "@testing-library/react";
 import CategoryCard from "../components/CategoryCard";
-import { StaticImageData } from "next/image";
 
 jest.mock("next/link", () => {
   const MockLink = ({ children, href }: { children: React.ReactNode; href: string }) => (
@@ -19,21 +18,19 @@ jest.mock("next/image", () => {
   return MockImage;
 });
 
-const mockImage: StaticImageData = { src: "/cat-test.jpg", height: 400, width: 300, blurDataURL: "" };
-
 describe("CategoryCard", () => {
   it("renders the category label", () => {
-    render(<CategoryCard image={mockImage} label="ENTERIZOS CORTOS" slug="enterizos-cortos" />);
+    render(<CategoryCard image="/cat-test.jpg" label="ENTERIZOS CORTOS" slug="enterizos-cortos" />);
     expect(screen.getByText("ENTERIZOS CORTOS")).toBeInTheDocument();
   });
 
   it("renders the image with correct alt text", () => {
-    render(<CategoryCard image={mockImage} label="SETS" slug="sets" />);
+    render(<CategoryCard image="/cat-test.jpg" label="SETS" slug="sets" />);
     expect(screen.getByAltText("SETS")).toBeInTheDocument();
   });
 
   it("links to the correct /collections/slug URL", () => {
-    render(<CategoryCard image={mockImage} label="CHAQUETAS" slug="chaquetas" />);
+    render(<CategoryCard image="/cat-test.jpg" label="CHAQUETAS" slug="chaquetas" />);
     const link = screen.getByRole("link");
     expect(link).toHaveAttribute("href", "/collections/chaquetas");
   });
@@ -42,11 +39,16 @@ describe("CategoryCard", () => {
     const slugs = ["enterizos-cortos", "sets", "chaquetas", "enterizos-largos", "bodys"];
     slugs.forEach((slug) => {
       const { unmount } = render(
-        <CategoryCard image={mockImage} label={slug.toUpperCase()} slug={slug} />
+        <CategoryCard image="/cat-test.jpg" label={slug.toUpperCase()} slug={slug} />
       );
       const link = screen.getByRole("link");
       expect(link).toHaveAttribute("href", `/collections/${slug}`);
       unmount();
     });
+  });
+
+  it("renders fallback label when image is null", () => {
+    render(<CategoryCard image={null} label="BODYS" slug="bodys" />);
+    expect(screen.getByText("BODYS")).toBeInTheDocument();
   });
 });

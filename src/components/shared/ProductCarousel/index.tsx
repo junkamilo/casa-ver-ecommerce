@@ -25,7 +25,6 @@ const ProductCarousel = ({ config, items }: ProductCarouselProps) => {
         className={`absolute ${decorPositionClass} text-[200px] font-black leading-none text-black/[0.02] pointer-events-none select-none`}
         style={{ fontFamily: "Georgia, serif" }}
       >
-        {config.decorNumber}
       </div>
 
       <div className="relative max-w-7xl mx-auto z-10">

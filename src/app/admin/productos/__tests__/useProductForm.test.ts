@@ -6,7 +6,7 @@ describe("useProductForm", () => {
     const { result } = renderHook(() => useProductForm());
     expect(result.current.name).toBe("");
     expect(result.current.basePrice).toBe("");
-    expect(result.current.colors).toHaveLength(0);
+    expect(result.current.selectedColors).toHaveLength(0);
   });
 
   it("resetea todos los campos al llamar reset()", () => {
@@ -27,62 +27,69 @@ describe("useProductForm", () => {
     expect(result.current.basePrice).toBe("");
   });
 
-  it("agrega un color con addColor()", () => {
+  it("agrega un color con toggleColor()", () => {
     const { result } = renderHook(() => useProductForm());
 
     act(() => {
-      result.current.addColor();
+      result.current.toggleColor("Negro", "#1C1C1C");
     });
 
-    expect(result.current.colors).toHaveLength(1);
+    expect(result.current.selectedColors).toHaveLength(1);
+    expect(result.current.selectedColors[0].name).toBe("Negro");
+    expect(result.current.selectedColors[0].hexCode).toBe("#1C1C1C");
   });
 
-  it("elimina un color con removeColor()", () => {
+  it("elimina un color con toggleColor() cuando ya existe", () => {
     const { result } = renderHook(() => useProductForm());
 
     act(() => {
-      result.current.addColor();
+      result.current.toggleColor("Negro", "#1C1C1C");
     });
 
-    const tempId = result.current.colors[0].tempId;
+    expect(result.current.selectedColors).toHaveLength(1);
 
     act(() => {
-      result.current.removeColor(tempId);
+      result.current.toggleColor("Negro", "#1C1C1C");
     });
 
-    expect(result.current.colors).toHaveLength(0);
+    expect(result.current.selectedColors).toHaveLength(0);
   });
 
-  it("actualiza el nombre de un color con updateColor()", () => {
+  it("setColorImages asigna imágenes a un color", () => {
     const { result } = renderHook(() => useProductForm());
 
     act(() => {
-      result.current.addColor();
+      result.current.toggleColor("Blanco", "#F5F5F5");
     });
-
-    const tempId = result.current.colors[0].tempId;
 
     act(() => {
-      result.current.updateColor(tempId, "name", "Verde Esmeralda");
+      result.current.setColorImages("Blanco", ["https://img.com/a.jpg", "https://img.com/b.jpg"]);
     });
 
-    expect(result.current.colors[0].name).toBe("Verde Esmeralda");
+    expect(result.current.selectedColors[0].images).toHaveLength(2);
   });
 
-  it("actualiza variante de stock con updateVariant()", () => {
+  it("toggleSize agrega una talla", () => {
     const { result } = renderHook(() => useProductForm());
 
     act(() => {
-      result.current.addColor();
+      result.current.toggleSize("M");
     });
 
-    const tempId = result.current.colors[0].tempId;
+    expect(result.current.selectedSizes).toContain("M");
+  });
+
+  it("toggleSize elimina una talla si ya existe", () => {
+    const { result } = renderHook(() => useProductForm());
 
     act(() => {
-      result.current.updateVariant(tempId, "S", "stock", "10");
+      result.current.toggleSize("M");
+    });
+    act(() => {
+      result.current.toggleSize("M");
     });
 
-    expect(result.current.colors[0].variants["S"].stock).toBe("10");
+    expect(result.current.selectedSizes).not.toContain("M");
   });
 
   it("buildPayload() construye el payload correcto", () => {
@@ -100,14 +107,58 @@ describe("useProductForm", () => {
     expect(payload.categoryId).toBe("cat-123");
   });
 
-  it("buildPayload() filtra colores sin nombre", () => {
+  it("buildPayload() incluye los colores seleccionados", () => {
     const { result } = renderHook(() => useProductForm());
 
     act(() => {
-      result.current.addColor();
+      result.current.toggleColor("Negro", "#1C1C1C");
     });
 
     const payload = result.current.buildPayload();
+    expect(payload.colors).toHaveLength(1);
+    expect(payload.colors[0].name).toBe("Negro");
+  });
+
+  it("buildPayload() incluye colores vacíos cuando no hay ninguno", () => {
+    const { result } = renderHook(() => useProductForm());
+
+    const payload = result.current.buildPayload();
     expect(payload.colors).toHaveLength(0);
+  });
+
+  it("isSet inicia en false", () => {
+    const { result } = renderHook(() => useProductForm());
+    expect(result.current.isSet).toBe(false);
+  });
+
+  it("setItems inicia vacío", () => {
+    const { result } = renderHook(() => useProductForm());
+    expect(result.current.setItems).toHaveLength(0);
+  });
+
+  it("addSetItem agrega un item de subcategoría", () => {
+    const { result } = renderHook(() => useProductForm());
+
+    act(() => {
+      result.current.addSetItem();
+    });
+
+    expect(result.current.setItems).toHaveLength(1);
+  });
+
+  it("removeSetItem elimina un item de subcategoría por localId", () => {
+    const { result } = renderHook(() => useProductForm());
+
+    act(() => {
+      result.current.addSetItem();
+    });
+
+    const localId = result.current.setItems[0].localId;
+
+    act(() => {
+      result.current.removeSetItem(localId);
+    });
+
+    expect(result.current.setItems).toHaveLength(0);
   });
 });

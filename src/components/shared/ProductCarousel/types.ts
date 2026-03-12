@@ -1,7 +1,7 @@
 import { StaticImageData } from "next/image";
 
 export interface ProductItem {
-  image: StaticImageData;
+  image: StaticImageData | string;
   name: string;
   price: string;
   oldPrice?: string;
@@ -20,7 +20,6 @@ export interface SectionConfig {
   linkHref: string;
   linkText: string;
   bgColor: string;
-  decorNumber: string;
   decorAlign: "left" | "right";
   badgeVariant?: "white" | "gold";
 }

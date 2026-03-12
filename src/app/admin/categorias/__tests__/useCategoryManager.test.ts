@@ -3,7 +3,6 @@ import { useCategoryManager } from "../hooks/useCategoryManager";
 
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
-global.confirm = jest.fn(() => true);
 
 const emptyFetch = () =>
   mockFetch.mockResolvedValue({ ok: true, json: async () => [] });
@@ -30,7 +29,7 @@ describe("useCategoryManager", () => {
 
   it("carga categorías al montar", async () => {
     const mockData = [
-      { id: "1", name: "Ropa", slug: "ropa", _count: { products: 3 } },
+      { id: "1", name: "Ropa", slug: "ropa", isActive: true, _count: { products: 3 } },
     ];
     mockFetch.mockResolvedValue({ ok: true, json: async () => mockData });
     const { result } = renderHook(() => useCategoryManager());
@@ -40,8 +39,8 @@ describe("useCategoryManager", () => {
 
   it("filtra categorías por search", async () => {
     const mockData = [
-      { id: "1", name: "Ropa Deportiva", slug: "ropa", _count: { products: 2 } },
-      { id: "2", name: "Accesorios", slug: "accesorios", _count: { products: 5 } },
+      { id: "1", name: "Ropa Deportiva", slug: "ropa", isActive: true, _count: { products: 2 } },
+      { id: "2", name: "Accesorios", slug: "accesorios", isActive: true, _count: { products: 5 } },
     ];
     mockFetch.mockResolvedValue({ ok: true, json: async () => mockData });
     const { result } = renderHook(() => useCategoryManager());
@@ -55,23 +54,13 @@ describe("useCategoryManager", () => {
 
   it("filtered muestra todas las categorías cuando search está vacío", async () => {
     const mockData = [
-      { id: "1", name: "A", slug: "a", _count: { products: 0 } },
-      { id: "2", name: "B", slug: "b", _count: { products: 0 } },
+      { id: "1", name: "A", slug: "a", isActive: true, _count: { products: 0 } },
+      { id: "2", name: "B", slug: "b", isActive: true, _count: { products: 0 } },
     ];
     mockFetch.mockResolvedValue({ ok: true, json: async () => mockData });
     const { result } = renderHook(() => useCategoryManager());
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.filtered).toHaveLength(2);
-  });
-
-  it("handleDelete no llama a fetch si el usuario cancela confirm", async () => {
-    (global.confirm as jest.Mock).mockReturnValueOnce(false);
-    const { result } = await mountAndWait();
-
-    const fetchCallsBefore = mockFetch.mock.calls.length;
-    await act(async () => { await result.current.handleDelete("1"); });
-
-    expect(mockFetch.mock.calls.length).toBe(fetchCallsBefore);
   });
 
   it("setToast establece el toast", async () => {
@@ -82,5 +71,31 @@ describe("useCategoryManager", () => {
 
     act(() => { result.current.setToast(null); });
     expect(result.current.toast).toBeNull();
+  });
+
+  it("openEditModal establece la categoría en edición", async () => {
+    const mockData = [
+      { id: "1", name: "Ropa", slug: "ropa", isActive: true, _count: { products: 3 } },
+    ];
+    mockFetch.mockResolvedValue({ ok: true, json: async () => mockData });
+    const { result } = renderHook(() => useCategoryManager());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => { result.current.openEditModal(mockData[0]); });
+    expect(result.current.editingCategory?.id).toBe("1");
+    expect(result.current.editName).toBe("Ropa");
+  });
+
+  it("closeEditModal limpia la categoría en edición", async () => {
+    const mockData = [
+      { id: "1", name: "Ropa", slug: "ropa", isActive: true, _count: { products: 3 } },
+    ];
+    mockFetch.mockResolvedValue({ ok: true, json: async () => mockData });
+    const { result } = renderHook(() => useCategoryManager());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => { result.current.openEditModal(mockData[0]); });
+    act(() => { result.current.closeEditModal(); });
+    expect(result.current.editingCategory).toBeNull();
   });
 });
