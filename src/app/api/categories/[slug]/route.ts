@@ -14,10 +14,7 @@ export async function GET(
         id: true,
         name: true,
         slug: true,
-        description: true,
         image: true,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        bannerImage: true as any,
         isActive: true,
       },
     });
