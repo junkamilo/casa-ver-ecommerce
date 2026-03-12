@@ -11,6 +11,9 @@ jest.mock("next/image", () => ({
 describe("CartItemCard", () => {
   const mockItem: CartItem = {
     id: "test-1",
+    variantId: "var-test-1",
+    productId: "prod-test-1",
+    sku: "SKU-TEST-001",
     name: "Producto Test",
     price: 50000,
     image: "/test-image.jpg",

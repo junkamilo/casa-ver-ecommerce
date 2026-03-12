@@ -33,7 +33,6 @@ interface Props {
   isFeatured: boolean; setIsFeatured: (v: boolean) => void;
   isNew: boolean; setIsNew: (v: boolean) => void;
   material: string; setMaterial: (v: string) => void;
-  careInfo: string; setCareInfo: (v: string) => void;
   selectedColors: SelectedColor[];
   selectedSizes: string[];
   showMaterial: boolean; setShowMaterial: (v: boolean) => void;
@@ -104,7 +103,6 @@ export default function ProductModal({
   isFeatured, setIsFeatured,
   isNew, setIsNew,
   material, setMaterial,
-  careInfo, setCareInfo,
   selectedColors,
   selectedSizes,
   showMaterial, setShowMaterial,
@@ -425,7 +423,6 @@ export default function ProductModal({
                   show={showMaterial}
                   onToggle={() => setShowMaterial(!showMaterial)}
                   material={material} onMaterial={setMaterial}
-                  careInfo={careInfo} onCareInfo={setCareInfo}
                 />
               </div>
             </div>

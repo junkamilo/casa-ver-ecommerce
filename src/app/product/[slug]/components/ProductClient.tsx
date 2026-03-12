@@ -427,8 +427,6 @@ export default function ProductClient({
             <ProductAccordion
               openKey={openAccordion}
               onToggle={toggleAccordion}
-              careInfo={product.careInfo}
-              material={product.material}
             />
           </div>
         </div>

@@ -20,11 +20,13 @@ describe("Testimonials", () => {
 
   it("renders double the number of cards (duplicated for infinite scroll)", () => {
     render(<Testimonials />);
-    // Each unique review text appears duplicated; pick one that is unique in the data
-    const uniqueTexts = [...new Set(TESTIMONIALS.map((t) => t.text))];
-    uniqueTexts.forEach((text) => {
-      const count = TESTIMONIALS.filter((t) => t.text === text).length;
-      expect(screen.getAllByText(text).length).toBe(count * 2);
+    // Each unique review comment appears duplicated; pick one that is unique in the data
+    const uniqueComments = [...new Set(TESTIMONIALS.map((t) => t.comment))];
+    uniqueComments.forEach((comment) => {
+      const count = TESTIMONIALS.filter((t) => t.comment === comment).length;
+      // Comment is rendered wrapped in quotes: "comment"
+      const elements = screen.queryAllByText(new RegExp(comment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+      expect(elements.length).toBe(count * 2);
     });
   });
 

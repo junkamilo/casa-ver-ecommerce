@@ -32,7 +32,8 @@
       "Bash(sed -i 's/lg:max-h-\\\\[700px\\\\] xl:max-h-\\\\[800px\\\\]/lg:max-h-175 xl:max-h-200/' \"c:/MIGRACION/casa-verde-ecommerce-nextjs/src/app/product/[slug]/components/ProductGallery.tsx\")",
       "Bash(sed -i 's/aspect-\\\\[3\\\\/4\\\\]/aspect-3\\\\/4/' \"c:/MIGRACION/casa-verde-ecommerce-nextjs/src/app/product/[slug]/components/ProductGallery.tsx\")",
       "Bash(sed -i 's/bg-gradient-to-tr/bg-linear-to-tr/' \"c:/MIGRACION/casa-verde-ecommerce-nextjs/src/app/product/[slug]/components/ProductGallery.tsx\")",
-      "Bash(sed -i 's/z-\\\\[1\\\\]/z-1/' \"c:/MIGRACION/casa-verde-ecommerce-nextjs/src/app/product/[slug]/components/ProductGallery.tsx\")"
+      "Bash(sed -i 's/z-\\\\[1\\\\]/z-1/' \"c:/MIGRACION/casa-verde-ecommerce-nextjs/src/app/product/[slug]/components/ProductGallery.tsx\")",
+      "Bash(echo \"EXIT:$?\")"
     ]
   }
 }

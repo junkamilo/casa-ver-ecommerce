@@ -1,9 +1,33 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { PedidosMobileList } from "../components/PedidosMobileList";
-import { ORDERS } from "../constants";
 import type { Order } from "../types";
 
-const mockOrders: Order[] = ORDERS.slice(0, 2);
+const mockOrders: Order[] = [
+  {
+    id: "ORD-2024-001",
+    customer: "María García",
+    email: "maria@example.com",
+    phone: "3001234567",
+    items: [{ name: "Enterizo Floral", qty: 1, price: 89900 }],
+    total: 89900,
+    status: "Pagado",
+    paymentMethod: "Bold",
+    date: "2024-12-15",
+    address: "Calle 123 # 45-67, Bogotá",
+  },
+  {
+    id: "ORD-2024-002",
+    customer: "Carlos López",
+    email: "carlos@example.com",
+    phone: "3109876543",
+    items: [{ name: "Blusa Casual", qty: 2, price: 45000 }],
+    total: 90000,
+    status: "Pendiente",
+    paymentMethod: "Nequi",
+    date: "2024-12-16",
+    address: "Carrera 50 # 10-20, Medellín",
+  },
+];
 
 const defaultProps = {
   orders: mockOrders,

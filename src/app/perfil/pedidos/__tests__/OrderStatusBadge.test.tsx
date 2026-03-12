@@ -1,15 +1,16 @@
 import { render, screen } from "@testing-library/react";
 import { OrderStatusBadge } from "../components/OrderStatusBadge";
 import { ORDER_STATUS_CONFIG } from "../constants";
-import { OrderStatus } from "../types";
+import type { OrderStatus } from "../types";
 
 const ALL_STATUSES: OrderStatus[] = [
   "PENDING",
-  "CONFIRMED",
   "PROCESSING",
+  "PAID",
   "SHIPPED",
   "DELIVERED",
   "CANCELLED",
+  "FAILED",
 ];
 
 describe("OrderStatusBadge", () => {

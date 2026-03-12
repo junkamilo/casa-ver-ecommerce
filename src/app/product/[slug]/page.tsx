@@ -149,7 +149,6 @@ export default async function ProductPage({ params }: Props) {
     basePrice: Number(product.basePrice),
     comparePrice: product.comparePrice ? Number(product.comparePrice) : null,
     material: product.material,
-    careInfo: product.careInfo,
     videoUrl: resolvedVideoUrl,
     generalImages: allGeneralImages.filter((url) => !isVideoUrl(url)),
     colors: (product.colors as any[]).map(mapUIColor),

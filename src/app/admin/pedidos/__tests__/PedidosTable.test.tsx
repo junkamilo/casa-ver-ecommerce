@@ -1,9 +1,45 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { PedidosTable } from "../components/PedidosTable";
-import { ORDERS } from "../constants";
 import type { Order } from "../types";
 
-const mockOrders: Order[] = ORDERS.slice(0, 3);
+const mockOrders: Order[] = [
+  {
+    id: "ORD-2024-001",
+    customer: "María García",
+    email: "maria@example.com",
+    phone: "3001234567",
+    items: [{ name: "Enterizo Floral", qty: 1, price: 89900 }],
+    total: 89900,
+    status: "Pagado",
+    paymentMethod: "Bold",
+    date: "2024-12-15 14:32",
+    address: "Calle 123 # 45-67, Bogotá",
+  },
+  {
+    id: "ORD-2024-002",
+    customer: "Carlos López",
+    email: "carlos@example.com",
+    phone: "3109876543",
+    items: [{ name: "Blusa Casual", qty: 2, price: 45000 }],
+    total: 90000,
+    status: "Pendiente",
+    paymentMethod: "Nequi",
+    date: "2024-12-16 10:00",
+    address: "Carrera 50 # 10-20, Medellín",
+  },
+  {
+    id: "ORD-2024-003",
+    customer: "Ana Martínez",
+    email: "ana@example.com",
+    phone: "3205551234",
+    items: [{ name: "Pantalón Lino", qty: 1, price: 65000 }],
+    total: 65000,
+    status: "Cancelado",
+    paymentMethod: "Daviplata",
+    date: "2024-12-17 09:15",
+    address: "Avenida 30 # 5-10, Cali",
+  },
+];
 
 describe("PedidosTable", () => {
   it("renderiza todos los encabezados de la tabla", () => {

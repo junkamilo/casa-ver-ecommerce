@@ -12,6 +12,9 @@ describe("CartContent", () => {
   const mockItems: CartItem[] = [
     {
       id: "item-1",
+      variantId: "var-1",
+      productId: "prod-1",
+      sku: "SKU-001",
       name: "Producto 1",
       price: 50000,
       image: "/img1.jpg",
@@ -21,6 +24,9 @@ describe("CartContent", () => {
     },
     {
       id: "item-2",
+      variantId: "var-2",
+      productId: "prod-2",
+      sku: "SKU-002",
       name: "Producto 2",
       price: 75000,
       image: "/img2.jpg",
