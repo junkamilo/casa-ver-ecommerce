@@ -4,6 +4,7 @@ import { SetItemForm } from "../../types";
 import { PRESET_COLORS, SIZES } from "../../constants";
 import { ItemFormErrors, SingleItemFormErrors } from "../../schema";
 import ImageUpload from "@/components/ui/image-upload";
+import VideoUpload from "@/components/ui/video-upload";
 
 interface Props {
   items: SetItemForm[];
@@ -173,22 +174,12 @@ function SetItemCard({
               <Video className="w-3.5 h-3.5" /> Video de la pieza
               <span className="text-gray-300 font-normal normal-case tracking-normal">— opcional</span>
             </p>
-            <input
-              type="url"
+            <VideoUpload
               value={item.videoUrl}
-              onChange={(e) => onUpdate(item.localId, { videoUrl: e.target.value })}
-              placeholder="https://res.cloudinary.com/... o URL de video"
+              onChange={(url) => onUpdate(item.localId, { videoUrl: url })}
               disabled={disabled}
-              className={fieldCls(!!errors.videoUrl)}
             />
             <FieldError msg={errors.videoUrl} />
-            {item.videoUrl && !errors.videoUrl && (
-              <video
-                src={item.videoUrl}
-                controls
-                className="mt-3 w-full max-h-48 rounded-xl border border-gray-200 object-contain bg-black"
-              />
-            )}
           </div>
 
           {/* ── BLOQUE D: Colores + Imágenes ─────────────────── */}

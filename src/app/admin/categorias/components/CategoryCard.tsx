@@ -1,4 +1,4 @@
-import { FolderOpen, Pencil, Eye, EyeOff } from "lucide-react";
+import { Pencil, Eye, EyeOff } from "lucide-react";
 import type { Category } from "../types/types";
 
 interface CategoryCardProps {
@@ -13,8 +13,8 @@ const CategoryCard = ({ category, onEdit, onToggleActive }: CategoryCardProps) =
       !category.isActive ? "opacity-60 border-gray-200 grayscale-[0.2]" : "border-[#C19A6B]/10 shadow-sm"
     }`}
   >
-    {/* Imagen / Banner Superior */}
-    <div className="relative h-32 bg-[#FAFAFA] border-b border-gray-100 overflow-hidden flex items-center justify-center">
+    {/* Imagen / Fallback Superior */}
+    <div className="relative h-32 border-b border-gray-100 overflow-hidden flex items-center justify-center">
       {category.image ? (
         <>
           <img
@@ -25,8 +25,10 @@ const CategoryCard = ({ category, onEdit, onToggleActive }: CategoryCardProps) =
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         </>
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#154734]/5">
-          <FolderOpen className="w-10 h-10 text-[#C19A6B]/40" />
+        <div className="absolute inset-0 bg-[#154734] flex items-center justify-center px-4">
+          <span className="text-[#C19A6B] font-black uppercase tracking-widest text-sm text-center leading-tight group-hover:-translate-y-1 transition-transform duration-500 ease-in-out">
+            {category.name}
+          </span>
         </div>
       )}
 

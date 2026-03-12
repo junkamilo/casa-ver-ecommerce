@@ -9,9 +9,7 @@ export async function GET() {
         id: true,
         name: true,
         slug: true,
-        description: true,
         image: true,
-        bannerImage: true,
         isActive: true,
         _count: {
           select: { products: true },
@@ -28,7 +26,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, description, image, bannerImage } = body;
+    const { name, image } = body;
 
     if (!name) return new NextResponse("Name is required", { status: 400 });
 
@@ -50,9 +48,7 @@ export async function POST(req: Request) {
       data: {
         name,
         slug,
-        description,
         image: image || null,
-        bannerImage: bannerImage || null,
       },
     });
 
@@ -99,7 +95,7 @@ export async function PATCH(req: Request) {
       return NextResponse.json(updated);
     }
 
-    const { name, description, image, bannerImage } = body;
+    const { name, image } = body;
 
     if (!name) return new NextResponse("Name is required", { status: 400 });
 
@@ -119,14 +115,11 @@ export async function PATCH(req: Request) {
 
     const updated = await prisma.category.update({
       where: { id },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: {
         name,
         slug,
-        description: description || null,
         image: image || null,
-        bannerImage: bannerImage || null,
-      } as any,
+      },
     });
 
     return NextResponse.json(updated);

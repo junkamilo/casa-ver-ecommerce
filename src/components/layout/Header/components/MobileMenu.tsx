@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { Search, User, Shield, ChevronRight } from "lucide-react";
-import { megaMenuData, HOVER_BRAND, TEXT_BRAND } from "../constants/constants";
+import { HOVER_BRAND, TEXT_BRAND } from "../constants/constants";
+import type { NavCategory } from "../types";
 
 interface Props {
   isAdmin: boolean;
+  categories: NavCategory[];
   onClose: () => void;
   onSearchOpen: () => void;
 }
 
-export default function MobileMenu({ isAdmin, onClose, onSearchOpen }: Props) {
+export default function MobileMenu({ isAdmin, categories, onClose, onSearchOpen }: Props) {
   return (
     <nav
       className="lg:hidden absolute top-full left-0 w-full border-b border-border/40 z-50 shadow-premium-lg h-[calc(100vh-64px)] overflow-y-auto animate-menu-slide"
@@ -77,38 +79,49 @@ export default function MobileMenu({ isAdmin, onClose, onSearchOpen }: Props) {
             <div className="h-px flex-1 bg-linear-to-r from-[#C19A6B]/30 to-transparent" />
           </div>
 
-          {megaMenuData.map((group, groupIdx) => (
-            <div
-              key={group.title}
-              className="flex flex-col gap-2.5"
-              style={{ animationDelay: `${groupIdx * 40}ms` }}
-            >
-              {/* Subtítulo de grupo */}
-              <span className="text-[10px] font-bold text-[#C19A6B] uppercase tracking-[0.25em] pl-3">
-                {group.title}
-              </span>
+          {/* Estado vacío */}
+          {categories.length === 0 && (
+            <p className="italic text-sm text-gray-400 pl-3">
+              Pronto agregaremos nuevas categorías.
+            </p>
+          )}
 
-              {/* Links de la categoría */}
-              {group.items.map((item) => (
+          {categories.length > 0 && categories.map((category, groupIdx) => (
+              <div
+                key={category.id}
+                className="flex flex-col gap-2.5"
+                style={{ animationDelay: `${groupIdx * 40}ms` }}
+              >
+                {/* Categoría Principal — verde + bold */}
                 <Link
-                  key={item.slug}
-                  href={`/collections/${item.slug}`}
-                  className={`relative group flex items-center gap-2 text-sm text-foreground/75 ${HOVER_BRAND} transition-all duration-200 pl-4 py-0.5`}
+                  href={`/collections/${category.slug}`}
+                  className="text-xs font-bold text-[#154734] uppercase tracking-[0.25em] pl-3 mb-2 hover:text-[#C19A6B] transition-colors duration-300"
                   onClick={onClose}
                 >
-                  {/* Barra izquierda dorada */}
-                  <span
-                    className="absolute left-0 top-0 bottom-0 w-[1.5px] bg-[#C19A6B] scale-y-0 group-hover:scale-y-100 transition-transform duration-200 origin-top rounded-full"
-                    aria-hidden="true"
-                  />
-                  <span className="group-hover:translate-x-0.5 transition-transform duration-200">
-                    {item.name}
-                  </span>
+                  {category.name}
                 </Link>
-              ))}
-            </div>
-          ))}
-        </div>
+
+                {/* Subcategorías — gris, normal */}
+                {category.subcategories.map((sub) => (
+                  <Link
+                    key={sub.id}
+                    href={`/collections/${sub.slug}`}
+                    className={`relative group flex items-center gap-2 text-sm text-gray-500 font-normal hover:text-[#C19A6B] transition-colors duration-300 pl-4 py-0.5`}
+                    onClick={onClose}
+                  >
+                    {/* Barra izquierda dorada */}
+                    <span
+                      className="absolute left-0 top-0 bottom-0 w-[1.5px] bg-[#C19A6B] scale-y-0 group-hover:scale-y-100 transition-transform duration-200 origin-top rounded-full"
+                      aria-hidden="true"
+                    />
+                    <span className="group-hover:translate-x-0.5 transition-transform duration-200 text-sm">
+                      {sub.name}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            ))}
+          </div>
 
         {/* ── PANEL ADMIN ── */}
         {isAdmin && (

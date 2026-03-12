@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { FilterSidebar } from "./FilterSidebar";
 import { MobileFilterDrawer } from "./MobileFilterDrawer";
 import { ProductToolbar } from "./ProductToolbar";
 import { ProductGrid } from "./ProductGrid";
@@ -42,14 +41,6 @@ export default function CollectionClient({ products, filterOptions }: Collection
         availableColors={filterOptions.availableColors}
         maxPriceDb={filterOptions.maxPriceDb}
       />
-
-      {/* Sidebar Desktop - Sticky */}
-      <div className="hidden lg:block w-[260px] xl:w-[300px] shrink-0 sticky top-24 h-[calc(100vh-6rem)] overflow-y-auto scrollbar-hide z-10 transition-all duration-500">
-        <FilterSidebar
-          availableColors={filterOptions.availableColors}
-          maxPriceDb={filterOptions.maxPriceDb}
-        />
-      </div>
 
       {/* Contenedor Principal de Productos */}
       <div className="flex-1 w-full min-w-0">

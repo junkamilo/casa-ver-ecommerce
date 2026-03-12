@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Loader2, ImageIcon, UploadCloud, Trash2, Layout } from "lucide-react";
+import { X, Loader2, ImageIcon, UploadCloud, Trash2 } from "lucide-react";
 import { CldUploadWidget, CloudinaryUploadWidgetResults } from "next-cloudinary";
 
 const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!;
@@ -109,12 +109,8 @@ interface CategoryModalProps {
   onSubmit: (e: React.FormEvent) => Promise<void>;
   name: string;
   setName: (v: string) => void;
-  description: string;
-  setDescription: (v: string) => void;
   image: string;
   setImage: (v: string) => void;
-  bannerImage: string;
-  setBannerImage: (v: string) => void;
   mode?: "create" | "edit";
 }
 
@@ -125,12 +121,8 @@ const CategoryModal = ({
   onSubmit,
   name,
   setName,
-  description,
-  setDescription,
   image,
   setImage,
-  bannerImage,
-  setBannerImage,
   mode = "create",
 }: CategoryModalProps) => {
   if (!isOpen) return null;
@@ -163,55 +155,27 @@ const CategoryModal = ({
           onSubmit={onSubmit}
           className="p-8 space-y-8 max-h-[75vh] overflow-y-auto"
         >
-          {/* Textos */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-xs font-black uppercase tracking-widest text-gray-500">Nombre de la Colección</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Ej: Prendas Inferiores"
-                required
-                className="w-full px-5 py-3.5 bg-[#FAFAFA] rounded-xl border border-gray-200 focus:bg-white focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10 outline-none transition-all text-[#154734] font-medium"
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-xs font-black uppercase tracking-widest text-gray-500">Descripción Editorial</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Un breve texto que inspire a tus clientes..."
-                rows={3}
-                className="w-full px-5 py-3.5 bg-[#FAFAFA] rounded-xl border border-gray-200 focus:bg-white focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10 outline-none resize-none transition-all text-gray-600 font-light"
-              />
-            </div>
+          {/* Nombre */}
+          <div className="space-y-2">
+            <label className="text-xs font-black uppercase tracking-widest text-gray-500">Nombre de la Colección</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ej: Prendas Inferiores"
+              required
+              className="w-full px-5 py-3.5 bg-[#FAFAFA] rounded-xl border border-gray-200 focus:bg-white focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10 outline-none transition-all text-[#154734] font-medium"
+            />
           </div>
 
-          {/* Zonas de Imagen */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-gray-100">
-            <div className="space-y-3">
-              <label className="text-xs font-black uppercase tracking-widest text-[#154734] flex items-center gap-2">
-                <ImageIcon className="w-4 h-4 text-[#C19A6B]" />
-                Miniatura (Card)
-              </label>
-              <p className="text-[11px] text-gray-400 font-light leading-relaxed">Esta imagen representará la categoría en la grilla principal. Formato cuadrado recomendado.</p>
-              <ImageZone image={image} setImage={setImage} aspectClass="h-40" />
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-xs font-black uppercase tracking-widest text-[#154734] flex items-center gap-2">
-                <Layout className="w-4 h-4 text-[#C19A6B]" />
-                Banner Editorial
-              </label>
-              <p className="text-[11px] text-gray-400 font-light leading-relaxed">Imagen panorámica (ancha) que se mostrará en la cabecera cuando el cliente entre a ver las prendas.</p>
-              <ImageZone
-                image={bannerImage}
-                setImage={setBannerImage}
-                aspectClass="h-40"
-              />
-            </div>
+          {/* Zona de Imagen */}
+          <div className="pt-4 border-t border-gray-100 space-y-3">
+            <label className="text-xs font-black uppercase tracking-widest text-[#154734] flex items-center gap-2">
+              <ImageIcon className="w-4 h-4 text-[#C19A6B]" />
+              Foto de la Tarjeta <span className="font-light normal-case tracking-normal text-gray-400">(opcional)</span>
+            </label>
+            <p className="text-[11px] text-gray-400 font-light leading-relaxed">Si no se sube foto, la tarjeta mostrará el nombre de la colección sobre fondo verde.</p>
+            <ImageZone image={image} setImage={setImage} aspectClass="h-40" />
           </div>
 
           {/* Acciones */}

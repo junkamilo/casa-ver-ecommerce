@@ -1,6 +1,5 @@
 export interface CollectionProduct {
-  mediaUrl: string | null;
-  hoverMediaUrl?: string | null;
+  images: string[];
   name: string;
   price: number;
   oldPrice?: number;

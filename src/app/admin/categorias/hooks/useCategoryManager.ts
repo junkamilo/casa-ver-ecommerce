@@ -17,16 +17,12 @@ export function useCategoryManager() {
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
   const [image, setImage] = useState("");
-  const [bannerImage, setBannerImage] = useState("");
 
   // Edit modal
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editName, setEditName] = useState("");
-  const [editDescription, setEditDescription] = useState("");
   const [editImage, setEditImage] = useState("");
-  const [editBannerImage, setEditBannerImage] = useState("");
   const [editSubmitting, setEditSubmitting] = useState(false);
 
   const [toast, setToast] = useState<ToastState>(null);
@@ -65,7 +61,7 @@ export function useCategoryManager() {
       const res = await fetch("/api/admin/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description, image, bannerImage }),
+        body: JSON.stringify({ name, image }),
       });
 
       if (!res.ok) {
@@ -76,9 +72,7 @@ export function useCategoryManager() {
       showToast("success", SUCCESS_MESSAGES.created);
       setShowModal(false);
       setName("");
-      setDescription("");
       setImage("");
-      setBannerImage("");
       fetchCategories();
     } catch (err: unknown) {
       showToast("error", err instanceof Error ? err.message : ERROR_MESSAGES.unknown);
@@ -90,17 +84,13 @@ export function useCategoryManager() {
   const openEditModal = (category: Category) => {
     setEditingCategory(category);
     setEditName(category.name);
-    setEditDescription(category.description || "");
     setEditImage(category.image || "");
-    setEditBannerImage(category.bannerImage || "");
   };
 
   const closeEditModal = () => {
     setEditingCategory(null);
     setEditName("");
-    setEditDescription("");
     setEditImage("");
-    setEditBannerImage("");
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
@@ -113,9 +103,7 @@ export function useCategoryManager() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: editName,
-          description: editDescription,
           image: editImage,
-          bannerImage: editBannerImage,
         }),
       });
 
@@ -174,24 +162,16 @@ export function useCategoryManager() {
     submitting,
     name,
     setName,
-    description,
-    setDescription,
     image,
     setImage,
-    bannerImage,
-    setBannerImage,
     toast,
     setToast,
     handleSubmit,
     editingCategory,
     editName,
     setEditName,
-    editDescription,
-    setEditDescription,
     editImage,
     setEditImage,
-    editBannerImage,
-    setEditBannerImage,
     editSubmitting,
     openEditModal,
     closeEditModal,

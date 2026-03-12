@@ -17,7 +17,7 @@ async function getCollectionData(
   slug: string,
   filters: CollectionFilters
 ): Promise<{
-  category: { name: string; description?: string | null; bannerImage?: string | null } | null;
+  category: { name: string } | null;
   products: CollectionProduct[];
   filterOptions: FilterOptions;
 }> {
@@ -26,7 +26,7 @@ async function getCollectionData(
   try {
     const category = await prisma.category.findUnique({
       where: { slug, isActive: true },
-      select: { name: true, description: true, bannerImage: true },
+      select: { name: true },
     });
 
     if (!category) return empty;
@@ -84,9 +84,8 @@ async function getCollectionData(
         isFeatured: true,
         isNew: true,
         images: {
-          where: { colorId: null },
           orderBy: { order: "asc" },
-          take: 2,
+          take: 8,
           select: { url: true },
         },
         colors: {
@@ -105,8 +104,7 @@ async function getCollectionData(
     });
 
     const products: CollectionProduct[] = raw.map((p) => ({
-      mediaUrl: p.images[0]?.url ?? p.colors[0]?.images[0]?.url ?? null,
-      hoverMediaUrl: p.images[1]?.url ?? p.colors[1]?.images[0]?.url ?? null,
+      images: p.images.map((i) => i.url),
       name: p.name,
       slug: p.slug,
       price: Number(p.basePrice),
@@ -166,8 +164,6 @@ export default async function CollectionPage({
           {/* Hero Section */}
           <CollectionHero
             title={title}
-            description={category?.description}
-            imageUrl={category?.bannerImage ?? undefined}
           />
 
           {/* Grilla de Productos */}

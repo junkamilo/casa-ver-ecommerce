@@ -26,7 +26,13 @@
       "Bash(npx tsc --noEmit --project tsconfig.json)",
       "Bash(npx prisma migrate deploy)",
       "Bash(node -e \"require\\(''mercadopago''\\); console.log\\(''OK''\\)\")",
-      "Bash(npx prisma migrate dev --name add_mercadopago_payment_method)"
+      "Bash(npx prisma migrate dev --name add_mercadopago_payment_method)",
+      "Bash(npx prisma migrate dev --name remove_category_banner_image)",
+      "Bash(npx prisma migrate dev --name remove_category_description_order)",
+      "Bash(sed -i 's/lg:max-h-\\\\[700px\\\\] xl:max-h-\\\\[800px\\\\]/lg:max-h-175 xl:max-h-200/' \"c:/MIGRACION/casa-verde-ecommerce-nextjs/src/app/product/[slug]/components/ProductGallery.tsx\")",
+      "Bash(sed -i 's/aspect-\\\\[3\\\\/4\\\\]/aspect-3\\\\/4/' \"c:/MIGRACION/casa-verde-ecommerce-nextjs/src/app/product/[slug]/components/ProductGallery.tsx\")",
+      "Bash(sed -i 's/bg-gradient-to-tr/bg-linear-to-tr/' \"c:/MIGRACION/casa-verde-ecommerce-nextjs/src/app/product/[slug]/components/ProductGallery.tsx\")",
+      "Bash(sed -i 's/z-\\\\[1\\\\]/z-1/' \"c:/MIGRACION/casa-verde-ecommerce-nextjs/src/app/product/[slug]/components/ProductGallery.tsx\")"
     ]
   }
 }
