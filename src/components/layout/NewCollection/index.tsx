@@ -10,7 +10,6 @@ const config: SectionConfig = {
   linkHref: "/collections/nueva-coleccion",
   linkText: "VER TODO",
   bgColor: "bg-white",
-  decorNumber: "03",
   decorAlign: "left",
   badgeVariant: "gold",
 };
