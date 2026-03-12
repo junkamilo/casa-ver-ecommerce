@@ -7,6 +7,8 @@ import CollectionHero from "@/app/collections/[slug]/components/CollectionHero";
 import CollectionClient from "@/app/collections/[slug]/components/CollectionClient";
 import type { CollectionProduct, FilterOptions } from "@/app/collections/[slug]/types";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Los Más Deseados | Casa Verde",
   description: "Descubre los productos más deseados de nuestra colección.",
