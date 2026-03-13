@@ -4,16 +4,7 @@ import { useState } from "react";
 import Image, { StaticImageData } from "next/image";
 import { ChevronUp, LayoutGrid, List, SlidersHorizontal, X } from "lucide-react";
 import AnnouncementBar from "@/components/AnnouncementBar";
-
 import Footer from "@/components/Footer";
-import product1 from "@/assets/product-1.jpg";
-import product2 from "@/assets/product-2.jpg";
-import product3 from "@/assets/product-3.jpg";
-import product4 from "@/assets/product-4.jpg";
-import product5 from "@/assets/product-5.jpg";
-import new1 from "@/assets/new-1.jpg";
-import new3 from "@/assets/new-3.jpg";
-import new6 from "@/assets/new-6.jpg";
 import Header from "@/components/layout/Header";
 
 interface Product {
@@ -25,56 +16,6 @@ interface Product {
     colors?: string[];
     colorLabel?: string;
 }
-
-const allProducts: Product[] = [
-    {
-        image: product1,
-        name: "BODY BASIC",
-        price: "$90.000",
-        colorLabel: "CAFÉ",
-        colors: ["#a8967a", "#2d2d2d", "#a8d4f0"],
-    },
-    {
-        image: product2,
-        name: "BODY BASIC NEGRO",
-        price: "$110.000",
-    },
-    {
-        image: product3,
-        name: "BODY BOTONES",
-        price: "$80.000",
-        oldPrice: "$125.000",
-        badge: "Oferta",
-    },
-    {
-        image: product4,
-        name: "BODY MAGNOLIO",
-        price: "$120.000",
-    },
-    {
-        image: product5,
-        name: "SET PANT G SIN PUSH",
-        price: "$150.000",
-        colors: ["#8b6f5e", "#3d6b8a"],
-        colorLabel: "CAFÉ",
-    },
-    {
-        image: new1,
-        name: "SET PANT BUSO LÍNEAS",
-        price: "$170.000",
-    },
-    {
-        image: new3,
-        name: "SET SHORT AZUL EFECTO LAVADO",
-        price: "$80.000",
-    },
-    {
-        image: new6,
-        name: "ENTERIZO LARGO MANGA LARGA",
-        price: "$170.000",
-    },
-];
-
 const Tienda = () => {
     const [disponibilidadOpen, setDisponibilidadOpen] = useState(true);
     const [precioOpen, setPrecioOpen] = useState(true);
@@ -196,7 +137,6 @@ const Tienda = () => {
                             </button>
 
                             <span className="text-xs sm:text-sm text-muted-foreground">
-                                {allProducts.length} artículos
                             </span>
                             <div className="flex items-center gap-3 sm:gap-4">
                                 <div className="flex items-center gap-1 cursor-pointer">
@@ -216,50 +156,7 @@ const Tienda = () => {
 
                         {/* Product Grid */}
                         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
-                            {allProducts.map((product, i) => (
-                                <div key={i} className="cursor-pointer group">
-                                    <div className="relative overflow-hidden mb-2 sm:mb-3">
-                                        <Image
-                                            src={product.image}
-                                            alt={product.name}
-                                            className="w-full aspect-3/4 object-cover group-hover:scale-105 transition-transform duration-500"
-                                            placeholder="blur"
-                                        />
-                                        {product.badge && (
-                                            <span className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-destructive text-destructive-foreground text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
-                                                {product.badge}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <h3 className="text-[10px] sm:text-xs font-semibold tracking-wider text-foreground mb-1 uppercase">
-                                        {product.name}
-                                    </h3>
-                                    <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
-                                        <span className="text-xs sm:text-sm text-foreground">{product.price}</span>
-                                        {product.oldPrice && (
-                                            <span className="text-xs sm:text-sm text-muted-foreground line-through">
-                                                {product.oldPrice}
-                                            </span>
-                                        )}
-                                    </div>
-                                    {product.colorLabel && (
-                                        <p className="text-[10px] sm:text-xs text-muted-foreground tracking-wider mb-1.5 sm:mb-2">
-                                            COLOR: {product.colorLabel}
-                                        </p>
-                                    )}
-                                    {product.colors && (
-                                        <div className="flex gap-1 sm:gap-1.5">
-                                            {product.colors.map((color, ci) => (
-                                                <span
-                                                    key={ci}
-                                                    className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-border"
-                                                    style={{ backgroundColor: color }}
-                                                />
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
+                            
                         </div>
                     </div>
                 </div>

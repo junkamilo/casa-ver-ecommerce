@@ -30,7 +30,7 @@ export const checkoutSchema = z.object({
   addressDetail: z.string().optional(),
   city: z.string().min(2, "Ciudad requerida"),
   department: z.string().min(2, "Departamento requerido"),
-  paymentMethod: z.enum(["MERCADOPAGO"]),
+  paymentMethod: z.enum(["BOLD"]),
   billingSameAsShipping: z.boolean(),
   couponCode: z.string().optional(),
 });
@@ -65,7 +65,7 @@ export function useCheckout() {
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
-      paymentMethod: "MERCADOPAGO",
+      paymentMethod: "BOLD",
       billingSameAsShipping: true,
     },
   });

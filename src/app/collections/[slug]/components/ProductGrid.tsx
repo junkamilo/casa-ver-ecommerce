@@ -98,28 +98,28 @@ function ProductCard({ item, viewMode }: { item: CollectionProduct; viewMode: "g
           {canGoPrev && (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); prevImage(); }}
-              className={`absolute left-3 top-1/2 -translate-y-1/2 z-30 flex items-center justify-center w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm border border-[#C19A6B]/20 shadow-[0_5px_15px_-3px_rgba(21,71,52,0.15)] transition-all duration-500 hover:scale-110 hover:bg-[#154734] hover:border-[#154734] text-[#154734] hover:text-[#C19A6B] ${
-                isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"
+              className={`absolute left-2 top-1/2 -translate-y-1/2 z-30 flex items-center justify-center w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm border border-[#C19A6B]/20 shadow-[0_5px_15px_-3px_rgba(21,71,52,0.15)] transition-all duration-500 hover:scale-110 hover:bg-[#154734] hover:border-[#154734] text-[#154734] hover:text-[#C19A6B] touch-target active:scale-90 ${
+                isHovered ? "opacity-100 translate-x-0" : "max-md:opacity-100 max-md:translate-x-0 md:opacity-0 md:-translate-x-4"
               }`}
               aria-label="Imagen anterior"
             >
-              <ChevronLeft className="w-5 h-5 pr-0.5" />
+              <ChevronLeft className="w-4 h-4" />
             </button>
           )}
           {canGoNext && (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); nextImage(); }}
-              className={`absolute right-3 top-1/2 -translate-y-1/2 z-30 flex items-center justify-center w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm border border-[#C19A6B]/20 shadow-[0_5px_15px_-3px_rgba(21,71,52,0.15)] transition-all duration-500 hover:scale-110 hover:bg-[#154734] hover:border-[#154734] text-[#154734] hover:text-[#C19A6B] ${
-                isHovered ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
+              className={`absolute right-2 top-1/2 -translate-y-1/2 z-30 flex items-center justify-center w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm border border-[#C19A6B]/20 shadow-[0_5px_15px_-3px_rgba(21,71,52,0.15)] transition-all duration-500 hover:scale-110 hover:bg-[#154734] hover:border-[#154734] text-[#154734] hover:text-[#C19A6B] touch-target active:scale-90 ${
+                isHovered ? "opacity-100 translate-x-0" : "max-md:opacity-100 max-md:translate-x-0 md:opacity-0 md:translate-x-4"
               }`}
               aria-label="Imagen siguiente"
             >
-              <ChevronRight className="w-5 h-5 pl-0.5" />
+              <ChevronRight className="w-4 h-4" />
             </button>
           )}
 
           {/* Indicadores de puntos (Dots) */}
-          <div className={`absolute bottom-3 left-1/2 -translate-x-1/2 z-30 flex gap-1.5 transition-opacity duration-500 ${isHovered ? "opacity-100" : "opacity-0"}`}>
+          <div className={`absolute bottom-3 left-1/2 -translate-x-1/2 z-30 flex gap-1.5 transition-opacity duration-500 ${isHovered ? "opacity-100" : "max-md:opacity-100 md:opacity-0"}`}>
             {images.map((_, i) => (
               <button
                 key={i}
@@ -256,7 +256,7 @@ export function ProductGrid({ products, viewMode }: ProductGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-5 gap-y-8 sm:gap-y-10">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-5">
       {products.map((item, index) => (
         <div
           key={item.slug}

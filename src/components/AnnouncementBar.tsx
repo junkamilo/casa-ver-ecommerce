@@ -4,7 +4,7 @@ import { Truck, Sparkles, ShieldCheck } from "lucide-react";
 
 const announcements = [
   {
-    text: "Envíos Gratis a Todo Colombia",
+    text: "Envíos gratis por compras superiores a $300.000 mil pesos",
     icon: Truck,
     delay: "0s",
   },

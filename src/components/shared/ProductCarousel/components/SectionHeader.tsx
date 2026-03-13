@@ -18,7 +18,7 @@ const SectionHeader = ({ config }: SectionHeaderProps) => (
       </div>
 
       <h2
-        className="text-4xl sm:text-5xl font-light text-[#154734] leading-none"
+        className="text-3xl sm:text-4xl md:text-5xl font-light text-[#154734] leading-none"
         style={{ fontFamily: "Georgia, serif" }}
       >
         {config.titleStart}{" "}
@@ -30,7 +30,7 @@ const SectionHeader = ({ config }: SectionHeaderProps) => (
 
     <Link
       href={config.linkHref}
-      className="group flex items-center gap-2.5 text-[11px] font-black tracking-[0.32em] uppercase text-[#154734] hover:text-[#C19A6B] transition-colors duration-300 pb-2"
+      className="group flex items-center gap-2.5 text-[11px] font-black tracking-[0.32em] uppercase text-[#154734] hover:text-[#C19A6B] transition-colors duration-300 pb-2 p-2 touch-target active:scale-95"
     >
       {config.linkText}
       <span className="h-px w-5 bg-[#154734]/30 group-hover:w-9 group-hover:bg-[#C19A6B] transition-all duration-350 ease-out" />

@@ -29,25 +29,25 @@ const CartItemCard = ({ item, onRemove, onUpdateQty }: CartItemCardProps) => (
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="flex items-center border border-border rounded h-8 w-24">
+        <div className="flex items-center border border-border rounded h-10 w-28">
           <button
             onClick={() => onUpdateQty(item.id, -1)}
-            className="w-8 h-full flex items-center justify-center hover:bg-muted"
+            className="w-10 h-full flex items-center justify-center hover:bg-muted active:bg-muted touch-target"
           >
-            <Minus className="w-3 h-3" />
+            <Minus className="w-3.5 h-3.5" />
           </button>
           <span className="flex-1 text-center text-xs font-medium">{item.quantity}</span>
           <button
             onClick={() => onUpdateQty(item.id, 1)}
-            className="w-8 h-full flex items-center justify-center hover:bg-muted"
+            className="w-10 h-full flex items-center justify-center hover:bg-muted active:bg-muted touch-target"
           >
-            <Plus className="w-3 h-3" />
+            <Plus className="w-3.5 h-3.5" />
           </button>
         </div>
 
         <button
           onClick={() => onRemove(item.id)}
-          className="text-muted-foreground hover:text-destructive transition-colors p-1"
+          className="text-muted-foreground hover:text-destructive transition-colors p-2.5 touch-target active:scale-90"
         >
           <Trash2 className="w-4 h-4" />
         </button>

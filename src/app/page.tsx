@@ -1,6 +1,5 @@
 
 import AnnouncementBar from "@/components/AnnouncementBar";
-import ElevaTuLook from "@/components/ElevaTuLook";
 import Footer from "@/components/Footer";
 import HeroSection from "@/components/HeroSection";
 import BestSellers from "@/components/layout/BestSellers";
@@ -10,7 +9,6 @@ import NewCollection from "@/components/layout/NewCollection";
 import Testimonials from "@/components/layout/Testimonials";
 import { TESTIMONIALS } from "@/components/layout/Testimonials/constants/constants";
 import PaymentMethodsBanner from "@/components/PaymentMethodsBanner";
-import ValueProps from "@/components/ValueProps";
 
 export default function Home() {
   return (
@@ -21,8 +19,6 @@ export default function Home() {
       <BestSellers />
       <NewCollection />
       <Categories />
-      <ElevaTuLook />
-      <ValueProps />
       <PaymentMethodsBanner />
       <Testimonials comments={TESTIMONIALS} />
       <Footer />

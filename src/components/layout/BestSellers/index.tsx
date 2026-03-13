@@ -5,11 +5,11 @@ import { SectionConfig, ProductItem } from "@/components/shared/ProductCarousel/
 
 // --- 1. CONFIGURACIÓN PREMIUM ---
 const config: SectionConfig = {
-  eyebrow: "Colección Exclusiva",
-  titleStart: "Favoritos de",
-  titleItalic: "Casa Verde",
+  eyebrow: "Favoritos",
+  titleStart: "Los mas",
+  titleItalic: "vendidos",
   linkHref: "/collections/mas-vendidos",
-  linkText: "EXPLORAR SELECCIÓN",
+  linkText: "VER TODO",
   bgColor: "bg-[#FDFBF7]", // Fondo beige cálido y elegante en lugar de gris genérico
   decorAlign: "right",
   badgeVariant: "white",

@@ -14,25 +14,25 @@ const ContactSection = () => {
   const { register, formState: { errors } } = useFormContext<CheckoutFormData>();
 
   return (
-    <section className="mb-10 bg-white p-6 sm:p-8 rounded-[2rem] border border-gray-100 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] relative overflow-hidden group/section hover:border-[#C19A6B]/30 transition-colors duration-300">
+    <section className="mb-8 sm:mb-10 bg-white p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2rem] border border-gray-100 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] relative overflow-hidden group/section hover:border-[#C19A6B]/30 transition-colors duration-300">
       <div className="absolute top-0 left-0 w-1.5 h-full bg-[#154734] scale-y-0 group-hover/section:scale-y-100 origin-top transition-transform duration-500" />
 
-      <div className="flex justify-between items-end mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 sm:gap-4 mb-6">
         <h2
-          className="text-xl sm:text-2xl text-[#154734] flex items-center gap-3"
+          className="text-lg sm:text-xl md:text-2xl text-[#154734] flex items-center gap-2 sm:gap-3"
           style={{ fontFamily: "Georgia, serif" }}
         >
-          <Mail className="w-5 h-5 text-[#C19A6B]" /> Contacto
+          <Mail className="w-4 sm:w-5 h-4 sm:h-5 text-[#C19A6B] shrink-0" /> Contacto
         </h2>
         <Link
           href="/login"
-          className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-[#C19A6B] hover:text-[#154734] transition-colors border-b border-transparent hover:border-[#154734] pb-0.5"
+          className="text-[9px] sm:text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-[#C19A6B] hover:text-[#154734] transition-colors border-b border-transparent hover:border-[#154734] pb-0.5 p-1 touch-target active:scale-90"
         >
           Iniciar sesión
         </Link>
       </div>
 
-      <div className="space-y-5">
+      <div className="space-y-4 sm:space-y-5">
         <div className="relative">
           <input
             type="email"

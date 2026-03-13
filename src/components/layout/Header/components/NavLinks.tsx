@@ -16,13 +16,8 @@ export default function NavLinks({ isCategoriesActive, onCategoriesEnter }: Prop
       <div className="relative group flex flex-col items-center gap-0.5 py-1">
         <Link
           href="/"
-          className="relative flex items-center gap-1.5 text-xs font-bold tracking-[0.18em] text-foreground/70 group-hover:text-[#154734] transition-all duration-300 group-hover:-translate-y-px"
+          className="relative text-xs font-bold tracking-[0.18em] text-foreground/70 group-hover:text-[#154734] transition-all duration-300 group-hover:-translate-y-px"
         >
-          {/* Diamante que se pinta en hover */}
-          <span
-            className="w-1 h-1 shrink-0 bg-[#C19A6B]/0 group-hover:bg-[#C19A6B] rotate-45 transition-all duration-300 ease-out scale-0 group-hover:scale-100"
-            aria-hidden="true"
-          />
           INICIO
         </Link>
 
@@ -39,12 +34,8 @@ export default function NavLinks({ isCategoriesActive, onCategoriesEnter }: Prop
       <div className="relative group flex flex-col items-center gap-0.5 py-1">
         <Link
           href="/tienda"
-          className="relative flex items-center gap-1.5 text-xs font-bold tracking-[0.18em] text-foreground/70 group-hover:text-[#154734] transition-all duration-300 group-hover:-translate-y-px"
+          className="relative text-xs font-bold tracking-[0.18em] text-foreground/70 group-hover:text-[#154734] transition-all duration-300 group-hover:-translate-y-px"
         >
-          <span
-            className="w-1 h-1 shrink-0 bg-[#C19A6B]/0 group-hover:bg-[#C19A6B] rotate-45 transition-all duration-300 ease-out scale-0 group-hover:scale-100"
-            aria-hidden="true"
-          />
           TIENDA
         </Link>
 
@@ -65,20 +56,12 @@ export default function NavLinks({ isCategoriesActive, onCategoriesEnter }: Prop
       >
         <Link
           href="/tienda"
-          className={`relative flex items-center gap-1.5 text-xs font-bold tracking-[0.18em] transition-all duration-300 py-2 ${
+          className={`relative text-xs font-bold tracking-[0.18em] transition-all duration-300 py-2 ${
             isCategoriesActive
               ? `${TEXT_BRAND} -translate-y-px`
               : "text-foreground/70 hover:text-[#154734] hover:-translate-y-px"
           }`}
         >
-          <span
-            className={`w-1 h-1 shrink-0 rotate-45 transition-all duration-300 ease-out ${
-              isCategoriesActive
-                ? "bg-[#C19A6B] scale-100"
-                : "bg-[#C19A6B]/0 group-hover:bg-[#C19A6B] scale-0 group-hover:scale-100"
-            }`}
-            aria-hidden="true"
-          />
           CATEGORÍAS
         </Link>
 
@@ -96,14 +79,6 @@ export default function NavLinks({ isCategoriesActive, onCategoriesEnter }: Prop
           />
         </span>
 
-        {/* Diamante conector al megamenú — aparece cuando el menú está abierto */}
-        <span
-          className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rotate-45 bg-[#C19A6B] transition-all duration-300 ease-out ${
-            isCategoriesActive ? "opacity-100 scale-100" : "opacity-0 scale-0"
-          }`}
-          style={{ boxShadow: "0 0 7px 1px rgba(193,154,107,0.65)" }}
-          aria-hidden="true"
-        />
       </div>
     </nav>
   );

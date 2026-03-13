@@ -94,17 +94,12 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
                   <Link
                     key={sub.id}
                     href={`/collections/${sub.slug}`}
-                    className={`relative group flex items-center gap-2 text-sm text-gray-500 font-normal hover:text-[#C19A6B] transition-colors duration-300 pl-3`}
+                    className={`relative group flex items-center text-sm text-gray-500 font-normal hover:text-[#C19A6B] transition-colors duration-300 pl-3`}
                     onClick={onClose}
                   >
                     {/* Barra dorada izquierda que aparece en hover */}
                     <span
                       className="absolute left-0 top-0 bottom-0 w-[1.5px] bg-[#C19A6B] scale-y-0 group-hover:scale-y-100 transition-transform duration-200 origin-top rounded-full"
-                      aria-hidden="true"
-                    />
-                    {/* Dot dorado */}
-                    <span
-                      className="w-1 h-1 rounded-full bg-[#C19A6B]/0 group-hover:bg-[#C19A6B] transition-all duration-200 shrink-0"
                       aria-hidden="true"
                     />
                     <span className="group-hover:translate-x-0.5 transition-transform duration-200 text-sm">

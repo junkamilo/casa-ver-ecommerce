@@ -108,15 +108,11 @@ const HeaderClient = ({ categories }: Props) => {
           <div className="absolute left-1/2 -translate-x-1/2">
             <Link href="/" className="block group" aria-label="Casa Verde — inicio">
               <span
-                className="text-2xl sm:text-3xl lg:text-4xl font-light tracking-wide animate-text-shimmer inline-block transition-transform duration-300 group-hover:scale-[1.03]"
+                className="text-2xl sm:text-3xl lg:text-4xl font-light tracking-wide animate-text-shimmer bg-clip-text text-transparent inline-block transition-transform duration-300 group-hover:scale-[1.03]"
                 style={{
                   fontFamily: "Georgia, serif",
-                  /* El 90% es verde puro, el 10% es el destello dorado */
-                  backgroundImage: `linear-gradient(90deg, ${BRAND_GREEN} 0%, ${BRAND_GREEN} 42%, #C19A6B 47%, #F5E8D0 50%, #C19A6B 53%, ${BRAND_GREEN} 58%, ${BRAND_GREEN} 100%)`,
-                  backgroundSize: "320% auto",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
+                  backgroundImage: `linear-gradient(90deg, ${BRAND_GREEN} 0%, ${BRAND_GREEN} 40%, #C19A6B 45%, #F5E8D0 50%, #C19A6B 55%, ${BRAND_GREEN} 60%, ${BRAND_GREEN} 100%)`,
+                  backgroundSize: "300% auto",
                 }}
               >
                 CASA VERDE
