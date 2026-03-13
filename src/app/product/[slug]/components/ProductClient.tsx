@@ -175,7 +175,7 @@ export default function ProductClient({
       {/* Toast */}
       <div
         aria-live="polite"
-        className={`fixed top-6 right-6 z-100 flex items-center gap-4 bg-[#154734] text-white shadow-2xl rounded-xl px-5 py-4 transition-all duration-500 ${showAddedNotification ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-8 pointer-events-none"
+        className={`fixed top-4 right-4 sm:top-6 sm:right-6 z-100 flex items-center gap-3 sm:gap-4 bg-[#154734] text-white shadow-2xl rounded-xl px-4 sm:px-5 py-3 sm:py-4 transition-all duration-500 max-w-[calc(100vw-32px)] sm:max-w-none ${showAddedNotification ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-8 pointer-events-none"
           }`}
       >
         <div className="bg-white/20 rounded-full p-2 backdrop-blur-sm">
@@ -455,7 +455,7 @@ export default function ProductClient({
               </div>
 
               <h2
-                className="text-4xl sm:text-5xl lg:text-6xl text-white mb-6 leading-[1.1] tracking-tight"
+                className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl text-white mb-6 leading-[1.1] tracking-tight"
                 style={{ fontFamily: "Georgia, serif" }}
               >
                 Movimiento <br />

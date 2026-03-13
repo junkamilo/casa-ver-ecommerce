@@ -17,7 +17,7 @@ export interface CheckoutItem {
 
 export type CheckoutFormData = z.infer<typeof checkoutSchema>;
 
-export type PaymentMethodUI = "MERCADOPAGO";
+export type PaymentMethodUI = "BOLD";
 
 export interface CouponState {
   code: string;

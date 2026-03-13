@@ -49,7 +49,6 @@ enum PaymentMethod {
   NEQUI
   BANCOLOMBIA
   DAVIPLATA
-  MERCADOPAGO
 }
 
 // ============================================================

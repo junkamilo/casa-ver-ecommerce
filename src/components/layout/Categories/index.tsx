@@ -14,45 +14,30 @@ const Categories = () => {
   const { categories, loading } = useCategories();
 
   return (
-    <section className="relative py-24 px-4 sm:px-6 lg:px-8 bg-[#FAFAFA] border-t border-[#C19A6B]/10 overflow-hidden">
+    <section className="relative w-full py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6 md:px-8 lg:px-12 bg-[#FAFAFA] border-t border-[#C19A6B]/10 overflow-hidden">
 
-      {/* Detalle de fondo sutil: Número Editorial 04 */}
-      <div className="absolute top-10 right-0 text-[180px] font-black leading-none text-[#154734]/[0.02] translate-x-1/4 pointer-events-none select-none" style={{ fontFamily: "Georgia, serif" }}>
-        04
-      </div>
+      <div className="relative max-w-7xl 2xl:max-w-6xl mx-auto z-10">
 
-      <div className="relative max-w-7xl mx-auto z-10">
-
-        {/* ── HEADER EDITORIAL ── */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 w-full mb-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6 w-full mb-8 sm:mb-10 md:mb-12">
           <div>
-            <div className="flex items-center gap-3 mb-3">
-              <span className="h-px w-8" style={{ background: BRAND_GOLD }} />
-              <span className="text-[10px] font-black tracking-[0.38em] uppercase text-[#C19A6B]">
-                Nuestros Estilos
-              </span>
-            </div>
-            <h2 className="text-4xl sm:text-5xl font-light text-[#154734] leading-none" style={{ fontFamily: "Georgia, serif" }}>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-[#154734] leading-none" style={{ fontFamily: "Georgia, serif" }}>
               Explora por <span className="italic" style={{ color: BRAND_GOLD }}>Categoría</span>
             </h2>
           </div>
 
           <Link
             href="/collections"
-            className="group flex items-center gap-2.5 text-[11px] font-black tracking-[0.32em] uppercase text-[#154734] hover:text-[#C19A6B] transition-colors duration-300 pb-2"
+            className="group flex items-center justify-center sm:justify-start gap-2.5 text-[10px] sm:text-[11px] font-black tracking-[0.32em] uppercase text-[#154734] hover:text-[#C19A6B] transition-colors duration-300 pb-1 sm:pb-2 p-2 touch-target active:scale-95"
           >
             VER TODO
             <span className="h-px w-5 bg-[#154734]/30 group-hover:w-9 group-hover:bg-[#C19A6B] transition-all duration-350 ease-out" />
           </Link>
         </div>
 
-        {/* ── CARRUSEL ── */}
-        <div className="relative group/carousel mt-12">
+        <div className="relative group/carousel mt-8 sm:mt-10 md:mt-12">
 
-          {/* ── Estado de carga: skeleton ── */}
           {loading && <CategoryCarouselSkeleton count={4} />}
 
-          {/* ── Estado vacío ── */}
           {!loading && categories.length === 0 && (
             <div className="flex flex-col items-center justify-center py-8 gap-3">
               <span
@@ -65,10 +50,8 @@ const Categories = () => {
             </div>
           )}
 
-          {/* ── Estado con datos ── */}
           {!loading && categories.length > 0 && (
             <>
-              {/* BOTÓN IZQUIERDO */}
               {canScrollLeft && (
                 <button
                   onClick={(e) => {
@@ -76,14 +59,13 @@ const Categories = () => {
                     e.stopPropagation();
                     scroll("left");
                   }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 z-100 w-12 h-12 rounded-full bg-white/90 backdrop-blur-md border border-[#154734]/10 flex items-center justify-center text-[#154734] hover:bg-[#154734] hover:text-white transition-all duration-400 shadow-xl opacity-0 -translate-x-4 group-hover/carousel:opacity-100 group-hover/carousel:translate-x-0 cursor-pointer"
+                  className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-100 w-12 h-12 rounded-full bg-white/90 backdrop-blur-md border border-[#154734]/10 items-center justify-center text-[#154734] hover:bg-[#154734] hover:text-white transition-all duration-400 shadow-xl opacity-0 -translate-x-4 group-hover/carousel:opacity-100 group-hover/carousel:translate-x-0 cursor-pointer touch-target active:scale-90"
                   aria-label="Anterior"
                 >
                   <ChevronLeft className="w-6 h-6 stroke-[1.5]" />
                 </button>
               )}
 
-              {/* BOTÓN DERECHO */}
               {canScrollRight && (
                 <button
                   onClick={(e) => {
@@ -91,7 +73,7 @@ const Categories = () => {
                     e.stopPropagation();
                     scroll("right");
                   }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 z-100 w-12 h-12 rounded-full bg-white/90 backdrop-blur-md border border-[#154734]/10 flex items-center justify-center text-[#154734] hover:bg-[#154734] hover:text-white transition-all duration-400 shadow-xl opacity-0 translate-x-4 group-hover/carousel:opacity-100 group-hover/carousel:translate-x-0 cursor-pointer"
+                  className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-100 w-12 h-12 rounded-full bg-white/90 backdrop-blur-md border border-[#154734]/10 items-center justify-center text-[#154734] hover:bg-[#154734] hover:text-white transition-all duration-400 shadow-xl opacity-0 translate-x-4 group-hover/carousel:opacity-100 group-hover/carousel:translate-x-0 cursor-pointer touch-target active:scale-90"
                   aria-label="Siguiente"
                 >
                   <ChevronRight className="w-6 h-6 stroke-[1.5]" />
@@ -100,16 +82,17 @@ const Categories = () => {
 
               <div
                 ref={scrollRef}
-                className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide pb-8 px-1"
+                className="grid grid-flow-col auto-cols-[80vw] sm:auto-cols-[50vw] gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-4 sm:pb-6 snap-x snap-mandatory md:grid-flow-row md:auto-cols-auto md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 md:gap-6 md:overflow-visible md:pb-0 md:snap-none"
                 style={{ scrollBehavior: "smooth" }}
               >
                 {categories.map((cat) => (
-                  <CategoryCard
-                    key={cat.id}
-                    image={cat.image ?? ""}
-                    label={cat.name}
-                    slug={cat.slug}
-                  />
+                  <div key={cat.id} className="snap-center md:snap-none">
+                    <CategoryCard
+                      image={cat.image ?? ""}
+                      label={cat.name}
+                      slug={cat.slug}
+                    />
+                  </div>
                 ))}
               </div>
             </>

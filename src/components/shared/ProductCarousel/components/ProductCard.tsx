@@ -14,8 +14,7 @@ const ProductCard = ({ item, badgeVariant = "gold" }: ProductCardProps) => {
   return (
     <Link
       href={`/product/${item.slug}`}
-      // ¡IMPORTANTE!: Mantenemos las clases de ancho (w-[65vw]...) y shrink-0 para que el carrusel no se rompa
-      className="group cursor-pointer flex flex-col h-full bg-white p-3 sm:p-4 rounded-[1.5rem] border border-[#C19A6B]/20 hover:border-[#C19A6B]/60 shadow-[0_4px_15px_-5px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_30px_-5px_rgba(193,154,107,0.15)] transition-all duration-500 w-[65vw] sm:w-[40vw] md:w-[calc(25%-18px)] shrink-0"
+      className="group cursor-pointer flex flex-col h-full bg-white p-3 sm:p-4 rounded-[1.5rem] border border-[#C19A6B]/20 hover:border-[#C19A6B]/60 shadow-[0_4px_15px_-5px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_30px_-5px_rgba(193,154,107,0.15)] transition-all duration-500 w-full"
     >
       {/* Contenedor de la Imagen */}
       <div className="relative aspect-[3/4] mb-4 overflow-hidden rounded-xl bg-[#FAFAFA] border border-gray-50">

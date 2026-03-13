@@ -10,7 +10,7 @@ interface CategoryCardProps {
 const CategoryCard = ({ image, label, slug }: CategoryCardProps) => (
   <Link
     href={`/collections/${slug}`}
-    className="group block relative cursor-pointer w-[65vw] sm:w-[40vw] md:w-[calc(25%-18px)] shrink-0 aspect-[4/5] overflow-hidden bg-[#154734] shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_40px_-15px_rgba(21,71,52,0.2)] transition-all duration-500"
+    className="group block relative cursor-pointer w-full aspect-4/5 overflow-hidden bg-[#154734] shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_40px_-15px_rgba(21,71,52,0.2)] transition-all duration-500"
   >
     {image ? (
       <>

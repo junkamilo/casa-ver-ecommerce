@@ -20,17 +20,17 @@ const ProductCarousel = ({ config, items }: ProductCarouselProps) => {
       : "top-10 left-0 -translate-x-1/4";
 
   return (
-    <section className={`relative py-20 px-4 sm:px-6 lg:px-8 ${config.bgColor} border-t border-[#C19A6B]/10 overflow-hidden`}>
+    <section className={`relative w-full py-12 sm:py-16 md:py-20 lg:py-20 px-4 sm:px-6 md:px-8 lg:px-12 ${config.bgColor} border-t border-[#C19A6B]/10 overflow-hidden`}>
       <div
-        className={`absolute ${decorPositionClass} text-[200px] font-black leading-none text-black/[0.02] pointer-events-none select-none`}
+        className={`absolute ${decorPositionClass} text-[120px] sm:text-[160px] md:text-[200px] font-black leading-none text-black/[0.02] pointer-events-none select-none`}
         style={{ fontFamily: "Georgia, serif" }}
       >
       </div>
 
-      <div className="relative max-w-7xl mx-auto z-10">
+      <div className="relative max-w-7xl 2xl:max-w-6xl mx-auto z-10">
         <SectionHeader config={config} />
 
-        <div className="relative mt-12 group/carousel">
+        <div className="relative mt-10 sm:mt-12 md:mt-12 lg:mt-12 group/carousel">
           {canScrollLeft && (
             <CarouselArrow direction="left" onClick={() => scroll("left")} />
           )}
@@ -40,11 +40,13 @@ const ProductCarousel = ({ config, items }: ProductCarouselProps) => {
 
           <div
             ref={scrollRef}
-            className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide pb-8 px-1"
+            className="grid grid-flow-col auto-cols-[80vw] sm:auto-cols-[45vw] gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-4 sm:pb-6 snap-x snap-mandatory md:grid-flow-row md:auto-cols-auto md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 md:gap-6 md:overflow-visible md:pb-0 md:snap-none"
             style={{ scrollBehavior: "smooth" }}
           >
             {items.map((item) => (
-              <ProductCard key={item.slug} item={item} badgeVariant={config.badgeVariant} />
+              <div key={item.slug} className="snap-center md:snap-none">
+                <ProductCard item={item} badgeVariant={config.badgeVariant} />
+              </div>
             ))}
           </div>
         </div>

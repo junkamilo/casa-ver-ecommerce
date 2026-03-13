@@ -34,8 +34,7 @@ export function OrderCard({ order, isExpanded, onToggle, onDelivered }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      {/* Header row */}
+    <div className="bg-white rounded-lg sm:rounded-xl border border-gray-200 shadow-sm overflow-hidden touch-target">
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between p-4 sm:p-5 text-left hover:bg-gray-50 transition-colors"

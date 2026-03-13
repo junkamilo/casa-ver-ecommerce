@@ -1,7 +1,6 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { MercadoPagoConfig, Preference } from "mercadopago";
 
 // ---------------------------------------------------------------------------
 // Tipos internos
@@ -21,7 +20,7 @@ export interface CreateOrderInput {
   department: string;
 
   // Pago
-  paymentMethod: "MERCADOPAGO";
+  paymentMethod: "BOLD";
 
   // Carrito
   items: {
@@ -64,6 +63,78 @@ function generateOrderNumber(): string {
 }
 
 // ---------------------------------------------------------------------------
+// createBoldPayment — Llamada a Bold API Sandbox/Integración
+//
+// Tarjetas de prueba de Bold (Sandbox):
+// ✓ APROBADA:  4532015112830366 | CVC: 123 | Exp: 12/25
+// ✗ RECHAZADA: 4111111111111111 | CVC: 123 | Exp: 12/25
+// ---------------------------------------------------------------------------
+async function createBoldPayment(
+  orderReference: string,
+  amount: number,
+  email: string,
+  phone: string
+): Promise<{ boldUrl?: string; error?: string }> {
+  const integrationKey = process.env.BOLD_INTEGRATION_KEY;
+  if (!integrationKey) {
+    return { error: "Variable BOLD_INTEGRATION_KEY no configurada" };
+  }
+
+  const boldApiUrl = process.env.BOLD_API_URL || "https://api.sandbox.bold.com/v1";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) {
+    return { error: "Variable NEXT_PUBLIC_APP_URL no configurada" };
+  }
+
+  try {
+    const payload = {
+      amount_in_cents: Math.round(amount * 100),
+      currency: "COP",
+      reference: orderReference,
+      description: `Pedido Casa Verde - ${orderReference}`,
+      redirect_url: {
+        success: `${appUrl}/checkout/success?orderId=${orderReference}`,
+        failure: `${appUrl}/checkout?error=pago_fallido`,
+        pending: `${appUrl}/checkout/pending?orderId=${orderReference}&method=BOLD`,
+      },
+      customer: {
+        email: email,
+        phone: phone,
+      },
+    };
+
+    const response = await fetch(`${boldApiUrl}/payment_links`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${integrationKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("[createBoldPayment] Error:", errorData);
+      return {
+        error: errorData.message || "Error al crear el pago en Bold",
+      };
+    }
+
+    const data = await response.json();
+
+    if (!data.url && !data.payment_link) {
+      console.error("[createBoldPayment] No redirect URL:", data);
+      return { error: "Bold no devolvió una URL de pago" };
+    }
+
+    return { boldUrl: data.url || data.payment_link };
+  } catch (err) {
+    console.error("[createBoldPayment] Exception:", err);
+    return { error: err instanceof Error ? err.message : "Error desconocido" };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // createOrder — Server Action principal
 // ---------------------------------------------------------------------------
 export async function createOrder(input: CreateOrderInput): Promise<CreateOrderResult> {
@@ -91,9 +162,6 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   const total = subtotal + shippingCost - discount;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
   if (!appUrl) return { success: false, error: "Variable NEXT_PUBLIC_APP_URL no configurada" };
-
-  const mpAccessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
-  if (!mpAccessToken) return { success: false, error: "Variable MERCADOPAGO_ACCESS_TOKEN no configurada" };
 
   try {
     const result = await prisma.$transaction(async (tx) => {
@@ -145,7 +213,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         }
       }
 
-      // 3. Generar número de orden
+      // 3. Generar número de orden y referencia única
       const orderNumber = generateOrderNumber();
       const transactionId = crypto.randomUUID();
 
@@ -165,7 +233,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
           discount,
           total,
           status: "PENDING",
-          paymentMethod: "MERCADOPAGO",
+          paymentMethod: "BOLD",
           items: {
             create: items.map((item) => ({
               productId: item.productId,
@@ -215,65 +283,22 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
     const { order, transactionId } = result;
 
-    // 7. Crear preferencia en Mercado Pago
-    const mp = new MercadoPagoConfig({ accessToken: mpAccessToken });
-    const preference = new Preference(mp);
+    // 7. Crear pago en Bold
+    const boldResult = await createBoldPayment(transactionId, Number(order.total), email, phone);
 
-    const preferenceResponse = await preference.create({
-      body: {
-        external_reference: transactionId,
-        items: items.map((item) => ({
-          id: item.variantId,
-          title: `${item.name} (${item.colorName} / ${item.size})`,
-          quantity: item.quantity,
-          unit_price: item.price,
-          currency_id: "COP",
-        })),
-        payer: {
-          name: firstName,
-          surname: lastName,
-          email: email.toLowerCase(),
-          identification: {
-            type: "CC",
-            number: cedula,
-          },
-          phone: {
-            area_code: "",
-            number: phone,
-          },
-          address: {
-            street_name: address,
-            zip_code: "",
-          },
-        },
-        back_urls: {
-          success: `${appUrl}/checkout/success?orderId=${order.id}`,
-          failure: `${appUrl}/checkout?error=pago_fallido`,
-          pending: `${appUrl}/checkout/pending?orderId=${order.id}&method=MERCADOPAGO`,
-        },
-        auto_return: "approved",
-        notification_url: `${appUrl}/api/webhooks/mercadopago`,
-        metadata: {
-          order_id: order.id,
-          order_number: order.orderNumber,
-        },
-      },
-    });
+    if (boldResult.error) {
+      throw new Error(boldResult.error);
+    }
 
-    const initPoint =
-      process.env.NODE_ENV === "production"
-        ? preferenceResponse.init_point
-        : preferenceResponse.sandbox_init_point;
-
-    if (!initPoint) {
-      throw new Error("Mercado Pago no devolvió una URL de pago");
+    if (!boldResult.boldUrl) {
+      throw new Error("No se pudo obtener URL de Bold");
     }
 
     return {
       success: true,
       orderId: order.id,
       orderNumber: order.orderNumber,
-      redirectUrl: initPoint,
+      redirectUrl: boldResult.boldUrl,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error interno al crear la orden";
@@ -283,7 +308,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 }
 
 // ---------------------------------------------------------------------------
-// markOrderPaid — Llamado desde el webhook de Mercado Pago
+// markOrderPaid — Llamado desde el webhook de Bold
 // ---------------------------------------------------------------------------
 export async function markOrderPaid(transactionId: string, paymentId: string): Promise<void> {
   await prisma.$transaction(async (tx) => {
