@@ -14,7 +14,6 @@ export interface ProductItem {
 }
 
 export interface SectionConfig {
-  eyebrow: string;
   titleStart: string;
   titleItalic: string;
   linkHref: string;

@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 
 // ---------------------------------------------------------------------------
@@ -49,7 +50,6 @@ export interface CreateOrderResult {
   success: boolean;
   orderId?: string;
   orderNumber?: string;
-  redirectUrl?: string;
   error?: string;
 }
 
@@ -60,78 +60,6 @@ function generateOrderNumber(): string {
   const timestamp = Date.now().toString(36).toUpperCase();
   const random = Math.random().toString(36).slice(2, 6).toUpperCase();
   return `CV-${timestamp}-${random}`;
-}
-
-// ---------------------------------------------------------------------------
-// createBoldPayment — Llamada a Bold API Sandbox/Integración
-//
-// Tarjetas de prueba de Bold (Sandbox):
-// ✓ APROBADA:  4532015112830366 | CVC: 123 | Exp: 12/25
-// ✗ RECHAZADA: 4111111111111111 | CVC: 123 | Exp: 12/25
-// ---------------------------------------------------------------------------
-async function createBoldPayment(
-  orderReference: string,
-  amount: number,
-  email: string,
-  phone: string
-): Promise<{ boldUrl?: string; error?: string }> {
-  const integrationKey = process.env.BOLD_INTEGRATION_KEY;
-  if (!integrationKey) {
-    return { error: "Variable BOLD_INTEGRATION_KEY no configurada" };
-  }
-
-  const boldApiUrl = process.env.BOLD_API_URL || "https://api.sandbox.bold.com/v1";
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!appUrl) {
-    return { error: "Variable NEXT_PUBLIC_APP_URL no configurada" };
-  }
-
-  try {
-    const payload = {
-      amount_in_cents: Math.round(amount * 100),
-      currency: "COP",
-      reference: orderReference,
-      description: `Pedido Casa Verde - ${orderReference}`,
-      redirect_url: {
-        success: `${appUrl}/checkout/success?orderId=${orderReference}`,
-        failure: `${appUrl}/checkout?error=pago_fallido`,
-        pending: `${appUrl}/checkout/pending?orderId=${orderReference}&method=BOLD`,
-      },
-      customer: {
-        email: email,
-        phone: phone,
-      },
-    };
-
-    const response = await fetch(`${boldApiUrl}/payment_links`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${integrationKey}`,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("[createBoldPayment] Error:", errorData);
-      return {
-        error: errorData.message || "Error al crear el pago en Bold",
-      };
-    }
-
-    const data = await response.json();
-
-    if (!data.url && !data.payment_link) {
-      console.error("[createBoldPayment] No redirect URL:", data);
-      return { error: "Bold no devolvió una URL de pago" };
-    }
-
-    return { boldUrl: data.url || data.payment_link };
-  } catch (err) {
-    console.error("[createBoldPayment] Exception:", err);
-    return { error: err instanceof Error ? err.message : "Error desconocido" };
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -160,8 +88,6 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   }
 
   const total = subtotal + shippingCost - discount;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!appUrl) return { success: false, error: "Variable NEXT_PUBLIC_APP_URL no configurada" };
 
   try {
     const result = await prisma.$transaction(async (tx) => {
@@ -215,7 +141,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
       // 3. Generar número de orden y referencia única
       const orderNumber = generateOrderNumber();
-      const transactionId = crypto.randomUUID();
+      const transactionId = randomUUID();
 
       // 4. Crear la orden en PENDING
       const order = await tx.order.create({
@@ -278,27 +204,15 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         });
       }
 
-      return { order, transactionId };
+      return { order };
     });
 
-    const { order, transactionId } = result;
-
-    // 7. Crear pago en Bold
-    const boldResult = await createBoldPayment(transactionId, Number(order.total), email, phone);
-
-    if (boldResult.error) {
-      throw new Error(boldResult.error);
-    }
-
-    if (!boldResult.boldUrl) {
-      throw new Error("No se pudo obtener URL de Bold");
-    }
+    const { order } = result;
 
     return {
       success: true,
       orderId: order.id,
       orderNumber: order.orderNumber,
-      redirectUrl: boldResult.boldUrl,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error interno al crear la orden";
@@ -308,7 +222,9 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 }
 
 // ---------------------------------------------------------------------------
-// markOrderPaid — Llamado desde el webhook de Bold
+// markOrderPaid — Llamado desde el webhook de Bold/Addi
+// Usa transacción atómica: si algo falla, NADA se guarda (evita estados inconsistentes).
+// Es idempotente: si la orden ya está PAID, no hace nada (safe para reintentos del webhook).
 // ---------------------------------------------------------------------------
 export async function markOrderPaid(transactionId: string, paymentId: string): Promise<void> {
   await prisma.$transaction(async (tx) => {
@@ -318,21 +234,41 @@ export async function markOrderPaid(transactionId: string, paymentId: string): P
     });
 
     if (!order) throw new Error(`Orden no encontrada: ${transactionId}`);
-    if (order.status === "PAID") return; // Idempotencia
+    // Idempotencia: Bold puede reenviar el mismo webhook múltiples veces
+    if (order.status === "PAID") return;
 
+    // 1. Marcar la orden como pagada
     await tx.order.update({
       where: { id: order.id },
       data: { status: "PAID", paymentId, paidAt: new Date() },
     });
 
+    // 2. Descontar stock real y liberar reserva
+    // IMPORTANTE: los ítems de un conjunto (isSet) usan ProductItemVariant (sin campo `reserved`),
+    // mientras que los productos normales usan ProductVariant (con `stock` y `reserved`).
+    // Intentamos primero en ProductVariant; si no existe, caemos a ProductItemVariant.
     for (const item of order.items) {
-      await tx.productVariant.update({
+      const productVariant = await tx.productVariant.findUnique({
         where: { id: item.variantId },
-        data: {
-          stock: { decrement: item.quantity },
-          reserved: { decrement: item.quantity },
-        },
+        select: { id: true },
       });
+
+      if (productVariant) {
+        // Producto normal: descontar stock físico y liberar reserva
+        await tx.productVariant.update({
+          where: { id: item.variantId },
+          data: {
+            stock: { decrement: item.quantity },
+            reserved: { decrement: item.quantity },
+          },
+        });
+      } else {
+        // Pieza de conjunto (ProductItemVariant): solo descontar stock (no tiene `reserved`)
+        await (tx as any).productItemVariant.update({
+          where: { id: item.variantId },
+          data: { stock: { decrement: item.quantity } },
+        });
+      }
     }
   });
 }

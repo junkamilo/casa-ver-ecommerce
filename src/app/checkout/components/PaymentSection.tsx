@@ -15,34 +15,24 @@ const PaymentSection = () => {
           Pago
         </h2>
         <span className="flex items-center gap-1.5 text-[10px] sm:text-xs text-gray-500 uppercase tracking-widest font-bold">
-          <Lock className="w-3 h-3 text-[#154734] shrink-0" /> Todas las transacciones son seguras y están encriptadas.
+          <Lock className="w-3 h-3 text-[#154734] shrink-0" /> Todas las
+          transacciones son seguras y están encriptadas.
         </span>
       </div>
 
-      {/* Única opción: Bold */}
-      <div className="border-2 border-[#154734] rounded-xl bg-[#154734]/5 p-5">
-        <div className="flex items-center gap-4">
-          {/* Radio seleccionado */}
-          <div className="shrink-0 w-5 h-5 rounded-full border-2 border-[#154734] flex items-center justify-center">
-            <div className="w-2.5 h-2.5 bg-[#154734] rounded-full" />
-          </div>
-
-          {/* Label + badges de métodos */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-sm font-bold tracking-wide text-[#154734]">Bold</span>
-              {/* Badges de métodos aceptados */}
-              <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#009EE3]/10 border border-[#009EE3]/30 text-[#009EE3] font-bold">PSE</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#FFCD00]/20 border border-[#FFCD00]/40 text-[#8B6914] font-bold">Tarjeta Crédito</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#1A1F71] text-white italic">VISA</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 font-bold">+2</span>
-            </div>
-            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-              Se te redirigirá a Bold para que completes la compra.
-            </p>
-          </div>
+      {/* Bold — único método de pago */}
+      <div className="flex items-center gap-4 p-4 rounded-xl border-2 border-[#154734] bg-[#154734]/5">
+        <div className="w-4 h-4 rounded-full border-2 border-[#154734] bg-[#154734] flex items-center justify-center shrink-0">
+          <div className="w-1.5 h-1.5 rounded-full bg-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <span className="text-sm font-bold text-[#154734]">Bold</span>
         </div>
       </div>
+
+      <p className="mt-4 text-sm text-gray-500 text-center">
+        Se te redirigirá a Bold para que completes la compra.
+      </p>
     </section>
   );
 };
