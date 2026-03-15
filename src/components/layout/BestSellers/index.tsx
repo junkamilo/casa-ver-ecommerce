@@ -5,7 +5,6 @@ import { SectionConfig, ProductItem } from "@/components/shared/ProductCarousel/
 
 // --- 1. CONFIGURACIÓN PREMIUM ---
 const config: SectionConfig = {
-  eyebrow: "Favoritos",
   titleStart: "Los mas",
   titleItalic: "vendidos",
   linkHref: "/collections/mas-vendidos",

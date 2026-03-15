@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \":*)",
+      "Bash(xargs grep:*)",
+      "Bash(npx prisma:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" -X GET \"https://integrations.api.bold.co/online/link/v1\" -H \"Authorization: x-api-key wOyI0aIPZG7RO5CP3pMzCEtzUt-dGOEGv9Z_hVh-TWI\")"
+    ]
+  }
+}

@@ -4,7 +4,6 @@ import ProductCarousel from "@/components/shared/ProductCarousel";
 import { SectionConfig, ProductItem } from "@/components/shared/ProductCarousel/types";
 
 const config: SectionConfig = {
-  eyebrow: "Colección",
   titleStart: "Nuevos",
   titleItalic: "Ingresos",
   linkHref: "/collections/nueva-coleccion",

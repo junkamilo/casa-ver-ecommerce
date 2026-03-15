@@ -14,6 +14,7 @@ import ColorsSection from "./form/ColorsSection";
 import MaterialSection from "./form/MaterialSection";
 import VideoSection from "./form/VideoSection";
 import SetItemsSection from "./form/SetItemsSection";
+import VariantStockSection from "./form/VariantStockSection";
 
 interface Props {
   editingId: string | null;
@@ -41,6 +42,7 @@ interface Props {
   toggleSize: (size: string) => void;
   setColorImages: (colorName: string, images: string[]) => void;
 
+  updateVariantStock: (colorName: string, size: string, stock: number) => void;
   isSet: boolean; setIsSet: (v: boolean) => void;
   setItems: SetItemForm[];
   addSetItem: () => void;
@@ -110,6 +112,7 @@ export default function ProductModal({
   toggleColor,
   toggleSize,
   setColorImages,
+  updateVariantStock,
   isSet, setIsSet,
   setItems,
   addSetItem,
@@ -122,6 +125,10 @@ export default function ProductModal({
   const [errors, setErrors] = useState<ProductFormErrors>({});
   const [itemErrors, setItemErrors] = useState<ItemFormErrors>({});
 
+  const hasVariantStocks =
+    !!editingId &&
+    selectedColors.some((c) => Object.keys(c.variantStocks || {}).length > 0);
+
   const handleValidatedSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -130,7 +137,8 @@ export default function ProductModal({
       description,
       basePrice,
       comparePrice: comparePrice || undefined,
-      stock,
+      // Cuando hay grid de variantes, el stock se calcula automáticamente — pasamos 0 para pasar validación
+      stock: hasVariantStocks ? "0" : stock,
       categoryId,
       videoUrl: videoUrl || undefined,
     });
@@ -316,7 +324,7 @@ export default function ProductModal({
                 />
                 <div className="space-y-6">
                   {/* Precio y Stock */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className={`grid grid-cols-1 gap-4 ${hasVariantStocks ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
                         Precio (COP) *
@@ -345,21 +353,38 @@ export default function ProductModal({
                       />
                       <FieldError msg={errors.comparePrice} />
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
-                        Stock Total *
-                      </label>
-                      <input
-                        type="number"
-                        value={stock}
-                        onChange={(e) => setStock(e.target.value)}
-                        placeholder="0"
-                        min="0"
-                        className={inputCls(!!errors.stock)}
-                      />
-                      <FieldError msg={errors.stock} />
-                    </div>
+                    {!hasVariantStocks && (
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                          Stock Total *
+                        </label>
+                        <input
+                          type="number"
+                          value={stock}
+                          onChange={(e) => setStock(e.target.value)}
+                          placeholder="0"
+                          min="0"
+                          className={inputCls(!!errors.stock)}
+                        />
+                        <FieldError msg={errors.stock} />
+                      </div>
+                    )}
                   </div>
+
+                  {/* Stock por variante — solo al editar cuando hay variantes cargadas */}
+                  {hasVariantStocks && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                        Stock por Variante
+                      </p>
+                      <VariantStockSection
+                        selectedColors={selectedColors}
+                        selectedSizes={selectedSizes}
+                        disabled={submitting}
+                        onUpdate={updateVariantStock}
+                      />
+                    </div>
+                  )}
 
                   {/* Colores y Tallas */}
                   <ColorsSection

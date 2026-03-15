@@ -1,102 +1,342 @@
 import { NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { markOrderPaid } from "@/app/actions/checkout";
 
 // ---------------------------------------------------------------------------
-// Bold Webhook — HMAC-SHA256
-// Bold envía la firma en el header: "bold-signature"
-// El secreto es BOLD_WEBHOOK_SECRET (diferente al BOLD_SECRET_KEY de checkout)
+// Verificación HMAC-SHA256 — timing-safe
+//
+// DOCUMENTACIÓN OFICIAL BOLD:
+//   1. Convertir el rawBody a Base64
+//   2. Calcular HMAC-SHA256 sobre ese Base64 usando el secreto
+//   3. Comparar en hex con timing-safe
+//
+// En sandbox/pruebas: BOLD_WEBHOOK_SECRET = '' (string vacío — NO ausente)
+// Header enviado por Bold: "x-bold-signature" (NO "bold-signature")
 // ---------------------------------------------------------------------------
-
 function verifyBoldSignature(rawBody: string, signatureHeader: string): boolean {
   const secret = process.env.BOLD_WEBHOOK_SECRET;
-  if (!secret) {
-    console.error("[Bold Webhook] BOLD_WEBHOOK_SECRET no configurado");
+
+  // undefined/null = variable no configurada → rechazar siempre
+  if (secret === undefined || secret === null) {
+    console.error("[Bold] ✗ BOLD_WEBHOOK_SECRET no está configurado en .env.local");
+    console.error("[Bold]   En sandbox usa: BOLD_WEBHOOK_SECRET='' (string vacío)");
     return false;
   }
 
-  const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
+  // Sandbox: si el secreto es vacío Y no hay firma, se acepta el webhook
+  if (secret === "" && !signatureHeader) {
+    console.warn("[Bold] ⚠ Sandbox: secreto vacío y sin firma — webhook aceptado");
+    return true;
+  }
+
+  if (!signatureHeader) {
+    console.warn("[Bold] ✗ Header 'x-bold-signature' ausente en la petición");
+    return false;
+  }
+
+  // Bold puede enviar la firma con prefijo "sha256=" (convención HMAC estándar)
+  const rawSignature = signatureHeader.startsWith("sha256=")
+    ? signatureHeader.slice(7)
+    : signatureHeader;
+
+  // CRÍTICO: Bold requiere HMAC sobre el body en Base64, NO sobre el raw body directamente
+  const bodyBase64 = Buffer.from(rawBody).toString("base64");
+  const expected = createHmac("sha256", secret).update(bodyBase64).digest("hex");
 
   try {
-    return timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(signatureHeader, "hex"));
+    const expectedBuf = Buffer.from(expected, "hex");
+    const receivedBuf = Buffer.from(rawSignature, "hex");
+
+    // timingSafeEqual lanza RangeError si los buffers difieren en longitud
+    if (expectedBuf.length !== receivedBuf.length) return false;
+
+    return timingSafeEqual(expectedBuf, receivedBuf);
   } catch {
     return false;
   }
 }
 
+// ---------------------------------------------------------------------------
+// Bold Webhook Handler — Next.js App Router
+//
+// ORDEN DE OPERACIONES:
+//   1. Capturar rawBody + headers   ← HMAC necesita el string sin parsear
+//   2. Parsear JSON                  ← extraer campos del payload
+//   3. Responder HTTP 200 INMEDIATAMENTE (Bold cancela si no responde en < 2s)
+//   4. DESPUÉS del 200 (via after()):
+//      a. CREAR LOG EN BD            ← auditoría antes de cualquier validación
+//      b. Validar firma HMAC-SHA256  ← seguridad
+//      c. Procesar pago              ← negocio
+//
+// Eventos Bold (Link de Pagos):
+//   SALE_APPROVED   → pago exitoso  ✅
+//   SALE_REJECTED   → pago rechazado
+//   VOID_APPROVED   → reembolso aprobado
+//   VOID_REJECTED   → reembolso rechazado
+// ---------------------------------------------------------------------------
 export async function POST(req: NextRequest) {
-  let rawBody: string;
-  let payload: Record<string, unknown>;
+  // ── Step 1: Capturar rawBody y headers SÍNCRONAMENTE ───────────────────────
+  console.log('[BOLD WEBHOOK] ===== SOLICITUD RECIBIDA =====');
+  console.log('[BOLD WEBHOOK] Timestamp:', new Date().toISOString());
+  console.log("[BOLD WEBHOOK] Headers completos:", JSON.stringify(Object.fromEntries(req.headers.entries()), null, 2));
 
+  const signatureHeader = req.headers.get("x-bold-signature") ?? "";
+  console.log("[BOLD WEBHOOK] x-bold-signature:", signatureHeader || "(ausente)");
+
+  let rawBody: string;
   try {
     rawBody = await req.text();
+    console.log("[BOLD WEBHOOK] Body raw recibido:", rawBody.slice(0, 500));
+  } catch (err) {
+    console.error("[BOLD WEBHOOK] ✗ No se pudo leer el body:", err);
+    return NextResponse.json({ error: "Cannot read body" }, { status: 400 });
+  }
+
+  // ── Step 2: Parsear JSON ───────────────────────────────────────────────────
+  let payload: Record<string, unknown>;
+  try {
     payload = JSON.parse(rawBody);
   } catch {
+    console.error("[BOLD WEBHOOK] ✗ JSON inválido. Body recibido:", rawBody.slice(0, 500));
+
+    // Guardar log en background incluso para payloads malformados
+    after(async () => {
+      await prisma.webhookLog
+        .create({
+          data: {
+            provider: "BOLD",
+            eventType: "parse_error",
+            payload: { raw: rawBody.slice(0, 2000) },
+            signature: signatureHeader,
+            status: 400,
+            errorMessage: "JSON inválido recibido de Bold",
+          },
+        })
+        .catch((e) => console.error("[BOLD WEBHOOK] ✗ No se pudo registrar error de parse:", e));
+    });
+
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  // 1. Validar firma HMAC-SHA256
-  const signatureHeader = req.headers.get("bold-signature") ?? "";
-  if (!verifyBoldSignature(rawBody, signatureHeader)) {
-    console.warn("[Bold Webhook] Firma inválida. Posible intento de fraude.");
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  // ── Step 3: Extraer campos del payload ────────────────────────────────────
+  //
+  // Bold Link de Pagos puede enviar dos estructuras:
+  //
+  // ESTRUCTURA PLANA (v1):
+  //   { id, reference, status, type, amount, ... }
+  //
+  // ESTRUCTURA ANIDADA (v2):
+  //   { type, data: { id, reference, status, amount, ... } }
+  //
+  const data = (payload.data ?? payload) as Record<string, unknown>;
+  const eventType = (payload.type ?? payload.event ?? data.event) as string | undefined;
+  const boldPaymentId = (data.id ?? payload.id) as string | undefined;
+  const reference = (data.reference ?? payload.reference) as string | undefined;
+  const boldStatus = (data.status ?? payload.status) as string | undefined;
+  const amount = (
+    (data.amount as Record<string, unknown>)?.total ??
+    (payload.amount as Record<string, unknown>)?.total
+  ) as number | undefined;
+  const paymentMethod = (data.payment_method ?? payload.payment_method) as string | undefined;
 
-  // 2. Extraer datos del payload Bold
-  const eventType = payload.event as string | undefined;
-  const transactionId = (payload.transaction_id ?? payload.order_id) as string | undefined;
-  const paymentId = (payload.payment_id ?? payload.id) as string | undefined;
-  const status = payload.status as string | undefined;
+  console.log("[BOLD WEBHOOK] Tipo de evento:", eventType);
+  console.log("[BOLD WEBHOOK] Payment ID:", boldPaymentId);
+  console.log("[BOLD WEBHOOK] Referencia:", reference);
+  console.log("[BOLD WEBHOOK] Monto total:", amount);
+  console.log("[BOLD WEBHOOK] Método de pago:", paymentMethod);
+  console.log("[BOLD WEBHOOK] Estado Bold:", boldStatus);
+  console.log('[BOLD WEBHOOK] type:', payload?.type);
+  console.log('[BOLD WEBHOOK] payment_id:', (payload?.data as any)?.payment_id);
+  console.log('[BOLD WEBHOOK] reference (metadata):', (payload?.data as any)?.metadata?.reference);
 
-  // 3. Registrar log del webhook (siempre, para trazabilidad)
-  let logEntry;
+  // ── Step 4: Responder 200 INMEDIATAMENTE (Bold requiere < 2 segundos) ─────
+  //
+  // TODO el procesamiento real va dentro de after() — se ejecuta DESPUÉS de
+  // retornar esta respuesta, sin bloquear a Bold.
+  after(async () => {
+    await processWebhookAsync({
+      rawBody,
+      payload,
+      signatureHeader,
+      eventType,
+      boldPaymentId,
+      reference,
+      boldStatus,
+      amount,
+      paymentMethod,
+    });
+  });
+
+  return NextResponse.json({ received: true }, { status: 200 });
+}
+
+// ---------------------------------------------------------------------------
+// processWebhookAsync — lógica completa en background (después del 200)
+// ---------------------------------------------------------------------------
+interface WebhookFields {
+  rawBody: string;
+  payload: Record<string, unknown>;
+  signatureHeader: string;
+  eventType: string | undefined;
+  boldPaymentId: string | undefined;
+  reference: string | undefined;
+  boldStatus: string | undefined;
+  amount: number | undefined;
+  paymentMethod: string | undefined;
+}
+
+async function processWebhookAsync(fields: WebhookFields): Promise<void> {
+  const {
+    rawBody,
+    payload,
+    signatureHeader,
+    eventType,
+    boldPaymentId,
+    reference,
+    boldStatus,
+    amount,
+    paymentMethod,
+  } = fields;
+
+  // ── a. Crear log inmediato (antes de validar firma) ─────────────────────
+  //
+  // Esto garantiza que CUALQUIER petición quede en webhook_logs,
+  // incluso si la firma es inválida o el secreto no está configurado.
+  // Si los logs están vacíos, Bold no está llegando al servidor (URL mal configurada).
+  let logEntry: { id: string } | undefined;
   try {
-    const order = transactionId
-      ? await prisma.order.findUnique({ where: { transactionId }, select: { id: true } })
+    const order = reference
+      ? await prisma.order.findUnique({ where: { transactionId: reference }, select: { id: true } })
       : null;
+
+    if (reference && !order) {
+      console.warn("[BOLD WEBHOOK] ⚠ No se encontró orden con transactionId:", reference);
+    }
 
     logEntry = await prisma.webhookLog.create({
       data: {
         orderId: order?.id ?? null,
         provider: "BOLD",
         eventType: eventType ?? null,
-        payload: payload as any,
+        payload: payload as Record<string, unknown>,
         signature: signatureHeader,
-        status: 200,
+        status: 0, // Se actualiza al final (0 = en proceso)
         attempt: 1,
       },
     });
+    console.log("[BOLD WEBHOOK] ✓ Log creado:", logEntry.id);
   } catch (logErr) {
-    console.error("[Bold Webhook] Error registrando log:", logErr);
+    console.error("[BOLD WEBHOOK] ✗ Error al crear log:", logErr);
+    // Continuar — el negocio es más importante que la auditoría
   }
 
-  // 4. Procesar solo eventos de pago aprobado
+  const updateLog = (status: number, errorMessage?: string) => {
+    if (!logEntry) return;
+    prisma.webhookLog
+      .update({ where: { id: logEntry!.id }, data: { status, errorMessage: errorMessage ?? null } })
+      .catch((e) => console.error("[BOLD WEBHOOK] ✗ Error actualizando log:", e));
+  };
+
+  // ── b. Validar firma HMAC-SHA256 ─────────────────────────────────────────
+  const signatureValid = verifyBoldSignature(rawBody, signatureHeader);
+
+  if (!signatureValid) {
+    console.warn("[BOLD WEBHOOK] ✗ Firma HMAC inválida.");
+    console.warn("[BOLD WEBHOOK] Posibles causas:");
+    console.warn("  1. BOLD_WEBHOOK_SECRET incorrecto en .env.local");
+    console.warn("  2. Secreto diferente al del Dashboard de Bold");
+    console.warn("  3. En sandbox: BOLD_WEBHOOK_SECRET debe ser '' (string vacío)");
+    console.warn("  4. El body fue modificado por un middleware antes de llegar aquí");
+    updateLog(401, "Firma HMAC-SHA256 inválida");
+    return;
+  }
+
+  console.log("[BOLD WEBHOOK] ✓ Firma HMAC válida");
+
+  // ── c. Procesar evento ───────────────────────────────────────────────────
+  //
+  // Estados Bold (Link de Pagos):
+  //   ACTIVE      → No pagado (o pago anterior falló, link reutilizable)
+  //   PROCESSING  → Pago en curso
+  //   PAID        → Pago exitoso ✅
+  //   REJECTED    → Pago rechazado
+  //   CANCELLED   → Cancelado por usuario
+  //   EXPIRED     → Link vencido
+  //
+  // Eventos Bold (webhook):
+  //   SALE_APPROVED   → pago exitoso ✅
+  //   SALE_REJECTED   → pago rechazado
+  //   VOID_APPROVED   → reembolso aprobado
+  //   VOID_REJECTED   → reembolso rechazado
+
   const isApproved =
-    eventType === "payment.approved" ||
+    eventType === "SALE_APPROVED" ||
     eventType === "PAYMENT_APPROVED" ||
-    status === "APPROVED" ||
-    status === "approved";
+    eventType === "TRANSACTION_APPROVED" ||
+    eventType === "payment.approved" ||
+    boldStatus === "APPROVED" ||
+    boldStatus === "approved" ||
+    boldStatus === "PAID";
 
-  if (isApproved && transactionId && paymentId) {
-    try {
-      await markOrderPaid(transactionId, paymentId);
-      console.info(`[Bold Webhook] Orden aprobada: ${transactionId}`);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Error desconocido";
-      console.error("[Bold Webhook] Error al marcar orden como pagada:", err);
+  const isRejected =
+    eventType === "SALE_REJECTED" ||
+    eventType === "PAYMENT_REJECTED" ||
+    eventType === "payment.rejected" ||
+    boldStatus === "REJECTED" ||
+    boldStatus === "rejected";
 
-      // Actualizar log con error
-      if (logEntry) {
-        await prisma.webhookLog.update({
-          where: { id: logEntry.id },
-          data: { status: 500, errorMessage },
-        });
-      }
+  const isRefunded =
+    eventType === "VOID_APPROVED" ||
+    boldStatus === "REFUNDED" ||
+    boldStatus === "refunded";
 
-      return NextResponse.json({ error: "Internal error" }, { status: 500 });
-    }
+  if (!isApproved && !isRejected && !isRefunded) {
+    console.log("[BOLD WEBHOOK] ℹ Evento recibido pero no requiere acción:", { eventType, boldStatus });
+    updateLog(200);
+    return;
   }
 
-  return NextResponse.json({ received: true }, { status: 200 });
+  if (isRejected || isRefunded) {
+    const newStatus = isRefunded ? "REFUNDED" : "FAILED";
+    console.log(`[BOLD WEBHOOK] ℹ Evento ${eventType ?? boldStatus} → actualizando orden a ${newStatus}`);
+
+    if (reference) {
+      try {
+        await prisma.order.update({
+          where: { transactionId: reference },
+          data: { status: newStatus as any },
+        });
+        console.log(`[BOLD WEBHOOK] ✓ Orden actualizada a ${newStatus}. transactionId:`, reference);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Error desconocido";
+        console.error(`[BOLD WEBHOOK] ✗ Error al actualizar orden a ${newStatus}:`, msg);
+        updateLog(500, msg);
+        return;
+      }
+    }
+
+    updateLog(200);
+    return;
+  }
+
+  // isApproved
+  if (!reference || !boldPaymentId) {
+    const msg = `Faltan campos requeridos: reference=${reference}, boldPaymentId=${boldPaymentId}`;
+    console.error("[BOLD WEBHOOK] ✗", msg);
+    // Devolver 200 para que Bold no reintente — es problema de datos, no del servidor
+    updateLog(200, msg);
+    return;
+  }
+
+  try {
+    await markOrderPaid(reference, boldPaymentId);
+    console.info("[BOLD WEBHOOK] ✓ Orden marcada como pagada. transactionId:", reference);
+    updateLog(200);
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "Error desconocido";
+    console.error("[BOLD WEBHOOK] ✗ Error al marcar orden como pagada:", errorMessage);
+    updateLog(500, errorMessage);
+  }
 }

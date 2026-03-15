@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { ToastState } from "./types";
 import { useProductList } from "./hooks/useProductList";
 import { useProductForm } from "./hooks/useProductForm";
@@ -9,8 +10,10 @@ import ProductsHeader from "./components/ProductsHeader";
 import ProductFilters from "./components/ProductFilters";
 import ProductTable from "./components/ProductTable";
 import ProductModal from "./components/ProductModal";
+import { createProduct, updateProduct } from "@/app/actions/products";
 
 export default function AdminProductos() {
+  const router = useRouter();
   const list = useProductList();
   const form = useProductForm();
 
@@ -56,19 +59,19 @@ export default function AdminProductos() {
     }
     setSubmitting(true);
     try {
-      const url = editingId ? `/api/admin/products/${editingId}` : "/api/admin/products";
-      const method = editingId ? "PATCH" : "POST";
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form.buildPayload()),
-      });
-      if (!res.ok) throw new Error();
+      const payload = form.buildPayload();
+      const result = editingId
+        ? await updateProduct(editingId, payload)
+        : await createProduct(payload);
+
+      if (!result.success) throw new Error(result.error);
       showToast("success", editingId ? "Producto actualizado" : "Producto creado");
       setShowModal(false);
-      list.fetchProducts();
-    } catch {
-      showToast("error", "Error al guardar el producto");
+      router.refresh();
+      await list.fetchProducts();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error al guardar el producto";
+      showToast("error", msg);
     } finally {
       setSubmitting(false);
     }

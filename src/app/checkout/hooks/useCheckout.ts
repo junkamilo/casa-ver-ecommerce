@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { validateCoupon } from "@/app/actions/coupons";
 import { createOrder } from "@/app/actions/checkout";
@@ -41,7 +40,6 @@ export type CheckoutFormData = z.infer<typeof checkoutSchema>;
 // Hook principal
 // ---------------------------------------------------------------------------
 export function useCheckout() {
-  const router = useRouter();
   const { items, subtotal, closeCart } = useCart();
   const [isPending, startTransition] = useTransition();
 
@@ -52,13 +50,13 @@ export function useCheckout() {
     discountPercentage: 0,
   });
 
-  // Error global del submit
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Cálculos
-  const discount = coupon.status === "valid"
-    ? Math.round((subtotal * coupon.discountPercentage) / 100)
-    : 0;
+  const discount =
+    coupon.status === "valid"
+      ? Math.round((subtotal * coupon.discountPercentage) / 100)
+      : 0;
   const total = subtotal + SHIPPING_COST - discount;
 
   // Form
@@ -107,7 +105,7 @@ export function useCheckout() {
   }
 
   // ---------------------------------------------------------------------------
-  // Submit — crear orden
+  // Submit — crear orden → crear link Bold → redirigir directo a checkout.bold.co
   // ---------------------------------------------------------------------------
   function onSubmit(data: CheckoutFormData) {
     if (!items.length) {
@@ -118,7 +116,8 @@ export function useCheckout() {
     setSubmitError(null);
 
     startTransition(async () => {
-      const result = await createOrder({
+      // PASO 1: Crear orden en DB
+      const orderResult = await createOrder({
         email: data.email,
         firstName: data.firstName,
         lastName: data.lastName,
@@ -147,21 +146,47 @@ export function useCheckout() {
         couponCode: coupon.status === "valid" ? coupon.code : undefined,
       });
 
-      if (!result.success) {
-        setSubmitError(result.error ?? "Error al procesar el pedido");
+      if (!orderResult.success || !orderResult.orderId) {
+        setSubmitError(orderResult.error ?? "Error al procesar el pedido");
+        return;
+      }
+
+      // PASO 2: Crear link de pago en Bold y obtener URL de redirección
+      console.log("[BOLD] Creando link de pago para orden:", orderResult.orderId);
+
+      const boldRes = await fetch("/api/payments/bold", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: orderResult.orderId,
+          payer: {
+            name: `${data.firstName} ${data.lastName}`,
+            email: data.email,
+            phone: data.phone,
+            cedula: data.cedula,
+          },
+        }),
+      });
+
+      const boldData = await boldRes.json();
+      console.log("[BOLD] Respuesta:", boldData);
+
+      if (!boldRes.ok) {
+        setSubmitError(boldData.error ?? "Error al conectar con Bold");
         return;
       }
 
       closeCart();
 
-      if (result.redirectUrl) {
-        // MP init_point es URL externa → window.location para salir del SPA
-        if (result.redirectUrl.startsWith("http")) {
-          window.location.href = result.redirectUrl;
-        } else {
-          router.push(result.redirectUrl);
-        }
+      // PASO 3: Redirigir DIRECTAMENTE a Bold
+      if (boldData.redirectUrl) {
+        console.log("[BOLD] Redirigiendo a:", boldData.redirectUrl);
+        window.location.href = boldData.redirectUrl;
+        return;
       }
+
+      console.warn("[BOLD] Sin redirectUrl en la respuesta:", boldData);
+      setSubmitError("No se recibió URL de pago de Bold. Intenta de nuevo.");
     });
   }
 
@@ -178,8 +203,8 @@ export function useCheckout() {
     isPending,
     submitError,
     onSubmit: form.handleSubmit(onSubmit),
-    // Atajos para los componentes
     billingSameAsShipping: form.watch("billingSameAsShipping"),
-    setBillingSameAsShipping: (val: boolean) => form.setValue("billingSameAsShipping", val),
+    setBillingSameAsShipping: (val: boolean) =>
+      form.setValue("billingSameAsShipping", val),
   };
 }

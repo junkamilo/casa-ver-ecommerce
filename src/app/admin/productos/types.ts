@@ -19,6 +19,7 @@ export interface SelectedColor {
   name: string;
   hexCode: string;
   images: string[];
+  variantStocks?: { [size: string]: number };
 }
 
 export interface SetItemForm {

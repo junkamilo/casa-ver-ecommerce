@@ -75,8 +75,21 @@ export async function GET(
         hexCode: c.hexCode,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         images: c.images.map((img: any) => img.url),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        variantStocks: Object.fromEntries(c.variants.map((v: any) => [v.size, v.stock])),
       })),
       sizes: allSizes,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      variants: product.colors.flatMap((c: any) =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        c.variants.map((v: any) => ({
+          id: v.id,
+          colorId: c.id,
+          colorName: c.name,
+          size: v.size,
+          stock: v.stock,
+        }))
+      ),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       items: (product.items || []).map((item: any) => ({
         id: item.id,
@@ -235,7 +248,7 @@ export async function DELETE(
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-type ColorInput = { name: string; hexCode: string; images?: string[] };
+type ColorInput = { name: string; hexCode: string; images?: string[]; variantStocks?: { [size: string]: number } };
 type SetItemInput = {
   name: string;
   description?: string | null;
@@ -276,8 +289,11 @@ async function createColorVariants(tx: any, productId: string, slug: string, col
     }
     for (const size of sizes) {
       const sku = `${slug}-${colorData.name.toLowerCase().replace(/\s+/g, "-")}-${size.toLowerCase()}`;
+      const variantStock = colorData.variantStocks?.[size] !== undefined
+        ? Number(colorData.variantStocks[size])
+        : base + (idx < rem ? 1 : 0);
       await tx.productVariant.create({
-        data: { productId, colorId: color.id, size: size as never, sku, stock: base + (idx < rem ? 1 : 0) },
+        data: { productId, colorId: color.id, size: size as never, sku, stock: variantStock },
       });
       idx++;
     }

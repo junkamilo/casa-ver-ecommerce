@@ -73,7 +73,12 @@ export function useProductForm() {
     // Parent product colors/sizes always loaded regardless of isSet
     setSelectedColors(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (data.colors || []).map((c: any) => ({ name: c.name, hexCode: c.hexCode, images: c.images || [] }))
+      (data.colors || []).map((c: any) => ({
+        name: c.name,
+        hexCode: c.hexCode,
+        images: c.images || [],
+        variantStocks: c.variantStocks || {},
+      }))
     );
     setSelectedSizes(data.sizes || []);
 
@@ -95,14 +100,35 @@ export function useProductForm() {
     }
   };
 
+  const updateVariantStock = (colorName: string, size: string, newStock: number) =>
+    setSelectedColors((prev) =>
+      prev.map((c) =>
+        c.name === colorName
+          ? { ...c, variantStocks: { ...(c.variantStocks || {}), [size]: newStock } }
+          : c
+      )
+    );
+
   // Parent product fields are ALWAYS included in payload regardless of isSet.
   // When isSet=true, subcategory items are added on top.
-  const buildPayload = () => ({
+  const buildPayload = () => {
+    const hasVariantStocks = selectedColors.some(
+      (c) => Object.keys(c.variantStocks || {}).length > 0
+    );
+    const effectiveStock = hasVariantStocks
+      ? selectedColors.reduce(
+          (sum, c) =>
+            sum + Object.values(c.variantStocks || {}).reduce((s, v) => s + Number(v), 0),
+          0
+        )
+      : stock ? parseInt(stock, 10) : 0;
+
+    return ({
     name,
     description,
     basePrice: parseFloat(basePrice),
     comparePrice: comparePrice ? parseFloat(comparePrice) : null,
-    stock: stock ? parseInt(stock) : 0,
+    stock: effectiveStock,
     categoryId,
     status,
     isFeatured,
@@ -119,12 +145,13 @@ export function useProductForm() {
           price: item.price ? parseFloat(item.price) : null,
           comparePrice: item.comparePrice ? parseFloat(item.comparePrice) : null,
           videoUrl: item.videoUrl || null,
-          stock: item.stock ? parseInt(item.stock) : 0,
+          stock: item.stock ? parseInt(item.stock, 10) : 0,
           colors: item.colors,
           sizes: item.sizes,
         }))
       : [],
   });
+  };
 
   // Helpers colores producto principal
   const toggleColor = (name: string, hexCode: string) =>
@@ -217,6 +244,7 @@ export function useProductForm() {
     toggleColor,
     toggleSize,
     setColorImages,
+    updateVariantStock,
     addSetItem,
     removeSetItem,
     updateSetItem,

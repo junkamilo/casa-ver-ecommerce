@@ -12,15 +12,18 @@ const isValidUrl = (v: string) => {
 export const productFormSchema = z.object({
   name: z.string().min(3, "Mínimo 3 caracteres"),
   description: z.string().min(10, "Mínimo 10 caracteres"),
-  basePrice: z
-    .string()
-    .min(1, "El precio es requerido")
-    .refine((v) => parseFloat(v) > 0, "Debe ser mayor a 0"),
-  comparePrice: z
-    .string()
+  basePrice: z.coerce
+    .number({ invalid_type_error: "El precio es requerido" })
+    .positive("Debe ser mayor a 0"),
+  comparePrice: z.coerce
+    .number()
+    .positive("Debe ser mayor a 0")
     .optional()
-    .refine((v) => !v || parseFloat(v) > 0, "Debe ser mayor a 0"),
-  stock: z.string().min(1, "El stock es requerido"),
+    .or(z.literal("").transform(() => undefined)),
+  stock: z.coerce
+    .number({ invalid_type_error: "El stock es requerido" })
+    .int("Debe ser un número entero")
+    .min(0, "Stock mínimo 0"),
   categoryId: z.string().min(1, "Selecciona una categoría"),
   videoUrl: z
     .string()
@@ -30,14 +33,16 @@ export const productFormSchema = z.object({
 
 export const setItemFormSchema = z.object({
   name: z.string().min(2, "Mínimo 2 caracteres"),
-  price: z
-    .string()
+  price: z.coerce
+    .number()
+    .positive("Debe ser mayor a 0")
     .optional()
-    .refine((v) => !v || parseFloat(v) > 0, "Debe ser mayor a 0"),
-  comparePrice: z
-    .string()
+    .or(z.literal("").transform(() => undefined)),
+  comparePrice: z.coerce
+    .number()
+    .positive("Debe ser mayor a 0")
     .optional()
-    .refine((v) => !v || parseFloat(v) > 0, "Debe ser mayor a 0"),
+    .or(z.literal("").transform(() => undefined)),
   videoUrl: z
     .string()
     .optional()

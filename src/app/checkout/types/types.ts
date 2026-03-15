@@ -19,6 +19,27 @@ export type CheckoutFormData = z.infer<typeof checkoutSchema>;
 
 export type PaymentMethodUI = "BOLD";
 
+export type BoldSubMethod =
+  | "CREDIT_CARD"
+  | "DEBIT_CARD"
+  | "PSE"
+  | "NEQUI"
+  | "BOTON_BANCOLOMBIA";
+
+export interface PseBank {
+  financial_institution_code: string;
+  financial_institution_name: string;
+}
+
+export interface CardFormData {
+  cardNumber: string;
+  cardholderName: string;
+  expirationMonth: string;
+  expirationYear: string;
+  cvc: string;
+  installments: number;
+}
+
 export interface CouponState {
   code: string;
   status: "idle" | "validating" | "valid" | "invalid";

@@ -446,7 +446,8 @@ model Order {
   
   // Bold / Addi Integración
   transactionId      String?       @unique // UUID idempotente enviado a pasarela
-  paymentId          String?       // ID retornado por Bold/Addi al confirmar
+  boldLinkId         String?       // LNK_* retornado por Bold al crear el link de pago
+  paymentId          String?       // transaction_id retornado por Bold en el webhook al aprobar
 
   // Logística
   trackingNumber     String?
