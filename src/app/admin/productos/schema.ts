@@ -13,7 +13,7 @@ export const productFormSchema = z.object({
   name: z.string().min(3, "Mínimo 3 caracteres"),
   description: z.string().min(10, "Mínimo 10 caracteres"),
   basePrice: z.coerce
-    .number({ invalid_type_error: "El precio es requerido" })
+    .number()
     .positive("Debe ser mayor a 0"),
   comparePrice: z.coerce
     .number()
@@ -21,7 +21,7 @@ export const productFormSchema = z.object({
     .optional()
     .or(z.literal("").transform(() => undefined)),
   stock: z.coerce
-    .number({ invalid_type_error: "El stock es requerido" })
+    .number()
     .int("Debe ser un número entero")
     .min(0, "Stock mínimo 0"),
   categoryId: z.string().min(1, "Selecciona una categoría"),
