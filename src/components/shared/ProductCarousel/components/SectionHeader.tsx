@@ -4,19 +4,12 @@ import { SectionConfig } from "../types";
 const BRAND_GOLD = "#C19A6B";
 
 interface SectionHeaderProps {
-  config: Pick<SectionConfig, "eyebrow" | "titleStart" | "titleItalic" | "linkHref" | "linkText">;
+  config: Pick<SectionConfig, "titleStart" | "titleItalic" | "linkHref" | "linkText">;
 }
 
 const SectionHeader = ({ config }: SectionHeaderProps) => (
   <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 w-full">
     <div>
-      <div className="flex items-center gap-3 mb-3">
-        <span className="h-px w-8" style={{ background: BRAND_GOLD }} />
-        <span className="text-[10px] font-black tracking-[0.38em] uppercase text-[#C19A6B]">
-          {config.eyebrow}
-        </span>
-      </div>
-
       <h2
         className="text-3xl sm:text-4xl md:text-5xl font-light text-[#154734] leading-none"
         style={{ fontFamily: "Georgia, serif" }}

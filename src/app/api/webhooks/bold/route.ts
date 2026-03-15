@@ -220,7 +220,7 @@ async function processWebhookAsync(fields: WebhookFields): Promise<void> {
         orderId: order?.id ?? null,
         provider: "BOLD",
         eventType: eventType ?? null,
-        payload: payload as Record<string, unknown>,
+        payload: payload as any,
         signature: signatureHeader,
         status: 0, // Se actualiza al final (0 = en proceso)
         attempt: 1,
