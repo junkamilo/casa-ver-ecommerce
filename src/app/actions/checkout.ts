@@ -3,9 +3,6 @@
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 
-// ---------------------------------------------------------------------------
-// Tipos internos
-// ---------------------------------------------------------------------------
 export interface CreateOrderInput {
   // Datos del comprador
   email: string;
