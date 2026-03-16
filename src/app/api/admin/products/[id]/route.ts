@@ -270,9 +270,12 @@ type SubProductInput = {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function createColorVariants(tx: any, productId: string, slug: string, colors: ColorInput[], sizes: string[], globalStock: number) {
+  // Si hay variantStocks proporcionados, usarlos; de lo contrario, dividir el stock global uniformemente
+  const hasVariantStocks = colors.some((c) => c.variantStocks && Object.keys(c.variantStocks).length > 0);
+
   const totalVariants = colors.length * sizes.length;
-  const base = totalVariants > 0 ? Math.floor(globalStock / totalVariants) : 0;
-  const rem = totalVariants > 0 ? globalStock % totalVariants : 0;
+  const base = !hasVariantStocks && totalVariants > 0 ? Math.floor(globalStock / totalVariants) : 0;
+  const rem = !hasVariantStocks && totalVariants > 0 ? globalStock % totalVariants : 0;
   let idx = 0;
 
   for (const colorData of colors) {
@@ -289,11 +292,20 @@ async function createColorVariants(tx: any, productId: string, slug: string, col
     }
     for (const size of sizes) {
       const sku = `${slug}-${colorData.name.toLowerCase().replace(/\s+/g, "-")}-${size.toLowerCase()}`;
+      // Usar variantStocks si existen; si no, usar división uniforme con minStock = 2
       const variantStock = colorData.variantStocks?.[size] !== undefined
         ? Number(colorData.variantStocks[size])
         : base + (idx < rem ? 1 : 0);
+
       await tx.productVariant.create({
-        data: { productId, colorId: color.id, size: size as never, sku, stock: variantStock },
+        data: {
+          productId,
+          colorId: color.id,
+          size: size as never,
+          sku,
+          stock: variantStock,
+          minStock: 2, // minStock fijo en 2 como especificó el cliente
+        },
       });
       idx++;
     }

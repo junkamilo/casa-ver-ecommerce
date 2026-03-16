@@ -126,8 +126,10 @@ export default function ProductModal({
   const [itemErrors, setItemErrors] = useState<ItemFormErrors>({});
 
   const hasVariantStocks =
-    !!editingId &&
     selectedColors.some((c) => Object.keys(c.variantStocks || {}).length > 0);
+
+  // Mostrar tabla de stock cuando hay colores Y tallas (en creación y edición)
+  const shouldShowStockTable = selectedColors.length > 0 && selectedSizes.length > 0;
 
   const handleValidatedSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,8 +139,9 @@ export default function ProductModal({
       description,
       basePrice,
       comparePrice: comparePrice || undefined,
-      // Cuando hay grid de variantes, el stock se calcula automáticamente — pasamos 0 para pasar validación
-      stock: hasVariantStocks ? "0" : stock,
+      // Cuando se muestran variantes, el stock se calcula desde variantStocks
+      // Si no hay tabla de stock, se usa el stock general
+      stock: shouldShowStockTable ? "0" : stock,
       categoryId,
       videoUrl: videoUrl || undefined,
     });
@@ -324,7 +327,7 @@ export default function ProductModal({
                 />
                 <div className="space-y-6">
                   {/* Precio y Stock */}
-                  <div className={`grid grid-cols-1 gap-4 ${hasVariantStocks ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
+                  <div className={`grid grid-cols-1 gap-4 ${shouldShowStockTable ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
                         Precio (COP) *
@@ -353,7 +356,7 @@ export default function ProductModal({
                       />
                       <FieldError msg={errors.comparePrice} />
                     </div>
-                    {!hasVariantStocks && (
+                    {!shouldShowStockTable && (
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
                           Stock Total *
@@ -371,16 +374,17 @@ export default function ProductModal({
                     )}
                   </div>
 
-                  {/* Stock por variante — solo al editar cuando hay variantes cargadas */}
-                  {hasVariantStocks && (
+                  {/* Stock por variante — cuando hay colores Y tallas seleccionadas */}
+                  {shouldShowStockTable && (
                     <div className="space-y-2">
                       <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
-                        Stock por Variante
+                        Stock por Variante (Color × Talla)
                       </p>
                       <VariantStockSection
                         selectedColors={selectedColors}
                         selectedSizes={selectedSizes}
                         disabled={submitting}
+                        productId={editingId || undefined}
                         onUpdate={updateVariantStock}
                       />
                     </div>

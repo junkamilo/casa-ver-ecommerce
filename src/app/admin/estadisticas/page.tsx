@@ -1,24 +1,28 @@
-"use client";
-
-import { useEstadisticas } from "./hooks/useEstadisticas";
+import { Suspense } from "react";
+import type { Period } from "./types";
 import { EstadisticasHeader } from "./components/EstadisticasHeader";
-import { KpiCards } from "./components/KpiCards";
-import { SalesChart } from "./components/SalesChart";
-import { CategoryChart } from "./components/CategoryChart";
-import { TopProductsTable } from "./components/TopProductsTable";
+import { EstadisticasContent } from "./components/EstadisticasContent";
+import { EstadisticasLoadingSkeleton } from "./components/EstadisticasLoadingSkeleton";
 
-export default function AdminEstadisticas() {
-  const { period, setPeriod, data } = useEstadisticas();
+interface PageProps {
+  searchParams?: Promise<{ period?: string }>;
+}
+
+export default async function AdminEstadisticas({
+  searchParams,
+}: PageProps) {
+  const params = await searchParams;
+  const period = (params?.period || "week") as Period;
 
   return (
     <div className="space-y-6 sm:space-y-8 p-3 sm:p-6 bg-gray-50 min-h-screen font-sans">
-      <EstadisticasHeader period={period} onPeriodChange={setPeriod} />
-      <KpiCards data={data} />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        <SalesChart />
-        <CategoryChart />
-      </div>
-      <TopProductsTable />
+      <Suspense fallback={null}>
+        <EstadisticasHeader />
+      </Suspense>
+      <Suspense fallback={<EstadisticasLoadingSkeleton />}>
+        <EstadisticasContent period={period} />
+      </Suspense>
     </div>
   );
 }
+

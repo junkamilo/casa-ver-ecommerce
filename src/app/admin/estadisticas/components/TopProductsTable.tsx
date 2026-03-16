@@ -1,5 +1,5 @@
 import { ArrowUpRight, TrendingUp, TrendingDown } from "lucide-react";
-import { TOP_PRODUCTS } from "../constants";
+import type { TopProduct } from "../types";
 
 function RankBadge({ rank }: { rank: number }) {
   const className = `w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ${
@@ -42,7 +42,11 @@ function TrendBadge({ trend, variant = "desktop" }: { trend: string; variant?: "
   );
 }
 
-export function TopProductsTable() {
+interface TopProductsTableProps {
+  products: TopProduct[];
+}
+
+export function TopProductsTable({ products }: TopProductsTableProps) {
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="p-4 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
@@ -70,7 +74,7 @@ export function TopProductsTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {TOP_PRODUCTS.map((product, i) => (
+            {products.map((product, i) => (
               <tr
                 key={product.name}
                 className="hover:bg-gray-50/50 transition-colors group"
@@ -104,7 +108,7 @@ export function TopProductsTable() {
 
       {/* Lista Móvil */}
       <div className="sm:hidden divide-y divide-gray-100">
-        {TOP_PRODUCTS.map((product, i) => (
+        {products.map((product, i) => (
           <div key={product.name} className="p-5 flex items-center gap-4">
             <RankBadge rank={i + 1} />
             <div className="flex-1 min-w-0">
