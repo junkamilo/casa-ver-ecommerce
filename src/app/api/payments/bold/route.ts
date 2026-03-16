@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     },
     reference,
     description: "Compra en Casa Verde",
-    callback_url: `${appUrl}/pago/resultado`,
+    callback_url: `${appUrl}/pago/resultado?reference_id=${reference}`,
   };
 
   console.log("[BOLD] Creando link de pago para orden:", orderId);

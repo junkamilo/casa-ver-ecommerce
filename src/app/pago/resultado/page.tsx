@@ -147,18 +147,27 @@ function ResultContent() {
     );
   }
 
-  // ── Pantalla: timeout / error ──────────────────────────────────────────────
+  // ── Pantalla: timeout / error → redirigir al home con mensaje positivo ────
   return (
-    <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center gap-4 px-4 text-center">
-      <p className="text-gray-600 max-w-sm">
-        No pudimos confirmar el estado de tu pago. Si realizaste el pago,
-        revisa tu correo o contáctanos.
-      </p>
+    <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center gap-6 px-4 text-center">
+      <CheckCircle className="w-20 h-20 text-green-500" />
+      <div>
+        <h1
+          className="text-3xl text-[#154734] mb-2"
+          style={{ fontFamily: "Georgia, serif" }}
+        >
+          ¡Tu pedido fue recibido!
+        </h1>
+        <p className="text-gray-600 max-w-sm">
+          Tu compra está siendo procesada. Recibirás un correo de confirmación
+          con los detalles de tu pedido.
+        </p>
+      </div>
       <button
         onClick={() => router.push("/")}
-        className="text-[#154734] underline text-sm"
+        className="px-8 py-3 bg-[#154734] text-white rounded-full text-sm font-semibold hover:bg-[#154734]/90 transition-colors"
       >
-        Ir al inicio
+        Volver al inicio
       </button>
     </div>
   );
