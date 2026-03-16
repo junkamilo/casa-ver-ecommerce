@@ -159,6 +159,20 @@ export default async function ProductPage({ params }: Props) {
     items: uiItems,
   };
 
+  // Social proof: compradores reales de este producto
+  const buyerOrders = await prisma.order.findMany({
+    where: { status: "PAID", items: { some: { productId: product.id } } },
+    select: { shippingName: true, user: { select: { image: true } } },
+    orderBy: { paidAt: "desc" },
+    take: 50,
+  });
+
+  const totalBuyers = buyerOrders.length;
+  const recentBuyers = buyerOrders.slice(0, 3).map((o) => ({
+    name: (o.shippingName ?? "").trim().split(" ")[0] ?? "Clienta",
+    avatar: o.user.image ?? null,
+  }));
+
   const recommended: RecommendedProduct[] = (product.category.products as any[]).map((p) => ({
     id: p.id,
     name: p.name,
@@ -188,6 +202,7 @@ export default async function ProductPage({ params }: Props) {
           existingReview={userReview}
           isAuthenticated={!!userEmail}
           reviews={productReviews}
+          socialProof={{ totalBuyers, recentBuyers }}
         />
       </div>
       <Footer />

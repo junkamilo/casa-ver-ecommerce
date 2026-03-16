@@ -25,12 +25,18 @@ interface ExistingReview {
   comment: string | null;
 }
 
+interface BuyerInfo {
+  name: string;
+  avatar: string | null;
+}
+
 interface Props {
   product: UIProduct;
   recommended: RecommendedProduct[];
   existingReview: ExistingReview | null;
   isAuthenticated: boolean;
   reviews: TestimonialItem[];
+  socialProof: { totalBuyers: number; recentBuyers: BuyerInfo[] };
 }
 
 const isVideoUrl = (url: string) => /\.(mp4|mov|avi|webm|mkv|ogg)$/i.test(url);
@@ -41,6 +47,7 @@ export default function ProductClient({
   existingReview,
   isAuthenticated,
   reviews,
+  socialProof,
 }: Props) {
   // ─── Estado principal ────────────────────────────────────────────────────
   const [selectedImage, setSelectedImage] = useState(0);
@@ -273,19 +280,37 @@ export default function ProductClient({
             </button>
 
             {/* Social proof */}
-            <div className="bg-[#FAFAFA] border border-gray-100 p-4 rounded-xl flex items-center gap-4 mb-8">
-              <div className="flex -space-x-3 shrink-0">
-                {[15, 16, 17].map((n) => (
-                  <div key={n} className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white overflow-hidden shadow-sm">
-                    <img src={`https://i.pravatar.cc/100?img=${n}`} alt="" aria-hidden="true" className="w-full h-full object-cover" />
-                  </div>
-                ))}
+            {socialProof.totalBuyers > 0 && (
+              <div className="bg-[#FAFAFA] border border-gray-100 p-4 rounded-xl flex items-center gap-4 mb-8">
+                <div className="flex -space-x-3 shrink-0">
+                  {socialProof.recentBuyers.map((buyer, i) => (
+                    <div key={i} className="w-8 h-8 rounded-full bg-[#154734]/10 border-2 border-white overflow-hidden shadow-sm flex items-center justify-center">
+                      {buyer.avatar ? (
+                        <img src={buyer.avatar} alt="" aria-hidden="true" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-[10px] font-bold text-[#154734]">{buyer.name[0]}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-600 leading-relaxed font-light">
+                  {socialProof.recentBuyers.length >= 2 ? (
+                    <>
+                      <strong className="text-[#154734] font-semibold">
+                        {socialProof.recentBuyers[0].name}, {socialProof.recentBuyers[1].name}
+                      </strong>{" "}
+                      y{" "}
+                    </>
+                  ) : socialProof.recentBuyers.length === 1 ? (
+                    <><strong className="text-[#154734] font-semibold">{socialProof.recentBuyers[0].name}</strong> y </>
+                  ) : null}
+                  <strong className="text-[#154734] font-semibold">
+                    {socialProof.totalBuyers > 3 ? `${socialProof.totalBuyers}+ personas` : `${socialProof.totalBuyers} persona${socialProof.totalBuyers !== 1 ? "s" : ""}`}
+                  </strong>{" "}
+                  ya lucen esta prenda.
+                </p>
               </div>
-              <p className="text-xs text-gray-600 leading-relaxed font-light">
-                <strong className="text-[#154734] font-semibold">Aleja, Mariana</strong> y{" "}
-                <strong className="text-[#154734] font-semibold">800+ mujeres</strong> ya lucen esta prenda.
-              </p>
-            </div>
+            )}
 
             {/* Addi */}
             <a
