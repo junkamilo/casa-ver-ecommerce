@@ -11,9 +11,8 @@
  * Nota: Requiere que el servidor esté corriendo en localhost:3000
  */
 
-import fetch from "node:fetch";
-
 const BASE_URL = "http://localhost:3000";
+const CLI_SECRET = process.env.CLI_SECRET || "";
 const ARGS = process.argv.slice(2);
 
 const args = {
@@ -60,7 +59,7 @@ async function main() {
 
       const emailResponse = await fetch(`${BASE_URL}/api/admin/email-test`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-cli-secret": CLI_SECRET },
         body: JSON.stringify({
           customerEmail: args.email,
           customerName: args.name,

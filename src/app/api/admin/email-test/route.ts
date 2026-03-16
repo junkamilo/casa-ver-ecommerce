@@ -31,13 +31,18 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  // Verificar autenticación
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  if (!token?.id || token.role !== "ADMIN") {
-    return NextResponse.json(
-      { error: "No autorizado. Se requiere rol ADMIN." },
-      { status: 403 }
-    );
+  // Verificar autenticación: sesión de admin O CLI_SECRET
+  const cliSecret = req.headers.get("x-cli-secret");
+  const isCliAuth = cliSecret && cliSecret === process.env.CLI_SECRET;
+
+  if (!isCliAuth) {
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+    if (!token?.id || token.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "No autorizado. Se requiere rol ADMIN." },
+        { status: 403 }
+      );
+    }
   }
 
   // Parsear cuerpo
