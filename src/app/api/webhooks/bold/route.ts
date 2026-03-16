@@ -3,6 +3,7 @@ import { after } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { markOrderPaid } from "@/app/actions/checkout";
+import { sendOrderConfirmationEmail } from "@/services/email/client";
 
 // ---------------------------------------------------------------------------
 // Verificación HMAC-SHA256 — timing-safe
@@ -340,8 +341,85 @@ async function processWebhookAsync(fields: WebhookFields): Promise<void> {
   }
 
   try {
-    await markOrderPaid(reference, boldPaymentId);
+    // 1. Marcar orden como PAID y actualizar stock
+    const order = await markOrderPaid(reference, boldPaymentId);
     console.info("[BOLD WEBHOOK] ✓ Orden marcada como pagada. transactionId:", reference);
+
+    // 2. Enviar correo de confirmación (asincrónico, no bloquea respuesta)
+    // Si el correo falla, NO revertimos PAID status — es "best effort"
+    try {
+      // Validar que el usuario tenga email
+      if (!order.user.email) {
+        console.warn(`[BOLD WEBHOOK] ⚠ Orden ${order.orderNumber} no tiene email de cliente`);
+        updateLog(200);
+        return;
+      }
+
+      console.log("[BOLD WEBHOOK] 📧 Enviando correo de confirmación...");
+
+      const emailResult = await sendOrderConfirmationEmail({
+        customerEmail: order.user.email,
+        customerName: order.shippingName,
+        orderNumber: order.orderNumber,
+        items: order.items.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: Number(item.price),
+          color: item.colorName,
+          size: item.size,
+          imageUrl: item.imageUrl,
+        })),
+        subtotal: Number(order.subtotal),
+        shippingCost: Number(order.shippingCost),
+        discount: Number(order.discount),
+        total: Number(order.total),
+      });
+
+      if (emailResult.success) {
+        // Registrar que el correo fue enviado exitosamente
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { confirmationEmailSentAt: new Date() },
+        });
+        console.info(
+          `[BOLD WEBHOOK] ✓ Confirmación enviada a ${order.user.email} (messageId: ${emailResult.messageId})`
+        );
+      } else {
+        // Registrar fallo del correo pero NO fallar la orden
+        await prisma.order.update({
+          where: { id: order.id },
+          data: {
+            confirmationEmailFailedAt: new Date(),
+            confirmationEmailError: emailResult.error || "Error desconocido",
+          },
+        });
+        console.error(
+          `[BOLD WEBHOOK] ⚠ Error enviando confirmación a ${order.user.email}: ${emailResult.error}`
+        );
+      }
+    } catch (emailErr) {
+      // Capturar cualquier excepción no esperada en el envío de correo
+      const emailErrorMsg =
+        emailErr instanceof Error ? emailErr.message : "Error desconocido";
+      console.error(`[BOLD WEBHOOK] ⚠ Excepción enviando email:`, emailErrorMsg);
+
+      // Registrar el error pero continuar (no fallar la orden)
+      try {
+        await prisma.order.update({
+          where: { transactionId: reference },
+          data: {
+            confirmationEmailFailedAt: new Date(),
+            confirmationEmailError: emailErrorMsg,
+          },
+        });
+      } catch (updateErr) {
+        console.error(
+          "[BOLD WEBHOOK] ⚠ Error registrando fallo de email:",
+          updateErr instanceof Error ? updateErr.message : "Error desconocido"
+        );
+      }
+    }
+
     updateLog(200);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Error desconocido";

@@ -223,23 +223,25 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 // ---------------------------------------------------------------------------
 // markOrderPaid — Llamado desde el webhook de Bold/Addi
 // Usa transacción atómica: si algo falla, NADA se guarda (evita estados inconsistentes).
-// Es idempotente: si la orden ya está PAID, no hace nada (safe para reintentos del webhook).
+// Es idempotente: si la orden ya está PAID, no hace nada (retorna orden sin cambios).
+// Retorna la orden completa con usuario e items (necesarios para envío de email).
 // ---------------------------------------------------------------------------
-export async function markOrderPaid(transactionId: string, paymentId: string): Promise<void> {
-  await prisma.$transaction(async (tx) => {
+export async function markOrderPaid(transactionId: string, paymentId: string) {
+  const result = await prisma.$transaction(async (tx) => {
     const order = await tx.order.findUnique({
       where: { transactionId },
-      include: { items: true },
+      include: { items: true, user: true },
     });
 
     if (!order) throw new Error(`Orden no encontrada: ${transactionId}`);
     // Idempotencia: Bold puede reenviar el mismo webhook múltiples veces
-    if (order.status === "PAID") return;
+    if (order.status === "PAID") return order;
 
     // 1. Marcar la orden como pagada
-    await tx.order.update({
+    const updatedOrder = await tx.order.update({
       where: { id: order.id },
       data: { status: "PAID", paymentId, paidAt: new Date() },
+      include: { items: true, user: true },
     });
 
     // 2. Descontar stock real y liberar reserva
@@ -269,5 +271,9 @@ export async function markOrderPaid(transactionId: string, paymentId: string): P
         });
       }
     }
+
+    return updatedOrder;
   });
+
+  return result;
 }
