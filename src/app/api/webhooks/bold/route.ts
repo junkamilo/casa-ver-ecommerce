@@ -122,18 +122,27 @@ export async function POST(req: NextRequest) {
 
   // ── Step 3: Extraer campos del payload ────────────────────────────────────
   //
-  // Bold Link de Pagos puede enviar dos estructuras:
-  //
-  // ESTRUCTURA PLANA (v1):
-  //   { id, reference, status, type, amount, ... }
-  //
-  // ESTRUCTURA ANIDADA (v2):
-  //   { type, data: { id, reference, status, amount, ... } }
+  // Bold Link de Pagos envía estructura anidada:
+  //   {
+  //     type: "SALE_APPROVED",
+  //     data: {
+  //       payment_id: "...",
+  //       metadata: { reference: "..." },
+  //       amount: { total: ... },
+  //       ...
+  //     }
+  //   }
   //
   const data = (payload.data ?? payload) as Record<string, unknown>;
   const eventType = (payload.type ?? payload.event ?? data.event) as string | undefined;
-  const boldPaymentId = (data.id ?? payload.id) as string | undefined;
-  const reference = (data.reference ?? payload.reference) as string | undefined;
+
+  // payment_id está en data.payment_id (no en data.id que es la notificación)
+  const boldPaymentId = (data.payment_id ?? data.id ?? payload.id) as string | undefined;
+
+  // reference está en data.metadata.reference
+  const metadata = (data.metadata ?? payload.metadata) as Record<string, unknown> | undefined;
+  const reference = (metadata?.reference ?? data.reference ?? payload.reference) as string | undefined;
+
   const boldStatus = (data.status ?? payload.status) as string | undefined;
   const amount = (
     (data.amount as Record<string, unknown>)?.total ??
