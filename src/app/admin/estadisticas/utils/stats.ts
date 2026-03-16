@@ -261,6 +261,7 @@ export async function getCategorySalesByPeriod(
     },
     select: {
       total: true,
+      productId: true,
     },
   });
 

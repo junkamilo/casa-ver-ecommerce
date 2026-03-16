@@ -321,7 +321,7 @@ export default async function AdminDashboard() {
                       <span className="text-sm font-medium text-gray-900">{order.user?.name || "Cliente Sin Nombre"}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm font-bold text-gray-900">{formatCOP(order.total)}</span>
+                      <span className="text-sm font-bold text-gray-900">{formatCOP(Number(order.total))}</span>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusInfo.styleClass}`}>
@@ -367,7 +367,7 @@ export default async function AdminDashboard() {
                       <CreditCard className="w-3 h-3" /> {order.paymentMethod || "N/A"}
                     </p>
                   </div>
-                  <p className="text-base font-bold text-gray-900">{formatCOP(order.total)}</p>
+                  <p className="text-base font-bold text-gray-900">{formatCOP(Number(order.total))}</p>
                 </div>
 
                 <div className="flex justify-end">
