@@ -1,7 +1,11 @@
 import { PieChart } from "lucide-react";
-import { CATEGORY_SALES } from "../constants";
+import type { CategorySale } from "../types";
 
-export function CategoryChart() {
+interface CategoryChartProps {
+  categorySales: CategorySale[];
+}
+
+export function CategoryChart({ categorySales }: CategoryChartProps) {
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-4 sm:p-6 shadow-sm flex flex-col">
       <h3 className="font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2 text-sm sm:text-base">
@@ -10,7 +14,7 @@ export function CategoryChart() {
       </h3>
 
       <div className="flex-1 flex flex-col justify-center space-y-6">
-        {CATEGORY_SALES.map((cat) => (
+        {categorySales.map((cat) => (
           <div key={cat.name} className="group">
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-gray-700 font-semibold group-hover:text-[#154734] transition-colors">

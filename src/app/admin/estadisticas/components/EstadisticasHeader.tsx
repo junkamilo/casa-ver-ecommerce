@@ -3,13 +3,17 @@
 import { BarChart3 } from "lucide-react";
 import { PERIOD_LABELS } from "../constants";
 import type { Period } from "../types";
+import { useRouter, useSearchParams } from "next/navigation";
 
-interface EstadisticasHeaderProps {
-  period: Period;
-  onPeriodChange: (p: Period) => void;
-}
+export function EstadisticasHeader() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const period = (searchParams.get("period") || "week") as Period;
 
-export function EstadisticasHeader({ period, onPeriodChange }: EstadisticasHeaderProps) {
+  const handlePeriodChange = (newPeriod: Period) => {
+    router.push(`/admin/estadisticas?period=${newPeriod}`);
+  };
+
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
       <div>
@@ -17,11 +21,11 @@ export function EstadisticasHeader({ period, onPeriodChange }: EstadisticasHeade
           className="text-2xl sm:text-3xl font-bold text-[#154734]"
           style={{ fontFamily: "Georgia, serif" }}
         >
-          Estadísticas
+          Reportes & Estadísticas
         </h1>
         <p className="text-gray-500 mt-1 flex items-center gap-2 text-xs sm:text-sm">
           <BarChart3 className="w-4 h-4" />
-          Visión general del rendimiento de la tienda
+          Visión en tiempo real del rendimiento de tu tienda
         </p>
       </div>
 
@@ -29,7 +33,7 @@ export function EstadisticasHeader({ period, onPeriodChange }: EstadisticasHeade
         {(Object.keys(PERIOD_LABELS) as Period[]).map((p) => (
           <button
             key={p}
-            onClick={() => onPeriodChange(p)}
+            onClick={() => handlePeriodChange(p)}
             className={`px-3 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-full transition-all duration-200 ${
               period === p
                 ? "bg-[#154734] text-white shadow-md"

@@ -1,7 +1,14 @@
 import { Calendar } from "lucide-react";
-import { DAILY_SALES, MAX_DAILY_SALE, formatPrice } from "../constants";
+import type { DailySale } from "../types";
+import { formatPrice } from "../utils/stats";
 
-export function SalesChart() {
+interface SalesChartProps {
+  salesData: DailySale[];
+}
+
+export function SalesChart({ salesData }: SalesChartProps) {
+  const maxSale = Math.max(...salesData.map((d) => d.amount), 1);
+
   return (
     <div className="lg:col-span-2 bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-4 sm:p-6 shadow-sm">
       <div className="flex items-center justify-between mb-4 sm:mb-8">
@@ -12,16 +19,16 @@ export function SalesChart() {
       </div>
 
       <div className="flex items-end gap-2 sm:gap-6 h-48 sm:h-64 w-full">
-        {DAILY_SALES.map((day, i) => (
+        {salesData.map((day, i) => (
           <div
-            key={day.day}
+            key={`${day.day}-${i}`}
             className="flex-1 flex flex-col items-center gap-3 group h-full justify-end"
           >
             <div className="w-full relative h-full flex items-end">
               <div
                 className="w-full bg-[#154734] rounded-t-lg transition-all duration-500 ease-out group-hover:bg-[#C19A6B] relative"
                 style={{
-                  height: `${(day.amount / MAX_DAILY_SALE) * 100}%`,
+                  height: `${(day.amount / maxSale) * 100}%`,
                   opacity: 0.8 + i * 0.03,
                 }}
               >

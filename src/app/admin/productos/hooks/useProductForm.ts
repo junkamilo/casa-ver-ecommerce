@@ -155,21 +155,48 @@ export function useProductForm() {
 
   // Helpers colores producto principal
   const toggleColor = (name: string, hexCode: string) =>
-    setSelectedColors((prev) =>
-      prev.some((c) => c.name === name)
+    setSelectedColors((prev) => {
+      const newColors = prev.some((c) => c.name === name)
         ? prev.filter((c) => c.name !== name)
-        : [...prev, { name, hexCode, images: [] }]
-    );
+        : [...prev, { name, hexCode, images: [], variantStocks: {} }];
+
+      // Inicializar variantStocks para el nuevo color con todas las tallas actuales
+      return newColors.map((c) => (
+        c.variantStocks && Object.keys(c.variantStocks).length > 0
+          ? c
+          : { ...c, variantStocks: Object.fromEntries(selectedSizes.map((s) => [s, 0])) }
+      ));
+    });
 
   const setColorImages = (colorName: string, images: string[]) =>
     setSelectedColors((prev) =>
       prev.map((c) => c.name === colorName ? { ...c, images } : c)
     );
 
-  const toggleSize = (size: string) =>
-    setSelectedSizes((prev) =>
-      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
-    );
+  const toggleSize = (size: string) => {
+    setSelectedSizes((prev) => {
+      const newSizes = prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size];
+
+      // Actualizar variantStocks de todos los colores cuando se agregan/quitan tallas
+      setSelectedColors((colors) =>
+        colors.map((c) => ({
+          ...c,
+          variantStocks: {
+            ...c.variantStocks,
+            // Si se agregó una talla, iniciarla con 0; si se quitó, eliminarla
+            ...(!prev.includes(size) && newSizes.includes(size) && { [size]: 0 }),
+            ...(prev.includes(size) &&
+              !newSizes.includes(size) &&
+              Object.fromEntries(
+                Object.entries(c.variantStocks || {}).filter(([s]) => s !== size)
+              )),
+          },
+        }))
+      );
+
+      return newSizes;
+    });
+  };
 
   // Helpers subcategorías
   const addSetItem = () =>
