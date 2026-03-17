@@ -13,7 +13,7 @@ interface Props {
 }
 
 const Testimonials = ({ comments }: Props) => {
-  const autoplayRef = useRef<InstanceType<typeof Autoplay>>(null);
+  const autoplayRef = useRef<ReturnType<typeof Autoplay> | null>(null);
 
   const [emblaRef, emblaApi] = useEmblaCarousel(
     {
