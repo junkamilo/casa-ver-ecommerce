@@ -4,6 +4,7 @@ import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import SocialProofPopup from "@/components/SocialProofPopup";
 import { Providers } from "@/components/Providers";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,6 +40,7 @@ export default function RootLayout({
             <SocialProofPopup />
           </CartProvider>
         </Providers>
+        <SpeedInsights />
       </body>
     </html>
   );
