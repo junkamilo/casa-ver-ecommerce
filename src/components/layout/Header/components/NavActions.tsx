@@ -2,16 +2,7 @@ import Link from "next/link";
 import { Search, User, ShoppingBag, Shield } from "lucide-react";
 import UserMenu from "@/components/UserMenu";
 import { TEXT_BRAND } from "../constants/constants";
-
-interface Props {
-  isAdmin: boolean;
-  cartCount: number;
-  isUserMenuOpen: boolean;
-  onSearchOpen: () => void;
-  onCartOpen: () => void;
-  onUserMenuToggle: () => void;
-  onUserMenuClose: () => void;
-}
+import type { NavActionsProps } from "../types";
 
 export default function NavActions({
   isAdmin,
@@ -21,7 +12,7 @@ export default function NavActions({
   onCartOpen,
   onUserMenuToggle,
   onUserMenuClose,
-}: Props) {
+}: NavActionsProps) {
   return (
     <div className="flex items-center gap-1 sm:gap-1.5">
 

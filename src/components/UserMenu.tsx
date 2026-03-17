@@ -15,15 +15,15 @@ const UserMenu = ({ onClose }: UserMenuProps) => {
   
   return (
     <>
-      {/* Overlay móvil - solo visible en pantallas pequeñas para cerrar al tocar fuera */}
+      {/* Overlay: transparente en todos los tamaños, solo para cerrar al tocar fuera */}
       <div
-        className="fixed inset-0 bg-black/50 z-40 sm:hidden"
+        className="fixed inset-0 z-40"
         onClick={onClose}
       />
 
-      {/* Menú: bottom-sheet en móvil, popover flotante en desktop */}
+      {/* Menú: dropdown anclado debajo del icono en todos los dispositivos */}
       <div
-        className="fixed bottom-0 left-0 right-0 sm:absolute sm:bottom-auto sm:left-auto sm:top-full sm:right-0 sm:mt-3 w-full sm:w-85 bg-background rounded-t-2xl sm:rounded-xl shadow-2xl border border-border p-5 sm:p-6 z-50 animate-in fade-in slide-in-from-bottom-5 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200"
+        className="absolute top-full right-0 mt-2 w-[calc(100vw-1rem)] max-w-xs sm:w-85 bg-background rounded-2xl shadow-2xl border border-border p-5 sm:p-6 z-50 max-h-[70vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200"
         onMouseLeave={() => {
           if (window.innerWidth >= 640) onClose();
         }}
@@ -34,7 +34,7 @@ const UserMenu = ({ onClose }: UserMenuProps) => {
             {/* Si está logueado mostramos el nombre, si no "Mi Cuenta" */}
             {status === "authenticated" ? `Hola, ${session.user?.name?.split(" ")[0]}` : "Mi Cuenta"}
           </h2>
-          <button onClick={onClose} className="sm:hidden text-muted-foreground hover:text-foreground">
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors active:scale-90">
             <X className="w-5 h-5" />
           </button>
         </div>

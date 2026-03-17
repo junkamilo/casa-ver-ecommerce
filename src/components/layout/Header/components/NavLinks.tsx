@@ -1,12 +1,8 @@
 import Link from "next/link";
 import { TEXT_BRAND } from "../constants/constants";
+import type { NavLinksProps } from "../types";
 
-interface Props {
-  isCategoriesActive: boolean;
-  onCategoriesEnter: () => void;
-}
-
-export default function NavLinks({ isCategoriesActive, onCategoriesEnter }: Props) {
+export default function NavLinks({ isCategoriesActive, onCategoriesEnter }: NavLinksProps) {
   return (
     <nav className="hidden lg:flex items-center gap-8" aria-label="Navegación principal">
 
