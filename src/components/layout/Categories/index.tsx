@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import SectionHeader from "@/components/ui/SectionHeader";
 import { useCarousel } from "./hooks/useCarousel";
 import { useCategories } from "./hooks/useCategories";
 import CategoryCard from "./components/CategoryCard";
@@ -18,21 +19,16 @@ const Categories = () => {
 
       <div className="relative max-w-7xl 2xl:max-w-6xl mx-auto z-10">
 
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6 w-full mb-8 sm:mb-10 md:mb-12">
-          <div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-[#154734] leading-none" style={{ fontFamily: "Georgia, serif" }}>
-              Explora por <span className="italic" style={{ color: BRAND_GOLD }}>Categoría</span>
-            </h2>
-          </div>
-
-          <Link
-            href="/collections"
-            className="group flex items-center justify-center sm:justify-start gap-2.5 text-[10px] sm:text-[11px] font-black tracking-[0.32em] uppercase text-[#154734] hover:text-[#C19A6B] transition-colors duration-300 pb-1 sm:pb-2 p-2 touch-target active:scale-95"
-          >
-            VER TODO
-            <span className="h-px w-5 bg-[#154734]/30 group-hover:w-9 group-hover:bg-[#C19A6B] transition-all duration-350 ease-out" />
-          </Link>
-        </div>
+        {/* ── Encabezado reutilizable ── */}
+        <SectionHeader
+          title="Explora por"
+          titleItalic="Categoría"
+          href="/collections"
+          linkText="VER TODO"
+          textColor="text-[#154734]"
+          hoverColor="hover:text-[#C19A6B]"
+          fontClass="font-light"
+        />
 
         <div className="relative group/carousel mt-8 sm:mt-10 md:mt-12">
 

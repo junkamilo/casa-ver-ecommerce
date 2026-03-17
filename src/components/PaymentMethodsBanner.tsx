@@ -24,9 +24,9 @@ const PaymentMethodsBanner = () => {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 md:gap-8">
+        <div className="flex flex-nowrap overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-6 pb-4 scrollbar-hide md:grid md:grid-cols-2 md:gap-8 md:overflow-x-visible md:pb-0">
 
-          <div className="group flex flex-col-reverse md:flex-row bg-[#FAFAFA] border border-gray-100 hover:shadow-[0_20px_40px_-15px_rgba(21,71,52,0.12)] transition-shadow duration-500 overflow-hidden touch-target active:shadow-md">
+          <div className="group flex-shrink-0 w-[85vw] sm:w-[75vw] md:w-auto md:flex-1 snap-center flex flex-col-reverse md:flex-row bg-[#FAFAFA] border border-gray-100 hover:shadow-[0_20px_40px_-15px_rgba(21,71,52,0.12)] transition-shadow duration-500 overflow-hidden touch-target active:shadow-md">
 
             <div className="w-full md:w-1/2 p-6 sm:p-8 md:p-10 lg:p-12 flex flex-col justify-center relative z-10 bg-[#FAFAFA]">
 
@@ -57,7 +57,7 @@ const PaymentMethodsBanner = () => {
               </Link>
             </div>
 
-            <div className="w-full md:w-1/2 h-48 sm:h-56 md:h-auto relative p-2 md:pl-0">
+            <div className="w-full md:w-1/2 h-56 sm:h-64 md:h-auto relative p-2 md:pl-0">
               <div className="relative w-full h-full overflow-hidden bg-white">
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500 z-10 pointer-events-none" />
                 <Image
@@ -70,7 +70,7 @@ const PaymentMethodsBanner = () => {
             </div>
           </div>
 
-          <div className="group flex flex-col-reverse md:flex-row bg-[#FAFAFA] border border-gray-100 hover:shadow-[0_20px_40px_-15px_rgba(21,71,52,0.12)] transition-shadow duration-500 overflow-hidden touch-target active:shadow-md">
+          <div className="group flex-shrink-0 w-[85vw] sm:w-[75vw] md:w-auto md:flex-1 snap-center flex flex-col-reverse md:flex-row bg-[#FAFAFA] border border-gray-100 hover:shadow-[0_20px_40px_-15px_rgba(21,71,52,0.12)] transition-shadow duration-500 overflow-hidden touch-target active:shadow-md">
 
             <div className="w-full md:w-1/2 p-6 sm:p-8 md:p-10 lg:p-12 flex flex-col justify-center relative z-10 bg-[#FAFAFA]">
 
@@ -101,7 +101,7 @@ const PaymentMethodsBanner = () => {
               </Link>
             </div>
 
-            <div className="w-full md:w-1/2 h-48 sm:h-56 md:h-auto relative p-2 md:pl-0">
+            <div className="w-full md:w-1/2 h-56 sm:h-64 md:h-auto relative p-2 md:pl-0">
               <div className="relative w-full h-full overflow-hidden bg-white">
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500 z-10 pointer-events-none" />
                 <Image

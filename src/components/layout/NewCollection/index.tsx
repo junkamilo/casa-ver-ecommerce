@@ -1,17 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { ProductStatus } from "@prisma/client";
-import ProductCarousel from "@/components/shared/ProductCarousel";
-import { SectionConfig, ProductItem } from "@/components/shared/ProductCarousel/types";
-
-const config: SectionConfig = {
-  titleStart: "Nuevos",
-  titleItalic: "Ingresos",
-  linkHref: "/collections/nueva-coleccion",
-  linkText: "VER TODO",
-  bgColor: "bg-white",
-  decorAlign: "left",
-  badgeVariant: "gold",
-};
+import { ProductItem } from "@/components/shared/ProductCarousel/types";
+import NewCollectionClient from "./NewCollectionClient";
 
 const formatPrice = (price: number) =>
   `$${Math.round(price).toLocaleString("es-CO")}`;
@@ -63,7 +53,7 @@ async function fetchNewProducts(): Promise<ProductItem[]> {
 
 const NewCollection = async () => {
   const items = await fetchNewProducts();
-  return <ProductCarousel config={config} items={items} />;
+  return <NewCollectionClient items={items} />;
 };
 
 export default NewCollection;

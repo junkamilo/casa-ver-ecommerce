@@ -26,15 +26,15 @@ const Footer = () => {
 
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#C19A6B] to-transparent opacity-50" />
 
-      <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 py-12 sm:py-16 md:py-20 relative z-10">
+      <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-12 md:py-16 relative z-10">
         <div className="max-w-7xl 2xl:max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 sm:gap-10 md:gap-12 lg:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6 sm:gap-8 md:gap-10 lg:gap-8">
 
             <div className="sm:col-span-2 lg:col-span-5">
-              <h4 className="text-[9px] sm:text-[10px] font-black tracking-[0.25em] text-white/50 mb-3 uppercase">
+              <h4 className="text-[9px] sm:text-[10px] font-black tracking-[0.25em] text-white/50 mb-2 sm:mb-3 uppercase">
                 Newsletter
               </h4>
-              <p className="text-white/70 text-sm mb-5 leading-relaxed">
+              <p className="text-white/70 text-sm mb-4 sm:mb-5 leading-relaxed">
                 Recibe novedades, lanzamientos y descuentos exclusivos directo en tu correo.
               </p>
               <form className="flex flex-col sm:flex-row gap-2 sm:gap-2">
@@ -53,10 +53,10 @@ const Footer = () => {
             </div>
 
             <div className="lg:col-span-2 lg:col-start-7">
-              <h4 className="text-[9px] sm:text-[10px] font-black tracking-[0.25em] text-white/50 mb-4 sm:mb-6 uppercase">
+              <h4 className="text-[9px] sm:text-[10px] font-black tracking-[0.25em] text-white/50 mb-2 sm:mb-3 uppercase">
                 Explorar
               </h4>
-              <ul className="space-y-3 sm:space-y-4">
+              <ul className="space-y-2 sm:space-y-3">
                 {[
                   { name: "Tienda", href: "/tienda" },
                   { name: "Nueva Colección", href: "/collections/nueva" },
@@ -74,10 +74,10 @@ const Footer = () => {
             </div>
 
             <div className="lg:col-span-2">
-              <h4 className="text-[9px] sm:text-[10px] font-black tracking-[0.25em] text-white/50 mb-4 sm:mb-6 uppercase">
+              <h4 className="text-[9px] sm:text-[10px] font-black tracking-[0.25em] text-white/50 mb-2 sm:mb-3 uppercase">
                 Ayuda
               </h4>
-              <ul className="space-y-3 sm:space-y-4">
+              <ul className="space-y-2 sm:space-y-3">
                 {[
                   { name: "Envíos y Devoluciones", href: "#" },
                   { name: "Guía de Tallas", href: "#" },
@@ -95,10 +95,10 @@ const Footer = () => {
             </div>
 
             <div className="sm:col-span-2 lg:col-span-3">
-              <h4 className="text-[9px] sm:text-[10px] font-black tracking-[0.25em] text-white/50 mb-4 sm:mb-6 uppercase">
+              <h4 className="text-[9px] sm:text-[10px] font-black tracking-[0.25em] text-white/50 mb-2 sm:mb-3 uppercase">
                 Contacto
               </h4>
-              <ul className="space-y-4 sm:space-y-5">
+              <ul className="space-y-3 sm:space-y-4">
                 <li>
                   <a href="mailto:contacto@casaverde.com" className="flex items-start gap-3 text-gray-300 text-sm hover:text-white transition-colors group p-1 touch-target active:scale-95">
                     <Mail className="w-4 h-4 text-[#C19A6B] shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
@@ -113,7 +113,7 @@ const Footer = () => {
                 </li>
               </ul>
 
-              <div className="flex items-center gap-3 mt-6">
+              <div className="flex items-center gap-3 mt-4 sm:mt-6">
                 <a
                   href="https://wa.me/573001234567"
                   target="_blank"
@@ -147,7 +147,7 @@ const Footer = () => {
       </div>
 
       <div className="border-t border-white/10 bg-black/20 backdrop-blur-sm relative z-10">
-        <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 py-4 sm:py-6">
+        <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 py-3 sm:py-4 md:py-6">
           <div className="max-w-7xl 2xl:max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
             <p className="text-xs text-white/50 font-light tracking-wide text-center sm:text-left">
               &copy; {new Date().getFullYear()} Casa Verde. Todos los derechos reservados.
