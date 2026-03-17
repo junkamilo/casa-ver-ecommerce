@@ -1,49 +1,36 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
-import { useSession } from "next-auth/react";
 import SearchModal from "@/components/SearchModal";
 import CartDrawer from "@/components/CartDrawer";
-import { useCart } from "@/context/CartContext";
 import logoIcon from "@/assets/logo-icon.png";
 
-import { BRAND_GREEN } from "./constants/constants";
-import MegaMenu from "./components/MegaMenu";
-import MobileMenu from "./components/MobileMenu";
-import NavActions from "./components/NavActions";
-import NavLinks from "./components/NavLinks";
-import type { NavCategory } from "./types";
+import { BRAND_GREEN } from "../constants/constants";
+import { useHeaderClient } from "../hooks/useHeaderClient";
+import MegaMenu from "./MegaMenu";
+import MobileMenu from "./MobileMenu";
+import NavActions from "./NavActions";
+import NavLinks from "./NavLinks";
+import type { HeaderClientProps } from "../types";
 
-interface Props {
-  categories: NavCategory[];
-}
-
-const HeaderClient = ({ categories }: Props) => {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [isCategoriesHovered, setIsCategoriesHovered] = useState(false);
-  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  const { cartCount, openCart } = useCart();
-  const { data: session } = useSession();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const isAdmin = (session?.user as any)?.role === "ADMIN";
-
-  // ── Scroll listener: el header gana elevación y borde dorado al bajar ──
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const openSearch = () => {
-    setMenuOpen(false);
-    setIsSearchModalOpen(true);
-  };
+const HeaderClient = ({ categories }: HeaderClientProps) => {
+  const {
+    menuOpen,
+    isCategoriesHovered,
+    isSearchModalOpen,
+    isUserMenuOpen,
+    scrolled,
+    isAdmin,
+    cartCount,
+    openCart,
+    openSearch,
+    setMenuOpen,
+    setIsCategoriesHovered,
+    setIsUserMenuOpen,
+    setIsSearchModalOpen,
+  } = useHeaderClient();
 
   return (
     <>
@@ -104,9 +91,9 @@ const HeaderClient = ({ categories }: Props) => {
             />
           </div>
 
-          {/* ── Centro: "CASA VERDE" con shimmer dorado — Visible solo en sm+ para evitar sobreposición en móvil ── */}
-          <div className="hidden sm:absolute sm:left-1/2 sm:-translate-x-1/2">
-            <Link href="/" className="block group" aria-label="Casa Verde — inicio">
+          {/* ── Centro: "CASA VERDE" con shimmer dorado — Solo visible en desktop (lg+), oculto en móvil/tablet ── */}
+          <div className="hidden lg:block absolute left-1/2 -translate-x-1/2 pointer-events-none">
+            <Link href="/" className="block group pointer-events-auto" aria-label="Casa Verde — inicio">
               <span
                 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-light tracking-wide animate-text-shimmer bg-clip-text text-transparent inline-block transition-transform duration-300 group-hover:scale-[1.03]"
                 style={{

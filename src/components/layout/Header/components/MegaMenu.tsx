@@ -1,19 +1,11 @@
 import Link from "next/link";
 import { HOVER_BRAND, TEXT_BRAND } from "../constants/constants";
-import type { NavCategory } from "../types";
-
-interface Props {
-  visible: boolean;
-  categories: NavCategory[];
-  onEnter: () => void;
-  onLeave: () => void;
-  onClose: () => void;
-}
+import type { MegaMenuProps } from "../types";
 
 // Delays escalonados para que cada columna entre con un pequeño retraso
 const COLUMN_DELAYS = ["0ms", "60ms", "120ms", "180ms", "240ms", "300ms"];
 
-export default function MegaMenu({ visible, categories, onEnter, onLeave, onClose }: Props) {
+export default function MegaMenu({ visible, categories, onEnter, onLeave, onClose }: MegaMenuProps) {
   return (
     <div
       className={`hidden lg:block absolute top-full left-0 w-full bg-background/97 backdrop-blur-xl border-b border-border/30 shadow-premium-lg transition-all duration-350 ease-out z-40 overflow-hidden ${

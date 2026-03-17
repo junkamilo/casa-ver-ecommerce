@@ -1,16 +1,9 @@
 import Link from "next/link";
 import { Search, User, Shield, ChevronRight } from "lucide-react";
 import { HOVER_BRAND, TEXT_BRAND } from "../constants/constants";
-import type { NavCategory } from "../types";
+import type { MobileMenuProps } from "../types";
 
-interface Props {
-  isAdmin: boolean;
-  categories: NavCategory[];
-  onClose: () => void;
-  onSearchOpen: () => void;
-}
-
-export default function MobileMenu({ isAdmin, categories, onClose, onSearchOpen }: Props) {
+export default function MobileMenu({ isAdmin, categories, onClose, onSearchOpen }: MobileMenuProps) {
   return (
     <nav
       className="lg:hidden absolute top-full left-0 w-full border-b border-border/40 z-50 shadow-premium-lg h-[calc(100vh-64px)] overflow-y-auto animate-menu-slide"

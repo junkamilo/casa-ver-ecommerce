@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import HeaderAsync from "./HeaderAsync";
-import HeaderSkeleton from "./HeaderSkeleton";
+import HeaderAsync from "./components/HeaderAsync";
+import HeaderSkeleton from "./components/HeaderSkeleton";
 
 export default function Header() {
   return (

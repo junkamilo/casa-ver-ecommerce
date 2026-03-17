@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import HeaderClient from "./HeaderClient";
-import type { NavCategory } from "./types";
+import type { NavCategory } from "../types";
 
 async function getNavCategories(): Promise<NavCategory[]> {
   try {

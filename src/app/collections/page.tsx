@@ -1,10 +1,16 @@
 import { prisma } from "@/lib/prisma";
-import Link from "next/link";
-import CategoryCard from "@/components/layout/Categories/components/CategoryCard";
 import AnnouncementBar from "@/components/AnnouncementBar";
+import Header from "@/components/layout/Header";
 import Footer from "@/components/Footer";
+import CollectionHero from "@/app/collections/[slug]/components/CollectionHero";
+import CategoriesClient from "@/app/collections/components/CategoriesClient";
 
 export const revalidate = 3600;
+
+export const metadata = {
+  title: "Colecciones | Casa Verde",
+  description: "Explora todas las colecciones de Casa Verde.",
+};
 
 export default async function CollectionsPage() {
   const collections = await prisma.category.findMany({
@@ -14,60 +20,49 @@ export default async function CollectionsPage() {
   });
 
   return (
-    <>
-      <AnnouncementBar />
-      <main className="min-h-screen bg-[#FAFAFA]">
+    <div className="min-h-screen flex flex-col bg-[#FAFAFA] selection:bg-[#C19A6B]/20 relative overflow-hidden">
+      <div
+        className="fixed inset-0 opacity-[0.02] pointer-events-none z-0"
+        style={{ backgroundImage: "radial-gradient(#154734 1px, transparent 1px)", backgroundSize: "40px 40px" }}
+      />
 
-        {/* ── Encabezado ── */}
-        <section className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 md:px-8 lg:px-12 border-b border-[#C19A6B]/10">
-          <div className="max-w-7xl 2xl:max-w-6xl mx-auto">
-            <p className="text-[10px] sm:text-[11px] font-black tracking-[0.32em] uppercase text-[#C19A6B] mb-3">
-              <Link href="/" className="hover:underline decoration-[#C19A6B]">Inicio</Link>
-              <span className="mx-2 opacity-50">/</span>
-              Colecciones
-            </p>
-            <h1
-              className="text-4xl sm:text-5xl md:text-6xl font-light text-[#154734] leading-none"
-              style={{ fontFamily: "Georgia, serif" }}
-            >
-              Nuestro <span className="italic text-[#C19A6B]">Catálogo</span>
-            </h1>
-          </div>
-        </section>
+      <div className="relative z-20">
+        <AnnouncementBar />
+        <Header />
+      </div>
 
-        {/* ── Grid de categorías ── */}
-        <section className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-8 lg:px-12">
-          <div className="max-w-7xl 2xl:max-w-6xl mx-auto">
+      <main className="flex-1 w-full flex flex-col pt-6 pb-24 sm:pt-10 sm:pb-32 relative z-10">
+        <div className="w-full max-w-400 mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+          <h1 className="sr-only">Colecciones</h1>
 
+          <CollectionHero title="Nuestro Catálogo" />
+
+          <div className="mt-12 sm:mt-16 lg:mt-24 w-full">
             {collections.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
-                <span className="w-8 h-8 rounded-full border-2 border-[#C19A6B]/40 border-t-[#C19A6B] animate-spin" aria-hidden="true" />
+              <div className="flex flex-col items-center justify-center py-32 gap-4">
+                <span
+                  className="text-5xl font-light text-[#154734]/20 select-none"
+                  style={{ fontFamily: "Georgia, serif" }}
+                >
+                  ✦
+                </span>
                 <p
-                  className="text-lg sm:text-xl font-light text-[#154734]/60 italic max-w-sm"
+                  className="text-center text-[#154734]/50 text-sm tracking-widest uppercase max-w-sm"
                   style={{ fontFamily: "Georgia, serif" }}
                 >
                   Pronto agregaremos nuevas colecciones. Vuelve pronto.
                 </p>
-                <span className="h-px w-12 bg-[#C19A6B]/40 mt-2" />
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
-                {collections.map((col) => (
-                  <CategoryCard
-                    key={col.id}
-                    image={col.image ?? null}
-                    label={col.name}
-                    slug={col.slug}
-                  />
-                ))}
-              </div>
+              <CategoriesClient categories={collections} />
             )}
-
           </div>
-        </section>
-
+        </div>
       </main>
-      <Footer />
-    </>
+
+      <div className="relative z-20">
+        <Footer />
+      </div>
+    </div>
   );
 }
