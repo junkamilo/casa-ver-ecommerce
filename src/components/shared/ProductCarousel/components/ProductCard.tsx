@@ -14,7 +14,7 @@ const ProductCard = ({ item, badgeVariant = "gold" }: ProductCardProps) => {
   return (
     <Link
       href={`/product/${item.slug}`}
-      className="group cursor-pointer flex flex-col h-full bg-white p-3 sm:p-4 rounded-[1.5rem] border border-[#C19A6B]/20 hover:border-[#C19A6B]/60 shadow-[0_4px_15px_-5px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_30px_-5px_rgba(193,154,107,0.15)] transition-all duration-500 w-full"
+      className="group cursor-pointer flex flex-col h-full bg-white p-2 sm:p-3 md:p-4 rounded-[1.5rem] border border-[#C19A6B]/20 hover:border-[#C19A6B]/60 shadow-[0_4px_15px_-5px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_30px_-5px_rgba(193,154,107,0.15)] transition-all duration-500 w-full"
     >
       {/* Contenedor de la Imagen */}
       <div className="relative aspect-[3/4] mb-4 overflow-hidden rounded-xl bg-[#FAFAFA] border border-gray-50">
@@ -47,15 +47,15 @@ const ProductCard = ({ item, badgeVariant = "gold" }: ProductCardProps) => {
 
       {/* Información del Producto */}
       <div className="px-1 text-center sm:text-left flex flex-col flex-1 items-center sm:items-start gap-2">
-        <h3 className="text-xs sm:text-sm font-bold uppercase tracking-widest transition-colors w-full truncate text-[#154734] group-hover:text-[#C19A6B]">
+        <h3 className="text-sm sm:text-sm md:text-base font-bold uppercase tracking-widest transition-colors w-full truncate text-[#154734] group-hover:text-[#C19A6B]">
           {item.name}
         </h3>
 
         {/* Precios */}
-        <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-sm mb-1">
+        <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-base sm:text-sm md:text-base mb-1">
           <span className="font-medium text-[#154734]">${item.price}</span>
           {item.oldPrice && (
-            <span className="text-gray-400 line-through text-xs font-light">${item.oldPrice}</span>
+            <span className="text-gray-400 line-through text-sm font-light">${item.oldPrice}</span>
           )}
         </div>
 
@@ -64,12 +64,12 @@ const ProductCard = ({ item, badgeVariant = "gold" }: ProductCardProps) => {
           
           {/* Muestras de Color */}
           {item.colors && item.colors.length > 0 ? (
-            <div className="flex gap-1.5 items-center flex-wrap" aria-label="Colores disponibles">
+            <div className="flex gap-2 sm:gap-1.5 items-center flex-wrap" aria-label="Colores disponibles">
               {item.colors.map((color, ci) => (
                 <div
                   key={ci}
                   title={color}
-                  className="w-4 h-4 rounded-full border border-gray-200 shadow-sm transition-all duration-200 shrink-0 hover:scale-110 hover:border-gray-400"
+                  className="w-6 h-6 sm:w-5 sm:h-5 md:w-4 md:h-4 rounded-full border border-gray-200 shadow-sm transition-all duration-200 shrink-0 hover:scale-110 hover:border-gray-400"
                   style={{ backgroundColor: color }}
                   aria-label={color}
                 />

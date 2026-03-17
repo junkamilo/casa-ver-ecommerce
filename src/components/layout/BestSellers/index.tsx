@@ -1,23 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { ProductStatus } from "@prisma/client";
-import ProductCarousel from "@/components/shared/ProductCarousel";
-import { SectionConfig, ProductItem } from "@/components/shared/ProductCarousel/types";
-
-// --- 1. CONFIGURACIÓN PREMIUM ---
-const config: SectionConfig = {
-  titleStart: "Los mas",
-  titleItalic: "vendidos",
-  linkHref: "/collections/mas-vendidos",
-  linkText: "VER TODO",
-  bgColor: "bg-[#FDFBF7]", // Fondo beige cálido y elegante en lugar de gris genérico
-  decorAlign: "right",
-  badgeVariant: "white",
-};
+import { ProductItem } from "@/components/shared/ProductCarousel/types";
+import BestSellersClient from "./BestSellersClient";
 
 const formatPrice = (price: number) =>
   `$${Math.round(price).toLocaleString("es-CO")}`;
 
-export async function fetchFeaturedProducts(): Promise<ProductItem[]> {
+async function fetchFeaturedProducts(): Promise<ProductItem[]> {
   const raw = await prisma.product.findMany({
     where: { isFeatured: true, status: ProductStatus.ACTIVE },
     include: {
@@ -63,27 +52,7 @@ export async function fetchFeaturedProducts(): Promise<ProductItem[]> {
 
 const BestSellers = async () => {
   const items = await fetchFeaturedProducts();
-  
-  return (
-    // --- 2. ENVOLTURA CON ACENTOS DE LUJO ---
-    // ELIMINADO: mt-12 sm:mt-16 y pt-2 para evitar el espacio blanco.
-    // AÑADIDO: bg-[#FDFBF7] al contenedor padre para que el empalme sea invisible.
-    <section className="relative w-full bg-[#FDFBF7] border-t border-[#C19A6B]/15 overflow-hidden">
-      
-      {/* Brillo decorativo superior dorado/esmeralda */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[1px] bg-gradient-to-r from-transparent via-[#C19A6B]/50 to-transparent" />
-      
-      {/* Patrón de fondo sutil para dar textura */}
-      <div 
-        className="absolute inset-0 opacity-[0.02] pointer-events-none z-0" 
-        style={{ backgroundImage: "radial-gradient(#154734 1px, transparent 1px)", backgroundSize: "40px 40px" }} 
-      />
-
-      <div className="relative z-10">
-        <ProductCarousel config={config} items={items} />
-      </div>
-    </section>
-  );
+  return <BestSellersClient items={items} />;
 };
 
 export default BestSellers;

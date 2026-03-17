@@ -104,11 +104,11 @@ const HeaderClient = ({ categories }: Props) => {
             />
           </div>
 
-          {/* ── Centro: "CASA VERDE" con shimmer dorado ── */}
-          <div className="absolute left-1/2 -translate-x-1/2">
+          {/* ── Centro: "CASA VERDE" con shimmer dorado — Visible solo en sm+ para evitar sobreposición en móvil ── */}
+          <div className="hidden sm:absolute sm:left-1/2 sm:-translate-x-1/2">
             <Link href="/" className="block group" aria-label="Casa Verde — inicio">
               <span
-                className="text-2xl sm:text-3xl lg:text-4xl font-light tracking-wide animate-text-shimmer bg-clip-text text-transparent inline-block transition-transform duration-300 group-hover:scale-[1.03]"
+                className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-light tracking-wide animate-text-shimmer bg-clip-text text-transparent inline-block transition-transform duration-300 group-hover:scale-[1.03]"
                 style={{
                   fontFamily: "Georgia, serif",
                   backgroundImage: `linear-gradient(90deg, ${BRAND_GREEN} 0%, ${BRAND_GREEN} 40%, #C19A6B 45%, #F5E8D0 50%, #C19A6B 55%, ${BRAND_GREEN} 60%, ${BRAND_GREEN} 100%)`,

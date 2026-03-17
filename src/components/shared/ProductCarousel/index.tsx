@@ -2,7 +2,7 @@
 
 import { ProductItem, SectionConfig } from "./types";
 import { useCarousel } from "./hooks/useCarousel";
-import SectionHeader from "./components/SectionHeader";
+import GlobalSectionHeader from "@/components/ui/SectionHeader";
 import CarouselArrow from "./components/CarouselArrow";
 import ProductCard from "./components/ProductCard";
 
@@ -28,7 +28,15 @@ const ProductCarousel = ({ config, items }: ProductCarouselProps) => {
       </div>
 
       <div className="relative max-w-7xl 2xl:max-w-6xl mx-auto z-10">
-        <SectionHeader config={config} />
+        <GlobalSectionHeader
+          title={config.titleStart}
+          titleItalic={config.titleItalic}
+          href={config.linkHref}
+          linkText={config.linkText}
+          textColor="text-[#154734]"
+          hoverColor="hover:text-[#C19A6B]"
+          fontClass="font-light"
+        />
 
         <div className="relative mt-10 sm:mt-12 md:mt-12 lg:mt-12 group/carousel">
           {canScrollLeft && (

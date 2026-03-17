@@ -1,19 +1,59 @@
 "use client";
 
 import { MessageSquare, Sparkles } from "lucide-react";
-import { useAutoScroll } from "./hooks/useAutoScroll";
+import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
 import TestimonialCard from "./components/TestimonialCard";
 import { TESTIMONIALS } from "./constants/constants";
 import { TestimonialItem } from "./types/types";
+import { useEffect, useRef } from "react";
 
 interface Props {
   comments?: TestimonialItem[];
 }
 
 const Testimonials = ({ comments }: Props) => {
-  const { scrollRef, setIsPaused } = useAutoScroll();
+  const autoplayRef = useRef<ReturnType<typeof Autoplay> | null>(null);
+
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      loop: true,
+      align: "center",
+      slidesToScroll: 1,
+      breakpoints: {
+        "(max-width: 768px)": { slidesToScroll: 1 },
+        "(min-width: 769px) and (max-width: 1024px)": { slidesToScroll: 1 },
+        "(min-width: 1025px)": { slidesToScroll: 1 },
+      },
+    },
+    [Autoplay({ delay: 3000, stopOnInteraction: false })]
+  );
+
   const items = comments ?? TESTIMONIALS;
-  const doubled = items.length >= 4 ? [...items, ...items] : items;
+
+  useEffect(() => {
+    if (!emblaApi) return;
+
+    // Obtener la instancia del plugin Autoplay
+    if (emblaApi.plugins) {
+      const autoplay = emblaApi.plugins().autoplay;
+      if (autoplay) {
+        autoplayRef.current = autoplay;
+      }
+    }
+  }, [emblaApi]);
+
+  const handleMouseEnter = () => {
+    if (autoplayRef.current?.stop) {
+      autoplayRef.current.stop();
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (autoplayRef.current?.play) {
+      autoplayRef.current.play();
+    }
+  };
 
   return (
     <section className="mx-3 sm:mx-4 md:mx-6 lg:mx-8 xl:mx-12 2xl:mx-auto 2xl:max-w-7xl relative rounded-2xl sm:rounded-[2rem] lg:rounded-[2.5rem] p-[2px] overflow-hidden group shadow-[0_15px_40px_-15px_rgba(21,71,52,0.15)] hover:shadow-[0_20px_50px_-15px_rgba(193,154,107,0.25)] transition-shadow duration-700 mb-12 sm:mb-16">
@@ -57,27 +97,23 @@ const Testimonials = ({ comments }: Props) => {
             </p>
           </div>
         ) : (
-          <div className="relative -mx-2 sm:-mx-4 lg:-mx-8">
-            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 sm:w-16 lg:w-24 xl:w-32 bg-gradient-to-r from-[#F2EAE0] to-transparent z-20" />
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 sm:w-16 lg:w-24 xl:w-32 bg-gradient-to-l from-[#F2EAE0] to-transparent z-20" />
+          <div className="relative overflow-hidden" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+            {/* Gradientes laterales para fade effect */}
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-6 sm:w-12 md:w-16 lg:w-24 bg-gradient-to-r from-[#F2EAE0] to-transparent z-20" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 sm:w-12 md:w-16 lg:w-24 bg-gradient-to-l from-[#F2EAE0] to-transparent z-20" />
 
-            <div
-              ref={scrollRef}
-              onMouseEnter={() => setIsPaused(true)}
-              onMouseLeave={() => setIsPaused(false)}
-              onTouchStart={() => setIsPaused(true)}
-              onTouchEnd={() => setIsPaused(false)}
-              className="flex gap-3 sm:gap-4 lg:gap-6 overflow-x-auto scrollbar-hide py-4 sm:py-6 px-4 sm:px-8 lg:px-16 xl:px-24 relative z-10 snap-x snap-mandatory"
-              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-            >
-              {doubled.map((t, i) => (
-                <div
-                  key={i}
-                  className="shrink-0 w-[220px] sm:w-[260px] lg:w-[280px] snap-center"
-                >
-                  <TestimonialCard {...t} />
-                </div>
-              ))}
+            {/* Contenedor Embla - Carrusel */}
+            <div className="overflow-hidden" ref={emblaRef}>
+              <div className="flex gap-3 sm:gap-4 lg:gap-6 py-4 sm:py-6 px-3 sm:px-6 lg:px-12">
+                {items.map((testimonial, index) => (
+                  <div
+                    key={index}
+                    className="flex-[0_0_85%] sm:flex-[0_0_50%] md:flex-[0_0_40%] lg:flex-[0_0_33.333%]"
+                  >
+                    <TestimonialCard {...testimonial} />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
