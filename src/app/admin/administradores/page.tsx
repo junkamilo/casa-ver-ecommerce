@@ -3,29 +3,32 @@
 import { useSession } from "next-auth/react";
 import { useAdminManager } from "./hooks/useAdminManager";
 import AdminToast from "./components/AdminToast";
-import AdminPageHeader from "./components/AdminPageHeader";
+
 import AdminStatsBar from "./components/AdminStatsBar";
 import AdminLoading from "./components/AdminLoading";
 import AdminEmptyState from "./components/AdminEmptyState";
 import AdminTable from "./components/AdminTable";
 import AdminMobileList from "./components/AdminMobileList";
 import AdminModal from "./components/AdminModal";
+import AdminPageHeader from "@/components/ui/AdminPageHeader";
+import AdminPagination from "@/components/ui/AdminPagination";
+import { UserPlus } from "lucide-react";
 
 export default function AdminAdministradores() {
   const { data: session } = useSession();
   const currentUserId = (session?.user as { id?: string })?.id;
 
   const {
-    admins, filteredAdmins, loading,
+    admins, filteredAdmins, pagedAdmins, page, setPage, totalPages, loading,
     searchTerm, setSearchTerm,
     showModal, setShowModal,
     submitting, name, setName, email, setEmail,
     password, setPassword, showPassword, setShowPassword,
-    lookupResult, setLookupResult, lookingUp,
+    lookupResult, lookingUp, lookupDone,
     isExistingUser, isAlreadyAdmin,
     toast, setToast,
     confirmDelete, setConfirmDelete, deleting,
-    onLookupEmail, onGeneratePassword, onCopyPassword,
+    onGeneratePassword, onCopyPassword,
     handleSubmit, handleDelete,
   } = useAdminManager();
 
@@ -33,7 +36,10 @@ export default function AdminAdministradores() {
     <div className="space-y-8 p-6 bg-gray-50 min-h-screen font-sans">
       <AdminToast toast={toast} onClose={() => setToast(null)} />
 
-      <AdminPageHeader onNewAdmin={() => setShowModal(true)} />
+      <AdminPageHeader
+        title="Administradores"
+        action={{ label: "Nuevo Admin", icon: UserPlus, onClick: () => setShowModal(true) }}
+      />
 
       <AdminStatsBar
         total={admins.length}
@@ -48,7 +54,7 @@ export default function AdminAdministradores() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="hidden md:block">
             <AdminTable
-              filteredAdmins={filteredAdmins}
+              filteredAdmins={pagedAdmins}
               currentUserId={currentUserId}
               confirmDelete={confirmDelete}
               deleting={deleting}
@@ -59,7 +65,7 @@ export default function AdminAdministradores() {
           </div>
           <div className="md:hidden">
             <AdminMobileList
-              filteredAdmins={filteredAdmins}
+              filteredAdmins={pagedAdmins}
               currentUserId={currentUserId}
               confirmDelete={confirmDelete}
               deleting={deleting}
@@ -69,6 +75,17 @@ export default function AdminAdministradores() {
             />
           </div>
           {filteredAdmins.length === 0 && <AdminEmptyState />}
+
+          <div className="px-6 pb-5">
+            <AdminPagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              total={filteredAdmins.length}
+              pageSize={10}
+              itemLabel="administradores"
+            />
+          </div>
         </div>
       )}
 
@@ -81,11 +98,11 @@ export default function AdminAdministradores() {
         email={email} setEmail={setEmail}
         password={password} setPassword={setPassword}
         showPassword={showPassword} setShowPassword={setShowPassword}
-        lookupResult={lookupResult} setLookupResult={setLookupResult}
+        lookupResult={lookupResult}
         lookingUp={lookingUp}
+        lookupDone={lookupDone}
         isExistingUser={isExistingUser}
         isAlreadyAdmin={isAlreadyAdmin}
-        onLookupEmail={onLookupEmail}
         onGeneratePassword={onGeneratePassword}
         onCopyPassword={onCopyPassword}
       />

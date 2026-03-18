@@ -2,6 +2,7 @@ export const PASSWORD_CHARS =
   "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$";
 
 export const TOAST_DURATION = 4000;
+export const PAGE_SIZE = 10;
 
 export function generatePassword(): string {
   let result = "";

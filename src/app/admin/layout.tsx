@@ -6,14 +6,13 @@ import { useEffect, useState } from "react";
 import LoadingScreen from "./components/layout/LoadingScreen";
 import AccessDenied from "./components/layout/AccessDenied";
 import AdminSidebar from "./components/layout/AdminSidebar";
-import AdminMobileSidebar from "./components/layout/AdminMobileSidebar";
 import AdminTopHeader from "./components/layout/AdminTopHeader";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const isAdmin = (session?.user as { role?: string })?.role === "ADMIN";
   const userInitial = session?.user?.name?.charAt(0).toUpperCase() ?? "A";
@@ -25,9 +24,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [status, router]);
 
-  // Cierra el menú móvil al cambiar de ruta
+  // Cierra el menú móvil al cambiar de ruta (solo en mobile)
   useEffect(() => {
-    setIsMobileMenuOpen(false);
+    if (window.innerWidth < 768) setIsSidebarOpen(false);
   }, [pathname]);
 
   if (status === "loading") return <LoadingScreen />;
@@ -36,21 +35,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
       <AdminSidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(!isSidebarOpen)}
         pathname={pathname}
         userName={session?.user?.name}
         userInitial={userInitial}
       />
 
-      <AdminMobileSidebar
-        isOpen={isMobileMenuOpen}
-        pathname={pathname}
-        onClose={() => setIsMobileMenuOpen(false)}
-      />
-
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <AdminTopHeader
           pathname={pathname}
-          onMenuOpen={() => setIsMobileMenuOpen(true)}
+          onMenuOpen={() => setIsSidebarOpen(!isSidebarOpen)}
         />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-gray-50 scrollbar-hide">
           <div className="max-w-7xl mx-auto">

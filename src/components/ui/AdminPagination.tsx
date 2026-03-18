@@ -6,27 +6,27 @@ interface Props {
   onPageChange: (page: number) => void;
   total: number;
   pageSize: number;
+  itemLabel?: string;
 }
 
-export default function ProductPagination({
+export default function AdminPagination({
   page,
   totalPages,
   onPageChange,
   total,
   pageSize,
+  itemLabel = "elementos",
 }: Props) {
   if (totalPages <= 1) return null;
 
   const from = (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, total);
 
-  // Genera rango de páginas visibles (máx 5)
-  const getPages = () => {
-    const pages: (number | "...")[] = [];
+  const getPages = (): (number | "...")[] => {
     if (totalPages <= 5) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
-    pages.push(1);
+    const pages: (number | "...")[] = [1];
     if (page > 3) pages.push("...");
     for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) {
       pages.push(i);
@@ -38,12 +38,10 @@ export default function ProductPagination({
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 px-1">
-      {/* Contador */}
       <p className="text-xs text-gray-500 order-2 sm:order-1">
-        Mostrando {from}–{to} de {total} productos
+        Mostrando {from}–{to} de {total} {itemLabel}
       </p>
 
-      {/* Controles */}
       <div className="flex items-center gap-1 order-1 sm:order-2">
         <button
           onClick={() => onPageChange(page - 1)}

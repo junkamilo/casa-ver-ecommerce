@@ -15,10 +15,10 @@ export default function AdminTopHeader({ pathname, onMenuOpen }: Props) {
   return (
     <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 sm:px-8 shadow-sm z-10">
       <div className="flex items-center gap-4">
-        {/* Botón hamburguesa (solo móvil) */}
+        {/* Botón hamburguesa (visible en todos los tamaños) */}
         <button
           onClick={onMenuOpen}
-          className="md:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+          className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           aria-label="Abrir menú"
         >
           <Menu className="w-6 h-6" />

@@ -2,6 +2,7 @@
 
 import { Search, Filter, CreditCard } from "lucide-react";
 import { ALL_STATUSES, ALL_METHODS } from "../constants";
+import AdminSelect from "@/components/ui/AdminSelect";
 
 interface PedidosFiltersProps {
   search: string;
@@ -33,32 +34,21 @@ export function PedidosFilters({
         />
       </div>
 
-      <div className="grid grid-cols-2 sm:flex gap-3 w-full md:w-auto">
-        <div className="relative">
-          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-          <select
-            value={statusFilter}
-            onChange={(e) => onStatusChange(e.target.value)}
-            className="w-full sm:w-40 pl-9 sm:pl-10 pr-8 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#154734]/20 bg-white appearance-none cursor-pointer hover:border-[#154734]"
-          >
-            {ALL_STATUSES.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="relative">
-          <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-          <select
-            value={methodFilter}
-            onChange={(e) => onMethodChange(e.target.value)}
-            className="w-full sm:w-40 pl-9 sm:pl-10 pr-8 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#154734]/20 bg-white appearance-none cursor-pointer hover:border-[#154734]"
-          >
-            {ALL_METHODS.map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
-        </div>
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full md:w-auto md:flex">
+        <AdminSelect
+          value={statusFilter}
+          onChange={onStatusChange}
+          options={ALL_STATUSES}
+          icon={<Filter className="w-3.5 h-3.5" />}
+          className="md:w-36"
+        />
+        <AdminSelect
+          value={methodFilter}
+          onChange={onMethodChange}
+          options={ALL_METHODS}
+          icon={<CreditCard className="w-3.5 h-3.5" />}
+          className="md:w-40"
+        />
       </div>
     </div>
   );

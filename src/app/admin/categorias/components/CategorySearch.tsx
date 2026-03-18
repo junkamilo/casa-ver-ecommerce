@@ -6,7 +6,7 @@ interface CategorySearchProps {
 }
 
 const CategorySearch = ({ value, onChange }: CategorySearchProps) => (
-  <div className="relative w-full max-w-xl mb-10 group">
+  <div className="relative w-full max-w-xs sm:max-w-md md:max-w-xl lg:max-w-2xl 2xl:max-w-3xl mx-auto mt-8 mb-10 group">
     <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
       <Search className="w-5 h-5 text-gray-400 group-focus-within:text-[#C19A6B] transition-colors" />
     </div>

@@ -3,8 +3,9 @@ import { LucideIcon } from "lucide-react";
 
 interface ActionButton {
   label: string;
-  href: string;
   icon: LucideIcon;
+  href?: string;
+  onClick?: () => void;
 }
 
 interface AdminPageHeaderProps {
@@ -13,6 +14,9 @@ interface AdminPageHeaderProps {
 }
 
 export default function AdminPageHeader({ title, action }: AdminPageHeaderProps) {
+  const btnClass =
+    "inline-flex items-center justify-center gap-2 bg-[#154734] hover:bg-[#0f3626] text-white px-6 py-2.5 rounded-full transition-all shadow-md hover:shadow-lg active:scale-95 font-medium text-sm";
+
   return (
     <div className="flex flex-col items-center gap-4 pt-2 pb-1">
       <div className="text-center">
@@ -33,13 +37,17 @@ export default function AdminPageHeader({ title, action }: AdminPageHeaderProps)
       </div>
 
       {action && (
-        <Link
-          href={action.href}
-          className="inline-flex items-center justify-center gap-2 bg-[#154734] hover:bg-[#0f3626] text-white px-6 py-2.5 rounded-full transition-all shadow-md hover:shadow-lg active:scale-95 font-medium text-sm"
-        >
-          <action.icon className="w-4 h-4 shrink-0" />
-          {action.label}
-        </Link>
+        action.onClick ? (
+          <button onClick={action.onClick} className={btnClass}>
+            <action.icon className="w-4 h-4 shrink-0" />
+            {action.label}
+          </button>
+        ) : (
+          <Link href={action.href!} className={btnClass}>
+            <action.icon className="w-4 h-4 shrink-0" />
+            {action.label}
+          </Link>
+        )
       )}
     </div>
   );

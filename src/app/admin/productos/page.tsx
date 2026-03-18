@@ -8,7 +8,7 @@ import { useProductForm } from "./hooks/useProductForm";
 import ToastNotification from "./components/ToastNotification";
 import ProductFilters from "./components/ProductFilters";
 import ProductTable from "./components/ProductTable";
-import ProductPagination from "./components/ProductPagination";
+import AdminPagination from "@/components/ui/AdminPagination";
 import ProductModal from "./components/ProductModal";
 import { createProduct, updateProduct } from "@/app/actions/products";
 import AdminPageHeader from "@/components/ui/AdminPageHeader";
@@ -90,9 +90,9 @@ export default function AdminProductos() {
       <ToastNotification toast={toast} />
 
       <AdminPageHeader
-          title="Inventario"
-          action={{ label: "Nuevo Producto", href: "/admin/productos?action=new", icon: Plus }}
-        />
+        title="Inventario"
+        action={{ label: "Nuevo Producto", href: "/admin/productos?action=new", icon: Plus }}
+      />
 
       <ProductFilters
         search={list.search}
@@ -110,12 +110,13 @@ export default function AdminProductos() {
         onToggleActive={list.toggleActive}
       />
 
-      <ProductPagination
+      <AdminPagination
         page={list.page}
         totalPages={list.totalPages}
         onPageChange={list.setPage}
         total={list.filteredProducts.length}
         pageSize={list.pageSize}
+        itemLabel="productos"
       />
 
       {showModal && (
