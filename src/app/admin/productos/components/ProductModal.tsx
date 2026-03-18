@@ -51,6 +51,7 @@ interface Props {
   toggleSetItemColor: (localId: string, name: string, hexCode: string) => void;
   toggleSetItemSize: (localId: string, size: string) => void;
   setSetItemColorImages: (localId: string, colorName: string, images: string[]) => void;
+  updateSetItemVariantStock: (localId: string, colorName: string, size: string, stock: number) => void;
 }
 
 // ── Componente auxiliar: cabecera de bloque ────────────────────────────────
@@ -121,6 +122,7 @@ export default function ProductModal({
   toggleSetItemColor,
   toggleSetItemSize,
   setSetItemColorImages,
+  updateSetItemVariantStock,
 }: Props) {
   const [errors, setErrors] = useState<ProductFormErrors>({});
   const [itemErrors, setItemErrors] = useState<ItemFormErrors>({});
@@ -356,22 +358,6 @@ export default function ProductModal({
                       />
                       <FieldError msg={errors.comparePrice} />
                     </div>
-                    {!shouldShowStockTable && (
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
-                          Stock Total *
-                        </label>
-                        <input
-                          type="number"
-                          value={stock}
-                          onChange={(e) => setStock(e.target.value)}
-                          placeholder="0"
-                          min="0"
-                          className={inputCls(!!errors.stock)}
-                        />
-                        <FieldError msg={errors.stock} />
-                      </div>
-                    )}
                   </div>
 
                   {/* Stock por variante — cuando hay colores Y tallas seleccionadas */}
@@ -440,6 +426,7 @@ export default function ProductModal({
                     onToggleColor={toggleSetItemColor}
                     onToggleSize={toggleSetItemSize}
                     onSetColorImages={setSetItemColorImages}
+                    onUpdateVariantStock={updateSetItemVariantStock}
                   />
                 </div>
               )}

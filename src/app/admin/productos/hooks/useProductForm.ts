@@ -92,7 +92,7 @@ export function useProductForm() {
         comparePrice: item.comparePrice?.toString() || "",
         videoUrl: item.videoUrl || "",
         stock: item.stock?.toString() || "0",
-        colors: (item.colors || []).map((c: any) => ({ name: c.name, hexCode: c.hexCode, images: c.images || [] })),
+        colors: (item.colors || []).map((c: any) => ({ name: c.name, hexCode: c.hexCode, images: c.images || [], variantStocks: c.variantStocks || {} })),
         sizes: item.sizes || [],
       })));
     } else {
@@ -139,16 +139,28 @@ export function useProductForm() {
     colors: selectedColors,
     sizes: selectedSizes,
     items: isSet
-      ? setItems.map((item) => ({
-          name: item.name,
-          description: item.description || null,
-          price: item.price ? parseFloat(item.price) : null,
-          comparePrice: item.comparePrice ? parseFloat(item.comparePrice) : null,
-          videoUrl: item.videoUrl || null,
-          stock: item.stock ? parseInt(item.stock, 10) : 0,
-          colors: item.colors,
-          sizes: item.sizes,
-        }))
+      ? setItems.map((item) => {
+          const hasVariantStocks = item.colors.some(
+            (c) => Object.keys(c.variantStocks || {}).length > 0
+          );
+          const effectiveStock = hasVariantStocks
+            ? item.colors.reduce(
+                (sum, c) =>
+                  sum + Object.values(c.variantStocks || {}).reduce((s, v) => s + Number(v), 0),
+                0
+              )
+            : item.stock ? parseInt(item.stock, 10) : 0;
+          return {
+            name: item.name,
+            description: item.description || null,
+            price: item.price ? parseFloat(item.price) : null,
+            comparePrice: item.comparePrice ? parseFloat(item.comparePrice) : null,
+            videoUrl: item.videoUrl || null,
+            stock: effectiveStock,
+            colors: item.colors,
+            sizes: item.sizes,
+          };
+        })
       : [],
   });
   };
@@ -215,12 +227,15 @@ export function useProductForm() {
       prev.map((i) => {
         if (i.localId !== localId) return i;
         const has = i.colors.some((c) => c.name === colorName);
-        return {
-          ...i,
-          colors: has
-            ? i.colors.filter((c) => c.name !== colorName)
-            : [...i.colors, { name: colorName, hexCode, images: [] }],
-        };
+        const newColors = has
+          ? i.colors.filter((c) => c.name !== colorName)
+          : [...i.colors, {
+              name: colorName,
+              hexCode,
+              images: [],
+              variantStocks: Object.fromEntries(i.sizes.map((s) => [s, 0])),
+            }];
+        return { ...i, colors: newColors };
       })
     );
 
@@ -228,11 +243,31 @@ export function useProductForm() {
     setSetItems((prev) =>
       prev.map((i) => {
         if (i.localId !== localId) return i;
+        const adding = !i.sizes.includes(size);
+        const newSizes = adding ? [...i.sizes, size] : i.sizes.filter((s) => s !== size);
+        const newColors = i.colors.map((c) => ({
+          ...c,
+          variantStocks: adding
+            ? { ...(c.variantStocks || {}), [size]: 0 }
+            : Object.fromEntries(
+                Object.entries(c.variantStocks || {}).filter(([s]) => s !== size)
+              ),
+        }));
+        return { ...i, sizes: newSizes, colors: newColors };
+      })
+    );
+
+  const updateSetItemVariantStock = (localId: string, colorName: string, size: string, stock: number) =>
+    setSetItems((prev) =>
+      prev.map((i) => {
+        if (i.localId !== localId) return i;
         return {
           ...i,
-          sizes: i.sizes.includes(size)
-            ? i.sizes.filter((s) => s !== size)
-            : [...i.sizes, size],
+          colors: i.colors.map((c) =>
+            c.name === colorName
+              ? { ...c, variantStocks: { ...(c.variantStocks || {}), [size]: stock } }
+              : c
+          ),
         };
       })
     );
@@ -278,5 +313,6 @@ export function useProductForm() {
     toggleSetItemColor,
     toggleSetItemSize,
     setSetItemColorImages,
+    updateSetItemVariantStock,
   };
 }

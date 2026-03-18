@@ -1,5 +1,6 @@
 import { fetchDashboardData } from "./queries/dashboard.queries";
-import DashboardHeader from "./components/DashboardHeader";
+import AdminPageHeader from "@/components/ui/AdminPageHeader";
+import { Plus } from "lucide-react";
 import StatsSection from "./components/StatsSection";
 import HorizontalNav from "./components/HorizontalNav";
 import NotificationsCard from "./components/NotificationsCard";
@@ -11,7 +12,10 @@ export default async function AdminDashboard() {
 
     return (
       <div className="space-y-4 sm:space-y-6 md:space-y-8 p-4 sm:p-6 md:p-8 bg-gray-50 min-h-screen font-sans">
-        <DashboardHeader />
+        <AdminPageHeader
+          title="Panel de Control"
+          action={{ label: "Nuevo Producto", href: "/admin/productos?action=new", icon: Plus }}
+        />
         <StatsSection stats={stats} />
         <HorizontalNav />
         <NotificationsCard orders={recentOrders} />
