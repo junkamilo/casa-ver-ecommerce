@@ -91,7 +91,7 @@ export default function AdminProductos() {
 
       <AdminPageHeader
         title="Inventario"
-        action={{ label: "Nuevo Producto", href: "/admin/productos?action=new", icon: Plus }}
+        action={{ label: "Nuevo Producto", onClick: openNew, icon: Plus }}
       />
 
       <ProductFilters
