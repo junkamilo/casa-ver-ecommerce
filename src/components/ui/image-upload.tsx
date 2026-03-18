@@ -17,6 +17,8 @@ interface MediaUploadProps {
   onChange: (urls: string[]) => void;
   onRemove: (url: string) => void;
   maxImages?: number;
+  /** Cuando se pasa, activa el layout de card por color */
+  colorInfo?: { name: string; hexCode: string };
 }
 
 export default function ImageUpload({
@@ -25,11 +27,13 @@ export default function ImageUpload({
   onChange,
   onRemove,
   maxImages = 5,
+  colorInfo,
 }: MediaUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState<{ id: string; previewUrl: string; isVideo: boolean }[]>([]);
 
   const remaining = maxImages - value.length - uploading.length;
+  const total = value.length + uploading.length;
 
   const handleFiles = async (files: FileList) => {
     const toUpload = Array.from(files).slice(0, Math.max(0, remaining));
@@ -63,7 +67,6 @@ export default function ImageUpload({
 
     if (uploadedUrls.length) onChange(uploadedUrls);
 
-    // Clean up failed previews
     results.forEach((r, i) => {
       if (r.status === "rejected") {
         URL.revokeObjectURL(pending[i].previewUrl);
@@ -72,6 +75,149 @@ export default function ImageUpload({
     });
   };
 
+  /* ── Layout COLOR ─────────────────────────────────────── */
+  if (colorInfo) {
+    return (
+      <div className="space-y-3">
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          accept="image/*,video/*,.heic,.heif"
+          className="sr-only"
+          onChange={(e) => {
+            if (e.target.files) handleFiles(e.target.files);
+            e.target.value = "";
+          }}
+        />
+
+        {/* Fila superior: info color | botón subir */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Info color */}
+          <div className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border border-gray-200 bg-white min-h-18">
+            <span
+              className="w-7 h-7 rounded-full border-2 border-white shadow-sm shrink-0"
+              style={{ backgroundColor: colorInfo.hexCode }}
+            />
+            <span className="text-xs font-semibold text-gray-700 text-center leading-tight">
+              {colorInfo.name}
+            </span>
+            <span className="text-[11px] text-gray-400">
+              {total} foto{total !== 1 ? "s" : ""}
+            </span>
+          </div>
+
+          {/* Botón subir */}
+          <button
+            type="button"
+            disabled={disabled || remaining <= 0}
+            onClick={() => inputRef.current?.click()}
+            className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border-2 border-dashed border-gray-300 bg-white hover:border-[#154734] hover:bg-[#154734]/5 transition-colors text-gray-400 hover:text-[#154734] min-h-18 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-300 disabled:hover:bg-white disabled:hover:text-gray-400"
+          >
+            <Upload className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] font-medium text-center leading-tight">
+              Subir archivo
+            </span>
+            <span className="text-[9px] text-center text-gray-400 leading-tight">
+              JPEG, PNG, HEIC, MP4
+            </span>
+          </button>
+        </div>
+
+        {/* Portada hint */}
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-gray-400">
+            {total} de {maxImages} archivos
+          </span>
+          {value.length > 0 && (
+            <span className="text-[#C19A6B] font-medium">
+              El primer archivo será la portada
+            </span>
+          )}
+        </div>
+
+        {/* Galería con scroll horizontal — formato portrait */}
+        {(value.length > 0 || uploading.length > 0) && (
+          <div className="overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-1 px-1">
+            <div className="flex gap-2.5 pb-1">
+              {value.map((url, index) => (
+                <div
+                  key={url}
+                  className="relative shrink-0 w-24 sm:w-28 rounded-xl overflow-hidden border-2 border-gray-200 group hover:border-[#C19A6B] transition-colors bg-gray-100 snap-start"
+                  style={{ aspectRatio: "2/3" }}
+                >
+                  {isVideo(url) ? (
+                    <>
+                      <video
+                        src={url}
+                        muted
+                        loop
+                        playsInline
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
+                        <PlayCircle className="w-7 h-7 text-white drop-shadow" />
+                      </div>
+                    </>
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={url}
+                      alt={`Foto ${index + 1}`}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  )}
+
+                  {index === 0 && (
+                    <span className="absolute bottom-0 left-0 right-0 bg-[#154734]/85 text-white text-[9px] font-bold text-center py-1 tracking-wide">
+                      PORTADA
+                    </span>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => onRemove(url)}
+                    disabled={disabled}
+                    className="absolute top-1.5 right-1.5 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 shadow-md"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+
+              {uploading.map(({ id, previewUrl, isVideo: isVid }) => (
+                <div
+                  key={id}
+                  className="relative shrink-0 w-24 sm:w-28 rounded-xl overflow-hidden border-2 border-[#154734]/30 bg-gray-100 snap-start"
+                  style={{ aspectRatio: "2/3" }}
+                >
+                  {isVid ? (
+                    <video
+                      src={previewUrl}
+                      muted
+                      className="absolute inset-0 w-full h-full object-cover opacity-40"
+                    />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={previewUrl}
+                      alt="Subiendo…"
+                      className="absolute inset-0 w-full h-full object-cover opacity-40"
+                    />
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Loader2 className="w-6 h-6 text-[#154734] animate-spin" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  /* ── Layout DEFAULT ───────────────────────────────────── */
   return (
     <div className="space-y-3">
       {remaining > 0 && !disabled && (

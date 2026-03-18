@@ -6,11 +6,13 @@ import { ToastState } from "./types";
 import { useProductList } from "./hooks/useProductList";
 import { useProductForm } from "./hooks/useProductForm";
 import ToastNotification from "./components/ToastNotification";
-import ProductsHeader from "./components/ProductsHeader";
 import ProductFilters from "./components/ProductFilters";
 import ProductTable from "./components/ProductTable";
+import ProductPagination from "./components/ProductPagination";
 import ProductModal from "./components/ProductModal";
 import { createProduct, updateProduct } from "@/app/actions/products";
+import AdminPageHeader from "@/components/ui/AdminPageHeader";
+import { Plus } from "lucide-react";
 
 export default function AdminProductos() {
   const router = useRouter();
@@ -87,7 +89,10 @@ export default function AdminProductos() {
     <div className="space-y-8 p-6 bg-gray-50 min-h-screen font-sans">
       <ToastNotification toast={toast} />
 
-      <ProductsHeader onNew={openNew} />
+      <AdminPageHeader
+          title="Inventario"
+          action={{ label: "Nuevo Producto", href: "/admin/productos?action=new", icon: Plus }}
+        />
 
       <ProductFilters
         search={list.search}
@@ -98,11 +103,19 @@ export default function AdminProductos() {
       />
 
       <ProductTable
-        products={list.filteredProducts}
+        products={list.paginatedProducts}
         loading={list.loading}
         onEdit={openEdit}
         onDelete={handleDelete}
         onToggleActive={list.toggleActive}
+      />
+
+      <ProductPagination
+        page={list.page}
+        totalPages={list.totalPages}
+        onPageChange={list.setPage}
+        total={list.filteredProducts.length}
+        pageSize={list.pageSize}
       />
 
       {showModal && (

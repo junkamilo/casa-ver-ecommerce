@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { ProductListItem, Category } from "../types";
 
+const PAGE_SIZE = 8;
+
 export function useProductList() {
   const [products, setProducts] = useState<ProductListItem[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<ProductListItem[]>([]);
@@ -10,6 +12,7 @@ export function useProductList() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("Todos");
+  const [page, setPage] = useState(1);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -47,6 +50,7 @@ export function useProductList() {
     if (filterCategory !== "Todos")
       result = result.filter((p) => p.category?.name === filterCategory);
     setFilteredProducts(result);
+    setPage(1);
   }, [search, filterCategory, products]);
 
   const deleteProduct = async (id: string): Promise<boolean> => {
@@ -77,9 +81,16 @@ export function useProductList() {
     }
   };
 
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
+  const paginatedProducts = filteredProducts.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE
+  );
+
   return {
     products,
     filteredProducts,
+    paginatedProducts,
     categories,
     loading,
     search,
@@ -89,5 +100,9 @@ export function useProductList() {
     fetchProducts,
     deleteProduct,
     toggleActive,
+    page,
+    setPage,
+    totalPages,
+    pageSize: PAGE_SIZE,
   };
 }

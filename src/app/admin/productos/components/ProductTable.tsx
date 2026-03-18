@@ -119,10 +119,10 @@ export default function ProductTable({
       </table>
 
       {/* Mobile */}
-      <ProductMobileList products={products} onEdit={onEdit} onDelete={onDelete} />
+      <ProductMobileList products={products} onEdit={onEdit} onToggleActive={onToggleActive} />
 
       {products.length === 0 && (
-        <div className="py-12 text-center text-gray-400">
+        <div className="hidden md:flex py-12 text-center text-gray-400 justify-center">
           <p>No se encontraron productos</p>
         </div>
       )}

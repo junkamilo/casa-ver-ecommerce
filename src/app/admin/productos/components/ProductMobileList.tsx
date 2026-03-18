@@ -1,50 +1,78 @@
 import Image from "next/image";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2 } from "lucide-react";
 import { ProductListItem } from "../types";
 import { formatPrice, getStockStatus } from "../constants";
 
 interface Props {
   products: ProductListItem[];
   onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
+  onToggleActive: (id: string, active: boolean) => void;
 }
 
-export default function ProductMobileList({ products, onEdit, onDelete }: Props) {
+export default function ProductMobileList({ products, onEdit, onToggleActive }: Props) {
+  if (products.length === 0) {
+    return (
+      <div className="md:hidden py-12 text-center text-gray-400 text-sm">
+        No se encontraron productos
+      </div>
+    );
+  }
+
   return (
-    <div className="md:hidden divide-y divide-gray-100">
+    <div className="md:hidden space-y-2 p-3">
       {products.map((product) => {
         const stockStatus = getStockStatus(product.stock);
         const mainImage = product.images[0]?.url || "/placeholder.jpg";
+
         return (
-          <div key={product.id} className="p-4 flex gap-3">
-            <div className="w-16 h-16 rounded-lg bg-gray-100 border overflow-hidden relative shrink-0">
+          <div
+            key={product.id}
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 p-4 active:scale-[0.99] transition-transform"
+          >
+            {/* Imagen */}
+            <div className="w-24 h-24 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden relative shrink-0">
               <Image src={mainImage} alt={product.name} fill className="object-cover" />
             </div>
+
+            {/* Info */}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">{product.name}</p>
-              <p className="text-sm font-medium text-gray-700 mt-0.5">
+              <p className="text-base font-semibold text-gray-900 truncate leading-tight">
+                {product.name}
+              </p>
+              <p className="text-base font-bold text-[#154734] mt-1">
                 {formatPrice(product.price)}
               </p>
-              <div className="flex items-center gap-2 mt-1">
-                <span
-                  className={`px-2 py-0.5 rounded text-[10px] font-medium border ${stockStatus.color}`}
-                >
-                  {stockStatus.label} ({product.stock})
-                </span>
-              </div>
+              <span
+                className={`inline-flex items-center mt-2 px-2.5 py-1 rounded-full text-xs font-semibold border ${stockStatus.color}`}
+              >
+                {stockStatus.label} ({product.stock})
+              </span>
             </div>
-            <div className="flex flex-col gap-1">
+
+            {/* Acciones */}
+            <div className="flex flex-col items-center gap-3 shrink-0">
+              {/* Toggle activo */}
+              <button
+                onClick={() => onToggleActive(product.id, product.active)}
+                className={`relative inline-flex h-7 w-13 items-center rounded-full transition-colors duration-200 ${
+                  product.active ? "bg-[#154734]" : "bg-gray-200"
+                }`}
+                title={product.active ? "Desactivar" : "Activar"}
+              >
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                    product.active ? "translate-x-7" : "translate-x-1"
+                  }`}
+                />
+              </button>
+
+              {/* Editar */}
               <button
                 onClick={() => onEdit(product.id)}
-                className="p-2 text-gray-400 hover:text-[#C19A6B]"
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#C19A6B]/10 text-[#C19A6B] active:scale-90 transition-transform"
+                title="Editar producto"
               >
-                <Edit2 className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => onDelete(product.id)}
-                className="p-2 text-gray-400 hover:text-red-500"
-              >
-                <Trash2 className="w-4 h-4" />
+                <Edit2 className="w-5 h-5" />
               </button>
             </div>
           </div>
