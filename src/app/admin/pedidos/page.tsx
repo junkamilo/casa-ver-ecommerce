@@ -1,11 +1,12 @@
 "use client";
 
 import { usePedidos } from "./hooks/usePedidos";
-import { PedidosHeader } from "./components/PedidosHeader";
 import { PedidosFilters } from "./components/PedidosFilters";
 import { PedidosTable } from "./components/PedidosTable";
 import { PedidosMobileList } from "./components/PedidosMobileList";
 import { PedidoDetailModal } from "./components/PedidoDetailModal";
+import AdminPageHeader from "@/components/ui/AdminPageHeader";
+import AdminPagination from "@/components/ui/AdminPagination";
 
 export default function AdminPedidos() {
   const {
@@ -20,6 +21,11 @@ export default function AdminPedidos() {
     detailOrder,
     setDetailOrder,
     filteredOrders,
+    paginatedOrders,
+    page,
+    setPage,
+    totalPages,
+    pageSize,
     loading,
     handleStatusUpdated,
   } = usePedidos();
@@ -34,7 +40,7 @@ export default function AdminPedidos() {
 
   return (
     <div className="space-y-6 sm:space-y-8 p-3 sm:p-6 bg-gray-50 min-h-screen font-sans">
-      <PedidosHeader />
+      <AdminPageHeader title="Pedidos" />
       <PedidosFilters
         search={search}
         onSearchChange={setSearch}
@@ -43,12 +49,20 @@ export default function AdminPedidos() {
         methodFilter={methodFilter}
         onMethodChange={setMethodFilter}
       />
-      <PedidosTable orders={filteredOrders} onViewDetail={setDetailOrder} />
+      <PedidosTable orders={paginatedOrders} onViewDetail={setDetailOrder} />
       <PedidosMobileList
-        orders={filteredOrders}
+        orders={paginatedOrders}
         expandedOrder={expandedOrder}
         onToggleExpand={setExpandedOrder}
         onViewDetail={setDetailOrder}
+      />
+      <AdminPagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        total={filteredOrders.length}
+        pageSize={pageSize}
+        itemLabel="pedidos"
       />
       {detailOrder && (
         <PedidoDetailModal order={detailOrder} onClose={() => setDetailOrder(null)} onStatusUpdated={handleStatusUpdated} />

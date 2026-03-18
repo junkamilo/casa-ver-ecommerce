@@ -2,10 +2,11 @@
 
 import { useCategoryManager } from "./hooks/useCategoryManager";
 import CategoryToast from "./components/CategoryToast";
-import CategoryPageHeader from "./components/CategoryPageHeader";
 import CategorySearch from "./components/CategorySearch";
 import CategoryGrid from "./components/CategoryGrid";
 import CategoryModal from "./components/CategoryModal";
+import AdminPageHeader from "@/components/ui/AdminPageHeader";
+import { Plus } from "lucide-react";
 
 export default function AdminCategorias() {
   const {
@@ -39,8 +40,11 @@ export default function AdminCategorias() {
       <CategoryToast toast={toast} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
-        
-        <CategoryPageHeader onNew={() => setShowModal(true)} />
+
+        <AdminPageHeader
+          title="Gestion De Categorias"
+          action={{ label: "Nueva Categoria", onClick: () => setShowModal(true), icon: Plus }}
+        />
 
         <CategorySearch value={search} onChange={setSearch} />
 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
-import SocialProofPopup from "@/components/SocialProofPopup";
+import SocialProofWrapper from "@/components/SocialProofWrapper";
 import { Providers } from "@/components/Providers";
 import { SpeedInsights } from "@vercel/speed-insights/next"
 
@@ -37,7 +37,7 @@ export default function RootLayout({
         <Providers> {/* <--- ENVUELVE TODO AQUÍ */}
           <CartProvider>
             {children}
-            <SocialProofPopup />
+            <SocialProofWrapper />
           </CartProvider>
         </Providers>
         <SpeedInsights />
