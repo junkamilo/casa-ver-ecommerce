@@ -61,7 +61,7 @@ export default function ColorsSection({
 
   return (
     <section className="space-y-4">
-      <SectionTitle>Colores y Tallas</SectionTitle>
+      <SectionTitle>Colores</SectionTitle>
 
       {/* Color picker — dropdown con scroll */}
       <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-3">

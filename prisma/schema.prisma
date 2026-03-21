@@ -455,6 +455,7 @@ model Order {
 
   items              OrderItem[]
   webhookLogs        WebhookLog[]
+  notifications      AdminNotification[]
 
   paidAt             DateTime?
   shippedAt          DateTime?
@@ -560,4 +561,24 @@ model WebhookLog {
 
   @@index([orderId])
   @@map("webhook_logs")
+}
+
+// ============================================================
+// NOTIFICACIONES ADMIN
+// ============================================================
+
+model AdminNotification {
+  id        String   @id @default(cuid())
+  orderId   String?
+  order     Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  title     String
+  body      String
+  isRead    Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("admin_notifications")
 }

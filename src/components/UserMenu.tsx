@@ -134,7 +134,7 @@ const UserMenu = ({ onClose }: UserMenuProps) => {
             {/* Botones de Acción */}
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <Link
-                href="/pedidos"
+                href="/perfil?section=pedidos"
                 className="flex flex-col items-center justify-center gap-2 border border-border rounded-lg py-3 hover:bg-muted/50 hover:border-[#C19A6B] transition-all text-foreground font-medium group text-sm"
                 onClick={onClose}
               >

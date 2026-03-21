@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, CreditCard, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 
 
@@ -24,9 +24,9 @@ const PaymentMethodsBanner = () => {
           </h2>
         </div>
 
-        <div className="flex flex-nowrap overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-6 pb-4 scrollbar-hide md:grid md:grid-cols-2 md:gap-8 md:overflow-x-visible md:pb-0">
+        <div className="flex justify-center">
 
-          <div className="group flex-shrink-0 w-[85vw] sm:w-[75vw] md:w-auto md:flex-1 snap-center flex flex-col-reverse md:flex-row bg-[#FAFAFA] border border-gray-100 hover:shadow-[0_20px_40px_-15px_rgba(21,71,52,0.12)] transition-shadow duration-500 overflow-hidden touch-target active:shadow-md">
+          <div className="group w-full max-w-2xl flex flex-col-reverse md:flex-row bg-[#FAFAFA] border border-gray-100 hover:shadow-[0_20px_40px_-15px_rgba(21,71,52,0.12)] transition-shadow duration-500 overflow-hidden active:shadow-md">
 
             <div className="w-full md:w-1/2 p-6 sm:p-8 md:p-10 lg:p-12 flex flex-col justify-center relative z-10 bg-[#FAFAFA]">
 
@@ -63,50 +63,6 @@ const PaymentMethodsBanner = () => {
                 <Image
                   src="/banner_addi.png"
                   alt="Paga con Addi"
-                  fill
-                  className="object-cover object-top group-hover:scale-110 transition-transform duration-[1500ms] ease-[cubic-bezier(0.25,1,0.5,1)]"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="group flex-shrink-0 w-[85vw] sm:w-[75vw] md:w-auto md:flex-1 snap-center flex flex-col-reverse md:flex-row bg-[#FAFAFA] border border-gray-100 hover:shadow-[0_20px_40px_-15px_rgba(21,71,52,0.12)] transition-shadow duration-500 overflow-hidden touch-target active:shadow-md">
-
-            <div className="w-full md:w-1/2 p-6 sm:p-8 md:p-10 lg:p-12 flex flex-col justify-center relative z-10 bg-[#FAFAFA]">
-
-              <div className="mb-6 sm:mb-8">
-                <div className="inline-flex items-center gap-2 bg-white border border-green-600/20 shadow-sm px-3 sm:px-4 py-1.5 touch-target">
-                  <CreditCard className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-green-700" strokeWidth={2} />
-                  <span className="font-bold text-green-700 tracking-wider text-[10px] sm:text-[11px] uppercase">Sistecrédito</span>
-                </div>
-              </div>
-
-              <h3 className="text-2xl sm:text-3xl lg:text-4xl text-[#154734] leading-[1.1] mb-4 sm:mb-5">
-                <span className="block font-bold tracking-[0.05em] uppercase mb-1">Crédito Fácil,</span>
-                <span className="block italic" style={{ fontFamily: "Georgia, serif", color: BRAND_GOLD }}>Rápido y Seguro.</span>
-              </h3>
-
-              <p className="text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8 leading-relaxed">
-                Utiliza tu cupo disponible. Elige las cuotas que mejor se adapten a ti sin necesidad de tarjetas de crédito.
-              </p>
-
-              <Link
-                href="#"
-                className="group/btn inline-flex items-center justify-center sm:justify-start gap-2 sm:gap-3 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-[#154734] hover:text-[#C19A6B] transition-colors mt-auto p-2 h-10 touch-target active:scale-95"
-              >
-                Usar Sistecrédito
-                <span className="relative flex items-center justify-center w-8 h-8 rounded-full border border-[#154734]/20 group-hover/btn:border-[#C19A6B] transition-colors">
-                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
-                </span>
-              </Link>
-            </div>
-
-            <div className="w-full md:w-1/2 h-56 sm:h-64 md:h-auto relative p-2 md:pl-0">
-              <div className="relative w-full h-full overflow-hidden bg-white">
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500 z-10 pointer-events-none" />
-                <Image
-                  src="/banner_sistecredito.png"
-                  alt="Paga con Sistecrédito"
                   fill
                   className="object-cover object-top group-hover:scale-110 transition-transform duration-[1500ms] ease-[cubic-bezier(0.25,1,0.5,1)]"
                 />

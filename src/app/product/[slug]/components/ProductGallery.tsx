@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Play, Maximize2, X } from "lucide-react";
@@ -29,6 +29,8 @@ export default function ProductGallery({
   const media = [...gallery, ...(videoUrl ? [videoUrl] : [])];
   const [currentIndex, setCurrentIndex] = useState(selectedImage);
   const [isZoomOpen, setIsZoomOpen] = useState(false);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
 
   useEffect(() => {
     setCurrentIndex(selectedImage);
@@ -55,6 +57,29 @@ export default function ProductGallery({
   const handleThumbnail = (i: number) => {
     setCurrentIndex(i);
     if (i < gallery.length) onSelect(i);
+  };
+
+  // Swipe táctil en móvil: distingue tap (zoom) de swipe (navegar)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+
+    // Swipe horizontal: navegar entre imágenes
+    if (absX > 50 && absX > absY) {
+      e.preventDefault();
+      goTo(deltaX < 0 ? currentIndex + 1 : currentIndex - 1);
+    }
+
+    touchStartX.current = null;
+    touchStartY.current = null;
   };
 
   const currentMedia = media[currentIndex];
@@ -109,14 +134,20 @@ export default function ProductGallery({
         </div>
 
         <div
-          className="relative w-full aspect-3/4 bg-[#FAFAFA] rounded-xl sm:rounded-2xl overflow-hidden shadow-sm border border-gray-100 group cursor-crosshair touch-target"
+          className={`relative w-full aspect-4/5 sm:aspect-3/4 bg-[#FAFAFA] rounded-xl sm:rounded-2xl overflow-hidden shadow-sm border border-gray-100 group touch-target ${
+            isCurrentVideo ? "cursor-default" : "cursor-zoom-in"
+          }`}
           style={{
             transition: "box-shadow 700ms ease-in-out",
             boxShadow: activeColorHex
               ? `0 0 0 1px ${activeColorHex}30, 0 8px 40px ${activeColorHex}35, 0 2px 12px ${activeColorHex}25`
               : "0 1px 3px 0 rgb(0 0 0 / 0.1)",
           }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onClick={() => { if (!isCurrentVideo) setIsZoomOpen(true); }}
         >
+          {/* Tinte de color del producto */}
           {!isCurrentVideo && (
             <div
               className="absolute inset-0 z-0 pointer-events-none"
@@ -127,28 +158,51 @@ export default function ProductGallery({
             />
           )}
 
-          {isCurrentVideo ? (
-            <video
-              key={currentMedia}
-              src={normalizeVideoUrl(currentMedia)}
-              autoPlay
-              loop
-              muted
-              playsInline
-              controls
-              preload="auto"
-              className="absolute inset-0 w-full h-full object-cover z-10"
-            />
-          ) : (
-            <Image
-              src={currentMedia}
-              alt={productName}
-              fill
-              priority
-              className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03] z-10"
-              sizes="(max-width: 768px) 100vw, 60vw"
-            />
-          )}
+          {/* Tira de medios — todas las imágenes/videos en fila, deslizamiento con CSS */}
+          <div
+            className="absolute inset-0 flex"
+            style={{
+              width: `${media.length * 100}%`,
+              transform: `translateX(-${(currentIndex * 100) / media.length}%)`,
+              transition: "transform 380ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+            }}
+          >
+            {media.map((url, i) => {
+              const isItemVideo = !!(videoUrl && url === videoUrl);
+              const isCurrent = i === currentIndex;
+              return (
+                <div
+                  key={url}
+                  className="relative h-full shrink-0 overflow-hidden"
+                  style={{ width: `${100 / media.length}%` }}
+                >
+                  {isItemVideo ? (
+                    <video
+                      src={normalizeVideoUrl(url)}
+                      autoPlay={isCurrent}
+                      loop
+                      muted
+                      playsInline
+                      controls
+                      preload={isCurrent ? "auto" : "metadata"}
+                      className="absolute inset-0 w-full h-full object-cover z-10"
+                    />
+                  ) : (
+                    <Image
+                      src={url}
+                      alt={isCurrent ? productName : `${productName} — imagen ${i + 1}`}
+                      fill
+                      priority={i === 0}
+                      className={`object-cover transition-transform duration-700 ease-out z-10 ${
+                        isCurrent ? "group-hover:scale-[1.03]" : ""
+                      }`}
+                      sizes="(max-width: 768px) 100vw, 60vw"
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
           {media.length > 1 && (
             <>

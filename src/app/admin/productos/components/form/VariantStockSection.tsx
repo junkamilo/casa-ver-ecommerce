@@ -118,7 +118,8 @@ export default function VariantStockSection({
                   </div>
                 </td>
                 {selectedSizes.map((size) => {
-                  const stock = Number(color.variantStocks?.[size] ?? 0);
+                  const rawStock = color.variantStocks?.[size];
+                  const stock = Number(rawStock ?? 0);
                   const isLowStock = stock <= MIN_STOCK;
                   const cellKey = `${color.name}-${size}`;
                   const isUpdating = updating === cellKey;
@@ -130,9 +131,9 @@ export default function VariantStockSection({
                           type="number"
                           min="0"
                           disabled={disabled || isUpdating}
-                          value={stock}
+                          value={rawStock !== undefined ? stock : ""}
                           onChange={(e) =>
-                            handleStockChange(color, size, Number(e.target.value))
+                            handleStockChange(color, size, e.target.value === "" ? NaN : Number(e.target.value))
                           }
                           className={`w-14 text-center px-2 py-1.5 rounded-lg border text-sm outline-none transition-colors ${
                             isLowStock
