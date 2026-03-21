@@ -10,7 +10,7 @@ const newSetItem = (): SetItemForm => ({
   price: "",
   comparePrice: "",
   videoUrl: "",
-  stock: "0",
+  stock: "",
   colors: [],
   sizes: [],
 });
@@ -91,7 +91,7 @@ export function useProductForm() {
         price: item.price?.toString() || "",
         comparePrice: item.comparePrice?.toString() || "",
         videoUrl: item.videoUrl || "",
-        stock: item.stock?.toString() || "0",
+        stock: item.stock?.toString() || "",
         colors: (item.colors || []).map((c: any) => ({ name: c.name, hexCode: c.hexCode, images: c.images || [], variantStocks: c.variantStocks || {} })),
         sizes: item.sizes || [],
       })));
@@ -104,7 +104,12 @@ export function useProductForm() {
     setSelectedColors((prev) =>
       prev.map((c) =>
         c.name === colorName
-          ? { ...c, variantStocks: { ...(c.variantStocks || {}), [size]: newStock } }
+          ? {
+              ...c,
+              variantStocks: isNaN(newStock)
+                ? Object.fromEntries(Object.entries(c.variantStocks || {}).filter(([s]) => s !== size))
+                : { ...(c.variantStocks || {}), [size]: newStock },
+            }
           : c
       )
     );
@@ -176,7 +181,7 @@ export function useProductForm() {
       return newColors.map((c) => (
         c.variantStocks && Object.keys(c.variantStocks).length > 0
           ? c
-          : { ...c, variantStocks: Object.fromEntries(selectedSizes.map((s) => [s, 0])) }
+          : { ...c, variantStocks: {} }
       ));
     });
 
@@ -196,7 +201,7 @@ export function useProductForm() {
           variantStocks: {
             ...c.variantStocks,
             // Si se agregó una talla, iniciarla con 0; si se quitó, eliminarla
-            ...(!prev.includes(size) && newSizes.includes(size) && { [size]: 0 }),
+            ...(!prev.includes(size) && newSizes.includes(size) && {}),
             ...(prev.includes(size) &&
               !newSizes.includes(size) &&
               Object.fromEntries(
@@ -233,7 +238,7 @@ export function useProductForm() {
               name: colorName,
               hexCode,
               images: [],
-              variantStocks: Object.fromEntries(i.sizes.map((s) => [s, 0])),
+              variantStocks: {},
             }];
         return { ...i, colors: newColors };
       })
@@ -248,7 +253,7 @@ export function useProductForm() {
         const newColors = i.colors.map((c) => ({
           ...c,
           variantStocks: adding
-            ? { ...(c.variantStocks || {}), [size]: 0 }
+            ? { ...(c.variantStocks || {}) }
             : Object.fromEntries(
                 Object.entries(c.variantStocks || {}).filter(([s]) => s !== size)
               ),
@@ -265,7 +270,12 @@ export function useProductForm() {
           ...i,
           colors: i.colors.map((c) =>
             c.name === colorName
-              ? { ...c, variantStocks: { ...(c.variantStocks || {}), [size]: stock } }
+              ? {
+                  ...c,
+                  variantStocks: isNaN(stock)
+                    ? Object.fromEntries(Object.entries(c.variantStocks || {}).filter(([s]) => s !== size))
+                    : { ...(c.variantStocks || {}), [size]: stock },
+                }
               : c
           ),
         };

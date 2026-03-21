@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Menu, Store } from "lucide-react";
+import NotificationsBell from "./NotificationsBell";
 
 interface Props {
   pathname: string;
@@ -33,7 +34,8 @@ export default function AdminTopHeader({ pathname, onMenuOpen }: Props) {
       </div>
 
       {/* Acciones derecha */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
+        <NotificationsBell />
         <div className="h-8 w-[1px] bg-gray-200 hidden sm:block" />
         <Link
           href="/"

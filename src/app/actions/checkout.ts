@@ -272,6 +272,15 @@ export async function markOrderPaid(transactionId: string, paymentId: string) {
       }
     }
 
+    // 3. Crear notificación para el admin
+    await (tx as any).adminNotification.create({
+      data: {
+        orderId: updatedOrder.id,
+        title: `Pedido pagado · ${updatedOrder.orderNumber}`,
+        body: `${updatedOrder.user?.name ?? "Cliente"} · ${new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(Number(updatedOrder.total))}`,
+      },
+    });
+
     return updatedOrder;
   });
 

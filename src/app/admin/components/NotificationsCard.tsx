@@ -16,20 +16,12 @@ export default function NotificationsCard({ orders }: Props) {
       {/* SUMMARY: header clicable para expandir / colapsar */}
       <summary className="px-4 py-3 flex items-center justify-between cursor-pointer list-none select-none active:bg-gray-50 transition-colors [&::-webkit-details-marker]:hidden">
         <div className="flex items-center gap-3">
-          {/* Campana con badge */}
-          <div className="relative">
-            <div className="w-9 h-9 bg-[#154734]/10 rounded-xl flex items-center justify-center">
-              <Bell className="w-5 h-5 text-[#154734]" />
-            </div>
-            {orders.length > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none shadow-sm">
-                {orders.length > 9 ? "9+" : orders.length}
-              </span>
-            )}
+          <div className="w-9 h-9 bg-[#154734]/10 rounded-xl flex items-center justify-center">
+            <Bell className="w-5 h-5 text-[#154734]" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-gray-900 leading-tight">Notificaciones</h2>
-            <p className="text-[11px] text-gray-400 leading-tight">{orders.length} nuevas</p>
+            <h2 className="text-sm font-bold text-gray-900 leading-tight">Pedidos recientes</h2>
+            <p className="text-[11px] text-gray-400 leading-tight">{orders.length} últimos pagados</p>
           </div>
         </div>
         {/* Flecha que rota al abrir/cerrar */}

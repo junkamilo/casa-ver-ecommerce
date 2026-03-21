@@ -1,4 +1,7 @@
-import { useState } from "react";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { ProfileSection } from "../types";
 
 export interface UseProfileNavResult {
@@ -8,7 +11,20 @@ export interface UseProfileNavResult {
 }
 
 export function useProfileNav(initial: ProfileSection = "perfil"): UseProfileNavResult {
-  const [activeSection, setActiveSection] = useState<ProfileSection>(initial);
+  const searchParams = useSearchParams();
+  const paramSection = searchParams.get("section") as ProfileSection | null;
+  const validSections: ProfileSection[] = ["perfil", "pedidos"];
+  const resolved =
+    paramSection && validSections.includes(paramSection) ? paramSection : initial;
+
+  const [activeSection, setActiveSection] = useState<ProfileSection>(resolved);
+
+  useEffect(() => {
+    if (paramSection && validSections.includes(paramSection)) {
+      setActiveSection(paramSection);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paramSection]);
 
   const isActive = (section: ProfileSection) => activeSection === section;
 

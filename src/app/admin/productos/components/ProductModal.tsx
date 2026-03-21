@@ -360,11 +360,21 @@ export default function ProductModal({
                     </div>
                   </div>
 
-                  {/* Stock por variante — cuando hay colores Y tallas seleccionadas */}
+                  {/* Colores, Imágenes por color y Tallas */}
+                  <ColorsSection
+                    selectedColors={selectedColors}
+                    selectedSizes={selectedSizes}
+                    disabled={submitting}
+                    onToggleColor={toggleColor}
+                    onToggleSize={toggleSize}
+                    onSetColorImages={setColorImages}
+                  />
+
+                  {/* Stock por variante — aparece debajo de tallas cuando hay colores Y tallas */}
                   {shouldShowStockTable && (
                     <div className="space-y-2">
                       <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
-                        Stock por Variante (Color × Talla)
+                        Stock por Variante
                       </p>
                       <VariantStockSection
                         selectedColors={selectedColors}
@@ -375,16 +385,6 @@ export default function ProductModal({
                       />
                     </div>
                   )}
-
-                  {/* Colores y Tallas */}
-                  <ColorsSection
-                    selectedColors={selectedColors}
-                    selectedSizes={selectedSizes}
-                    disabled={submitting}
-                    onToggleColor={toggleColor}
-                    onToggleSize={toggleSize}
-                    onSetColorImages={setColorImages}
-                  />
 
                   {/* Video */}
                   <div className="pt-2 border-t border-gray-100">

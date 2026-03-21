@@ -56,18 +56,6 @@ export default function ProductVideo({ url }: Props) {
       {/* Overlay Cinemático */}
       <div className="absolute inset-0 bg-gradient-to-t from-[#154734]/80 via-transparent to-transparent pointer-events-none z-10 opacity-70 group-hover:opacity-40 transition-opacity duration-700 ease-in-out" />
 
-      {/* Etiqueta Flotante "En Movimiento" */}
-      <div className="absolute top-4 right-4 z-20 pointer-events-none">
-        <div className="bg-black/25 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg transition-transform duration-500 group-hover:scale-105 group-hover:bg-black/40">
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C19A6B] opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#C19A6B]"></span>
-          </span>
-          <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.25em] text-white drop-shadow-md mt-px">
-            En Movimiento
-          </span>
-        </div>
-      </div>
     </div>
   );
 }

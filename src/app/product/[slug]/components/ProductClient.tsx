@@ -208,8 +208,8 @@ export default function ProductClient({
         </div>
       </nav>
 
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-8 pb-16 sm:pt-12 sm:pb-24 lg:pb-32">
-        <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-10 lg:gap-16 xl:gap-20">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-4 pb-12 sm:pt-8 sm:pb-16 lg:pt-12 lg:pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-5 sm:gap-8 lg:gap-16 xl:gap-20">
 
           {/* Galería — sticky mientras scrolleas los detalles */}
           <div className="self-start lg:sticky lg:top-24 xl:top-28">
@@ -227,9 +227,9 @@ export default function ProductClient({
           <div className="flex flex-col">
 
             {/* Nombre y Precio */}
-            <div className="mb-5">
+            <div className="mb-4 sm:mb-5">
               <h1
-                className="text-3xl sm:text-4xl lg:text-[2.75rem] xl:text-5xl font-light text-[#154734] mb-4 uppercase leading-tight tracking-tight"
+                className="text-2xl sm:text-4xl lg:text-[2.75rem] xl:text-5xl font-light text-[#154734] mb-3 sm:mb-4 uppercase leading-tight tracking-tight"
                 style={{ fontFamily: "Georgia, serif" }}
               >
                 {product.name}
@@ -257,7 +257,7 @@ export default function ProductClient({
             <button
               type="button"
               onClick={scrollToReviews}
-              className="flex items-center gap-3 mb-8 cursor-pointer group w-fit focus:outline-none"
+              className="flex items-center gap-3 mb-5 sm:mb-8 cursor-pointer group w-fit focus:outline-none"
             >
               <div className="flex text-[#C19A6B]">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -281,7 +281,7 @@ export default function ProductClient({
 
             {/* Social proof */}
             {socialProof.totalBuyers > 0 && (
-              <div className="bg-[#FAFAFA] border border-gray-100 p-4 rounded-xl flex items-center gap-4 mb-8">
+              <div className="bg-[#FAFAFA] border border-gray-100 p-3 sm:p-4 rounded-xl flex items-center gap-3 sm:gap-4 mb-5 sm:mb-8">
                 <div className="flex -space-x-3 shrink-0">
                   {socialProof.recentBuyers.map((buyer, i) => (
                     <div key={i} className="w-8 h-8 rounded-full bg-[#154734]/10 border-2 border-white overflow-hidden shadow-sm flex items-center justify-center">
@@ -317,7 +317,7 @@ export default function ProductClient({
               href="https://co.addi.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-4 mb-8 p-4 rounded-xl border border-gray-100 bg-white hover:border-[#2F6BFF]/30 transition-all duration-300 group"
+              className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-8 p-3 sm:p-4 rounded-xl border border-gray-100 bg-white hover:border-[#2F6BFF]/30 transition-all duration-300 group"
             >
               <div className="w-10 h-10 rounded-full bg-[#2F6BFF] flex items-center justify-center shrink-0 shadow-sm group-hover:shadow-md transition-shadow">
                 <span className="text-white font-bold text-xl leading-none" style={{ fontFamily: "Arial, sans-serif" }}>a</span>
@@ -334,7 +334,7 @@ export default function ProductClient({
 
             {/* ── TABS: Producto principal + Subcategorías ──────────────── */}
             {product.isSet && product.items.length > 0 && (
-              <div className="mb-8">
+              <div className="mb-5 sm:mb-8">
                 <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-gray-400 mb-3">
                   Elige lo que quieres ver
                 </p>
@@ -376,12 +376,12 @@ export default function ProductClient({
             )}
 
             {/* Descripción — reactiva al tab activo */}
-            <div className="prose prose-sm prose-gray mb-8">
-              <p className="text-gray-600 leading-loose font-light">{activeDescription}</p>
+            <div className="prose prose-sm prose-gray mb-5 sm:mb-8">
+              <p className="text-gray-600 leading-relaxed sm:leading-loose font-light">{activeDescription}</p>
             </div>
 
             {/* Selectores de color y talla */}
-            <div className="space-y-8 mb-10">
+            <div className="space-y-5 sm:space-y-8 mb-7 sm:mb-10">
               {activeColors.length > 0 && (
                 <ColorSelector
                   colors={activeColors}
@@ -397,7 +397,7 @@ export default function ProductClient({
             </div>
 
             {/* Acciones de compra */}
-            <div className="flex flex-col gap-3 mb-10">
+            <div className="flex flex-col gap-3 mb-7 sm:mb-10">
               <div className="flex gap-3">
                 <QuantityPicker
                   quantity={quantity}
@@ -440,7 +440,7 @@ export default function ProductClient({
             </div>
 
             {/* Métodos de pago */}
-            <div className="flex flex-wrap justify-center gap-3 mb-10 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500">
+            <div className="flex flex-wrap justify-center gap-3 mb-7 sm:mb-10 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500">
               {["GPay", "Apple", "PayPal", "Master", "Visa", "PSE"].map((item) => (
                 <div key={item} className="h-8 px-3 bg-white border border-gray-200 rounded flex items-center justify-center">
                   <span className="text-[10px] font-bold text-gray-500">{item}</span>
@@ -460,7 +460,7 @@ export default function ProductClient({
 
         {/* Video editorial — reactivo al tab activo */}
         {activeVideoUrl && (
-          <div className="mt-24 sm:mt-32 mb-16 mx-4 sm:mx-6 lg:mx-8 xl:mx-12 relative bg-[#154734] border border-[#C19A6B]/20 rounded-[2.5rem] sm:rounded-[3rem] shadow-[0_20px_50px_-15px_rgba(21,71,52,0.4)] overflow-hidden flex flex-col md:flex-row items-center justify-between gap-10 lg:gap-16 p-8 sm:p-12 lg:p-16 group isolate transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(21,71,52,0.5)]">
+          <div className="mt-12 sm:mt-24 md:mt-32 mb-10 sm:mb-16 mx-3 sm:mx-6 lg:mx-8 xl:mx-12 relative bg-[#154734] border border-[#C19A6B]/20 rounded-2xl sm:rounded-[2.5rem] md:rounded-[3rem] shadow-[0_20px_50px_-15px_rgba(21,71,52,0.4)] overflow-hidden flex flex-row items-center justify-between gap-4 sm:gap-10 lg:gap-16 p-5 sm:p-10 lg:p-16 group isolate transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(21,71,52,0.5)]">
 
             {/* Decoración de fondo */}
             <div
@@ -469,45 +469,55 @@ export default function ProductClient({
             />
             <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-[#C19A6B]/20 to-transparent rounded-bl-full pointer-events-none -z-10 transition-transform duration-1000 group-hover:scale-110" />
 
-            <div className="flex-1 text-center md:text-left z-10 w-full">
-              <div className="flex items-center justify-center md:justify-start gap-4 mb-6">
+            {/* Columna izquierda: texto */}
+            <div className="flex-1 min-w-0 text-left z-10">
+
+              {/* Etiqueta móvil compacta */}
+              <p className="sm:hidden text-[8px] font-black tracking-[0.3em] uppercase text-[#C19A6B] mb-2 flex items-center gap-1.5">
+                <Sparkles className="w-2.5 h-2.5 shrink-0" />
+                Lookbook
+              </p>
+
+              {/* Etiqueta sm+ con separadores */}
+              <div className="hidden sm:flex items-center md:justify-start gap-4 mb-6">
                 <span className="h-px w-10 sm:w-12 bg-gradient-to-r from-transparent to-[#C19A6B]" />
                 <span className="text-[10px] sm:text-xs font-black tracking-[0.4em] uppercase text-[#C19A6B] flex items-center gap-2 drop-shadow-sm">
                   <Sparkles className="w-3.5 h-3.5" />
                   Lookbook Exclusivo
                 </span>
-                <span className="h-px w-10 sm:w-12 bg-gradient-to-l from-transparent to-[#C19A6B] md:hidden" />
               </div>
 
               <h2
-                className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl text-white mb-6 leading-[1.1] tracking-tight"
+                className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl text-white mb-2 sm:mb-6 leading-[1.1] tracking-tight"
                 style={{ fontFamily: "Georgia, serif" }}
               >
                 Movimiento <br />
                 <span className="italic text-[#C19A6B]">&amp; Fluidez</span>
               </h2>
 
-              <p className="text-gray-300 font-light leading-relaxed max-w-md mx-auto md:mx-0 text-sm sm:text-base border-l-2 border-[#C19A6B]/50 pl-4">
+              {/* Descripción — oculta en móvil */}
+              <p className="hidden sm:block text-gray-300 font-light leading-relaxed max-w-md text-sm sm:text-base border-l-2 border-[#C19A6B]/50 pl-4">
                 Descubre cómo esta prenda se adapta a tu cuerpo. Diseñada para brindarte
                 comodidad absoluta sin perder la elegancia en cada uno de tus pasos.
               </p>
             </div>
 
-            {/* Contenedor del video con altura controlada para evitar desbordes visuales */}
-            <div className="flex-1 w-full flex justify-center md:justify-end z-10">
-              <div className="relative w-full max-w-[240px] sm:max-w-[280px] lg:max-w-[320px] aspect-[3/4] sm:aspect-[4/5] max-h-[480px] bg-white rounded-[2rem] overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.3)] border border-[#C19A6B]/30 transition-all duration-700 ease-in-out hover:-translate-y-2 hover:shadow-[0_25px_50px_rgba(193,154,107,0.25)] hover:border-[#C19A6B]/60">
+            {/* Columna derecha: video */}
+            <div className="shrink-0 flex justify-center md:justify-end z-10">
+              <div className="relative w-45 sm:w-60 md:w-70 lg:w-[320px] aspect-3/4 sm:aspect-4/5 bg-white rounded-xl sm:rounded-4xl overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.3)] border border-[#C19A6B]/30 transition-all duration-700 ease-in-out hover:-translate-y-2 hover:shadow-[0_25px_50px_rgba(193,154,107,0.25)] hover:border-[#C19A6B]/60">
                 <ProductVideo url={activeVideoUrl} />
               </div>
             </div>
 
-            <div className="absolute top-1/2 right-10 text-[180px] sm:text-[250px] lg:text-[300px] text-white/5 font-serif leading-none -translate-y-1/2 pointer-events-none select-none transition-transform duration-1000 group-hover:scale-105">
+            {/* Texto decorativo — oculto en móvil */}
+            <div className="hidden sm:block absolute top-1/2 right-10 text-[250px] lg:text-[300px] text-white/5 font-serif leading-none -translate-y-1/2 pointer-events-none select-none transition-transform duration-1000 group-hover:scale-105">
               C.V.
             </div>
           </div>
         )}
 
         {/* Secciones finales */}
-        <div className="mt-24 space-y-24">
+        <div className="mt-8 sm:mt-24 space-y-10 sm:space-y-24">
           <RecommendedProducts products={recommended} />
           <Testimonials comments={reviews} />
           <div id="seccion-resenas" className="scroll-mt-32">
