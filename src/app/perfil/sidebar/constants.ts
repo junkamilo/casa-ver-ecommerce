@@ -1,4 +1,4 @@
-import { User, Package } from "lucide-react";
+import { User, Package, MapPin } from "lucide-react";
 import { NavItem } from "./types";
 
 export const SIDEBAR_NAV_ITEMS: NavItem[] = [
@@ -13,5 +13,11 @@ export const SIDEBAR_NAV_ITEMS: NavItem[] = [
     label: "Mis Pedidos",
     description: "Historial de compras",
     icon: Package,
+  },
+  {
+    id: "direcciones",
+    label: "Mis Direcciones",
+    description: "Direcciones de envío",
+    icon: MapPin,
   },
 ];

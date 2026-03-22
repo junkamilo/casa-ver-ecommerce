@@ -16,14 +16,9 @@ import RecommendedProducts from "./RecommendedProducts";
 import ProductVideo from "./ProductVideo";
 import Testimonials from "@/components/layout/Testimonials";
 
-import { UIProduct, UIColor, RecommendedProduct } from "../types";
+import { UIProduct, UIColor, RecommendedProduct, ExistingReview } from "../types";
 import { formatPrice } from "../constants";
 import type { TestimonialItem } from "@/components/layout/Testimonials/types/types";
-
-interface ExistingReview {
-  rating: number;
-  comment: string | null;
-}
 
 interface BuyerInfo {
   name: string;
@@ -467,7 +462,7 @@ export default function ProductClient({
               className="absolute inset-0 opacity-[0.05] pointer-events-none"
               style={{ backgroundImage: "radial-gradient(#C19A6B 1.5px, transparent 1.5px)", backgroundSize: "32px 32px" }}
             />
-            <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-[#C19A6B]/20 to-transparent rounded-bl-full pointer-events-none -z-10 transition-transform duration-1000 group-hover:scale-110" />
+            <div className="absolute top-0 right-0 w-72 h-72 bg-linear-to-bl from-[#C19A6B]/20 to-transparent rounded-bl-full pointer-events-none -z-10 transition-transform duration-1000 group-hover:scale-110" />
 
             {/* Columna izquierda: texto */}
             <div className="flex-1 min-w-0 text-left z-10">
@@ -480,7 +475,7 @@ export default function ProductClient({
 
               {/* Etiqueta sm+ con separadores */}
               <div className="hidden sm:flex items-center md:justify-start gap-4 mb-6">
-                <span className="h-px w-10 sm:w-12 bg-gradient-to-r from-transparent to-[#C19A6B]" />
+                <span className="h-px w-10 sm:w-12 bg-linear-to-r from-transparent to-[#C19A6B]" />
                 <span className="text-[10px] sm:text-xs font-black tracking-[0.4em] uppercase text-[#C19A6B] flex items-center gap-2 drop-shadow-sm">
                   <Sparkles className="w-3.5 h-3.5" />
                   Lookbook Exclusivo
@@ -528,6 +523,7 @@ export default function ProductClient({
               numReviews={product.numReviews}
               existingReview={existingReview}
               isAuthenticated={isAuthenticated}
+              reviews={reviews}
             />
           </div>
         </div>

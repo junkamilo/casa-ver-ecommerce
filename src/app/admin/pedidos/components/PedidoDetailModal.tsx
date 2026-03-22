@@ -6,7 +6,7 @@ import { getStatusStyles, formatPrice } from "../constants";
 import { updateOrderStatus } from "@/app/actions/orders";
 import type { Order } from "../types";
 
-const ADMIN_STATUSES = ["Pendiente", "Procesando", "Pagado", "Enviado", "Cancelado", "Fallido"];
+const ADMIN_STATUSES = ["Pendiente", "Procesando", "Pagado", "Enviado", "Entregado", "Cancelado", "Fallido", "Reembolsado"];
 
 interface PedidoDetailModalProps {
   order: Order;

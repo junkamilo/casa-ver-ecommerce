@@ -16,6 +16,7 @@ export function OrdersSection() {
     expandedId,
     toggleExpand,
     orderCountByStatus,
+    markDelivered,
   } = useOrders();
 
   return (
@@ -55,6 +56,7 @@ export function OrdersSection() {
               order={order}
               isExpanded={expandedId === order.id}
               onToggle={() => toggleExpand(order.id)}
+              onDelivered={markDelivered}
             />
           ))
         )}

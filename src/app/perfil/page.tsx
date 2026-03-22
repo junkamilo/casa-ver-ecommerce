@@ -12,6 +12,7 @@ import { useProfileNav } from "./sidebar/hooks/useProfileNav";
 import { ProfileSidebar } from "./sidebar/components/ProfileSidebar";
 import { ProfileInfoSection } from "./sections/ProfileInfoSection";
 import { OrdersSection } from "./pedidos/components/OrdersSection";
+import { AddressesSection } from "./direcciones/components/AddressesSection";
 
 function PerfilContent() {
   const { status } = useSession();
@@ -115,6 +116,7 @@ function PerfilContent() {
               />
             )}
             {activeSection === "pedidos" && <OrdersSection />}
+            {activeSection === "direcciones" && <AddressesSection />}
           </div>
         </div>
 

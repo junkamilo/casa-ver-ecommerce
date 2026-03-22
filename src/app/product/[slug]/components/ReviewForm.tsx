@@ -1,16 +1,10 @@
-// 2. Componente: ReviewForm.tsx
-
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Star, CheckCircle, MessageSquareQuote } from "lucide-react";
-import { saveReview } from "../actions";
-
-interface ExistingReview {
-  rating: number;
-  comment: string | null;
-}
+import { Star, CheckCircle, MessageSquareQuote, Trash2 } from "lucide-react";
+import { saveReview, deleteReview } from "../actions";
+import type { ExistingReview } from "../types";
 
 interface Props {
   productId: string;
@@ -30,7 +24,7 @@ export default function ReviewForm({
   const [rating, setRating] = useState(existing?.rating ?? 0);
   const [comment, setComment] = useState(existing?.comment ?? "");
   const [error, setError] = useState("");
-  const [toast, setToast] = useState(false);
+  const [toast, setToast] = useState<"saved" | "deleted" | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -38,9 +32,22 @@ export default function ReviewForm({
     setComment(existing?.comment ?? "");
   }, [existing]);
 
-  const showToast = () => {
-    setToast(true);
-    setTimeout(() => setToast(false), 3000);
+  const showToast = (type: "saved" | "deleted") => {
+    setToast(type);
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleDelete = () => {
+    setError("");
+    startTransition(async () => {
+      const result = await deleteReview(productId, productSlug);
+      if (result.success) {
+        showToast("deleted");
+        router.refresh();
+      } else {
+        setError(result.error ?? "Error al eliminar la reseña");
+      }
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -56,7 +63,7 @@ export default function ReviewForm({
         comment: comment || undefined,
       });
       if (result.success) {
-        showToast();
+        showToast("saved");
         router.refresh();
       } else {
         setError(result.error ?? "Error al guardar la reseña");
@@ -93,7 +100,7 @@ export default function ReviewForm({
   return (
     <div className="w-full relative max-w-md mx-auto">
 
-      {/* Toast reseña guardada */}
+      {/* Toast feedback */}
       <div
         aria-live="polite"
         className={`absolute -top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-white border border-[#C19A6B]/30 text-[#154734] shadow-[0_20px_40px_-10px_rgba(193,154,107,0.3)] rounded-2xl px-5 py-3 transition-all duration-500 w-max ${
@@ -101,7 +108,9 @@ export default function ReviewForm({
         }`}
       >
         <CheckCircle className="w-5 h-5 text-[#C19A6B]" />
-        <span className="text-xs sm:text-sm font-bold tracking-wide">¡Reseña guardada!</span>
+        <span className="text-xs sm:text-sm font-bold tracking-wide">
+          {toast === "deleted" ? "Reseña eliminada" : "¡Reseña guardada!"}
+        </span>
       </div>
 
       <form onSubmit={handleSubmit} className="w-full flex flex-col items-center">
@@ -188,6 +197,19 @@ export default function ReviewForm({
             )}
           </span>
         </button>
+
+        {/* Eliminar reseña (solo si ya existe) */}
+        {existing && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={isPending}
+            className="mt-3 flex items-center justify-center gap-2 text-xs text-gray-400 hover:text-red-500 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed w-full py-2 rounded-xl hover:bg-red-50"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Eliminar mi reseña
+          </button>
+        )}
       </form>
     </div>
   );

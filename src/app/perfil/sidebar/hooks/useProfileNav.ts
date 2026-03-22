@@ -13,7 +13,7 @@ export interface UseProfileNavResult {
 export function useProfileNav(initial: ProfileSection = "perfil"): UseProfileNavResult {
   const searchParams = useSearchParams();
   const paramSection = searchParams.get("section") as ProfileSection | null;
-  const validSections: ProfileSection[] = ["perfil", "pedidos"];
+  const validSections: ProfileSection[] = ["perfil", "pedidos", "direcciones"];
   const resolved =
     paramSection && validSections.includes(paramSection) ? paramSection : initial;
 
