@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
-import { getToken } from "next-auth/jwt";
+import { auth } from "@/auth";
 import type { NextRequest } from "next/server";
 
-async function verifyAdmin(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  if (!token || token.role !== "ADMIN") return false;
+async function verifyAdmin() {
+  const session = await auth();
+  if (!session?.user || (session.user as any).role !== "ADMIN") return false;
   return true;
 }
 
 // GET - Listar todos los admins o buscar usuario por email
 export async function GET(req: NextRequest) {
-  if (!(await verifyAdmin(req))) {
+  if (!(await verifyAdmin())) {
     return NextResponse.json({ message: "No autorizado" }, { status: 401 });
   }
 
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
 
 // POST - Crear nuevo admin
 export async function POST(req: NextRequest) {
-  if (!(await verifyAdmin(req))) {
+  if (!(await verifyAdmin())) {
     return NextResponse.json({ message: "No autorizado" }, { status: 401 });
   }
 
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
 
 // DELETE - Revocar rol de admin (lo convierte a USER)
 export async function DELETE(req: NextRequest) {
-  if (!(await verifyAdmin(req))) {
+  if (!(await verifyAdmin())) {
     return NextResponse.json({ message: "No autorizado" }, { status: 401 });
   }
 
@@ -144,8 +144,8 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Verificar que no se elimine a sí mismo
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    if (token?.id === userId) {
+    const session = await auth();
+    if ((session?.user as any)?.id === userId) {
       return NextResponse.json(
         { message: "No puedes revocar tu propio acceso de administrador" },
         { status: 400 }

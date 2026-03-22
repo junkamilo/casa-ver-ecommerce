@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getToken } from "next-auth/jwt";
+import { auth } from "@/auth";
 import type { NextRequest } from "next/server";
 
 /**
@@ -13,8 +13,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string; variantId: string }> }
 ) {
   try {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    if (!token?.id || token.role !== "ADMIN") {
+    const session = await auth();
+    if (!session?.user || (session.user as any).role !== "ADMIN") {
       return new NextResponse("Unauthorized", { status: 403 });
     }
 

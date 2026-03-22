@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import type { NextRequest } from "next/server";
 
 export async function POST(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  if (!token?.id) {
+  const session = await auth();
+  if (!session?.user) {
     return NextResponse.json({ message: "No autorizado" }, { status: 401 });
   }
+  const userId = (session.user as any).id as string;
 
   const { id } = await params;
 
@@ -20,7 +21,7 @@ export async function POST(
     return NextResponse.json({ message: "Pedido no encontrado" }, { status: 404 });
   }
 
-  if (order.userId !== token.id) {
+  if (order.userId !== userId) {
     return NextResponse.json({ message: "No autorizado" }, { status: 403 });
   }
 

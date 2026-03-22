@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getToken } from "next-auth/jwt";
+import { auth } from "@/auth";
 import type { NextRequest } from "next/server";
 
 // --- GET: Listar Productos (resumen para tabla) ---
@@ -77,8 +77,8 @@ type SubProductInput = {
 // --- POST: Crear Producto completo ---
 export async function POST(req: NextRequest) {
   try {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    if (!token?.id || token.role !== "ADMIN") {
+    const session = await auth();
+    if (!session?.user || (session.user as any).role !== "ADMIN") {
       return new NextResponse("Acceso denegado", { status: 403 });
     }
 

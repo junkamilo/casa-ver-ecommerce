@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getToken } from "next-auth/jwt";
-import type { NextRequest } from "next/server";
+import { auth } from "@/auth";
 
-async function verifyAdmin(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  if (!token || token.role !== "ADMIN") return false;
+async function verifyAdmin() {
+  const session = await auth();
+  if (!session?.user || (session.user as any).role !== "ADMIN") return false;
   return true;
 }
 
 // POST — marca todas las notificaciones no leídas como leídas
-export async function POST(req: NextRequest) {
-  if (!(await verifyAdmin(req))) {
+export async function POST() {
+  if (!(await verifyAdmin())) {
     return NextResponse.json({ message: "No autorizado" }, { status: 401 });
   }
 
