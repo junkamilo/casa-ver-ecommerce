@@ -11,15 +11,16 @@ import type { RegisterFormData, UseRegisterFormReturn } from "../types/types";
 export function useRegisterForm(): UseRegisterFormReturn {
   const router = useRouter();
 
-  const [step, setStep] = useState<"form" | "verify">("form");
-  const [error, setError] = useState<string | null>(null);
+  const [step, setStep]       = useState<"form" | "verify">("form");
+  const [error, setError]     = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Almacenados tras el registro exitoso para usarlos en la verificación
-  const pendingUserId = useRef<string | null>(null);
-  const pendingCredentials = useRef<{ email: string; password: string } | null>(null);
   const [pendingEmail, setPendingEmail] = useState("");
+
+  // tokenId del EmailVerificationToken (opaco, nunca expone userId)
+  const pendingTokenId    = useRef<string | null>(null);
+  // Credenciales para auto-login tras verificación exitosa
+  const pendingCredentials = useRef<{ email: string; password: string } | null>(null);
 
   const {
     register,
@@ -27,11 +28,9 @@ export function useRegisterForm(): UseRegisterFormReturn {
     setValue,
     watch,
     formState: { errors },
-  } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
-  });
+  } = useForm<RegisterFormData>({ resolver: zodResolver(registerSchema) });
 
-  // ─── Paso 1: Registro ────────────────────────────────────────────────────
+  // ─── Paso 1: Registro ─────────────────────────────────────────────────────
   const onSubmit = async (data: RegisterFormData): Promise<void> => {
     setIsLoading(true);
     setError(null);
@@ -39,23 +38,20 @@ export function useRegisterForm(): UseRegisterFormReturn {
 
     try {
       const res = await fetch("/api/auth/register", {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body:    JSON.stringify(data),
       });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || ERROR_MESSAGES.unexpected);
-      }
 
       const responseData = await res.json();
 
-      // Guardar datos necesarios para verificación y auto-login posterior
-      pendingUserId.current = responseData.id;
+      if (!res.ok) {
+        throw new Error(responseData.message ?? ERROR_MESSAGES.unexpected);
+      }
+
+      pendingTokenId.current    = responseData.tokenId;
       pendingCredentials.current = { email: data.email, password: data.password };
       setPendingEmail(data.email);
-
       setStep("verify");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : ERROR_MESSAGES.unexpected);
@@ -64,38 +60,41 @@ export function useRegisterForm(): UseRegisterFormReturn {
     }
   };
 
-  // ─── Paso 2: Verificar código ────────────────────────────────────────────
+  // ─── Paso 2: Verificar código ─────────────────────────────────────────────
   const onVerifyCode = async (code: string): Promise<void> => {
-    if (!pendingUserId.current) return;
+    if (!pendingTokenId.current) return;
     setIsLoading(true);
     setError(null);
     setSuccess(null);
 
     try {
       const res = await fetch("/api/auth/verify-email", {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: pendingUserId.current, code }),
+        body:    JSON.stringify({ tokenId: pendingTokenId.current, code }),
       });
 
       const responseData = await res.json();
 
       if (!res.ok) {
-        throw new Error(responseData.message || "Código incorrecto");
+        throw new Error(responseData.message ?? "Código incorrecto");
       }
 
-      // Verificación exitosa → auto-login
       setSuccess(SUCCESS_MESSAGES.accountVerified);
 
-      const creds = pendingCredentials.current!;
+      const creds = pendingCredentials.current;
+      if (!creds) {
+        router.push("/login?verified=true");
+        return;
+      }
+
       const loginRes = await signIn("credentials", {
-        email: creds.email,
+        email:    creds.email,
         password: creds.password,
         redirect: false,
       });
 
       if (loginRes?.error) {
-        // Verificado pero fallo el login: redirigir al login manualmente
         router.push("/login?verified=true");
       } else {
         router.refresh();
@@ -108,23 +107,28 @@ export function useRegisterForm(): UseRegisterFormReturn {
     }
   };
 
-  // ─── Reenviar código ─────────────────────────────────────────────────────
+  // ─── Reenviar código ──────────────────────────────────────────────────────
   const onResendCode = async (): Promise<void> => {
-    if (!pendingUserId.current) return;
+    if (!pendingTokenId.current) return;
     setError(null);
     setSuccess(null);
 
     try {
       const res = await fetch("/api/auth/resend-verification", {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: pendingUserId.current }),
+        body:    JSON.stringify({ tokenId: pendingTokenId.current }),
       });
 
       const responseData = await res.json();
 
       if (!res.ok) {
-        throw new Error(responseData.message || "No se pudo reenviar el código");
+        throw new Error(responseData.message ?? "No se pudo reenviar el código");
+      }
+
+      // El servidor puede devolver un nuevo tokenId si se regeneró
+      if (responseData.tokenId) {
+        pendingTokenId.current = responseData.tokenId;
       }
 
       setSuccess("Nuevo código enviado. Revisa tu correo.");
@@ -133,9 +137,8 @@ export function useRegisterForm(): UseRegisterFormReturn {
     }
   };
 
-  // Limpia el estado de error cuando el usuario empieza a corregir el código
   const onCodeReset = (): void => {
-    if (error) setError(null);
+    if (error)   setError(null);
     if (success) setSuccess(null);
   };
 

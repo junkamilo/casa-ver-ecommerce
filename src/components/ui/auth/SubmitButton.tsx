@@ -1,10 +1,12 @@
-import { Loader2, UserPlus } from "lucide-react";
+import { Loader2, type LucideIcon } from "lucide-react";
 
 interface SubmitButtonProps {
   isLoading: boolean;
+  label: string;
+  icon: LucideIcon;
 }
 
-const SubmitButton = ({ isLoading }: SubmitButtonProps) => (
+const SubmitButton = ({ isLoading, label, icon: Icon }: SubmitButtonProps) => (
   <button
     type="submit"
     disabled={isLoading}
@@ -14,8 +16,8 @@ const SubmitButton = ({ isLoading }: SubmitButtonProps) => (
       <Loader2 className="w-4 h-4 animate-spin" />
     ) : (
       <>
-        <UserPlus className="w-4 h-4" />
-        Crear mi cuenta
+        <Icon className="w-4 h-4" />
+        {label}
       </>
     )}
   </button>

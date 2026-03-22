@@ -6,36 +6,34 @@ const MAX_ATTEMPTS = 5;
 
 export async function POST(request: Request) {
   try {
-    const { userId, code } = await request.json();
+    const { tokenId, code } = await request.json();
 
-    if (!userId || !code) {
-      return NextResponse.json(
-        { message: "Datos requeridos" },
-        { status: 400 }
-      );
+    if (!tokenId || !code || typeof tokenId !== "string" || typeof code !== "string") {
+      return NextResponse.json({ message: "Datos requeridos" }, { status: 400 });
     }
 
+    // ── Buscar token por su ID opaco (no por userId) ──────────────────────────
     const record = await (prisma as any).emailVerificationToken.findUnique({
-      where: { userId },
+      where: { id: tokenId },
     });
 
     if (!record) {
       return NextResponse.json(
-        { message: "No hay un código pendiente para este usuario" },
+        { message: "Token inválido o ya utilizado" },
         { status: 400 }
       );
     }
 
-    // Verificar expiración
+    // ── Expiración ────────────────────────────────────────────────────────────
     if (new Date() > new Date(record.expires)) {
-      await (prisma as any).emailVerificationToken.delete({ where: { userId } });
+      await (prisma as any).emailVerificationToken.delete({ where: { id: tokenId } });
       return NextResponse.json(
         { message: "El código ha expirado. Solicita uno nuevo." },
         { status: 400 }
       );
     }
 
-    // Bloquear después de MAX_ATTEMPTS intentos fallidos
+    // ── Límite de intentos ────────────────────────────────────────────────────
     if (record.attempts >= MAX_ATTEMPTS) {
       return NextResponse.json(
         { message: "Demasiados intentos fallidos. Solicita un nuevo código." },
@@ -43,16 +41,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Comparar código con el hash almacenado
-    const isValid = await compare(String(code).trim(), record.codeHash);
+    // ── Comparar código ───────────────────────────────────────────────────────
+    const isValid = await compare(code.trim(), record.codeHash);
 
     if (!isValid) {
-      // Incrementar contador de intentos
       await (prisma as any).emailVerificationToken.update({
-        where: { userId },
-        data: { attempts: record.attempts + 1 },
+        where: { id: tokenId },
+        data:  { attempts: record.attempts + 1 },
       });
-
       const remaining = MAX_ATTEMPTS - record.attempts - 1;
       return NextResponse.json(
         {
@@ -65,21 +61,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // Código correcto → verificar email y eliminar token
+    // ── Código correcto → verificar email y eliminar token ────────────────────
     await prisma.$transaction([
       prisma.user.update({
-        where: { id: userId },
-        data: { emailVerified: new Date() },
+        where: { id: record.userId },
+        data:  { emailVerified: new Date() },
       }),
-      (prisma as any).emailVerificationToken.delete({ where: { userId } }),
+      (prisma as any).emailVerificationToken.delete({ where: { id: tokenId } }),
     ]);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[VerifyEmail] Error:", error);
-    return NextResponse.json(
-      { message: "Error en el servidor" },
-      { status: 500 }
-    );
+    console.error("[VerifyEmail]", error);
+    return NextResponse.json({ message: "Error en el servidor" }, { status: 500 });
   }
 }
