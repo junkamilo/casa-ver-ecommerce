@@ -1,4 +1,7 @@
-import { Lock } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { Lock, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import type { UseFormRegister, FieldErrors } from "react-hook-form";
 import type { LoginFormData } from "../types/types";
@@ -8,32 +11,46 @@ interface PasswordFieldProps {
   errors: FieldErrors<LoginFormData>;
 }
 
-const PasswordField = ({ register, errors }: PasswordFieldProps) => (
-  <div className="space-y-1.5 sm:space-y-2">
-    <div className="flex justify-between items-center ml-1">
-      <label className="text-xs sm:text-sm font-medium text-gray-700">
+const PasswordField = ({ register, errors }: PasswordFieldProps) => {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide ml-0.5">
         Contraseña
       </label>
-      <Link
-        href="/recuperar"
-        className="text-xs text-[#C19A6B] hover:underline font-medium"
-      >
-        ¿Olvidaste tu contraseña?
-      </Link>
+      <div className="relative">
+        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#154734]/50" />
+        <input
+          {...register("password")}
+          type={show ? "text" : "password"}
+          placeholder="••••••••"
+          className="w-full pl-10 pr-11 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C19A6B]/40 focus:border-[#C19A6B] focus:bg-white transition-all placeholder:text-gray-400"
+        />
+        <button
+          type="button"
+          onClick={() => setShow((s) => !s)}
+          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#154734] transition-colors"
+          tabIndex={-1}
+        >
+          {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </button>
+      </div>
+      {errors.password && (
+        <p className="text-xs text-red-500 ml-0.5">{errors.password.message}</p>
+      )}
+
+      {/* ¿Olvidaste tu contraseña? */}
+      <div className="pt-1 flex justify-end">
+        <Link
+          href="/recuperar"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-[#C19A6B] hover:text-[#a67c52] underline underline-offset-2 transition-colors"
+        >
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </div>
     </div>
-    <div className="relative">
-      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-      <input
-        {...register("password")}
-        type="password"
-        placeholder="••••••••"
-        className="w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C19A6B]/50 focus:border-[#C19A6B] transition-all"
-      />
-    </div>
-    {errors.password && (
-      <p className="text-xs text-red-500 ml-1">{errors.password.message}</p>
-    )}
-  </div>
-);
+  );
+};
 
 export default PasswordField;

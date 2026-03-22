@@ -5,7 +5,9 @@
       "Bash(xargs grep:*)",
       "Bash(npx prisma:*)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" -X GET \"https://integrations.api.bold.co/online/link/v1\" -H \"Authorization: x-api-key wOyI0aIPZG7RO5CP3pMzCEtzUt-dGOEGv9Z_hVh-TWI\")",
-      "Bash(2)"
+      "Bash(2)",
+      "Bash(find /c/MIGRACION/casa-verde-ecommerce-nextjs/src -type f \\\\\\(-name *auth* -o -name *login* -o -name *register* -o -name *signup* \\\\\\))",
+      "Bash(grep -E \"\\\\.\\(ts|tsx|js|jsx\\)$\")"
     ]
   }
 }

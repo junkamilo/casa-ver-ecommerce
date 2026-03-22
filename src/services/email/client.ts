@@ -288,6 +288,195 @@ export async function sendOrderConfirmationEmail(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Función: Enviar email de verificación de cuenta
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface SendVerificationEmailInput {
+  customerEmail: string;
+  customerName: string;
+  code: string;
+}
+
+export async function sendVerificationEmail(
+  input: SendVerificationEmailInput
+): Promise<EmailResult> {
+  const { customerEmail, customerName, code } = input;
+
+  if (!process.env.RESEND_API_KEY) {
+    return { success: false, error: "Email service not configured" };
+  }
+
+  // Separar dígitos para mostrarlos con espaciado visual: "123 456"
+  const codeFormatted = `${code.slice(0, 3)} ${code.slice(3)}`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Código de verificación - Casa Verde</title>
+    </head>
+    <body style="margin:0;padding:0;background-color:#F9FAFB;font-family:system-ui,-apple-system,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F9FAFB;">
+        <tr>
+          <td style="padding:24px 10px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background-color:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+              <tr>
+                <td style="padding:32px 24px;border-bottom:1px solid #E5E7EB;text-align:center;">
+                  <h1 style="margin:0;font-size:32px;font-weight:700;color:#154734;">Casa Verde</h1>
+                  <p style="margin:8px 0 0 0;font-size:12px;color:#6B7280;">Moda Sostenible</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:32px 24px;">
+                  <h2 style="margin:0 0 12px 0;font-size:20px;font-weight:600;color:#1F2937;">¡Hola, ${customerName}!</h2>
+                  <p style="margin:0 0 24px 0;font-size:14px;line-height:1.6;color:#4B5563;">
+                    Usa el siguiente código para verificar tu correo electrónico e ingresar a tu nueva cuenta en Casa Verde.
+                  </p>
+
+                  <!-- Código destacado -->
+                  <div style="margin:0 0 24px 0;padding:24px;background-color:#F0FDF4;border:2px solid #154734;border-radius:12px;text-align:center;">
+                    <p style="margin:0 0 8px 0;font-size:11px;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:0.1em;">Tu código de verificación</p>
+                    <p style="margin:0;font-size:44px;font-weight:800;color:#154734;letter-spacing:0.18em;font-family:monospace;">${codeFormatted}</p>
+                  </div>
+
+                  <p style="margin:0 0 8px 0;font-size:13px;color:#6B7280;text-align:center;">
+                    Ingresa este código en la pantalla de registro. Expira en <strong>15 minutos</strong>.
+                  </p>
+                  <p style="margin:0 0 24px 0;font-size:12px;color:#9CA3AF;text-align:center;">
+                    Si no creaste esta cuenta, puedes ignorar este mensaje.
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:24px;border-top:1px solid #E5E7EB;text-align:center;">
+                  <p style="margin:0;font-size:12px;color:#6B7280;">© 2024 Casa Verde. Todos los derechos reservados.</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  try {
+    const response = await resend.emails.send({
+      from: `${FROM_NAME} <${FROM_EMAIL}>`,
+      to: customerEmail,
+      subject: `${codeFormatted} es tu código de Casa Verde`,
+      html,
+      replyTo: "contacto@casaverdeoficial.com",
+    });
+
+    if (response.error) {
+      return { success: false, error: response.error.message || "Error desconocido" };
+    }
+
+    return { success: true, messageId: response.data?.id };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+    return { success: false, error: errorMessage };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Función: Enviar email de restablecimiento de contraseña
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface SendPasswordResetEmailInput {
+  customerEmail: string;
+  customerName: string;
+  code: string;
+}
+
+export async function sendPasswordResetEmail(
+  input: SendPasswordResetEmailInput
+): Promise<EmailResult> {
+  const { customerEmail, customerName, code } = input;
+
+  if (!process.env.RESEND_API_KEY) {
+    return { success: false, error: "Email service not configured" };
+  }
+
+  const codeFormatted = `${code.slice(0, 3)} ${code.slice(3)}`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Restablece tu contraseña - Casa Verde</title>
+    </head>
+    <body style="margin:0;padding:0;background-color:#F9FAFB;font-family:system-ui,-apple-system,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F9FAFB;">
+        <tr>
+          <td style="padding:24px 10px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background-color:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+              <tr>
+                <td style="padding:32px 24px;border-bottom:1px solid #E5E7EB;text-align:center;">
+                  <h1 style="margin:0;font-size:32px;font-weight:700;color:#154734;">Casa Verde</h1>
+                  <p style="margin:8px 0 0 0;font-size:12px;color:#6B7280;">Moda Sostenible</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:32px 24px;">
+                  <h2 style="margin:0 0 12px 0;font-size:20px;font-weight:600;color:#1F2937;">¡Hola, ${customerName}!</h2>
+                  <p style="margin:0 0 24px 0;font-size:14px;line-height:1.6;color:#4B5563;">
+                    Recibimos una solicitud para restablecer la contraseña de tu cuenta. Usa el siguiente código para continuar con el proceso.
+                  </p>
+
+                  <!-- Código destacado -->
+                  <div style="margin:0 0 24px 0;padding:24px;background-color:#FFF9F0;border:2px solid #C19A6B;border-radius:12px;text-align:center;">
+                    <p style="margin:0 0 8px 0;font-size:11px;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:0.1em;">Tu código de restablecimiento</p>
+                    <p style="margin:0;font-size:44px;font-weight:800;color:#154734;letter-spacing:0.18em;font-family:monospace;">${codeFormatted}</p>
+                  </div>
+
+                  <p style="margin:0 0 8px 0;font-size:13px;color:#6B7280;text-align:center;">
+                    Ingresa este código en la pantalla de recuperación. Expira en <strong>15 minutos</strong>.
+                  </p>
+                  <p style="margin:0 0 24px 0;font-size:12px;color:#9CA3AF;text-align:center;">
+                    Si no solicitaste este cambio, puedes ignorar este mensaje. Tu contraseña no será modificada.
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:24px;border-top:1px solid #E5E7EB;text-align:center;">
+                  <p style="margin:0;font-size:12px;color:#6B7280;">© 2024 Casa Verde. Todos los derechos reservados.</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  try {
+    const response = await resend.emails.send({
+      from: `${FROM_NAME} <${FROM_EMAIL}>`,
+      to: customerEmail,
+      subject: `${codeFormatted} — Restablece tu contraseña en Casa Verde`,
+      html,
+      replyTo: "contacto@casaverdeoficial.com",
+    });
+
+    if (response.error) {
+      return { success: false, error: response.error.message || "Error desconocido" };
+    }
+
+    return { success: true, messageId: response.data?.id };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+    return { success: false, error: errorMessage };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Función auxiliar: Validar configuración de email
 // (Útil para debugging en desarrollo)
 // ─────────────────────────────────────────────────────────────────────────────

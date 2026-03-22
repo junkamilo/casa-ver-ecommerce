@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import { Loader2, LogIn } from "lucide-react";
 
 interface SubmitButtonProps {
   isLoading: boolean;
@@ -8,9 +8,16 @@ const SubmitButton = ({ isLoading }: SubmitButtonProps) => (
   <button
     type="submit"
     disabled={isLoading}
-    className="w-full bg-[#154734] hover:bg-[#0f382a] text-white font-bold py-3 sm:py-3.5 text-sm sm:text-base rounded-lg transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2"
+    className="w-full bg-[#154734] hover:bg-[#0f3829] disabled:opacity-70 text-white font-semibold py-3.5 text-sm rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 mt-2"
   >
-    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Iniciar Sesión"}
+    {isLoading ? (
+      <Loader2 className="w-4 h-4 animate-spin" />
+    ) : (
+      <>
+        <LogIn className="w-4 h-4" />
+        Iniciar sesión
+      </>
+    )}
   </button>
 );
 
