@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useLoginForm } from "./hooks/useLoginForm";
 import LoginHeader from "./components/LoginHeader";
 import LoginErrorAlert from "./components/LoginErrorAlert";
@@ -8,29 +9,34 @@ import PasswordField from "./components/PasswordField";
 import SubmitButton from "./components/SubmitButton";
 import DividerOr from "./components/DividerOr";
 import GoogleButton from "./components/GoogleButton";
-import LoginFooter from "./components/LoginFooter";
 
 const LoginForm = () => {
   const { register, handleSubmit, errors, error, isLoading, onSubmit, handleGoogleLogin } =
     useLoginForm();
 
   return (
-    <div className="w-full max-w-md bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden mx-4 sm:mx-0">
-      <div className="p-5 sm:p-8">
-        <LoginHeader />
-        <LoginErrorAlert error={error} />
+    <div className="w-full max-w-md mx-auto">
+      <LoginHeader />
+      <LoginErrorAlert error={error} />
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
-          <EmailField register={register} errors={errors} />
-          <PasswordField register={register} errors={errors} />
-          <SubmitButton isLoading={isLoading} />
-        </form>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
+        <EmailField register={register} errors={errors} />
+        <PasswordField register={register} errors={errors} />
+        <SubmitButton isLoading={isLoading} />
+      </form>
 
-        <DividerOr />
-        <GoogleButton isLoading={isLoading} onClick={handleGoogleLogin} />
-      </div>
+      <DividerOr />
+      <GoogleButton isLoading={isLoading} onClick={handleGoogleLogin} />
 
-      <LoginFooter />
+      <p className="mt-7 text-center text-sm text-gray-500">
+        ¿No tienes cuenta?{" "}
+        <Link
+          href="/registro"
+          className="font-semibold text-[#154734] hover:text-[#C19A6B] transition-colors"
+        >
+          Regístrate aquí
+        </Link>
+      </p>
     </div>
   );
 };

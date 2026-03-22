@@ -1,9 +1,19 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { compare } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+
+class InvalidCredentials extends CredentialsSignin {
+  code = "invalid_credentials";
+}
+class UseGoogleSignIn extends CredentialsSignin {
+  code = "use_google";
+}
+class EmailNotVerified extends CredentialsSignin {
+  code = "email_not_verified";
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -28,11 +38,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const user = await prisma.user.findUnique({ where: { email } });
 
-        if (!user) throw new Error("Usuario no encontrado");
-        if (!user.password) throw new Error("Por favor inicia sesión con Google");
+        if (!user) throw new InvalidCredentials();
+        if (!user.password) throw new UseGoogleSignIn();
 
         const match = await compare(password, user.password);
-        if (!match) throw new Error("Contraseña incorrecta");
+        if (!match) throw new InvalidCredentials();
+
+        if (!user.emailVerified) throw new EmailNotVerified();
 
         return { id: user.id, name: user.name, email: user.email, role: user.role };
       },
@@ -44,6 +56,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: { signIn: "/login" },
 
   callbacks: {
+    // Marca emailVerified cuando el proveedor es Google (JWT + PrismaAdapter no lo hace automático)
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "google" && user.email) {
+        const googleVerified = (profile as any)?.email_verified;
+        if (googleVerified) {
+          await prisma.user.update({
+            where: { email: user.email },
+            data: { emailVerified: new Date() },
+          });
+        }
+      }
+      return true;
+    },
+
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
@@ -51,6 +77,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return token;
     },
+
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.id;

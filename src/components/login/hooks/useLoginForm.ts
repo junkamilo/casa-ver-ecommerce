@@ -6,6 +6,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { loginSchema, ERROR_MESSAGES } from "../constants/constants";
+
+const CREDENTIAL_ERROR_MAP: Record<string, string> = {
+  invalid_credentials: ERROR_MESSAGES.invalidCredentials,
+  use_google:          ERROR_MESSAGES.useGoogle,
+  email_not_verified:  ERROR_MESSAGES.notVerified,
+};
 import type { LoginFormData, UseLoginFormReturn } from "../types/types";
 
 export function useLoginForm(): UseLoginFormReturn {
@@ -33,7 +39,8 @@ export function useLoginForm(): UseLoginFormReturn {
       });
 
       if (result?.error) {
-        setError(ERROR_MESSAGES.invalidCredentials);
+        const code = (result as any).code as string | undefined;
+        setError(CREDENTIAL_ERROR_MAP[code ?? ""] ?? ERROR_MESSAGES.invalidCredentials);
         setIsLoading(false);
       } else {
         router.refresh();

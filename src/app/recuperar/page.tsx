@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Leaf, CheckCircle2, ArrowLeft } from "lucide-react";
-import RegisterForm from "@/components/register";
+import { Leaf, ArrowLeft, Lock, ShieldCheck, KeyRound } from "lucide-react";
+import ForgotPasswordForm from "@/components/forgot-password";
 
-export default function RegisterPage() {
+export default function RecuperarPage() {
   return (
     <div className="flex flex-col lg:flex-row lg:h-dvh">
 
@@ -22,17 +22,17 @@ export default function RegisterPage() {
             </span>
           </div>
           <Link
-            href="/"
+            href="/login"
             className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-[#154734] transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Volver al inicio
+            Volver al inicio de sesión
           </Link>
         </div>
 
-        {/* Scrollable form area */}
-        <div className="flex-1 overflow-y-auto scrollbar-brand px-6 sm:px-10 py-8 flex flex-col items-center">
-          <RegisterForm />
+        {/* Área del formulario */}
+        <div className="flex-1 overflow-y-auto scrollbar-brand px-6 sm:px-10 py-8 flex flex-col items-center justify-center">
+          <ForgotPasswordForm />
         </div>
       </div>
 
@@ -49,13 +49,13 @@ export default function RegisterPage() {
         />
 
         {/* Gradiente overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#154734]/88 via-[#154734]/72 to-[#0a2218]/92" />
+        <div className="absolute inset-0 bg-linear-to-br from-[#154734]/88 via-[#154734]/72 to-[#0a2218]/92" />
 
         {/* Hojas decorativas de fondo */}
         <div className="absolute -bottom-20 -right-20 opacity-[0.07] pointer-events-none">
           <Leaf className="w-80 h-80 text-white" />
         </div>
-        <div className="absolute -top-10 -left-10 rotate-[200deg] opacity-[0.07] pointer-events-none">
+        <div className="absolute -top-10 -left-10 rotate-200 opacity-[0.07] pointer-events-none">
           <Leaf className="w-56 h-56 text-white" />
         </div>
 
@@ -66,7 +66,7 @@ export default function RegisterPage() {
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-px bg-[#C19A6B]" />
             <span className="text-[#C19A6B] text-xs font-semibold uppercase tracking-[0.25em]">
-              Bienvenido a
+              Seguridad en
             </span>
           </div>
 
@@ -83,21 +83,24 @@ export default function RegisterPage() {
             className="text-white/75 text-lg xl:text-xl leading-relaxed mb-10 italic"
             style={{ fontFamily: "Georgia, serif" }}
           >
-            "Donde el estilo vive<br />con la naturaleza"
+            "Tu cuenta protegida,<br />siempre a tu alcance"
           </p>
 
-          {/* Beneficios */}
+          {/* Pasos del proceso */}
           <div className="space-y-4 mb-12">
             {[
-              "Acceso a ofertas y descuentos exclusivos",
-              "Seguimiento en tiempo real de tus pedidos",
-              "Guarda tus direcciones y paga más rápido",
-            ].map((benefit) => (
-              <div key={benefit} className="flex items-start gap-3">
+              { icon: KeyRound,    text: "Ingresa tu correo de recuperación" },
+              { icon: ShieldCheck, text: "Verifica el código que recibirás" },
+              { icon: Lock,        text: "Crea tu nueva contraseña segura" },
+            ].map(({ icon: Icon, text }, i) => (
+              <div key={text} className="flex items-start gap-3">
                 <div className="mt-0.5 w-5 h-5 rounded-full bg-[#C19A6B]/25 border border-[#C19A6B]/55 flex items-center justify-center shrink-0">
-                  <CheckCircle2 className="w-3 h-3 text-[#C19A6B]" />
+                  <Icon className="w-3 h-3 text-[#C19A6B]" />
                 </div>
-                <span className="text-white/80 text-sm leading-snug">{benefit}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[#C19A6B] text-xs font-bold">{i + 1}.</span>
+                  <span className="text-white/80 text-sm leading-snug">{text}</span>
+                </div>
               </div>
             ))}
           </div>

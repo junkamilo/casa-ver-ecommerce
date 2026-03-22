@@ -94,18 +94,48 @@ model User {
   password      String?
   role          Role      @default(USER)
   phone         String?
+  recoveryEmail String?
   
   // Relaciones
-  accounts      Account[]
-  sessions      Session[]
-  addresses     Address[]
-  orders        Order[]
-  reviews       Review[]
+  accounts              Account[]
+  sessions              Session[]
+  addresses             Address[]
+  orders                Order[]
+  reviews               Review[]
+  verificationTokens    EmailVerificationToken[]
+  passwordResetTokens   PasswordResetToken[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   @@map("users")
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  expires   DateTime
+  attempts  Int      @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@map("email_verification_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  expires   DateTime
+  attempts  Int      @default(0)
+  verified  Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@map("password_reset_tokens")
 }
 
 model Address {
