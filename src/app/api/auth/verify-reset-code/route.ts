@@ -6,33 +6,34 @@ const MAX_ATTEMPTS = 5;
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, code } = await req.json();
+    const { tokenId, code } = await req.json();
 
-    if (!userId || !code) {
+    if (!tokenId || !code || typeof tokenId !== "string" || typeof code !== "string") {
       return NextResponse.json({ message: "Datos incompletos" }, { status: 400 });
     }
 
+    // ── Buscar token por su ID opaco ──────────────────────────────────────────
     const record = await (prisma as any).passwordResetToken.findUnique({
-      where: { userId },
+      where: { id: tokenId },
     });
 
     if (!record) {
       return NextResponse.json(
-        { message: "Código no encontrado. Solicita uno nuevo." },
+        { message: "Token inválido. Solicita uno nuevo." },
         { status: 400 }
       );
     }
 
-    // Verificar expiración
+    // ── Expiración ────────────────────────────────────────────────────────────
     if (new Date() > new Date(record.expires)) {
-      await (prisma as any).passwordResetToken.delete({ where: { userId } });
+      await (prisma as any).passwordResetToken.delete({ where: { id: tokenId } });
       return NextResponse.json(
         { message: "El código ha expirado. Solicita uno nuevo." },
         { status: 400 }
       );
     }
 
-    // Verificar intentos
+    // ── Límite de intentos ────────────────────────────────────────────────────
     if (record.attempts >= MAX_ATTEMPTS) {
       return NextResponse.json(
         { message: "Demasiados intentos fallidos. Solicita un nuevo código." },
@@ -40,13 +41,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Comparar código
-    const isValid = await compare(String(code).trim(), record.codeHash);
+    // ── Comparar código ───────────────────────────────────────────────────────
+    const isValid = await compare(code.trim(), record.codeHash);
 
     if (!isValid) {
       await (prisma as any).passwordResetToken.update({
-        where: { userId },
-        data: { attempts: record.attempts + 1 },
+        where: { id: tokenId },
+        data:  { attempts: record.attempts + 1 },
       });
       const remaining = MAX_ATTEMPTS - record.attempts - 1;
       return NextResponse.json(
@@ -55,10 +56,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Código válido → marcar como verificado
+    // ── Código válido → marcar como verificado ────────────────────────────────
     await (prisma as any).passwordResetToken.update({
-      where: { userId },
-      data: { verified: true },
+      where: { id: tokenId },
+      data:  { verified: true },
     });
 
     return NextResponse.json({ success: true }, { status: 200 });

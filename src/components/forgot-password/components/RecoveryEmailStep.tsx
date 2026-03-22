@@ -1,17 +1,20 @@
 "use client";
 
-import { Mail, Loader2, KeyRound } from "lucide-react";
+import { Mail } from "lucide-react";
 import type { UseFormRegister, UseFormHandleSubmit, FieldErrors } from "react-hook-form";
 import type { RecoveryEmailFormData } from "../types/types";
+import AuthAlert from "@/components/ui/auth/AuthAlert";
+import AuthFormHeader from "@/components/ui/auth/AuthFormHeader";
+import SubmitButton from "@/components/ui/auth/SubmitButton";
 
 interface RecoveryEmailStepProps {
-  register: UseFormRegister<RecoveryEmailFormData>;
+  register:     UseFormRegister<RecoveryEmailFormData>;
   handleSubmit: UseFormHandleSubmit<RecoveryEmailFormData>;
-  errors: FieldErrors<RecoveryEmailFormData>;
-  error: string | null;
-  success: string | null;
-  isLoading: boolean;
-  onSubmit: (data: RecoveryEmailFormData) => Promise<void>;
+  errors:       FieldErrors<RecoveryEmailFormData>;
+  error:        string | null;
+  success:      string | null;
+  isLoading:    boolean;
+  onSubmit:     (data: RecoveryEmailFormData) => Promise<void>;
 }
 
 export default function RecoveryEmailStep({
@@ -25,40 +28,16 @@ export default function RecoveryEmailStep({
 }: RecoveryEmailStepProps) {
   return (
     <div className="w-full max-w-md mx-auto">
-      {/* Encabezado */}
-      <div className="mb-7">
-        <div className="w-14 h-14 rounded-full bg-[#154734]/10 flex items-center justify-center mb-4">
-          <KeyRound className="w-7 h-7 text-[#154734]" />
-        </div>
-        <h2
-          className="text-2xl sm:text-3xl font-bold text-[#154734] mb-1.5"
-          style={{ fontFamily: "Georgia, serif" }}
-        >
-          Recupera tu cuenta
-        </h2>
-        <p className="text-sm text-gray-500 leading-relaxed">
-          Ingresa el correo de recuperación que registraste al crear tu cuenta. Te enviaremos un código de verificación.
-        </p>
-      </div>
+      <AuthFormHeader
+        icon={Mail}
+        title="Recupera tu cuenta"
+        subtitle="Ingresa el correo de recuperación que registraste al crear tu cuenta. Te enviaremos un código de verificación."
+      />
 
-      {/* Error */}
-      {error && (
-        <div className="mb-5 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 flex items-start gap-2 rounded text-xs sm:text-sm animate-in fade-in">
-          <span className="mt-0.5 shrink-0">⚠</span>
-          <p>{error}</p>
-        </div>
-      )}
-
-      {/* Éxito (recoveryEmail no encontrado pero mostramos genérico) */}
-      {success && (
-        <div className="mb-5 p-3 bg-blue-50 border-l-4 border-blue-500 text-blue-700 flex items-start gap-2 rounded text-xs sm:text-sm animate-in fade-in">
-          <span className="mt-0.5 shrink-0">ℹ</span>
-          <p>{success}</p>
-        </div>
-      )}
+      <AuthAlert message={error}   variant="error" />
+      <AuthAlert message={success} variant="info" />
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        {/* Campo correo de recuperación */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide ml-0.5">
             Correo de recuperación
@@ -77,20 +56,7 @@ export default function RecoveryEmailStep({
           )}
         </div>
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full bg-[#154734] hover:bg-[#0f3829] disabled:opacity-70 text-white font-semibold py-3.5 text-sm rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 mt-2"
-        >
-          {isLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <>
-              <Mail className="w-4 h-4" />
-              Enviar código de verificación
-            </>
-          )}
-        </button>
+        <SubmitButton isLoading={isLoading} label="Enviar código de verificación" icon={Mail} />
       </form>
     </div>
   );

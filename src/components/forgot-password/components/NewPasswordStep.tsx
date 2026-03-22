@@ -1,18 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
+import { Lock, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import type { UseFormRegister, UseFormHandleSubmit, FieldErrors } from "react-hook-form";
 import type { NewPasswordFormData } from "../types/types";
-import { PASSWORD_RULES } from "../constants/constants";
+import { PASSWORD_RULES } from "@/lib/auth/validation";
+import AuthAlert from "@/components/ui/auth/AuthAlert";
+import AuthFormHeader from "@/components/ui/auth/AuthFormHeader";
+import SubmitButton from "@/components/ui/auth/SubmitButton";
 
 interface NewPasswordStepProps {
-  register: UseFormRegister<NewPasswordFormData>;
+  register:     UseFormRegister<NewPasswordFormData>;
   handleSubmit: UseFormHandleSubmit<NewPasswordFormData>;
-  errors: FieldErrors<NewPasswordFormData>;
-  error: string | null;
-  isLoading: boolean;
-  onSubmit: (data: NewPasswordFormData) => Promise<void>;
+  errors:       FieldErrors<NewPasswordFormData>;
+  error:        string | null;
+  isLoading:    boolean;
+  onSubmit:     (data: NewPasswordFormData) => Promise<void>;
 }
 
 export default function NewPasswordStep({
@@ -23,39 +26,24 @@ export default function NewPasswordStep({
   isLoading,
   onSubmit,
 }: NewPasswordStepProps) {
-  const [showPassword, setShowPassword]         = useState(false);
-  const [showConfirm, setShowConfirm]           = useState(false);
-  const [passwordValue, setPasswordValue]       = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm]   = useState(false);
+  const [passwordValue, setPasswordValue] = useState("");
 
   const { onChange: onChangePwd, ...restPwd } = register("password");
 
   return (
     <div className="w-full max-w-md mx-auto">
-      {/* Encabezado */}
-      <div className="mb-7">
-        <div className="w-14 h-14 rounded-full bg-[#154734]/10 flex items-center justify-center mb-4">
-          <ShieldCheck className="w-7 h-7 text-[#154734]" />
-        </div>
-        <h2
-          className="text-2xl sm:text-3xl font-bold text-[#154734] mb-1.5"
-          style={{ fontFamily: "Georgia, serif" }}
-        >
-          Nueva contraseña
-        </h2>
-        <p className="text-sm text-gray-500">
-          Crea una contraseña segura para tu cuenta.
-        </p>
-      </div>
+      <AuthFormHeader
+        icon={ShieldCheck}
+        title="Nueva contraseña"
+        subtitle="Crea una contraseña segura para tu cuenta."
+      />
 
-      {/* Error */}
-      {error && (
-        <div className="mb-5 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 flex items-start gap-2 rounded text-xs sm:text-sm animate-in fade-in">
-          <span className="mt-0.5 shrink-0">⚠</span>
-          <p>{error}</p>
-        </div>
-      )}
+      <AuthAlert message={error} variant="error" />
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
+
         {/* Nueva contraseña */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide ml-0.5">
@@ -79,6 +67,7 @@ export default function NewPasswordStep({
               onClick={() => setShowPassword((s) => !s)}
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#154734] transition-colors"
               tabIndex={-1}
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -91,12 +80,26 @@ export default function NewPasswordStep({
                 const ok = rule.test(passwordValue);
                 return (
                   <li key={rule.label} className="flex items-center gap-1.5">
-                    <span className={`flex-shrink-0 w-3.5 h-3.5 rounded-full flex items-center justify-center transition-colors ${ok ? "bg-[#154734]" : "bg-gray-200"}`}>
+                    <span
+                      className={`shrink-0 w-3.5 h-3.5 rounded-full flex items-center justify-center transition-colors ${
+                        ok ? "bg-[#154734]" : "bg-gray-200"
+                      }`}
+                    >
                       <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 10 10">
-                        <path d="M2 5l2.5 2.5 3.5-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                        <path
+                          d="M2 5l2.5 2.5 3.5-4"
+                          stroke="currentColor"
+                          strokeWidth="1.6"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
                       </svg>
                     </span>
-                    <span className={`text-[11px] transition-colors ${ok ? "text-[#154734] font-medium" : "text-gray-400"}`}>
+                    <span
+                      className={`text-[11px] transition-colors ${
+                        ok ? "text-[#154734] font-medium" : "text-gray-400"
+                      }`}
+                    >
                       {rule.label}
                     </span>
                   </li>
@@ -128,6 +131,7 @@ export default function NewPasswordStep({
               onClick={() => setShowConfirm((s) => !s)}
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#154734] transition-colors"
               tabIndex={-1}
+              aria-label={showConfirm ? "Ocultar contraseña" : "Mostrar contraseña"}
             >
               {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -137,20 +141,7 @@ export default function NewPasswordStep({
           )}
         </div>
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full bg-[#154734] hover:bg-[#0f3829] disabled:opacity-70 text-white font-semibold py-3.5 text-sm rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 mt-2"
-        >
-          {isLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <>
-              <ShieldCheck className="w-4 h-4" />
-              Guardar nueva contraseña
-            </>
-          )}
-        </button>
+        <SubmitButton isLoading={isLoading} label="Guardar nueva contraseña" icon={ShieldCheck} />
       </form>
     </div>
   );

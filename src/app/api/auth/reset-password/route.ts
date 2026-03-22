@@ -1,24 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { resetPasswordServerSchema } from "@/lib/auth/validation";
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, password } = await req.json();
+    const body = await req.json();
 
-    if (!userId || !password || typeof password !== "string") {
-      return NextResponse.json({ message: "Datos incompletos" }, { status: 400 });
+    // ── Validación server-side con Zod (incluye complejidad de contraseña) ────
+    const parsed = resetPasswordServerSchema.safeParse(body);
+    if (!parsed.success) {
+      const message = parsed.error.issues[0]?.message ?? "Datos inválidos";
+      return NextResponse.json({ message }, { status: 400 });
     }
 
-    if (password.length < 8) {
-      return NextResponse.json(
-        { message: "La contraseña debe tener al menos 8 caracteres" },
-        { status: 400 }
-      );
-    }
+    const { tokenId, password } = parsed.data;
 
+    // ── Buscar token por su ID opaco ──────────────────────────────────────────
     const record = await (prisma as any).passwordResetToken.findUnique({
-      where: { userId },
+      where: { id: tokenId },
     });
 
     if (!record) {
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verificar que el código fue validado previamente
+    // ── Verificar que el OTP fue validado previamente ─────────────────────────
     if (!record.verified) {
       return NextResponse.json(
         { message: "Debes verificar el código antes de cambiar la contraseña." },
@@ -36,25 +36,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verificar que el token aún esté vigente (mismo plazo de 15 min)
+    // ── Verificar vigencia ────────────────────────────────────────────────────
     if (new Date() > new Date(record.expires)) {
-      await (prisma as any).passwordResetToken.delete({ where: { userId } });
+      await (prisma as any).passwordResetToken.delete({ where: { id: tokenId } });
       return NextResponse.json(
         { message: "La sesión de recuperación expiró. Solicita un nuevo código." },
         { status: 400 }
       );
     }
 
-    // Hashear nueva contraseña
+    // ── Actualizar contraseña y eliminar token (transacción atómica) ──────────
     const passwordHash = await hash(password, 10);
-
-    // Actualizar contraseña y eliminar token en una transacción
     await prisma.$transaction([
       prisma.user.update({
-        where: { id: userId },
-        data: { password: passwordHash },
+        where: { id: record.userId },
+        data:  { password: passwordHash },
       }),
-      (prisma as any).passwordResetToken.delete({ where: { userId } }),
+      (prisma as any).passwordResetToken.delete({ where: { id: tokenId } }),
     ]);
 
     return NextResponse.json({ success: true }, { status: 200 });

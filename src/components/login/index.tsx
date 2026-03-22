@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { LogIn } from "lucide-react";
 import { useLoginForm } from "./hooks/useLoginForm";
-import LoginHeader from "./components/LoginHeader";
-import LoginErrorAlert from "./components/LoginErrorAlert";
 import EmailField from "./components/EmailField";
 import PasswordField from "./components/PasswordField";
-import SubmitButton from "./components/SubmitButton";
-import DividerOr from "./components/DividerOr";
-import GoogleButton from "./components/GoogleButton";
+import AuthAlert from "@/components/ui/auth/AuthAlert";
+import AuthFormHeader from "@/components/ui/auth/AuthFormHeader";
+import DividerOr from "@/components/ui/auth/DividerOr";
+import GoogleButton from "@/components/ui/auth/GoogleButton";
+import SubmitButton from "@/components/ui/auth/SubmitButton";
 
 const LoginForm = () => {
   const { register, handleSubmit, errors, error, isLoading, onSubmit, handleGoogleLogin } =
@@ -16,13 +17,17 @@ const LoginForm = () => {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <LoginHeader />
-      <LoginErrorAlert error={error} />
+      <AuthFormHeader
+        title="Bienvenido de nuevo"
+        subtitle="Ingresa a tu cuenta para gestionar tus pedidos"
+      />
+
+      <AuthAlert message={error} variant="error" />
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
         <EmailField register={register} errors={errors} />
         <PasswordField register={register} errors={errors} />
-        <SubmitButton isLoading={isLoading} />
+        <SubmitButton isLoading={isLoading} label="Iniciar sesión" icon={LogIn} />
       </form>
 
       <DividerOr />
