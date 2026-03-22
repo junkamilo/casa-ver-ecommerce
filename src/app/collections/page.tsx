@@ -4,6 +4,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/Footer";
 import CollectionHero from "@/app/collections/[slug]/components/CollectionHero";
 import CategoriesClient from "@/app/collections/components/CategoriesClient";
+import SectionEmptyState from "@/components/ui/SectionEmptyState";
 
 export const revalidate = 3600;
 
@@ -39,20 +40,7 @@ export default async function CollectionsPage() {
 
           <div className="mt-12 sm:mt-16 lg:mt-24 w-full">
             {collections.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-32 gap-4">
-                <span
-                  className="text-5xl font-light text-[#154734]/20 select-none"
-                  style={{ fontFamily: "Georgia, serif" }}
-                >
-                  ✦
-                </span>
-                <p
-                  className="text-center text-[#154734]/50 text-sm tracking-widest uppercase max-w-sm"
-                  style={{ fontFamily: "Georgia, serif" }}
-                >
-                  Pronto agregaremos nuevas colecciones. Vuelve pronto.
-                </p>
-              </div>
+              <SectionEmptyState message="Pronto agregaremos nuevas categorías y colecciones." />
             ) : (
               <CategoriesClient categories={collections} />
             )}

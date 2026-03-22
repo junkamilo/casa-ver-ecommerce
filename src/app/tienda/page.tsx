@@ -6,6 +6,7 @@ import CollectionHero from "@/app/collections/[slug]/components/CollectionHero";
 
 import type { CollectionProduct } from "@/app/collections/[slug]/types";
 import { ProductGrid } from "../collections/[slug]/components/ProductGrid";
+import SectionEmptyState from "@/components/ui/SectionEmptyState";
 
 async function getAllProducts(): Promise<CollectionProduct[]> {
   try {
@@ -99,9 +100,7 @@ export default async function TiendaPage() {
 
           <div className="mt-12 sm:mt-16 lg:mt-24 w-full">
             {products.length === 0 ? (
-              <p className="text-center text-muted-foreground py-24 text-sm tracking-wide">
-                No hay productos disponibles en este momento.
-              </p>
+              <SectionEmptyState message="Pronto agregaremos nuevos productos." />
             ) : (
               <ProductGrid products={products} viewMode="grid" />
             )}
