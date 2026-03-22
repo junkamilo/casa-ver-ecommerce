@@ -1,106 +1,7 @@
 "use client";
 
-import { X, Loader2, ImageIcon, UploadCloud, Trash2 } from "lucide-react";
-import { CldUploadWidget, CloudinaryUploadWidgetResults } from "next-cloudinary";
-
-const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!;
-
-const WIDGET_OPTIONS = {
-  sources: ["local"] as const,
-  multiple: false,
-  resourceType: "image" as const,
-  clientAllowedFormats: ["jpg", "jpeg", "png", "webp"],
-  maxFileSize: 5 * 1024 * 1024,
-  styles: {
-    palette: {
-      window: "#FFFFFF",
-      windowBorder: "#E5E7EB",
-      tabIcon: "#154734",
-      menuIcons: "#154734",
-      textDark: "#111827",
-      textLight: "#FFFFFF",
-      link: "#C19A6B",
-      action: "#154734",
-      inactiveTabIcon: "#9CA3AF",
-      error: "#EF4444",
-      inProgress: "#154734",
-      complete: "#10B981",
-      sourceBg: "#F9FAFB",
-    },
-  },
-};
-
-interface ImageZoneProps {
-  image: string;
-  setImage: (v: string) => void;
-  aspectClass: string;
-}
-
-function ImageZone({ image, setImage, aspectClass }: ImageZoneProps) {
-  const handleSuccess = (result: CloudinaryUploadWidgetResults) => {
-    if (
-      result?.info &&
-      typeof result.info === "object" &&
-      "secure_url" in result.info
-    ) {
-      setImage(result.info.secure_url as string);
-    }
-  };
-
-  return (
-    <CldUploadWidget
-      uploadPreset={UPLOAD_PRESET}
-      options={WIDGET_OPTIONS as any}
-      onSuccess={handleSuccess}
-    >
-      {({ open }) =>
-        !image ? (
-          <button
-            type="button"
-            onClick={() => open()}
-            className={`w-full flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl hover:border-[#C19A6B] hover:bg-[#FAFAFA] transition-all group ${aspectClass}`}
-          >
-            <div className="w-10 h-10 rounded-full bg-[#154734]/5 flex items-center justify-center mb-3 group-hover:bg-[#C19A6B]/10 transition-colors">
-              <UploadCloud className="w-5 h-5 text-[#154734] group-hover:text-[#C19A6B] transition-colors" />
-            </div>
-            <span className="text-xs font-bold text-[#154734] group-hover:text-[#C19A6B] transition-colors uppercase tracking-widest">
-              Subir Foto
-            </span>
-            <span className="text-[10px] text-gray-400 mt-1">JPG, PNG — máx. 5MB</span>
-          </button>
-        ) : (
-          <div
-            className={`relative rounded-2xl overflow-hidden border border-gray-100 shadow-sm group ${aspectClass}`}
-          >
-            <img
-              src={image}
-              alt="Vista previa"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4 backdrop-blur-sm">
-              <button
-                type="button"
-                onClick={() => open()}
-                className="p-3 bg-white text-[#154734] hover:text-[#C19A6B] rounded-full shadow-xl hover:scale-110 transition-all"
-                title="Cambiar imagen"
-              >
-                <UploadCloud className="w-5 h-5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setImage("")}
-                className="p-3 bg-white text-gray-700 hover:text-red-600 rounded-full shadow-xl hover:scale-110 transition-all"
-                title="Eliminar imagen"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        )
-      }
-    </CldUploadWidget>
-  );
-}
+import { X, Loader2, ImageIcon } from "lucide-react";
+import ImageUpload from "@/components/ui/image-upload";
 
 interface CategoryModalProps {
   isOpen: boolean;
@@ -134,7 +35,7 @@ const CategoryModal = ({
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+      <div className="relative w-full max-w-2xl bg-white rounded-4xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
         <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-[#FAFAFA]">
           <h2
             className="text-2xl text-[#154734] italic"
@@ -142,8 +43,8 @@ const CategoryModal = ({
           >
             {mode === "edit" ? "Editar Colección" : "Nueva Colección"}
           </h2>
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={onClose}
             className="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 hover:text-[#C19A6B] transition-colors"
           >
@@ -157,7 +58,9 @@ const CategoryModal = ({
         >
           {/* Nombre */}
           <div className="space-y-2">
-            <label className="text-xs font-black uppercase tracking-widest text-gray-500">Nombre de la Colección</label>
+            <label className="text-xs font-black uppercase tracking-widest text-gray-500">
+              Nombre de la Colección
+            </label>
             <input
               type="text"
               value={name}
@@ -168,14 +71,25 @@ const CategoryModal = ({
             />
           </div>
 
-          {/* Zona de Imagen */}
+          {/* Imagen */}
           <div className="pt-4 border-t border-gray-100 space-y-3">
             <label className="text-xs font-black uppercase tracking-widest text-[#154734] flex items-center gap-2">
               <ImageIcon className="w-4 h-4 text-[#C19A6B]" />
-              Foto de la Tarjeta <span className="font-light normal-case tracking-normal text-gray-400">(opcional)</span>
+              Foto de la Tarjeta{" "}
+              <span className="font-light normal-case tracking-normal text-gray-400">
+                (opcional)
+              </span>
             </label>
-            <p className="text-[11px] text-gray-400 font-light leading-relaxed">Si no se sube foto, la tarjeta mostrará el nombre de la colección sobre fondo verde.</p>
-            <ImageZone image={image} setImage={setImage} aspectClass="h-40" />
+            <p className="text-[11px] text-gray-400 font-light leading-relaxed">
+              Si no se sube foto, la tarjeta mostrará el nombre de la colección sobre fondo verde.
+            </p>
+            <ImageUpload
+              value={image ? [image] : []}
+              disabled={submitting}
+              onChange={(urls) => setImage(urls[0] ?? "")}
+              onRemove={() => setImage("")}
+              maxImages={1}
+            />
           </div>
 
           {/* Acciones */}

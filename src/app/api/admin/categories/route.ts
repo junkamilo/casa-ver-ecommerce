@@ -1,5 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
+import type { NextRequest } from "next/server";
+
+function generateSlug(raw: string): string {
+  return raw
+    .toLowerCase()
+    .trim()
+    .replace(/[\s\W-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 export async function GET() {
   try {
@@ -23,22 +33,34 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user || (session.user as { role?: string }).role !== "ADMIN") {
+      return new NextResponse("Acceso denegado", { status: 403 });
+    }
+
     const body = await req.json();
-    const { name, image } = body;
+    const rawName: string = typeof body.name === "string" ? body.name.trim() : "";
+    const image: string | undefined = body.image;
 
-    if (!name) return new NextResponse("Name is required", { status: 400 });
+    if (!rawName) {
+      return new NextResponse("El nombre es requerido", { status: 400 });
+    }
+    if (rawName.length < 2) {
+      return new NextResponse("El nombre debe tener al menos 2 caracteres", { status: 400 });
+    }
+    if (rawName.length > 100) {
+      return new NextResponse("El nombre no puede superar los 100 caracteres", { status: 400 });
+    }
 
-    const slug = name
-      .toLowerCase()
-      .trim()
-      .replace(/[\s\W-]+/g, "-")
-      .replace(/^-+|-+$/g, "");
+    const slug = generateSlug(rawName);
 
-    const existing = await prisma.category.findUnique({
-      where: { slug },
-    });
+    if (!slug) {
+      return new NextResponse("El nombre ingresado no genera un slug válido", { status: 400 });
+    }
+
+    const existing = await prisma.category.findUnique({ where: { slug } });
 
     if (existing) {
       return new NextResponse("Esta categoría ya existe", { status: 409 });
@@ -46,7 +68,7 @@ export async function POST(req: Request) {
 
     const category = await prisma.category.create({
       data: {
-        name,
+        name: rawName,
         slug,
         image: image || null,
       },
@@ -59,22 +81,28 @@ export async function POST(req: Request) {
   }
 }
 
-export async function PATCH(req: Request) {
+export async function PATCH(req: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user || (session.user as { role?: string }).role !== "ADMIN") {
+      return new NextResponse("Acceso denegado", { status: 403 });
+    }
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
-    if (!id) return new NextResponse("ID required", { status: 400 });
+    if (!id) return new NextResponse("ID requerido", { status: 400 });
 
     const body = await req.json();
 
+    // --- Toggle activo / inactivo ---
     if (body.action === "toggle") {
       const category = await prisma.category.findUnique({
         where: { id },
         include: { _count: { select: { products: true } } },
       });
 
-      if (!category) return new NextResponse("Not found", { status: 404 });
+      if (!category) return new NextResponse("Categoría no encontrada", { status: 404 });
 
       if (category.isActive && category._count.products > 0) {
         return NextResponse.json(
@@ -95,15 +123,25 @@ export async function PATCH(req: Request) {
       return NextResponse.json(updated);
     }
 
-    const { name, image } = body;
+    // --- Editar nombre / imagen ---
+    const rawName: string = typeof body.name === "string" ? body.name.trim() : "";
+    const image: string | undefined = body.image;
 
-    if (!name) return new NextResponse("Name is required", { status: 400 });
+    if (!rawName) {
+      return new NextResponse("El nombre es requerido", { status: 400 });
+    }
+    if (rawName.length < 2) {
+      return new NextResponse("El nombre debe tener al menos 2 caracteres", { status: 400 });
+    }
+    if (rawName.length > 100) {
+      return new NextResponse("El nombre no puede superar los 100 caracteres", { status: 400 });
+    }
 
-    const slug = name
-      .toLowerCase()
-      .trim()
-      .replace(/[\s\W-]+/g, "-")
-      .replace(/^-+|-+$/g, "");
+    const slug = generateSlug(rawName);
+
+    if (!slug) {
+      return new NextResponse("El nombre ingresado no genera un slug válido", { status: 400 });
+    }
 
     const existing = await prisma.category.findFirst({
       where: { slug, NOT: { id } },
@@ -116,7 +154,7 @@ export async function PATCH(req: Request) {
     const updated = await prisma.category.update({
       where: { id },
       data: {
-        name,
+        name: rawName,
         slug,
         image: image || null,
       },

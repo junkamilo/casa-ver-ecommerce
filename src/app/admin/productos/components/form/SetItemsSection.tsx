@@ -144,7 +144,7 @@ function SetItemCard({
             <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
               <DollarSign className="w-3.5 h-3.5" /> Precio e Inventario
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">
                   Precio (COP)
@@ -159,21 +159,6 @@ function SetItemCard({
                   className={fieldCls(!!errors.price)}
                 />
                 <FieldError msg={errors.price} />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">
-                  Precio Anterior <span className="font-normal text-gray-400">(tachado)</span>
-                </label>
-                <input
-                  type="number"
-                  value={item.comparePrice}
-                  onChange={(e) => onUpdate(item.localId, { comparePrice: e.target.value })}
-                  placeholder="120000"
-                  min="0"
-                  disabled={disabled}
-                  className={fieldCls(!!errors.comparePrice)}
-                />
-                <FieldError msg={errors.comparePrice} />
               </div>
             </div>
           </div>

@@ -3,6 +3,7 @@ import { Edit2, Trash2, Loader2 } from "lucide-react";
 import { ProductListItem } from "../types";
 import { formatPrice, getStockStatus } from "../constants";
 import ProductMobileList from "./ProductMobileList";
+import SectionEmptyState from "@/components/ui/SectionEmptyState";
 
 interface Props {
   products: ProductListItem[];
@@ -122,8 +123,8 @@ export default function ProductTable({
       <ProductMobileList products={products} onEdit={onEdit} onToggleActive={onToggleActive} />
 
       {products.length === 0 && (
-        <div className="hidden md:flex py-12 text-center text-gray-400 justify-center">
-          <p>No se encontraron productos</p>
+        <div className="hidden md:flex justify-center">
+          <SectionEmptyState message="No se encontraron productos." />
         </div>
       )}
     </div>

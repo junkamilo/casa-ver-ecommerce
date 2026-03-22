@@ -78,7 +78,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // Con allowDangerousEmailAccountLinking, PrismaAdapter ya vinculó el
       // Account de Google al User existente antes de llegar aquí.
       if (user.email) {
-        await prisma.user.update({
+        await prisma.user.updateMany({
           where: { email: user.email },
           data: { emailVerified: new Date() },
         });

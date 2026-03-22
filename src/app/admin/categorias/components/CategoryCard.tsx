@@ -57,10 +57,6 @@ const CategoryCard = ({ category, onEdit, onToggleActive }: CategoryCardProps) =
         </h3>
       </div>
 
-      <p className="text-sm text-gray-500 mb-6 line-clamp-2 font-light leading-relaxed min-h-[2.5rem]">
-        {category.description || "Sin descripción asignada para esta colección."}
-      </p>
-
       {/* Footer de la tarjeta */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
         <span className="bg-[#FAFAFA] text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 flex items-center gap-1.5">

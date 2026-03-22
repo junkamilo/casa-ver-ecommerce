@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Bell, CheckCircle2, Clock, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
+import SectionEmptyState from "@/components/ui/SectionEmptyState";
 
 interface AdminNotification {
   id: string;
@@ -114,12 +115,7 @@ export default function NotificationsBell() {
           {/* Lista */}
           <div className="divide-y divide-gray-50 max-h-[380px] overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 gap-2">
-                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                  <Bell className="w-6 h-6 text-gray-300" />
-                </div>
-                <p className="text-sm text-gray-400 font-medium">Sin notificaciones</p>
-              </div>
+              <SectionEmptyState message="Sin notificaciones." />
             ) : (
               notifications.map((notif) => (
                 <div

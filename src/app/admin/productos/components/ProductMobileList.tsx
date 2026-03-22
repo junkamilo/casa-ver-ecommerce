@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Edit2 } from "lucide-react";
 import { ProductListItem } from "../types";
 import { formatPrice, getStockStatus } from "../constants";
+import SectionEmptyState from "@/components/ui/SectionEmptyState";
 
 interface Props {
   products: ProductListItem[];
@@ -12,8 +13,8 @@ interface Props {
 export default function ProductMobileList({ products, onEdit, onToggleActive }: Props) {
   if (products.length === 0) {
     return (
-      <div className="md:hidden py-12 text-center text-gray-400 text-sm">
-        No se encontraron productos
+      <div className="md:hidden">
+        <SectionEmptyState message="No se encontraron productos." />
       </div>
     );
   }

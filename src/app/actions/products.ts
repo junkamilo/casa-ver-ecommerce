@@ -71,7 +71,7 @@ async function createColorVariants(tx: any, productId: string, slug: string, col
         ? Number(colorData.variantStocks[size])
         : base + (idx < rem ? 1 : 0);
       await tx.productVariant.create({
-        data: { productId, colorId: color.id, size: size as never, sku, stock: variantStock },
+        data: { productId, colorId: color.id, size: size as never, sku, stock: variantStock, minStock: 2 },
       });
       idx++;
     }
@@ -89,9 +89,12 @@ async function createSetItems(tx: any, productId: string, slug: string, items: S
     });
 
     const itemStock = itemData.stock ?? 0;
+    const hasVariantStocks = (itemData.colors || []).some(
+      (c) => c.variantStocks && Object.keys(c.variantStocks).length > 0
+    );
     const totalVariants = (itemData.colors?.length ?? 0) * (itemData.sizes?.length ?? 0);
-    const base = totalVariants > 0 ? Math.floor(itemStock / totalVariants) : 0;
-    const rem = totalVariants > 0 ? itemStock % totalVariants : 0;
+    const base = !hasVariantStocks && totalVariants > 0 ? Math.floor(itemStock / totalVariants) : 0;
+    const rem = !hasVariantStocks && totalVariants > 0 ? itemStock % totalVariants : 0;
     let idx = 0;
 
     for (const colorData of itemData.colors || []) {
@@ -108,8 +111,11 @@ async function createSetItems(tx: any, productId: string, slug: string, items: S
       }
       for (const size of itemData.sizes || []) {
         const sku = `${slug}-${itemData.name.toLowerCase().replace(/\s+/g, "-")}-${colorData.name.toLowerCase().replace(/\s+/g, "-")}-${size.toLowerCase()}`;
+        const variantStock = colorData.variantStocks?.[size] !== undefined
+          ? Number(colorData.variantStocks[size])
+          : base + (idx < rem ? 1 : 0);
         await tx.productItemVariant.create({
-          data: { colorId: itemColor.id, size: size as never, sku, stock: base + (idx < rem ? 1 : 0) },
+          data: { colorId: itemColor.id, size: size as never, sku, stock: variantStock },
         });
         idx++;
       }
