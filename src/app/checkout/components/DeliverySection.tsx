@@ -2,20 +2,14 @@
 
 import { MapPin, ChevronDown } from "lucide-react";
 import { useFormContext } from "react-hook-form";
+import { DEPARTAMENTOS } from "@/lib/constants/colombia";
+import { SavedAddressPicker } from "./SavedAddressPicker";
 import type { CheckoutFormData } from "../hooks/useCheckout";
 
 const fi =
   "peer w-full px-5 py-4 bg-[#FAFAFA] border border-gray-200 rounded-xl focus:bg-white focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/15 outline-none transition-all duration-300 text-sm text-[#154734] shadow-inner pt-6";
 const fl =
   "absolute left-5 top-4 text-gray-400 text-sm transition-all duration-300 peer-focus:-translate-y-2.5 peer-focus:text-[10px] peer-focus:text-[#C19A6B] peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-widest peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:font-bold peer-[:not(:placeholder-shown)]:uppercase peer-[:not(:placeholder-shown)]:tracking-widest pointer-events-none";
-
-const DEPARTAMENTOS = [
-  "Amazonas","Antioquia","Arauca","Atlántico","Bogotá D.C.","Bolívar","Boyacá",
-  "Caldas","Caquetá","Casanare","Cauca","Cesar","Chocó","Córdoba","Cundinamarca",
-  "Guainía","Guaviare","Huila","La Guajira","Magdalena","Meta","Nariño",
-  "Norte de Santander","Putumayo","Quindío","Risaralda","San Andrés y Providencia",
-  "Santander","Sucre","Tolima","Valle del Cauca","Vaupés","Vichada",
-];
 
 const FieldError = ({ message }: { message?: string }) =>
   message ? <p className="mt-1.5 text-xs text-red-500 font-medium ml-1">{message}</p> : null;
@@ -24,7 +18,7 @@ const DeliverySection = () => {
   const { register, formState: { errors } } = useFormContext<CheckoutFormData>();
 
   return (
-    <section className="mb-8 sm:mb-10 bg-white p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2rem] border border-gray-100 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] relative overflow-hidden group/section hover:border-[#C19A6B]/30 transition-colors duration-300">
+    <section className="mb-8 sm:mb-10 bg-white p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-4xl border border-gray-100 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] relative overflow-hidden group/section hover:border-[#C19A6B]/30 transition-colors duration-300">
       <div className="absolute top-0 left-0 w-1.5 h-full bg-[#154734] scale-y-0 group-hover/section:scale-y-100 origin-top transition-transform duration-500" />
 
       <h2
@@ -33,6 +27,8 @@ const DeliverySection = () => {
       >
         <MapPin className="w-4 sm:w-5 h-4 sm:h-5 text-[#C19A6B] shrink-0" /> Dirección de entrega
       </h2>
+
+      <SavedAddressPicker />
 
       <div className="space-y-4 sm:space-y-5">
         <div className="relative group">

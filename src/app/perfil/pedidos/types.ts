@@ -5,7 +5,8 @@ export type OrderStatus =
   | "SHIPPED"
   | "DELIVERED"
   | "CANCELLED"
-  | "FAILED";
+  | "FAILED"
+  | "REFUNDED";
 
 export type OrderFilter = "ALL" | OrderStatus;
 

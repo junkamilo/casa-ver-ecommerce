@@ -22,6 +22,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      // Permite fusionar automáticamente la cuenta Google con una cuenta
+      // existente de email/contraseña cuando ambas comparten el mismo correo.
+      // Es seguro para Google porque siempre verifica la titularidad del email.
+      allowDangerousEmailAccountLinking: true,
+      // Fuerza el selector de cuentas de Google en cada intento de login.
+      // Sin esto, Google reutiliza la sesión activa del navegador silenciosamente.
+      authorization: {
+        params: { prompt: "select_account" },
+      },
     }),
 
     Credentials({
@@ -56,17 +65,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: { signIn: "/login" },
 
   callbacks: {
-    // Marca emailVerified cuando el proveedor es Google (JWT + PrismaAdapter no lo hace automático)
     async signIn({ user, account, profile }) {
-      if (account?.provider === "google" && user.email) {
-        const googleVerified = (profile as any)?.email_verified;
-        if (googleVerified) {
-          await prisma.user.update({
-            where: { email: user.email },
-            data: { emailVerified: new Date() },
-          });
-        }
+      // Solo se aplica lógica especial para el proveedor Google
+      if (account?.provider !== "google") return true;
+
+      // Rechazar si Google no confirmó la titularidad del correo.
+      // Esto también cubre el caso en que la cuenta Google está en disputa.
+      const emailVerifiedByGoogle = (profile as any)?.email_verified === true;
+      if (!emailVerifiedByGoogle) return false;
+
+      // Marcar emailVerified en la cuenta propia (Credentials no lo hace).
+      // Con allowDangerousEmailAccountLinking, PrismaAdapter ya vinculó el
+      // Account de Google al User existente antes de llegar aquí.
+      if (user.email) {
+        await prisma.user.update({
+          where: { email: user.email },
+          data: { emailVerified: new Date() },
+        });
       }
+
       return true;
     },
 

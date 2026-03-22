@@ -1,7 +1,15 @@
 "use server";
 
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import type { Order } from "@/app/admin/pedidos/types";
+
+async function requireAdmin() {
+  const session = await auth();
+  if (!session?.user || (session.user as any).role !== "ADMIN") {
+    throw new Error("No autorizado");
+  }
+}
 
 const STATUS_MAP: Record<string, string> = {
   PENDING:    "Pendiente",
@@ -11,6 +19,7 @@ const STATUS_MAP: Record<string, string> = {
   DELIVERED:  "Entregado",
   CANCELLED:  "Cancelado",
   FAILED:     "Fallido",
+  REFUNDED:   "Reembolsado",
 };
 
 const METHOD_MAP: Record<string, string> = {
@@ -22,15 +31,18 @@ const METHOD_MAP: Record<string, string> = {
 };
 
 const STATUS_ES_TO_DB: Record<string, string> = {
-  Pendiente:  "PENDING",
-  Procesando: "PROCESSING",
-  Pagado:     "PAID",
-  Enviado:    "SHIPPED",
-  Cancelado:  "CANCELLED",
-  Fallido:    "FAILED",
+  Pendiente:    "PENDING",
+  Procesando:   "PROCESSING",
+  Pagado:       "PAID",
+  Enviado:      "SHIPPED",
+  Entregado:    "DELIVERED",
+  Cancelado:    "CANCELLED",
+  Fallido:      "FAILED",
+  Reembolsado:  "REFUNDED",
 };
 
 export async function updateOrderStatus(orderNumber: string, statusEs: string): Promise<void> {
+  await requireAdmin();
   const dbStatus = STATUS_ES_TO_DB[statusEs];
   if (!dbStatus) throw new Error(`Estado inválido: ${statusEs}`);
   await prisma.order.update({
@@ -40,6 +52,7 @@ export async function updateOrderStatus(orderNumber: string, statusEs: string): 
 }
 
 export async function getOrders(): Promise<Order[]> {
+  await requireAdmin();
   const orders = await prisma.order.findMany({
     include: {
       user: { select: { email: true } },

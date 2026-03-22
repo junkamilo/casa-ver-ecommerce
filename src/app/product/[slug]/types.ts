@@ -1,15 +1,6 @@
-import type { StaticImageData } from "next/image";
-
-export interface ProductVariant {
-  name: string;
-  type: string;
-  price: number;
-  description: string;
+export interface ExistingReview {
   rating: number;
-  reviews: number;
-  colors: { name: string; hex: string }[];
-  sizes: string[];
-  gallery: (StaticImageData | string)[];
+  comment: string | null;
 }
 
 export interface UIColorVariant {

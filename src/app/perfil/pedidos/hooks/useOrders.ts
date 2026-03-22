@@ -10,6 +10,7 @@ export interface UseOrdersResult {
   expandedId: string | null;
   toggleExpand: (id: string) => void;
   orderCountByStatus: Record<string, number>;
+  markDelivered: (id: string) => void;
 }
 
 export function useOrders(): UseOrdersResult {
@@ -43,6 +44,12 @@ export function useOrders(): UseOrdersResult {
     setExpandedId((prev) => (prev === id ? null : id));
   };
 
+  const markDelivered = (id: string) => {
+    setOrders((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, status: "DELIVERED" as const } : o))
+    );
+  };
+
   return {
     orders,
     filteredOrders,
@@ -52,5 +59,6 @@ export function useOrders(): UseOrdersResult {
     expandedId,
     toggleExpand,
     orderCountByStatus,
+    markDelivered,
   };
 }

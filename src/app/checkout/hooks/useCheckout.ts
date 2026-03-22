@@ -32,6 +32,7 @@ export const checkoutSchema = z.object({
   paymentMethod: z.enum(["BOLD"]),
   billingSameAsShipping: z.boolean(),
   couponCode: z.string().optional(),
+  savedAddressId: z.string().optional(),
 });
 
 export type CheckoutFormData = z.infer<typeof checkoutSchema>;
@@ -127,6 +128,7 @@ export function useCheckout() {
         addressDetail: data.addressDetail,
         city: data.city,
         department: data.department,
+        savedAddressId: data.savedAddressId,
         paymentMethod: data.paymentMethod,
         items: items.map((item) => ({
           variantId: item.variantId,

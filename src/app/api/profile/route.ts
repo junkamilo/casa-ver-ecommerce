@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hash, compare } from "bcryptjs";
+import { passwordSchema } from "@/lib/auth/validation";
 import type { NextRequest } from "next/server";
 
 export async function GET() {
@@ -19,7 +20,9 @@ export async function GET() {
       email: true,
       image: true,
       role: true,
+      password: true,
       createdAt: true,
+      accounts: { select: { provider: true } },
     },
   });
 
@@ -27,7 +30,15 @@ export async function GET() {
     return NextResponse.json({ message: "Usuario no encontrado" }, { status: 404 });
   }
 
-  return NextResponse.json(user);
+  const { password, accounts, ...userData } = user;
+
+  return NextResponse.json({
+    ...userData,
+    // Indica si el usuario tiene contraseña configurada (false = solo OAuth)
+    hasPassword: !!password,
+    // Lista de proveedores OAuth vinculados (ej. ["google"])
+    linkedProviders: accounts.map((a) => a.provider),
+  });
 }
 
 export async function PUT(req: NextRequest) {
@@ -71,8 +82,12 @@ export async function PUT(req: NextRequest) {
     if (!valid) {
       return NextResponse.json({ message: "Contraseña actual incorrecta" }, { status: 400 });
     }
-    if (newPassword.length < 6) {
-      return NextResponse.json({ message: "La nueva contraseña debe tener al menos 6 caracteres" }, { status: 400 });
+    const parsed = passwordSchema.safeParse(newPassword);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { message: parsed.error.issues[0].message },
+        { status: 400 }
+      );
     }
     updateData.password = await hash(newPassword, 12);
   }

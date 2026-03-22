@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
 import { auth } from "@/auth";
+import { passwordSchema } from "@/lib/auth/validation";
 import type { NextRequest } from "next/server";
 
 async function verifyAdmin() {
@@ -97,14 +98,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (password.length < 6) {
+    const parsed = passwordSchema.safeParse(password);
+    if (!parsed.success) {
       return NextResponse.json(
-        { message: "La contraseña debe tener al menos 6 caracteres" },
+        { message: parsed.error.issues[0].message },
         { status: 400 }
       );
     }
 
-    const hashedPassword = await hash(password, 10);
+    const hashedPassword = await hash(password, 12);
 
     const newAdmin = await prisma.user.create({
       data: {

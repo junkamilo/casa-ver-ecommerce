@@ -3,8 +3,6 @@
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 
-
-
 export interface CreateOrderInput {
   // Datos del comprador
   email: string;
@@ -18,6 +16,8 @@ export interface CreateOrderInput {
   addressDetail?: string;
   city: string;
   department: string;
+  /** Si el usuario eligió una dirección guardada, se vincula a la orden */
+  savedAddressId?: string;
 
   // Pago
   paymentMethod: "BOLD";
@@ -75,6 +75,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     addressDetail,
     city,
     department,
+    savedAddressId,
     items,
     subtotal,
     shippingCost,
@@ -143,11 +144,23 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       const transactionId = randomUUID();
 
       // 4. Crear la orden en PENDING
+      // Validar que el savedAddressId pertenezca al usuario (si se proveyó)
+      if (savedAddressId) {
+        const addrOwner = await tx.address.findUnique({
+          where: { id: savedAddressId },
+          select: { userId: true },
+        });
+        if (!addrOwner || addrOwner.userId !== user.id) {
+          throw new Error("Dirección de envío inválida");
+        }
+      }
+
       const order = await tx.order.create({
         data: {
           orderNumber,
           userId: user.id,
           transactionId,
+          ...(savedAddressId ? { addressId: savedAddressId } : {}),
           shippingName: `${firstName} ${lastName}`,
           shippingAddress: `${address}${addressDetail ? `, ${addressDetail}` : ""}`,
           shippingCity: city,

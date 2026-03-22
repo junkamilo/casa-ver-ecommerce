@@ -42,17 +42,23 @@ export const ORDER_STATUS_CONFIG: Record<OrderStatus, StatusConfig> = {
     color: "bg-red-100 text-red-800 border-red-300",
     dotColor: "bg-red-600",
   },
+  REFUNDED: {
+    label: "Reembolsado",
+    color: "bg-purple-50 text-purple-700 border-purple-200",
+    dotColor: "bg-purple-500",
+  },
 };
 
 export const ORDER_FILTER_LABELS: Record<OrderFilter, string> = {
-  ALL:       "Todos",
-  PENDING:   "Pendientes",
+  ALL:        "Todos",
+  PENDING:    "Pendientes",
   PROCESSING: "En proceso",
-  PAID:      "Pagados",
-  SHIPPED:   "Enviados",
-  DELIVERED: "Entregados",
-  CANCELLED: "Cancelados",
-  FAILED:    "Fallidos",
+  PAID:       "Pagados",
+  SHIPPED:    "Enviados",
+  DELIVERED:  "Entregados",
+  CANCELLED:  "Cancelados",
+  FAILED:     "Fallidos",
+  REFUNDED:   "Reembolsados",
 };
 
 export const VISIBLE_FILTERS: OrderFilter[] = [
@@ -64,6 +70,7 @@ export const VISIBLE_FILTERS: OrderFilter[] = [
   "DELIVERED",
   "CANCELLED",
   "FAILED",
+  "REFUNDED",
 ];
 
 export const formatOrderPrice = (value: number): string =>

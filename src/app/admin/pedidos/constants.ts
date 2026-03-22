@@ -1,5 +1,5 @@
 export const ALL_STATUSES = [
-  "Todos", "Pendiente", "Procesando", "Pagado", "Enviado", "Entregado", "Cancelado", "Fallido",
+  "Todos", "Pendiente", "Procesando", "Pagado", "Enviado", "Entregado", "Cancelado", "Fallido", "Reembolsado",
 ];
 
 export const ALL_METHODS = [
@@ -12,10 +12,11 @@ export const getStatusStyles = (status: string): string => {
     case "Pendiente":  return "bg-amber-50 text-amber-700 border-amber-200";
     case "Procesando": return "bg-blue-50 text-blue-700 border-blue-200";
     case "Enviado":    return "bg-sky-100 text-sky-800 border-sky-200";
-    case "Entregado":  return "bg-gray-100 text-gray-800 border-gray-200";
-    case "Cancelado":  return "bg-red-50 text-red-700 border-red-200";
-    case "Fallido":    return "bg-red-100 text-red-800 border-red-300";
-    default:           return "bg-gray-100 text-gray-800";
+    case "Entregado":    return "bg-gray-100 text-gray-800 border-gray-200";
+    case "Cancelado":    return "bg-red-50 text-red-700 border-red-200";
+    case "Fallido":      return "bg-red-100 text-red-800 border-red-300";
+    case "Reembolsado":  return "bg-purple-50 text-purple-700 border-purple-200";
+    default:             return "bg-gray-100 text-gray-800";
   }
 };
 

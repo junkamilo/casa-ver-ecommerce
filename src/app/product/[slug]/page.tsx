@@ -88,11 +88,12 @@ export default async function ProductPage({ params }: Props) {
 
   if (!product) notFound();
 
-  const userReview = userId
-    ? ((await (prisma.review as any).findUnique({
-        where: { userId_productId: { userId, productId: product.id } },
-        select: { rating: true, comment: true },
-      })) as { rating: number; comment: string | null } | null)
+  // Extraemos la reseña del usuario desde el array ya cargado (evita query extra)
+  const rawUserReview = userId
+    ? (product.reviews as any[]).find((r: any) => r.userId === userId) ?? null
+    : null;
+  const userReview: { rating: number; comment: string | null } | null = rawUserReview
+    ? { rating: rawUserReview.rating as number, comment: (rawUserReview.comment as string | null) ?? null }
     : null;
 
   const isVideoUrl = (url: string) => /\.(mp4|mov|avi|webm|mkv|ogg)$/i.test(url);

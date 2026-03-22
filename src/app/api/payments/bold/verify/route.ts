@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { markOrderPaid } from "@/app/actions/checkout";
+import { sendOrderConfirmationEmail } from "@/services/email/client";
 
 const BOLD_LINK_API = "https://integrations.api.bold.co/online/link/v1";
 
@@ -90,7 +91,39 @@ export async function GET(req: NextRequest) {
 
   if (boldStatus === "PAID") {
     try {
-      await markOrderPaid(referenceId, data.id ?? order.boldLinkId);
+      const paidOrder = await markOrderPaid(referenceId, data.id ?? order.boldLinkId);
+
+      // Enviar email de confirmación si no fue enviado aún (puede llegar antes que el webhook)
+      if (!paidOrder.confirmationEmailSentAt && paidOrder.user?.email) {
+        try {
+          const emailResult = await sendOrderConfirmationEmail({
+            customerEmail: paidOrder.user.email,
+            customerName: paidOrder.shippingName,
+            orderNumber: paidOrder.orderNumber,
+            items: paidOrder.items.map((item) => ({
+              name: item.name,
+              quantity: item.quantity,
+              price: Number(item.price),
+              color: item.colorName,
+              size: item.size,
+              imageUrl: item.imageUrl,
+            })),
+            subtotal: Number(paidOrder.subtotal),
+            shippingCost: Number(paidOrder.shippingCost),
+            discount: Number(paidOrder.discount),
+            total: Number(paidOrder.total),
+          });
+
+          await prisma.order.update({
+            where: { id: paidOrder.id },
+            data: emailResult.success
+              ? { confirmationEmailSentAt: new Date() }
+              : { confirmationEmailFailedAt: new Date(), confirmationEmailError: emailResult.error ?? "Error desconocido" },
+          });
+        } catch (emailErr) {
+          console.error("[BOLD CALLBACK] Error enviando email:", emailErr);
+        }
+      }
     } catch (e) {
       // Idempotente: si ya está pagado no es un error real
       console.warn("[BOLD CALLBACK] markOrderPaid (posiblemente idempotente):", e);

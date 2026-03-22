@@ -1,6 +1,6 @@
 import { LucideIcon } from "lucide-react";
 
-export type ProfileSection = "perfil" | "pedidos";
+export type ProfileSection = "perfil" | "pedidos" | "direcciones";
 
 export interface NavItem {
   id: ProfileSection;
