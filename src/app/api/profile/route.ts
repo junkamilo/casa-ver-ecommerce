@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hash, compare } from "bcryptjs";
 import type { NextRequest } from "next/server";
 
-export async function GET(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  if (!token?.id) {
+export async function GET() {
+  const session = await auth();
+  if (!session?.user) {
     return NextResponse.json({ message: "No autorizado" }, { status: 401 });
   }
+  const userId = (session.user as any).id as string;
 
   const user = await prisma.user.findUnique({
-    where: { id: token.id as string },
+    where: { id: userId },
     select: {
       id: true,
       name: true,
@@ -30,16 +31,17 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  if (!token?.id) {
+  const session = await auth();
+  if (!session?.user) {
     return NextResponse.json({ message: "No autorizado" }, { status: 401 });
   }
+  const userId = (session.user as any).id as string;
 
   const body = await req.json();
   const { name, currentPassword, newPassword } = body;
 
   const user = await prisma.user.findUnique({
-    where: { id: token.id as string },
+    where: { id: userId },
   });
 
   if (!user) {

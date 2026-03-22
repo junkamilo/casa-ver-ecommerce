@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { auth } from "@/auth";
 import { validateEmailConfig, sendOrderConfirmationEmail } from "@/services/email/client";
 
 /**
@@ -36,8 +36,8 @@ export async function POST(req: NextRequest) {
   const isCliAuth = cliSecret && cliSecret === process.env.CLI_SECRET;
 
   if (!isCliAuth) {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    if (!token?.id || token.role !== "ADMIN") {
+    const session = await auth();
+    if (!session?.user || (session.user as any).role !== "ADMIN") {
       return NextResponse.json(
         { error: "No autorizado. Se requiere rol ADMIN." },
         { status: 403 }

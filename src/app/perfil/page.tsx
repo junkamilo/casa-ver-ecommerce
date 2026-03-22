@@ -37,7 +37,10 @@ function PerfilContent() {
   useEffect(() => {
     if (status === "authenticated") {
       fetch("/api/profile")
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) throw new Error("Error al cargar perfil");
+          return res.json();
+        })
         .then((data) => setProfile(data))
         .catch(() => showToast("error", "Error al cargar perfil"))
         .finally(() => setLoading(false));
