@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import SectionHeader from "@/components/ui/SectionHeader";
+import SectionEmptyState from "@/components/ui/SectionEmptyState";
 import { useCarousel } from "./hooks/useCarousel";
 import { useCategories } from "./hooks/useCategories";
 import CategoryCard from "./components/CategoryCard";
@@ -35,15 +36,7 @@ const Categories = () => {
           {loading && <CategoryCarouselSkeleton count={4} />}
 
           {!loading && categories.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-8 gap-3">
-              <span
-                className="w-6 h-6 rounded-full border-2 border-[#C19A6B]/40 border-t-[#C19A6B] animate-spin"
-                aria-hidden="true"
-              />
-              <p className="italic text-sm text-[#C19A6B]/80 text-center">
-                Pronto agregaremos nuevas categorías y colecciones.
-              </p>
-            </div>
+            <SectionEmptyState message="Pronto agregaremos nuevas categorías y colecciones." />
           )}
 
           {!loading && categories.length > 0 && (

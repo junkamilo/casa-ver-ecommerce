@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import SectionHeader from "@/components/ui/SectionHeader";
+import SectionEmptyState from "@/components/ui/SectionEmptyState";
 import ProductCard from "@/components/shared/ProductCarousel/components/ProductCard";
 import { useCarousel } from "@/components/shared/ProductCarousel/hooks/useCarousel";
 import { ProductItem } from "@/components/shared/ProductCarousel/types";
@@ -40,6 +41,10 @@ const BestSellersClient = ({ items }: BestSellersClientProps) => {
         />
 
         {/* ── Carousel Section ── */}
+        {items.length === 0 && (
+          <SectionEmptyState message="Pronto agregaremos los productos más vendidos." />
+        )}
+
         <div className="relative mt-10 sm:mt-12 group/carousel">
           {canScrollLeft && (
             <button
@@ -61,17 +66,19 @@ const BestSellersClient = ({ items }: BestSellersClientProps) => {
             </button>
           )}
 
-          <div
-            ref={scrollRef}
-            className="grid grid-flow-col auto-cols-[80vw] sm:auto-cols-[45vw] gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-4 sm:pb-6 snap-x snap-mandatory md:grid-flow-row md:auto-cols-auto md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 md:gap-6 md:overflow-visible md:pb-0 md:snap-none"
-            style={{ scrollBehavior: "smooth" }}
-          >
-            {items.map((item) => (
-              <div key={item.slug} className="snap-center md:snap-none">
-                <ProductCard item={item} badgeVariant="white" />
-              </div>
-            ))}
-          </div>
+          {items.length > 0 && (
+            <div
+              ref={scrollRef}
+              className="grid grid-flow-col auto-cols-[80vw] sm:auto-cols-[45vw] gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-4 sm:pb-6 snap-x snap-mandatory md:grid-flow-row md:auto-cols-auto md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 md:gap-6 md:overflow-visible md:pb-0 md:snap-none"
+              style={{ scrollBehavior: "smooth" }}
+            >
+              {items.map((item) => (
+                <div key={item.slug} className="snap-center md:snap-none">
+                  <ProductCard item={item} badgeVariant="white" />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>

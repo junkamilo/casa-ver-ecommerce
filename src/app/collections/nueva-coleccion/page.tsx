@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import CollectionHero from "@/app/collections/[slug]/components/CollectionHero";
 import CollectionClient from "@/app/collections/[slug]/components/CollectionClient";
 import type { CollectionProduct, FilterOptions } from "@/app/collections/[slug]/types";
+import SectionEmptyState from "@/components/ui/SectionEmptyState";
 
 export const dynamic = "force-dynamic";
 
@@ -97,20 +98,7 @@ export default async function NuevaColeccionPage() {
 
           <div className="mt-12 sm:mt-16 lg:mt-24 w-full">
             {products.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-32 gap-4">
-                <span
-                  className="text-5xl font-light text-[#154734]/20 select-none"
-                  style={{ fontFamily: "Georgia, serif" }}
-                >
-                  ✦
-                </span>
-                <p
-                  className="text-center text-[#154734]/50 text-sm tracking-widest uppercase max-w-sm"
-                  style={{ fontFamily: "Georgia, serif" }}
-                >
-                  Los nuevos lanzamientos de esta temporada estarán disponibles muy pronto.
-                </p>
-              </div>
+              <SectionEmptyState message="Pronto agregaremos nuevos ingresos." />
             ) : (
               <CollectionClient products={products} filterOptions={filterOptions} />
             )}
