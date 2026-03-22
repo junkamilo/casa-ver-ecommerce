@@ -1,8 +1,8 @@
 "use client";
 
-import { SelectedColor } from "../../types";
-import { AlertTriangle, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { SelectedColor } from "../../types";
+import { AlertTriangle, Zap } from "lucide-react";
 
 const MIN_STOCK = 2; // Umbral de alerta — cuando stock <= minStock
 
@@ -21,7 +21,7 @@ export default function VariantStockSection({
   productId,
   onUpdate,
 }: Props) {
-  const [updating, setUpdating] = useState<string | null>(null);
+  const [bulkStock, setBulkStock] = useState("");
 
   if (!selectedColors.length || !selectedSizes.length) {
     return (
@@ -64,8 +64,48 @@ export default function VariantStockSection({
     // Esto requeriría pasar el color.id completo desde el backend
   };
 
+  const handleBulkFill = () => {
+    const value = parseInt(bulkStock, 10);
+    if (isNaN(value) || value < 0) return;
+    for (const color of selectedColors) {
+      for (const size of selectedSizes) {
+        onUpdate(color.name, size, value);
+      }
+    }
+    setBulkStock("");
+  };
+
   return (
     <div className="space-y-3">
+      {/* Relleno rápido */}
+      <div className="flex items-center gap-2 p-3 bg-[#154734]/5 border border-[#154734]/20 rounded-lg">
+        <Zap className="w-4 h-4 text-[#154734] shrink-0" />
+        <span className="text-xs font-semibold text-[#154734] shrink-0">
+          Stock por talla:
+        </span>
+        <input
+          type="number"
+          min="0"
+          value={bulkStock}
+          onChange={(e) => setBulkStock(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleBulkFill())}
+          placeholder="ej. 10"
+          disabled={disabled}
+          className="w-20 text-center px-2 py-1.5 rounded-lg border border-[#154734]/30 focus:border-[#154734] focus:ring-2 focus:ring-[#154734]/10 outline-none text-sm disabled:opacity-50"
+        />
+        <button
+          type="button"
+          disabled={disabled || !bulkStock}
+          onClick={handleBulkFill}
+          className="px-3 py-1.5 text-xs font-bold text-white bg-[#154734] hover:bg-[#103a2a] rounded-lg transition-colors disabled:opacity-40"
+        >
+          Aplicar a todas
+        </button>
+        <span className="text-[10px] text-gray-400">
+          Se asigna este stock a cada talla seleccionada
+        </span>
+      </div>
+
       {/* Alerta de stock bajo */}
       {lowStockVariants.length > 0 && (
         <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
@@ -121,8 +161,6 @@ export default function VariantStockSection({
                   const rawStock = color.variantStocks?.[size];
                   const stock = Number(rawStock ?? 0);
                   const isLowStock = stock <= MIN_STOCK;
-                  const cellKey = `${color.name}-${size}`;
-                  const isUpdating = updating === cellKey;
 
                   return (
                     <td key={size} className="px-3 py-3">
@@ -130,7 +168,7 @@ export default function VariantStockSection({
                         <input
                           type="number"
                           min="0"
-                          disabled={disabled || isUpdating}
+                          disabled={disabled}
                           value={rawStock !== undefined ? stock : ""}
                           onChange={(e) =>
                             handleStockChange(color, size, e.target.value === "" ? NaN : Number(e.target.value))
@@ -141,10 +179,7 @@ export default function VariantStockSection({
                               : "border-gray-200 focus:border-[#C19A6B] focus:ring-[#C19A6B]/10"
                           } disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2`}
                         />
-                        {isUpdating && (
-                          <Loader2 className="w-3.5 h-3.5 text-blue-600 animate-spin absolute right-1" />
-                        )}
-                        {!isUpdating && isLowStock && (
+                        {isLowStock && (
                           <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
                         )}
                       </div>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Play, ChevronLeft, ChevronRight } from "lucide-react";
 import type { CollectionProduct } from "../types";
+import SectionEmptyState from "@/components/ui/SectionEmptyState";
 
 const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".ogg"];
 
@@ -314,15 +315,7 @@ function ProductCard({ item, viewMode }: { item: CollectionProduct; viewMode: "g
 
 export function ProductGrid({ products, viewMode }: ProductGridProps) {
   if (products.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-32 text-center bg-[#FAFAFA] rounded-3xl border border-dashed border-gray-200">
-        <span className="text-4xl mb-4">✨</span>
-        <h3 className="text-lg font-bold text-[#154734] mb-2 uppercase tracking-widest">Colección en camino</h3>
-        <p className="text-sm text-gray-500 max-w-sm">
-          Pronto añadiremos nuevas prendas exclusivas a esta colección. ¡Vuelve a visitarnos!
-        </p>
-      </div>
-    );
+    return <SectionEmptyState message="Pronto añadiremos nuevas prendas exclusivas a esta colección." />;
   }
 
   if (viewMode === "list") {

@@ -12,6 +12,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user || (session.user as any).role !== "ADMIN") {
+      return new NextResponse("Acceso denegado", { status: 403 });
+    }
     const { id } = await params;
 
     const product = await db.product.findUnique({
@@ -109,6 +113,8 @@ export async function GET(
           hexCode: c.hexCode,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           images: c.images.map((img: any) => img.url),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          variantStocks: Object.fromEntries(c.variants.map((v: any) => [v.size, v.stock])),
         })),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         sizes: [...new Set(item.colors.flatMap((c: any) => c.variants.map((v: any) => v.size)))],
@@ -362,9 +368,12 @@ async function createSetItems(tx: any, productId: string, slug: string, items: S
     });
 
     const itemStock = itemData.stock ?? 0;
+    const hasVariantStocks = (itemData.colors || []).some(
+      (c) => c.variantStocks && Object.keys(c.variantStocks).length > 0
+    );
     const totalVariants = (itemData.colors?.length ?? 0) * (itemData.sizes?.length ?? 0);
-    const base = totalVariants > 0 ? Math.floor(itemStock / totalVariants) : 0;
-    const rem = totalVariants > 0 ? itemStock % totalVariants : 0;
+    const base = !hasVariantStocks && totalVariants > 0 ? Math.floor(itemStock / totalVariants) : 0;
+    const rem = !hasVariantStocks && totalVariants > 0 ? itemStock % totalVariants : 0;
     let idx = 0;
 
     for (const colorData of itemData.colors || []) {
@@ -381,8 +390,11 @@ async function createSetItems(tx: any, productId: string, slug: string, items: S
       }
       for (const size of itemData.sizes || []) {
         const sku = `${slug}-${itemData.name.toLowerCase().replace(/\s+/g, "-")}-${colorData.name.toLowerCase().replace(/\s+/g, "-")}-${size.toLowerCase()}`;
+        const variantStock = colorData.variantStocks?.[size] !== undefined
+          ? Number(colorData.variantStocks[size])
+          : base + (idx < rem ? 1 : 0);
         await tx.productItemVariant.create({
-          data: { colorId: itemColor.id, size: size as never, sku, stock: base + (idx < rem ? 1 : 0) },
+          data: { colorId: itemColor.id, size: size as never, sku, stock: variantStock },
         });
         idx++;
       }

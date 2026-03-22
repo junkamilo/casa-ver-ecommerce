@@ -57,7 +57,7 @@ export default function ProductClient({
   // 'main' = producto principal, cualquier otro string = item.id de subcategoría
   const [activeView, setActiveView] = useState<string>("main");
 
-  const { addToCart } = useCart();
+  const { addToCart, setBuyNow } = useCart();
   const router = useRouter();
 
   // ─── Datos activos según la vista seleccionada ──────────────────────────
@@ -154,7 +154,7 @@ export default function ProductClient({
   const handleBuyNow = () => {
     const cartProduct = buildCartProduct();
     if (!cartProduct || !selectedColor) return;
-    addToCart(
+    setBuyNow(
       cartProduct,
       quantity,
       { name: selectedColor.name, hex: selectedColor.hex },

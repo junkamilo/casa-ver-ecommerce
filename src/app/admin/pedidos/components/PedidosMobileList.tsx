@@ -3,6 +3,7 @@
 import { ChevronDown, ChevronUp, CreditCard, MapPin } from "lucide-react";
 import { getStatusStyles, formatPrice } from "../constants";
 import type { Order } from "../types";
+import SectionEmptyState from "@/components/ui/SectionEmptyState";
 
 interface PedidosMobileListProps {
   orders: Order[];
@@ -17,6 +18,14 @@ export function PedidosMobileList({
   onToggleExpand,
   onViewDetail,
 }: PedidosMobileListProps) {
+  if (orders.length === 0) {
+    return (
+      <div className="md:hidden">
+        <SectionEmptyState message="No se encontraron pedidos." />
+      </div>
+    );
+  }
+
   return (
     <div className="md:hidden space-y-3">
       {orders.map((order) => (

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Bell, CheckCircle2, Clock, ChevronDown, ArrowUpRight } from "lucide-react";
 import { mapOrderStatus, formatCOP, timeAgo } from "../constants";
 import type { RecentOrder } from "../types";
+import SectionEmptyState from "@/components/ui/SectionEmptyState";
 
 interface Props {
   orders: RecentOrder[];
@@ -41,12 +42,7 @@ export default function NotificationsCard({ orders }: Props) {
       {/* Lista de notificaciones */}
       <div className="divide-y divide-gray-50">
         {orders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 gap-2">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-              <Bell className="w-6 h-6 text-gray-300" />
-            </div>
-            <p className="text-sm text-gray-400 font-medium">Sin notificaciones</p>
-          </div>
+          <SectionEmptyState message="Sin notificaciones." />
         ) : (
           orders.map((order) => {
             const statusInfo = mapOrderStatus(order.status);

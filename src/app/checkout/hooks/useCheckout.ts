@@ -41,7 +41,11 @@ export type CheckoutFormData = z.infer<typeof checkoutSchema>;
 // Hook principal
 // ---------------------------------------------------------------------------
 export function useCheckout() {
-  const { items, subtotal, closeCart } = useCart();
+  const { items, closeCart, buyNowItem, clearBuyNow } = useCart();
+
+  // Si hay un buyNowItem, el checkout opera solo con ese ítem (no toca el carrito)
+  const checkoutItems = buyNowItem ? [buyNowItem] : items;
+  const subtotal = checkoutItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const [isPending, startTransition] = useTransition();
 
   // Cupón
@@ -109,8 +113,8 @@ export function useCheckout() {
   // Submit — crear orden → crear link Bold → redirigir directo a checkout.bold.co
   // ---------------------------------------------------------------------------
   function onSubmit(data: CheckoutFormData) {
-    if (!items.length) {
-      setSubmitError("Tu carrito está vacío");
+    if (!checkoutItems.length) {
+      setSubmitError("No hay productos para procesar. Vuelve a la tienda y selecciona un producto.");
       return;
     }
 
@@ -130,7 +134,7 @@ export function useCheckout() {
         department: data.department,
         savedAddressId: data.savedAddressId,
         paymentMethod: data.paymentMethod,
-        items: items.map((item) => ({
+        items: checkoutItems.map((item) => ({
           variantId: item.variantId,
           productId: item.productId,
           name: item.name,
@@ -179,6 +183,7 @@ export function useCheckout() {
       }
 
       closeCart();
+      clearBuyNow();
 
       // PASO 3: Redirigir DIRECTAMENTE a Bold
       if (boldData.redirectUrl) {
@@ -194,7 +199,7 @@ export function useCheckout() {
 
   return {
     form,
-    items,
+    items: checkoutItems,
     subtotal,
     shippingCost: SHIPPING_COST,
     discount,

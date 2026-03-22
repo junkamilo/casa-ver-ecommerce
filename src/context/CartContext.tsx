@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { StaticImageData } from "next/image";
 
 export interface CartItem {
@@ -26,6 +26,9 @@ interface CartContextType {
   isCartOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
+  buyNowItem: CartItem | null;
+  setBuyNow: (product: any, quantity: number, color: any, size?: string) => void;
+  clearBuyNow: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -33,6 +36,15 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [buyNowItem, setBuyNowItem] = useState<CartItem | null>(null);
+
+  // Leer sessionStorage solo después de la hidratación para evitar mismatch SSR/cliente
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem("buyNowItem");
+      if (stored) setBuyNowItem(JSON.parse(stored) as CartItem);
+    } catch {}
+  }, []);
 
   // Calcular total de items (para la bolita roja)
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -71,6 +83,29 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const setBuyNow = (product: any, qty: number, color: any, size?: string) => {
+    const sizeLabel = size || "Única";
+    const item: CartItem = {
+      id: `buynow-${product.id ?? product.name}-${color.id ?? color.name}-${sizeLabel}`,
+      variantId: product.variantId ?? color.variantId ?? "",
+      productId: product.id ?? "",
+      sku: product.sku ?? color.sku ?? "",
+      name: product.name,
+      price: product.price,
+      image: product.gallery?.[0] || product.image,
+      color: color.name,
+      size: sizeLabel,
+      quantity: qty,
+    };
+    setBuyNowItem(item);
+    try { sessionStorage.setItem("buyNowItem", JSON.stringify(item)); } catch {}
+  };
+
+  const clearBuyNow = () => {
+    setBuyNowItem(null);
+    try { sessionStorage.removeItem("buyNowItem"); } catch {}
+  };
+
   const removeFromCart = (id: string) => {
     setItems(items.filter(item => item.id !== id));
   };
@@ -86,9 +121,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <CartContext.Provider value={{ 
-      items, addToCart, removeFromCart, updateQuantity, 
-      cartCount, subtotal, isCartOpen, openCart: () => setIsCartOpen(true), closeCart: () => setIsCartOpen(false) 
+    <CartContext.Provider value={{
+      items, addToCart, removeFromCart, updateQuantity,
+      cartCount, subtotal, isCartOpen, openCart: () => setIsCartOpen(true), closeCart: () => setIsCartOpen(false),
+      buyNowItem, setBuyNow, clearBuyNow,
     }}>
       {children}
     </CartContext.Provider>

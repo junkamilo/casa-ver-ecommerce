@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { MapPin, ChevronDown } from "lucide-react";
-import { useFormContext } from "react-hook-form";
-import { DEPARTAMENTOS } from "@/lib/constants/colombia";
+import { useFormContext, useController } from "react-hook-form";
+import { DEPARTAMENTOS, MUNICIPIOS } from "@/lib/constants/colombia";
 import { SavedAddressPicker } from "./SavedAddressPicker";
+import CustomSelect from "./CustomSelect";
 import type { CheckoutFormData } from "../hooks/useCheckout";
 
 const fi =
@@ -15,11 +17,33 @@ const FieldError = ({ message }: { message?: string }) =>
   message ? <p className="mt-1.5 text-xs text-red-500 font-medium ml-1">{message}</p> : null;
 
 const DeliverySection = () => {
-  const { register, formState: { errors } } = useFormContext<CheckoutFormData>();
+  const {
+    register,
+    setValue,
+    formState: { errors },
+  } = useFormContext<CheckoutFormData>();
+
+  const {
+    field: deptField,
+  } = useController<CheckoutFormData, "department">({ name: "department" });
+
+  const {
+    field: cityField,
+  } = useController<CheckoutFormData, "city">({ name: "city" });
+
+  const selectedDepartment = deptField.value;
+
+  // Al cambiar departamento, limpiar ciudad
+  useEffect(() => {
+    setValue("city", "");
+  }, [selectedDepartment, setValue]);
+
+  const municipios = selectedDepartment ? (MUNICIPIOS[selectedDepartment] ?? []) : [];
 
   return (
-    <section className="mb-8 sm:mb-10 bg-white p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-4xl border border-gray-100 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] relative overflow-hidden group/section hover:border-[#C19A6B]/30 transition-colors duration-300">
-      <div className="absolute top-0 left-0 w-1.5 h-full bg-[#154734] scale-y-0 group-hover/section:scale-y-100 origin-top transition-transform duration-500" />
+    <section className="mb-8 sm:mb-10 bg-white p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-4xl border border-gray-100 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] relative group/section hover:border-[#C19A6B]/30 transition-colors duration-300">
+      {/* Barra decorativa izquierda — rounded para no salir del contorno sin overflow-hidden */}
+      <div className="absolute top-0 left-0 w-1.5 h-full rounded-l-2xl sm:rounded-l-4xl bg-[#154734] scale-y-0 group-hover/section:scale-y-100 origin-top transition-transform duration-500" />
 
       <h2
         className="text-lg sm:text-xl md:text-2xl text-[#154734] mb-5 sm:mb-6 flex items-center gap-2 sm:gap-3"
@@ -31,11 +55,12 @@ const DeliverySection = () => {
       <SavedAddressPicker />
 
       <div className="space-y-4 sm:space-y-5">
-        <div className="relative group">
-          <select className="w-full px-4 sm:px-5 py-3 sm:py-4 bg-[#FAFAFA] border border-gray-200 rounded-xl appearance-none text-[#154734] font-medium outline-none focus:bg-white focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/15 transition-all duration-300 text-sm shadow-inner cursor-pointer pt-5 sm:pt-6 peer h-12 sm:h-auto">
+        {/* País */}
+        <div className="relative">
+          <select className="w-full px-5 py-4 bg-[#FAFAFA] border border-gray-200 rounded-xl appearance-none text-[#154734] font-medium outline-none focus:bg-white focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/15 transition-all duration-300 text-sm shadow-inner cursor-pointer pt-6">
             <option value="CO">Colombia</option>
           </select>
-          <label className="absolute left-5 top-2 text-[10px] font-bold uppercase tracking-widest text-gray-400 pointer-events-none">
+          <label className="absolute left-5 top-2 text-[10px] font-bold uppercase tracking-widest text-[#C19A6B] pointer-events-none">
             País / Región
           </label>
           <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#C19A6B] pointer-events-none" />
@@ -69,43 +94,41 @@ const DeliverySection = () => {
           <FieldError message={errors.address?.message} />
         </div>
 
-        {/* Apto + Ciudad */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div className="relative">
-            <input type="text" id="addressDetail" className={fi} placeholder=" " {...register("addressDetail")} />
-            <label htmlFor="addressDetail" className={fl}>Apartamento, local (Opcional)</label>
-          </div>
-          <div className="relative">
-            <input type="text" id="city" className={fi} placeholder=" " {...register("city")} />
-            <label htmlFor="city" className={fl}>Ciudad</label>
-            <FieldError message={errors.city?.message} />
-          </div>
+        {/* Apto */}
+        <div className="relative">
+          <input type="text" id="addressDetail" className={fi} placeholder=" " {...register("addressDetail")} />
+          <label htmlFor="addressDetail" className={fl}>Apartamento, local (Opcional)</label>
         </div>
 
-        {/* Departamento + Teléfono */}
+        {/* Departamento + Ciudad — siempre juntos */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div className="relative">
-            <select
-              id="department"
-              className="w-full px-5 py-4 bg-[#FAFAFA] border border-gray-200 rounded-xl appearance-none text-[#154734] outline-none focus:bg-white focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/15 transition-all duration-300 text-sm shadow-inner cursor-pointer pt-6"
-              {...register("department")}
-            >
-              <option value="">Seleccionar</option>
-              {DEPARTAMENTOS.map((d) => (
-                <option key={d} value={d}>{d}</option>
-              ))}
-            </select>
-            <label className="absolute left-5 top-2 text-[10px] font-bold uppercase tracking-widest text-gray-400 pointer-events-none">
-              Departamento
-            </label>
-            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            <FieldError message={errors.department?.message} />
-          </div>
-          <div className="relative">
-            <input type="tel" id="phone" className={fi} placeholder=" " {...register("phone")} />
-            <label htmlFor="phone" className={fl}>Teléfono móvil</label>
-            <FieldError message={errors.phone?.message} />
-          </div>
+          <CustomSelect
+            label="Departamento"
+            value={deptField.value ?? ""}
+            onChange={(val) => deptField.onChange(val)}
+            options={[...DEPARTAMENTOS]}
+            placeholder="Seleccionar"
+            searchable
+            error={errors.department?.message}
+          />
+
+          <CustomSelect
+            label="Ciudad / Municipio"
+            value={cityField.value ?? ""}
+            onChange={(val) => cityField.onChange(val)}
+            options={municipios}
+            placeholder={selectedDepartment ? "Seleccionar ciudad" : "Primero elige departamento"}
+            disabled={!selectedDepartment}
+            searchable
+            error={errors.city?.message}
+          />
+        </div>
+
+        {/* Teléfono */}
+        <div className="relative">
+          <input type="tel" id="phone" className={fi} placeholder=" " {...register("phone")} />
+          <label htmlFor="phone" className={fl}>Teléfono móvil</label>
+          <FieldError message={errors.phone?.message} />
         </div>
       </div>
     </section>

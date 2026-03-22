@@ -1,6 +1,7 @@
-import { Eye, Receipt } from "lucide-react";
+import { Eye } from "lucide-react";
 import { getStatusStyles, formatPrice } from "../constants";
 import type { Order } from "../types";
+import SectionEmptyState from "@/components/ui/SectionEmptyState";
 
 interface PedidosTableProps {
   orders: Order[];
@@ -64,12 +65,7 @@ export function PedidosTable({ orders, onViewDetail }: PedidosTableProps) {
         </tbody>
       </table>
 
-      {orders.length === 0 && (
-        <div className="p-12 text-center text-gray-500">
-          <Receipt className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-          <p>No se encontraron pedidos</p>
-        </div>
-      )}
+      {orders.length === 0 && <SectionEmptyState message="No se encontraron pedidos." />}
     </div>
   );
 }
