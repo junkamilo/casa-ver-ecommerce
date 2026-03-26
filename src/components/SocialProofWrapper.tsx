@@ -5,6 +5,6 @@ import SocialProofPopup from "./SocialProofPopup";
 
 export default function SocialProofWrapper() {
   const pathname = usePathname();
-  if (pathname?.startsWith("/admin")) return null;
+  if (pathname?.startsWith("/admin") || pathname?.startsWith("/checkout")) return null;
   return <SocialProofPopup />;
 }

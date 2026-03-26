@@ -91,7 +91,15 @@ export async function GET(req: NextRequest) {
 
   if (boldStatus === "PAID") {
     try {
-      const paidOrder = await markOrderPaid(referenceId, data.id ?? order.boldLinkId);
+      // data.payment_id = ID real de la transacción Bold (preferido)
+      // data.id         = LNK_* (ID del link, NO es el payment ID)
+      // order.boldLinkId = fallback final
+      const boldPaymentId =
+        (data.payment_id as string | undefined) ??
+        (data.transaction_id as string | undefined) ??
+        (data.id as string | undefined) ??
+        order.boldLinkId;
+      const paidOrder = await markOrderPaid(referenceId, boldPaymentId!);
 
       // Enviar email de confirmación si no fue enviado aún (puede llegar antes que el webhook)
       if (!paidOrder.confirmationEmailSentAt && paidOrder.user?.email) {

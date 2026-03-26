@@ -1,7 +1,11 @@
 import type { StaticImageData } from "next/image";
-import type { z } from "zod";
-import type { checkoutSchema } from "../hooks/useCheckout";
 
+// Re-export del schema para que los componentes importen desde un solo lugar
+export type { CheckoutFormData } from "./schema";
+
+// ---------------------------------------------------------------------------
+// Carrito / ítem de checkout
+// ---------------------------------------------------------------------------
 export interface CheckoutItem {
   id: string;
   variantId: string;
@@ -15,31 +19,9 @@ export interface CheckoutItem {
   sku: string;
 }
 
-export type CheckoutFormData = z.infer<typeof checkoutSchema>;
-
-export type PaymentMethodUI = "BOLD";
-
-export type BoldSubMethod =
-  | "CREDIT_CARD"
-  | "DEBIT_CARD"
-  | "PSE"
-  | "NEQUI"
-  | "BOTON_BANCOLOMBIA";
-
-export interface PseBank {
-  financial_institution_code: string;
-  financial_institution_name: string;
-}
-
-export interface CardFormData {
-  cardNumber: string;
-  cardholderName: string;
-  expirationMonth: string;
-  expirationYear: string;
-  cvc: string;
-  installments: number;
-}
-
+// ---------------------------------------------------------------------------
+// Cupón
+// ---------------------------------------------------------------------------
 export interface CouponState {
   code: string;
   status: "idle" | "validating" | "valid" | "invalid";
@@ -47,3 +29,23 @@ export interface CouponState {
   couponId?: string;
   errorMessage?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Dirección guardada del perfil (compartida entre AuthenticatedDelivery y hook)
+// ---------------------------------------------------------------------------
+export interface SavedAddress {
+  id: string;
+  fullName: string;
+  cedula: string | null;
+  phone: string;
+  department: string;
+  city: string;
+  address: string;
+  addressDetail: string | null;
+  isDefault: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// UI
+// ---------------------------------------------------------------------------
+export type PaymentMethodUI = "BOLD";

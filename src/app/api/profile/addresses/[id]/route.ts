@@ -6,6 +6,7 @@ import { z } from "zod";
 
 const updateSchema = z.object({
   fullName: z.string().min(2, "Nombre requerido").optional(),
+  cedula: z.string().nullable().optional(),
   phone: z
     .string()
     .min(7, "Teléfono inválido")

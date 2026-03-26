@@ -45,9 +45,22 @@ export async function updateOrderStatus(orderNumber: string, statusEs: string): 
   await requireAdmin();
   const dbStatus = STATUS_ES_TO_DB[statusEs];
   if (!dbStatus) throw new Error(`Estado inválido: ${statusEs}`);
+
+  const now = new Date();
+  const extraData: Record<string, Date | null> = {};
+  if (dbStatus === "SHIPPED")    extraData.shippedAt   = now;
+  if (dbStatus === "DELIVERED")  extraData.deliveredAt = now;
+  if (dbStatus === "CANCELLED")  extraData.cancelledAt = now;
+  // Si se revierte desde Enviado/Entregado/Cancelado, limpiar la fecha
+  if (dbStatus === "PAID" || dbStatus === "PROCESSING" || dbStatus === "PENDING") {
+    extraData.shippedAt   = null;
+    extraData.deliveredAt = null;
+    extraData.cancelledAt = null;
+  }
+
   await prisma.order.update({
     where: { orderNumber },
-    data:  { status: dbStatus as any },
+    data:  { status: dbStatus as any, ...extraData },
   });
 }
 
@@ -74,6 +87,9 @@ export async function getOrders(): Promise<Order[]> {
     paymentMethod: METHOD_MAP[o.paymentMethod] ?? o.paymentMethod,
     date:          o.createdAt.toLocaleString("es-CO", { timeZone: "America/Bogota" }),
     address:       `${o.shippingAddress}, ${o.shippingCity}, ${o.shippingDepartment}`,
+    deliveredAt:   o.deliveredAt
+      ? o.deliveredAt.toLocaleString("es-CO", { timeZone: "America/Bogota" })
+      : undefined,
     items: o.items.map((item) => ({
       name:  item.name,
       qty:   item.quantity,

@@ -18,4 +18,5 @@ export interface Order {
   paymentMethod: string;
   date: string;
   address: string;
+  deliveredAt?: string;
 }

@@ -17,39 +17,50 @@ export async function POST(request: Request) {
 
     const { email, password, name, recoveryEmail, phone } = parsed.data;
 
-    // ── Verificar si el correo ya existe ─────────────────────────────────────
-    const userFound = await prisma.user.findUnique({ where: { email } });
-    if (userFound) {
+    // ── Verificar si ya existe un usuario VERIFICADO con ese correo ──────────
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser && existingUser.emailVerified) {
       return NextResponse.json(
         { message: "El correo ya está registrado" },
         { status: 400 }
       );
     }
 
-    // ── Crear usuario con emailVerified null ──────────────────────────────────
-    const hashedPassword = await hash(password, 10);
-    const newUser = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: "USER",
-        phone: phone || null,
-        recoveryEmail: recoveryEmail || null,
-        emailVerified: null,
-      },
-      select: { id: true }, // solo necesitamos el ID
-    });
+    // Si existe un usuario sin verificar (registro antiguo con bug), eliminarlo
+    if (existingUser && !existingUser.emailVerified) {
+      await prisma.user.delete({ where: { email } });
+    }
 
-    // ── Generar y persistir código de verificación ────────────────────────────
+    // ── Generar código y hash de contraseña ───────────────────────────────────
+    const hashedPassword = await hash(password, 10);
     const code = generateSecureCode();
     const codeHash = await hash(code, 10);
     const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
 
-    const token = await (prisma as any).emailVerificationToken.upsert({
-      where:  { userId: newUser.id },
-      create: { userId: newUser.id, codeHash, expires, attempts: 0 },
-      update: { codeHash, expires, attempts: 0 },
+    // ── Guardar registro pendiente (SIN crear usuario todavía) ────────────────
+    // El usuario solo se crea en la BD cuando verifique su correo exitosamente.
+    const pending = await (prisma as any).pendingRegistration.upsert({
+      where:  { email },
+      create: {
+        name:         name || null,
+        email,
+        passwordHash: hashedPassword,
+        phone:        phone || null,
+        recoveryEmail: recoveryEmail || null,
+        codeHash,
+        expires,
+        attempts:     0,
+      },
+      update: {
+        name:         name || null,
+        passwordHash: hashedPassword,
+        phone:        phone || null,
+        recoveryEmail: recoveryEmail || null,
+        codeHash,
+        expires,
+        attempts:     0,
+        createdAt:    new Date(),
+      },
       select: { id: true },
     });
 
@@ -60,9 +71,9 @@ export async function POST(request: Request) {
       code,
     });
 
-    // ── Respuesta mínima: solo el tokenId opaco (sin userId ni datos del user) ─
+    // ── Respuesta mínima: solo el tokenId opaco ───────────────────────────────
     return NextResponse.json(
-      { tokenId: token.id, requiresVerification: true },
+      { tokenId: pending.id, requiresVerification: true },
       { status: 201 }
     );
   } catch (error) {

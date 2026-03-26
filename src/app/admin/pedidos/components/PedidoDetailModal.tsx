@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, User, Package, MapPin, CreditCard, Calendar, ChevronDown } from "lucide-react";
+import { X, User, Package, MapPin, CreditCard, Calendar, ChevronDown, CheckCircle2 } from "lucide-react";
 import { getStatusStyles, formatPrice } from "../constants";
 import { updateOrderStatus } from "@/app/actions/orders";
 import type { Order } from "../types";
@@ -145,6 +145,15 @@ export function PedidoDetailModal({ order, onClose, onStatusUpdated }: PedidoDet
                   <p className="text-gray-500 text-xs">{order.date}</p>
                 </div>
               </div>
+              {order.deliveredAt && (
+                <div className="flex items-start gap-3 pt-2 border-t border-gray-100">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-medium text-emerald-700">Confirmado por el cliente</p>
+                    <p className="text-gray-500 text-xs">{order.deliveredAt}</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

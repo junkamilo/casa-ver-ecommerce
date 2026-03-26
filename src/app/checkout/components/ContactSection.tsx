@@ -1,70 +1,84 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { Mail } from "lucide-react";
 import { useFormContext } from "react-hook-form";
-import type { CheckoutFormData } from "../hooks/useCheckout";
-
-const fi =
-  "peer w-full px-5 py-4 bg-[#FAFAFA] border border-gray-200 rounded-xl focus:bg-white focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/15 outline-none transition-all duration-300 text-sm text-[#154734] shadow-inner pt-6";
-const fl =
-  "absolute left-5 top-4 text-gray-400 text-sm transition-all duration-300 peer-focus:-translate-y-2.5 peer-focus:text-[10px] peer-focus:text-[#C19A6B] peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-widest peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:font-bold peer-[:not(:placeholder-shown)]:uppercase peer-[:not(:placeholder-shown)]:tracking-widest pointer-events-none";
+import { useSession } from "next-auth/react";
+import {
+  SECTION_CLS,
+  ACCENT_BAR_CLS,
+  SECTION_TITLE_CLS,
+  INPUT_CLS,
+  LABEL_CLS,
+} from "../constants/constants";
+import type { CheckoutFormData } from "../types/schema";
 
 const ContactSection = () => {
-  const { register, formState: { errors } } = useFormContext<CheckoutFormData>();
+  const {
+    register,
+    setValue,
+    formState: { errors },
+  } = useFormContext<CheckoutFormData>();
+
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === "authenticated";
+
+  // Pre-rellenar email para usuarios con sesión activa
+  useEffect(() => {
+    if (isAuthenticated && session?.user?.email) {
+      setValue("email", session.user.email, { shouldValidate: false });
+    }
+  }, [isAuthenticated, session, setValue]);
+
+  const firstName = session?.user?.name?.split(" ")[0];
 
   return (
-    <section className="mb-8 sm:mb-10 bg-white p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2rem] border border-gray-100 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] relative overflow-hidden group/section hover:border-[#C19A6B]/30 transition-colors duration-300">
-      <div className="absolute top-0 left-0 w-1.5 h-full bg-[#154734] scale-y-0 group-hover/section:scale-y-100 origin-top transition-transform duration-500" />
+    <section className={SECTION_CLS}>
+      <div className={ACCENT_BAR_CLS} />
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 sm:gap-4 mb-6">
+      <div className="flex items-center justify-between gap-3 mb-6">
         <h2
-          className="text-lg sm:text-xl md:text-2xl text-[#154734] flex items-center gap-2 sm:gap-3"
+          className={SECTION_TITLE_CLS}
           style={{ fontFamily: "Georgia, serif" }}
         >
-          <Mail className="w-4 sm:w-5 h-4 sm:h-5 text-[#C19A6B] shrink-0" /> Contacto
+          <Mail className="w-4 sm:w-5 h-4 sm:h-5 text-[#C19A6B] shrink-0" />
+          Contacto
+          {isAuthenticated && firstName && (
+            <span className="text-xs sm:text-sm text-gray-400 font-normal ml-1">
+              · Hola, {firstName}
+            </span>
+          )}
         </h2>
-        <Link
-          href="/login"
-          className="text-[9px] sm:text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-[#C19A6B] hover:text-[#154734] transition-colors border-b border-transparent hover:border-[#154734] pb-0.5 p-1 touch-target active:scale-90"
-        >
-          Iniciar sesión
-        </Link>
+
+        {!isAuthenticated && (
+          <Link
+            href="/login"
+            className="text-[9px] sm:text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-[#C19A6B] hover:text-[#154734] transition-colors border-b border-transparent hover:border-[#154734] pb-0.5 p-1 active:scale-90 shrink-0"
+          >
+            Iniciar sesión
+          </Link>
+        )}
       </div>
 
-      <div className="space-y-4 sm:space-y-5">
-        <div className="relative">
-          <input
-            type="email"
-            id="email"
-            className={fi}
-            placeholder=" "
-            {...register("email")}
-          />
-          <label htmlFor="email" className={fl}>
-            Correo electrónico
-          </label>
-          {errors.email && (
-            <p className="mt-1.5 text-xs text-red-500 font-medium ml-1">{errors.email.message}</p>
-          )}
-        </div>
-
-        <label className="flex items-center gap-3 text-xs sm:text-sm text-gray-500 cursor-pointer group w-fit">
-          <div className="relative flex items-center justify-center">
-            <input
-              type="checkbox"
-              className="peer appearance-none w-5 h-5 border-2 border-gray-200 rounded-md focus:ring-2 focus:ring-[#C19A6B]/30 checked:bg-[#C19A6B] checked:border-[#C19A6B] transition-colors cursor-pointer"
-            />
-            <div className="absolute text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="4 10 8 14 16 6" />
-              </svg>
-            </div>
-          </div>
-          <span className="group-hover:text-[#154734] transition-colors">
-            Quiero recibir ofertas exclusivas de Casa Verde
-          </span>
+      <div className="relative">
+        <input
+          type="email"
+          id="email"
+          autoComplete="email"
+          className={`${INPUT_CLS} ${isAuthenticated ? "text-gray-400 cursor-default select-none" : ""}`}
+          placeholder=" "
+          readOnly={isAuthenticated}
+          {...register("email")}
+        />
+        <label htmlFor="email" className={LABEL_CLS}>
+          Correo electrónico
         </label>
+        {errors.email && (
+          <p className="mt-1.5 text-xs text-red-500 font-medium ml-1">
+            {errors.email.message}
+          </p>
+        )}
       </div>
     </section>
   );

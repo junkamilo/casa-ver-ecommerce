@@ -94,8 +94,20 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { success: false, error: "Correo electrónico inválido" };
   }
+  if (!/^\d{6,12}$/.test(cedula)) {
+    return { success: false, error: "Cédula inválida (6–12 dígitos numéricos)" };
+  }
+  if (!/^\d{10}$/.test(phone)) {
+    return { success: false, error: "Teléfono inválido (10 dígitos numéricos)" };
+  }
+  if (address.length > 200 || firstName.length > 50 || lastName.length > 80) {
+    return { success: false, error: "Datos de dirección demasiado largos" };
+  }
   if (items.some((item) => !item.variantId || !item.productId || item.price <= 0 || item.quantity <= 0)) {
     return { success: false, error: "Datos de producto inválidos" };
+  }
+  if (items.some((item) => item.quantity > 100)) {
+    return { success: false, error: "Cantidad por producto excede el límite permitido" };
   }
 
   const total = subtotal + shippingCost - discount;
