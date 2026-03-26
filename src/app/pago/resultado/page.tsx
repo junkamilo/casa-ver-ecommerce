@@ -15,6 +15,11 @@ import { Loader2, CheckCircle, XCircle } from "lucide-react";
 
 type PaymentStatus = "loading" | "APPROVED" | "REJECTED" | "RUNNING" | "error";
 
+interface VerifyResult {
+  status: PaymentStatus;
+  orderId?: string;
+}
+
 function ResultContent() {
   const params = useSearchParams();
   const router = useRouter();
@@ -27,21 +32,22 @@ function ResultContent() {
     null;
 
   const [status, setStatus] = useState<PaymentStatus>("loading");
+  const [orderId, setOrderId] = useState<string | undefined>();
   const [pollCount, setPollCount] = useState(0);
 
-  const verify = async (): Promise<PaymentStatus> => {
-    if (!referenceId) return "error";
+  const verify = async (): Promise<VerifyResult> => {
+    if (!referenceId) return { status: "error" };
     try {
       const res = await fetch(
         `/api/payments/bold/verify?reference_id=${encodeURIComponent(referenceId)}`
       );
       const data = await res.json();
       const s = (data.status ?? "UNKNOWN").toUpperCase();
-      if (s === "APPROVED") return "APPROVED";
-      if (s === "REJECTED" || s === "CANCELLED" || s === "EXPIRED") return "REJECTED";
-      return "RUNNING";
+      if (s === "APPROVED") return { status: "APPROVED", orderId: data.orderId };
+      if (s === "REJECTED" || s === "CANCELLED" || s === "EXPIRED") return { status: "REJECTED" };
+      return { status: "RUNNING" };
     } catch {
-      return "error";
+      return { status: "error" };
     }
   };
 
@@ -51,23 +57,29 @@ function ResultContent() {
       setStatus("error");
       return;
     }
-    verify().then(setStatus);
+    verify().then((result) => {
+      setStatus(result.status);
+      if (result.orderId) setOrderId(result.orderId);
+      if (result.status === "APPROVED" && result.orderId) {
+        router.replace(`/checkout/success?orderId=${result.orderId}`);
+      }
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [referenceId]);
 
   // Polling mientras RUNNING (máx 10 veces = 30 segundos)
   useEffect(() => {
     if (status !== "RUNNING" || pollCount >= 10) {
-      if (status === "RUNNING" && pollCount >= 10) {
-        // Agotamos los intentos — mostrar como "en proceso"
-        setStatus("RUNNING");
-      }
       return;
     }
     const timer = setTimeout(async () => {
-      const newStatus = await verify();
-      setStatus(newStatus);
+      const result = await verify();
+      setStatus(result.status);
+      if (result.orderId) setOrderId(result.orderId);
       setPollCount((c) => c + 1);
+      if (result.status === "APPROVED" && result.orderId) {
+        router.replace(`/checkout/success?orderId=${result.orderId}`);
+      }
     }, 3000);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -93,8 +105,20 @@ function ResultContent() {
     );
   }
 
-  // ── Pantalla: APROBADO ─────────────────────────────────────────────────────
+  // ── Pantalla: APROBADO — redirige a /checkout/success si hay orderId ─────
   if (status === "APPROVED") {
+    if (orderId) {
+      // La redirección ya fue disparada en el useEffect; mostrar loader mientras ocurre
+      return (
+        <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center gap-4 px-4 text-center">
+          <Loader2 className="w-12 h-12 text-[#154734] animate-spin" />
+          <p className="text-[#154734]" style={{ fontFamily: "Georgia, serif" }}>
+            Redirigiendo a tu pedido...
+          </p>
+        </div>
+      );
+    }
+    // Fallback si no hay orderId
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center gap-6 px-4 text-center">
         <CheckCircle className="w-20 h-20 text-green-500" />
@@ -106,8 +130,7 @@ function ResultContent() {
             ¡Pago exitoso!
           </h1>
           <p className="text-gray-600 max-w-sm">
-            Tu pedido ha sido confirmado. Recibirás un correo con los detalles
-            de tu compra.
+            Tu pedido ha sido confirmado. Recibirás un correo con los detalles de tu compra.
           </p>
         </div>
         <button

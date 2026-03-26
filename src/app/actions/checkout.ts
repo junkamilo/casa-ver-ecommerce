@@ -87,6 +87,17 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     return { success: false, error: "El carrito está vacío" };
   }
 
+  // Validación de campos requeridos
+  if (!email || !firstName || !lastName || !address || !city || !department || !phone) {
+    return { success: false, error: "Faltan campos requeridos" };
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { success: false, error: "Correo electrónico inválido" };
+  }
+  if (items.some((item) => !item.variantId || !item.productId || item.price <= 0 || item.quantity <= 0)) {
+    return { success: false, error: "Datos de producto inválidos" };
+  }
+
   const total = subtotal + shippingCost - discount;
 
   try {
@@ -276,13 +287,9 @@ export async function markOrderPaid(transactionId: string, paymentId: string) {
             reserved: { decrement: item.quantity },
           },
         });
-      } else {
-        // Pieza de conjunto (ProductItemVariant): solo descontar stock (no tiene `reserved`)
-        await (tx as any).productItemVariant.update({
-          where: { id: item.variantId },
-          data: { stock: { decrement: item.quantity } },
-        });
       }
+      // ProductItemVariant: el stock ya fue descontado al crear la orden (no tiene campo 'reserved').
+      // No se descuenta de nuevo aquí para evitar doble decremento.
     }
 
     // 3. Crear notificación para el admin

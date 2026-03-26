@@ -79,8 +79,8 @@ export function useCheckout() {
   async function handleApplyCoupon(code: string) {
     const email = form.getValues("email");
 
-    if (!email || !form.formState.dirtyFields.email) {
-      form.setError("email", { message: "Ingresa tu correo antes de aplicar el cupón" });
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      form.setError("email", { message: "Ingresa un correo válido antes de aplicar el cupón" });
       return;
     }
 

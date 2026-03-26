@@ -1,15 +1,23 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, ChevronRight, ShieldCheck, Truck } from "lucide-react";
 
-const CheckoutHeader = () => (
+const CheckoutHeader = () => {
+  const router = useRouter();
+
+  return (
   <>
     <header className="mb-10 flex items-center gap-4 sm:gap-6 relative z-10">
-      <Link
-        href="/carrito"
+      <button
+        type="button"
+        onClick={() => router.back()}
         className="flex shrink-0 items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-gray-200 bg-white hover:border-[#C19A6B] hover:shadow-md transition-all duration-300 group"
+        aria-label="Volver"
       >
         <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-[#154734] transition-colors" />
-      </Link>
+      </button>
       <Link
         href="/"
         className="text-3xl sm:text-5xl text-[#154734] tracking-tight leading-none flex items-center gap-2 group"
@@ -46,6 +54,7 @@ const CheckoutHeader = () => (
       </div>
     </div>
   </>
-);
+  );
+};
 
 export default CheckoutHeader;

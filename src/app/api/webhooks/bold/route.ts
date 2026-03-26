@@ -79,9 +79,7 @@ function verifyBoldSignature(rawBody: string, signatureHeader: string): boolean 
 // ---------------------------------------------------------------------------
 export async function POST(req: NextRequest) {
   // ── Step 1: Capturar rawBody y headers SÍNCRONAMENTE ───────────────────────
-  console.log('[BOLD WEBHOOK] ===== SOLICITUD RECIBIDA =====');
-  console.log('[BOLD WEBHOOK] Timestamp:', new Date().toISOString());
-  console.log("[BOLD WEBHOOK] Headers completos:", JSON.stringify(Object.fromEntries(req.headers.entries()), null, 2));
+  console.log('[BOLD WEBHOOK] Solicitud recibida:', new Date().toISOString());
 
   const signatureHeader = req.headers.get("x-bold-signature") ?? "";
   console.log("[BOLD WEBHOOK] x-bold-signature:", signatureHeader || "(ausente)");
@@ -151,15 +149,7 @@ export async function POST(req: NextRequest) {
   ) as number | undefined;
   const paymentMethod = (data.payment_method ?? payload.payment_method) as string | undefined;
 
-  console.log("[BOLD WEBHOOK] Tipo de evento:", eventType);
-  console.log("[BOLD WEBHOOK] Payment ID:", boldPaymentId);
-  console.log("[BOLD WEBHOOK] Referencia:", reference);
-  console.log("[BOLD WEBHOOK] Monto total:", amount);
-  console.log("[BOLD WEBHOOK] Método de pago:", paymentMethod);
-  console.log("[BOLD WEBHOOK] Estado Bold:", boldStatus);
-  console.log('[BOLD WEBHOOK] type:', payload?.type);
-  console.log('[BOLD WEBHOOK] payment_id:', (payload?.data as any)?.payment_id);
-  console.log('[BOLD WEBHOOK] reference (metadata):', (payload?.data as any)?.metadata?.reference);
+  console.log("[BOLD WEBHOOK] Evento:", eventType, "| Referencia:", reference, "| Estado:", boldStatus);
 
   // ── Step 4: Responder 200 INMEDIATAMENTE (Bold requiere < 2 segundos) ─────
   //

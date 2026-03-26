@@ -84,7 +84,6 @@ export async function POST(req: NextRequest) {
   };
 
   console.log("[BOLD] Creando link de pago para orden:", orderId);
-  console.log("[BOLD] Body enviado:", JSON.stringify(boldBody, null, 2));
 
   const boldRes = await fetch(BOLD_LINK_API, {
     method: "POST",
@@ -97,7 +96,6 @@ export async function POST(req: NextRequest) {
 
   const boldData = await boldRes.json();
   console.log("[BOLD] Respuesta Bold status:", boldRes.status);
-  console.log("[BOLD] Respuesta Bold data:", JSON.stringify(boldData, null, 2));
 
   if (!boldRes.ok) {
     console.error("[BOLD] Error creando link:", boldData);

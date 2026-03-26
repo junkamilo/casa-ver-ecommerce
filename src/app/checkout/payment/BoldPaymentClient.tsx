@@ -21,27 +21,6 @@ export default function BoldPaymentClient({ orderRef, amount, integrity, orderId
 
     const redirectionUrl = `${appUrl}/checkout/success?orderId=${orderId}`;
 
-    // ── Logs diagnósticos Bold ─────────────────────────────────────────────
-    console.log('[BOLD CREATE] ===== INICIANDO BOTÓN BOLD =====');
-    console.log('[BOLD CREATE] URL usada:', 'https://checkout.bold.co/library/boldPaymentButton.js');
-    console.log('[BOLD CREATE] Headers enviados:', JSON.stringify({
-      'data-api-key': identityKey,
-      'data-order-id': orderRef,
-      'data-amount': amount,
-      'data-currency': 'COP',
-      'data-integrity': integrity,
-      'data-redirection-url': redirectionUrl,
-    }));
-    console.log('[BOLD CREATE] Body enviado:', JSON.stringify({
-      apiKey: identityKey,
-      orderId: orderRef,
-      amount,
-      currency: 'COP',
-      integrity,
-      redirectionUrl,
-    }, null, 2));
-    // ──────────────────────────────────────────────────────────────────────
-
     // Bold requiere un <script data-bold-button ...> con todos los atributos
     const script = document.createElement("script");
     script.src = "https://checkout.bold.co/library/boldPaymentButton.js";

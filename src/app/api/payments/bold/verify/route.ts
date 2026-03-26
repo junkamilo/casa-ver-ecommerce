@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
   // Si ya está pagada (webhook llegó antes que el redirect), retornar directo
   if (order.status === "PAID") {
     console.log("[BOLD CALLBACK] Orden ya marcada como PAID (webhook adelantado)");
-    return NextResponse.json({ status: "APPROVED" });
+    return NextResponse.json({ status: "APPROVED", orderId: order.id });
   }
 
   if (!order.boldLinkId) {
@@ -143,5 +143,5 @@ export async function GET(req: NextRequest) {
       );
   }
 
-  return NextResponse.json({ status: uiStatus });
+  return NextResponse.json({ status: uiStatus, orderId: order.id });
 }

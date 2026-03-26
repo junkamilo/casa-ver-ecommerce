@@ -34,7 +34,10 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
         {order ? (
           <>
             <p className="text-gray-500 text-sm mb-6 leading-relaxed">
-              Gracias, <strong className="text-[#154734]">{order.shippingName}</strong>. Tu pago fue procesado correctamente.
+              Gracias, <strong className="text-[#154734]">{order.shippingName}</strong>.{" "}
+              {order.status === "PAID"
+                ? "Tu pago fue procesado correctamente."
+                : "Tu pedido fue recibido y está siendo procesado."}
             </p>
             <div className="bg-[#FAFAFA] border border-gray-100 rounded-2xl p-5 mb-8 text-left space-y-3">
               <div className="flex justify-between text-sm">
@@ -49,7 +52,11 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Estado</span>
-                <span className="font-bold text-green-600 uppercase tracking-wider text-xs">
+                <span
+                  className={`font-bold uppercase tracking-wider text-xs ${
+                    order.status === "PAID" ? "text-green-600" : "text-amber-600"
+                  }`}
+                >
                   {order.status === "PAID" ? "Pagado" : "En proceso"}
                 </span>
               </div>
