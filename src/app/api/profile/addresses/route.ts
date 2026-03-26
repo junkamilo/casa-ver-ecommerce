@@ -8,6 +8,7 @@ const MAX_ADDRESSES = 5;
 
 const addressSchema = z.object({
   fullName: z.string().min(2, "Nombre requerido"),
+  cedula: z.string().optional(),
   phone: z
     .string()
     .min(7, "Teléfono inválido")
@@ -33,6 +34,7 @@ export async function GET() {
     select: {
       id: true,
       fullName: true,
+      cedula: true,
       phone: true,
       department: true,
       city: true,

@@ -75,6 +75,7 @@ export function useAddresses(): UseAddressesResult {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...values,
+          cedula: values.cedula || undefined,
           addressDetail: values.addressDetail || undefined,
           zipCode: values.zipCode || undefined,
         }),

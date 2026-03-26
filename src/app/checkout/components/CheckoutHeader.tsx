@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ChevronRight, ShieldCheck, Truck } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Truck } from "lucide-react";
 
 const CheckoutHeader = () => {
   const router = useRouter();
@@ -30,27 +30,17 @@ const CheckoutHeader = () => {
       </Link>
     </header>
 
-    <nav className="flex items-center text-[10px] sm:text-xs uppercase tracking-[0.2em] text-gray-400 mb-10 gap-3 ml-2 relative z-10">
-      <Link href="/carrito" className="hover:text-[#C19A6B] transition-colors">
-        Bolsa
-      </Link>
-      <ChevronRight className="w-3 h-3 text-[#C19A6B]/50" />
-      <span className="text-[#154734] font-bold border-b border-[#C19A6B] pb-0.5">
-        Información
-      </span>
-      <ChevronRight className="w-3 h-3 text-[#C19A6B]/50" />
-      <span>Pago</span>
-    </nav>
 
-    <div className="flex flex-wrap items-center gap-x-8 gap-y-3 mb-10 bg-white px-6 py-4 rounded-2xl border border-gray-100 shadow-sm relative z-10">
-      <div className="flex items-center gap-2 text-[10px] sm:text-xs font-bold text-[#154734] uppercase tracking-widest">
-        <ShieldCheck className="w-4 h-4 text-[#C19A6B]" />
-        Pago 100% Seguro
+<div className="flex items-center justify-center sm:justify-start gap-3 sm:gap-x-8 mb-10 bg-white px-4 sm:px-6 py-3 sm:py-4 rounded-2xl border border-gray-100 shadow-sm relative z-10">
+      <div className="flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-xs font-bold text-[#154734] uppercase tracking-widest">
+        <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C19A6B] shrink-0" />
+        <span>Pago 100% Seguro</span>
       </div>
+      <div className="w-px h-4 bg-[#C19A6B]/30 sm:hidden" />
       <div className="hidden sm:block w-1 h-1 rounded-full bg-[#C19A6B]/50" />
-      <div className="flex items-center gap-2 text-[10px] sm:text-xs font-bold text-[#154734] uppercase tracking-widest">
-        <Truck className="w-4 h-4 text-[#C19A6B]" />
-        Envío a todo Colombia
+      <div className="flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-xs font-bold text-[#154734] uppercase tracking-widest">
+        <Truck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C19A6B] shrink-0" />
+        <span>Envío a todo Colombia</span>
       </div>
     </div>
   </>

@@ -1,21 +1,22 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useController } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { X, Loader2, ChevronDown } from "lucide-react";
-import { DEPARTAMENTOS } from "@/lib/constants/colombia";
+import { DEPARTAMENTOS, MUNICIPIOS } from "@/lib/constants/colombia";
 import type { SavedAddress, AddressFormValues } from "../types";
 
 const schema = z.object({
   fullName: z.string().min(2, "Nombre requerido (mínimo 2 caracteres)"),
+  cedula: z.string().regex(/^\d*$/, "Solo números"),
   phone: z
     .string()
     .min(7, "Teléfono inválido")
     .regex(/^\d+$/, "Solo números"),
   department: z.string().min(2, "Selecciona un departamento"),
-  city: z.string().min(2, "Ciudad requerida"),
+  city: z.string().min(2, "Selecciona una ciudad"),
   address: z.string().min(5, "Dirección muy corta (mínimo 5 caracteres)"),
   addressDetail: z.string(),
   zipCode: z.string(),
@@ -26,6 +27,9 @@ const fi =
   "peer w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/15 outline-none transition-all duration-200 text-sm text-[#154734] pt-6 placeholder-transparent";
 const fl =
   "absolute left-4 top-3.5 text-gray-400 text-sm transition-all duration-200 peer-focus:-translate-y-2 peer-focus:text-[10px] peer-focus:text-[#C19A6B] peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-widest peer-[:not(:placeholder-shown)]:-translate-y-2 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:font-bold peer-[:not(:placeholder-shown)]:uppercase peer-[:not(:placeholder-shown)]:tracking-widest pointer-events-none";
+
+const selectCls =
+  "w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl appearance-none text-[#154734] outline-none focus:bg-white focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/15 transition-all duration-200 text-sm cursor-pointer pt-6 disabled:cursor-not-allowed disabled:opacity-50";
 
 const FieldError = ({ message }: { message?: string }) =>
   message ? (
@@ -51,11 +55,13 @@ export function AddressFormModal({
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<AddressFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       fullName: "",
+      cedula: "",
       phone: "",
       department: "",
       city: "",
@@ -66,12 +72,26 @@ export function AddressFormModal({
     },
   });
 
-  // Rellenar form al editar
+  // Campos controlados para el cascade departamento → ciudad
+  const { field: deptField } = useController<AddressFormValues, "department">({
+    control,
+    name: "department",
+  });
+  const { field: cityField } = useController<AddressFormValues, "city">({
+    control,
+    name: "city",
+  });
+
+  const selectedDepartment = deptField.value;
+  const municipios = selectedDepartment ? (MUNICIPIOS[selectedDepartment] ?? []) : [];
+
+  // Rellenar form al abrir
   useEffect(() => {
     if (open) {
       if (editing) {
         reset({
           fullName: editing.fullName,
+          cedula: editing.cedula ?? "",
           phone: editing.phone,
           department: editing.department,
           city: editing.city,
@@ -83,6 +103,7 @@ export function AddressFormModal({
       } else {
         reset({
           fullName: "",
+          cedula: "",
           phone: "",
           department: "",
           city: "",
@@ -144,16 +165,29 @@ export function AddressFormModal({
             <FieldError message={errors.fullName?.message} />
           </div>
 
-          {/* Teléfono */}
-          <div className="relative">
-            <input
-              type="tel"
-              className={fi}
-              placeholder=" "
-              {...register("phone")}
-            />
-            <label className={fl}>Teléfono</label>
-            <FieldError message={errors.phone?.message} />
+          {/* Cédula + Teléfono */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="relative">
+              <input
+                type="text"
+                inputMode="numeric"
+                className={fi}
+                placeholder=" "
+                {...register("cedula")}
+              />
+              <label className={fl}>Cédula / NIT</label>
+              <FieldError message={errors.cedula?.message} />
+            </div>
+            <div className="relative">
+              <input
+                type="tel"
+                className={fi}
+                placeholder=" "
+                {...register("phone")}
+              />
+              <label className={fl}>Teléfono</label>
+              <FieldError message={errors.phone?.message} />
+            </div>
           </div>
 
           {/* Dirección */}
@@ -168,35 +202,31 @@ export function AddressFormModal({
             <FieldError message={errors.address?.message} />
           </div>
 
-          {/* Apto + Ciudad */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="relative">
-              <input
-                type="text"
-                className={fi}
-                placeholder=" "
-                {...register("addressDetail")}
-              />
-              <label className={fl}>Apto / Local (Opcional)</label>
-            </div>
-            <div className="relative">
-              <input
-                type="text"
-                className={fi}
-                placeholder=" "
-                {...register("city")}
-              />
-              <label className={fl}>Ciudad</label>
-              <FieldError message={errors.city?.message} />
-            </div>
+          {/* Apto */}
+          <div className="relative">
+            <input
+              type="text"
+              className={fi}
+              placeholder=" "
+              {...register("addressDetail")}
+            />
+            <label className={fl}>Apto / Local (Opcional)</label>
           </div>
 
-          {/* Departamento + Código postal */}
+          {/* Departamento → Ciudad (cascade controlado) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Departamento */}
             <div className="relative">
               <select
-                className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl appearance-none text-[#154734] outline-none focus:bg-white focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/15 transition-all duration-200 text-sm cursor-pointer pt-6"
-                {...register("department")}
+                name={deptField.name}
+                ref={deptField.ref}
+                value={deptField.value}
+                onBlur={deptField.onBlur}
+                onChange={(e) => {
+                  deptField.onChange(e.target.value);
+                  cityField.onChange(""); // limpiar ciudad al cambiar departamento
+                }}
+                className={selectCls}
               >
                 <option value="">Seleccionar</option>
                 {DEPARTAMENTOS.map((d) => (
@@ -212,15 +242,45 @@ export function AddressFormModal({
               <FieldError message={errors.department?.message} />
             </div>
 
+            {/* Ciudad — filtrada por departamento seleccionado */}
             <div className="relative">
-              <input
-                type="text"
-                className={fi}
-                placeholder=" "
-                {...register("zipCode")}
-              />
-              <label className={fl}>Código postal (Opcional)</label>
+              <select
+                name={cityField.name}
+                ref={cityField.ref}
+                value={cityField.value}
+                onBlur={cityField.onBlur}
+                onChange={(e) => cityField.onChange(e.target.value)}
+                disabled={!selectedDepartment}
+                className={selectCls}
+              >
+                <option value="">
+                  {selectedDepartment
+                    ? "Seleccionar ciudad"
+                    : "Primero elige departamento"}
+                </option>
+                {municipios.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+              <label className="absolute left-4 top-2 text-[10px] font-bold uppercase tracking-widest text-gray-400 pointer-events-none">
+                Ciudad / Municipio
+              </label>
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <FieldError message={errors.city?.message} />
             </div>
+          </div>
+
+          {/* Código postal */}
+          <div className="relative">
+            <input
+              type="text"
+              className={fi}
+              placeholder=" "
+              {...register("zipCode")}
+            />
+            <label className={fl}>Código postal (Opcional)</label>
           </div>
 
           {/* Predeterminada */}

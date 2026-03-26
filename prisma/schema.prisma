@@ -129,12 +129,30 @@ model PasswordResetToken {
   @@map("password_reset_tokens")
 }
 
+// Registro pendiente de verificación — el usuario NO existe en `users` todavía.
+// Se crea al solicitar registro y se elimina al verificar el correo exitosamente.
+model PendingRegistration {
+  id            String   @id @default(cuid())
+  name          String?
+  email         String   @unique
+  passwordHash  String
+  phone         String?
+  recoveryEmail String?
+  codeHash      String
+  expires       DateTime
+  attempts      Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  @@map("pending_registrations")
+}
+
 model Address {
   id            String   @id @default(cuid())
   userId        String
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   fullName      String
+  cedula        String?
   phone         String
   department    String
   city          String

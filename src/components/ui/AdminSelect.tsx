@@ -3,12 +3,22 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Check } from "lucide-react";
 
+type SelectOption = string | { value: string; label: string };
+
 interface AdminSelectProps {
   value: string;
   onChange: (value: string) => void;
-  options: string[];
+  options: SelectOption[];
   icon?: React.ReactNode;
   className?: string;
+  placeholder?: string;
+}
+
+function getOptValue(opt: SelectOption) {
+  return typeof opt === "string" ? opt : opt.value;
+}
+function getOptLabel(opt: SelectOption) {
+  return typeof opt === "string" ? opt : opt.label;
 }
 
 export default function AdminSelect({
@@ -17,6 +27,7 @@ export default function AdminSelect({
   options,
   icon,
   className = "",
+  placeholder,
 }: AdminSelectProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -46,7 +57,11 @@ export default function AdminSelect({
         {icon && (
           <span className="text-gray-400 flex-shrink-0">{icon}</span>
         )}
-        <span className="flex-1 text-left truncate">{value}</span>
+        <span className="flex-1 text-left truncate">
+          {options.find((o) => getOptValue(o) === value)
+            ? getOptLabel(options.find((o) => getOptValue(o) === value)!)
+            : placeholder ?? value}
+        </span>
         <ChevronDown
           className={`w-3.5 h-3.5 text-gray-400 flex-shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
         />
@@ -54,25 +69,30 @@ export default function AdminSelect({
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute z-50 mt-1.5 left-0 min-w-full w-max bg-white border border-gray-200 rounded-xl shadow-lg py-1 overflow-hidden">
-          {options.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => {
-                onChange(opt);
-                setOpen(false);
-              }}
-              className={`w-full flex items-center justify-between gap-3 px-3 py-2 text-xs sm:text-sm transition-colors ${
-                value === opt
-                  ? "bg-[#154734]/5 text-[#154734] font-semibold"
-                  : "text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              <span>{opt}</span>
-              {value === opt && <Check className="w-3.5 h-3.5 text-[#154734] flex-shrink-0" />}
-            </button>
-          ))}
+        <div className="absolute z-50 mt-1.5 left-0 w-full bg-white border border-gray-200 rounded-xl shadow-lg py-1 overflow-hidden">
+          {options.map((opt) => {
+            const optVal = getOptValue(opt);
+            const optLabel = getOptLabel(opt);
+            const isSelected = value === optVal;
+            return (
+              <button
+                key={optVal}
+                type="button"
+                onClick={() => {
+                  onChange(optVal);
+                  setOpen(false);
+                }}
+                className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 text-xs sm:text-sm transition-colors ${
+                  isSelected
+                    ? "bg-[#154734]/5 text-[#154734] font-semibold"
+                    : "text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <span className="truncate text-left">{optLabel}</span>
+                {isSelected && <Check className="w-3.5 h-3.5 text-[#154734] shrink-0" />}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
