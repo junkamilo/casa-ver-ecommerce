@@ -24,12 +24,18 @@ function ResultContent() {
   const params = useSearchParams();
   const router = useRouter();
 
-  // Bold puede enviar el reference_id con distintos nombres según el método
+  // Bold Botón de Pagos envía: ?bold-order-id=...&bold-tx-status=...
+  // El bold-order-id es nuestro transactionId (el order-id que pasamos al botón)
   const referenceId =
+    params.get("bold-order-id") ??
     params.get("reference_id") ??
     params.get("reference") ??
     params.get("ref") ??
     null;
+
+  // bold-tx-status: "approved" | "pending" | "rejected"
+  // Es el estado que el cliente vio en Bold — puede no ser definitivo, siempre verificamos
+  const boldTxStatus = params.get("bold-tx-status");
 
   const [status, setStatus] = useState<PaymentStatus>("loading");
   const [orderId, setOrderId] = useState<string | undefined>();
@@ -55,6 +61,11 @@ function ResultContent() {
   useEffect(() => {
     if (!referenceId) {
       setStatus("error");
+      return;
+    }
+    // Si Bold ya confirmó rechazo, mostramos directamente sin llamar al API
+    if (boldTxStatus === "rejected") {
+      setStatus("REJECTED");
       return;
     }
     verify().then((result) => {

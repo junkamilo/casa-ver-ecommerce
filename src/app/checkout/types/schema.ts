@@ -2,7 +2,8 @@ import { z } from "zod";
 
 /**
  * Schema Zod del formulario de checkout.
- * Fuente única de verdad — importado por el hook y por los componentes.
+ * El usuario solo ingresa datos de contacto y envío.
+ * El pago se completa en Bold (hosted checkout).
  */
 export const checkoutSchema = z.object({
   email: z.string().email("Ingresa un correo válido"),
@@ -41,7 +42,7 @@ export const checkoutSchema = z.object({
 
   department: z.string().min(2, "Departamento requerido"),
 
-  paymentMethod: z.enum(["BOLD"]),
+  paymentMethod: z.literal("BOLD"),
 
   savedAddressId: z.string().optional(),
 
