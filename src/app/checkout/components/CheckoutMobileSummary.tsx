@@ -17,7 +17,6 @@ import type { CheckoutItem, CouponState } from "../types/types";
 interface CheckoutMobileSummaryProps {
   items: CheckoutItem[];
   subtotal: number;
-  shippingCost: number;
   discount: number;
   total: number;
   coupon: CouponState;
@@ -28,7 +27,6 @@ interface CheckoutMobileSummaryProps {
 export default function CheckoutMobileSummary({
   items,
   subtotal,
-  shippingCost,
   discount,
   total,
   coupon,
@@ -185,12 +183,6 @@ export default function CheckoutMobileSummary({
                 <span>Subtotal</span>
                 <span className="text-[#154734] font-bold">
                   ${subtotal.toLocaleString(LOCALE)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Envío Nacional</span>
-                <span className="text-[#154734] font-bold">
-                  ${shippingCost.toLocaleString(LOCALE)}
                 </span>
               </div>
               {discount > 0 && (

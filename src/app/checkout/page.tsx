@@ -9,7 +9,6 @@ import CheckoutHeader from "./components/CheckoutHeader";
 import ContactSection from "./components/ContactSection";
 import DeliverySection from "./components/DeliverySection";
 import { AuthenticatedDelivery } from "./components/AuthenticatedDelivery";
-import ShippingMethodSection from "./components/ShippingMethodSection";
 import PaymentSection from "./components/PaymentSection";
 import BillingSection from "./components/BillingSection";
 import CheckoutSubmitButton from "./components/CheckoutSubmitButton";
@@ -55,7 +54,6 @@ export default function CheckoutPage() {
     form,
     items,
     subtotal,
-    shippingCost,
     discount,
     total,
     coupon,
@@ -75,7 +73,6 @@ export default function CheckoutPage() {
         <CheckoutMobileSummary
           items={items}
           subtotal={subtotal}
-          shippingCost={shippingCost}
           discount={discount}
           total={total}
           coupon={coupon}
@@ -104,7 +101,6 @@ export default function CheckoutPage() {
               <DeliverySection />
             )}
 
-            <ShippingMethodSection shippingCost={shippingCost} />
             <PaymentSection />
             <BillingSection />
 
@@ -122,7 +118,6 @@ export default function CheckoutPage() {
         <OrderSummaryPanel
           items={items}
           subtotal={subtotal}
-          shippingCost={shippingCost}
           discount={discount}
           total={total}
           coupon={coupon}

@@ -2,11 +2,11 @@
 
 import { useState, useTransition, useCallback } from "react";
 import { useForm } from "react-hook-form";
+import type { Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCart } from "@/context/CartContext";
 import { validateCoupon } from "@/app/actions/coupons";
 import { createOrder } from "@/app/actions/checkout";
-import { SHIPPING_COST } from "../constants/constants";
 import { checkoutSchema } from "../types/schema";
 import type { CheckoutFormData } from "../types/schema";
 import type { CouponState } from "../types/types";
@@ -50,11 +50,11 @@ export function useCheckout(options?: UseCheckoutOptions) {
     coupon.status === "valid"
       ? Math.round((subtotal * coupon.discountPercentage) / 100)
       : 0;
-  const total = subtotal + SHIPPING_COST - discount;
+  const total = subtotal - discount;
 
   // Formulario
   const form = useForm<CheckoutFormData>({
-    resolver: zodResolver(checkoutSchema),
+    resolver: zodResolver(checkoutSchema) as Resolver<CheckoutFormData>,
     defaultValues: {
       paymentMethod: "BOLD",
     },
@@ -141,7 +141,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
             imageUrl: typeof item.image === "string" ? item.image : undefined,
           })),
           subtotal,
-          shippingCost: SHIPPING_COST,
+          shippingCost: 0,
           discount,
           couponId: coupon.couponId,
           couponCode: coupon.status === "valid" ? coupon.code : undefined,
@@ -161,7 +161,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
           }
         }
 
-        // PASO 2: Crear link de pago Bold y obtener URL de redirección
+        // PASO 2: Crear payment link en Bold y redirigir al checkout
         const boldRes = await fetch("/api/payments/bold", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -172,6 +172,10 @@ export function useCheckout(options?: UseCheckoutOptions) {
               email: data.email,
               phone: data.phone,
               cedula: data.cedula,
+              address: data.address,
+              addressDetail: data.addressDetail,
+              city: data.city,
+              department: data.department,
             },
           }),
         });
@@ -187,7 +191,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
         closeCart();
         clearBuyNow();
 
-        // PASO 3: Redirigir DIRECTAMENTE a Bold
+        // PASO 3: Redirigir a Bold hosted checkout
         if (boldData.redirectUrl) {
           window.location.href = boldData.redirectUrl;
           return;
@@ -204,7 +208,6 @@ export function useCheckout(options?: UseCheckoutOptions) {
     form,
     items: checkoutItems,
     subtotal,
-    shippingCost: SHIPPING_COST,
     discount,
     total,
     coupon,

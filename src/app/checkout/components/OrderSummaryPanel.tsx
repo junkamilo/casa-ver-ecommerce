@@ -9,7 +9,6 @@ import type { CheckoutItem, CouponState } from "../types/types";
 interface OrderSummaryPanelProps {
   items: CheckoutItem[];
   subtotal: number;
-  shippingCost: number;
   discount: number;
   total: number;
   coupon: CouponState;
@@ -20,7 +19,6 @@ interface OrderSummaryPanelProps {
 const OrderSummaryPanel = ({
   items,
   subtotal,
-  shippingCost,
   discount,
   total,
   coupon,
@@ -126,10 +124,6 @@ const OrderSummaryPanel = ({
           <div className="flex justify-between items-center">
             <span>Subtotal</span>
             <span className="text-[#154734] font-bold">${subtotal.toLocaleString(LOCALE)}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span>Envío Nacional</span>
-            <span className="text-[#154734] font-bold">${shippingCost.toLocaleString(LOCALE)}</span>
           </div>
           {discount > 0 && (
             <div className="flex justify-between items-center text-green-600">

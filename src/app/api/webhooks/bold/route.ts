@@ -8,12 +8,13 @@ import { sendOrderConfirmationEmail } from "@/services/email/client";
 // ---------------------------------------------------------------------------
 // Verificación HMAC-SHA256 — timing-safe
 //
-// DOCUMENTACIÓN OFICIAL BOLD:
+// DOCUMENTACIÓN OFICIAL BOLD (Payment Intent API — Producción):
+//   Base URL: https://api.online.payments.bold.co
 //   1. Convertir el rawBody a Base64
 //   2. Calcular HMAC-SHA256 sobre ese Base64 usando el secreto
 //   3. Comparar en hex con timing-safe
 //
-// En sandbox/pruebas: BOLD_WEBHOOK_SECRET = '' (string vacío — NO ausente)
+// BOLD_WEBHOOK_SECRET = secreto HMAC configurado en el Dashboard de Bold (Webhooks → Secreto)
 // Header enviado por Bold: "x-bold-signature" (NO "bold-signature")
 // ---------------------------------------------------------------------------
 function verifyBoldSignature(rawBody: string, signatureHeader: string): boolean {
@@ -22,14 +23,8 @@ function verifyBoldSignature(rawBody: string, signatureHeader: string): boolean 
   // undefined/null = variable no configurada → rechazar siempre
   if (secret === undefined || secret === null) {
     console.error("[Bold] ✗ BOLD_WEBHOOK_SECRET no está configurado en .env.local");
-    console.error("[Bold]   En sandbox usa: BOLD_WEBHOOK_SECRET='' (string vacío)");
+    console.error("[Bold]   Copia el secreto desde: Dashboard Bold → Webhooks → Secreto (producción)");
     return false;
-  }
-
-  // Sandbox: si el secreto es vacío Y no hay firma, se acepta el webhook
-  if (secret === "" && !signatureHeader) {
-    console.warn("[Bold] ⚠ Sandbox: secreto vacío y sin firma — webhook aceptado");
-    return true;
   }
 
   if (!signatureHeader) {
@@ -61,6 +56,7 @@ function verifyBoldSignature(rawBody: string, signatureHeader: string): boolean 
 
 // ---------------------------------------------------------------------------
 // Bold Webhook Handler — Next.js App Router
+// Bold Payment Intent API — Producción: https://api.online.payments.bold.co
 //
 // ORDEN DE OPERACIONES:
 //   1. Capturar rawBody + headers   ← HMAC necesita el string sin parsear
@@ -71,11 +67,18 @@ function verifyBoldSignature(rawBody: string, signatureHeader: string): boolean 
 //      b. Validar firma HMAC-SHA256  ← seguridad
 //      c. Procesar pago              ← negocio
 //
-// Eventos Bold (Link de Pagos):
-//   SALE_APPROVED   → pago exitoso  ✅
-//   SALE_REJECTED   → pago rechazado
-//   VOID_APPROVED   → reembolso aprobado
-//   VOID_REJECTED   → reembolso rechazado
+// Eventos Bold (Payment Intent API):
+//   SALE_APPROVED        → pago exitoso  ✅
+//   SALE_REJECTED        → pago rechazado
+//   VOID_APPROVED        → anulación aprobada (mismo día, antes 9 PM)
+//   VOID_REJECTED        → anulación rechazada
+//   PAYMENT_APPROVED     → alias de SALE_APPROVED en algunos entornos
+//   PAYMENT_REJECTED     → alias de SALE_REJECTED en algunos entornos
+//
+// Campos clave en el payload de producción:
+//   data.transaction_id  → ID único de la transacción Bold
+//   data.reference_id    → nuestro reference (transactionId de la orden)
+//   data.status          → APPROVED | REJECTED | RUNNING | CANCELLED
 // ---------------------------------------------------------------------------
 export async function POST(req: NextRequest) {
   // ── Step 1: Capturar rawBody y headers SÍNCRONAMENTE ───────────────────────
@@ -121,13 +124,15 @@ export async function POST(req: NextRequest) {
 
   // ── Step 3: Extraer campos del payload ────────────────────────────────────
   //
-  // Bold Link de Pagos envía estructura anidada:
+  // Bold Payment Intent API envía estructura anidada:
   //   {
   //     type: "SALE_APPROVED",
   //     data: {
-  //       payment_id: "...",
-  //       metadata: { reference: "..." },
-  //       amount: { total: ... },
+  //       transaction_id: "TXN...",      ← ID único de la transacción
+  //       reference_id: "CV-xxx",        ← nuestro reference (transactionId de la orden)
+  //       status: "APPROVED",
+  //       amount: { total_amount: ... },
+  //       payment_method: "CREDIT_CARD",
   //       ...
   //     }
   //   }
@@ -135,16 +140,22 @@ export async function POST(req: NextRequest) {
   const data = (payload.data ?? payload) as Record<string, unknown>;
   const eventType = (payload.type ?? payload.event ?? data.event) as string | undefined;
 
-  // payment_id está en data.payment_id (no en data.id que es la notificación)
-  const boldPaymentId = (data.payment_id ?? data.id ?? payload.id) as string | undefined;
+  // transaction_id es el ID de Bold (nuevo API); fallback a payment_id / id para compatibilidad
+  const boldPaymentId = (
+    data.transaction_id ?? data.payment_id ?? data.id ?? payload.id
+  ) as string | undefined;
 
-  // reference está en data.metadata.reference
+  // reference_id es nuestro identificador de orden (nuevo API); fallback a metadata.reference
   const metadata = (data.metadata ?? payload.metadata) as Record<string, unknown> | undefined;
-  const reference = (metadata?.reference ?? data.reference ?? payload.reference) as string | undefined;
+  const reference = (
+    data.reference_id ?? metadata?.reference ?? data.reference ?? payload.reference
+  ) as string | undefined;
 
   const boldStatus = (data.status ?? payload.status) as string | undefined;
   const amount = (
+    (data.amount as Record<string, unknown>)?.total_amount ??
     (data.amount as Record<string, unknown>)?.total ??
+    (payload.amount as Record<string, unknown>)?.total_amount ??
     (payload.amount as Record<string, unknown>)?.total
   ) as number | undefined;
   const paymentMethod = (data.payment_method ?? payload.payment_method) as string | undefined;
@@ -245,10 +256,9 @@ async function processWebhookAsync(fields: WebhookFields): Promise<void> {
   if (!signatureValid) {
     console.warn("[BOLD WEBHOOK] ✗ Firma HMAC inválida.");
     console.warn("[BOLD WEBHOOK] Posibles causas:");
-    console.warn("  1. BOLD_WEBHOOK_SECRET incorrecto en .env.local");
-    console.warn("  2. Secreto diferente al del Dashboard de Bold");
-    console.warn("  3. En sandbox: BOLD_WEBHOOK_SECRET debe ser '' (string vacío)");
-    console.warn("  4. El body fue modificado por un middleware antes de llegar aquí");
+    console.warn("  1. BOLD_WEBHOOK_SECRET incorrecto — usa el secreto de PRODUCCIÓN del Dashboard Bold");
+    console.warn("  2. Copia el secreto exacto desde: Dashboard Bold → Webhooks → Secreto");
+    console.warn("  3. El body fue modificado por un middleware antes de llegar aquí");
     updateLog(401, "Firma HMAC-SHA256 inválida");
     return;
   }
@@ -257,19 +267,17 @@ async function processWebhookAsync(fields: WebhookFields): Promise<void> {
 
   // ── c. Procesar evento ───────────────────────────────────────────────────
   //
-  // Estados Bold (Link de Pagos):
-  //   ACTIVE      → No pagado (o pago anterior falló, link reutilizable)
-  //   PROCESSING  → Pago en curso
-  //   PAID        → Pago exitoso ✅
+  // Estados Bold (Payment Intent API — GET /v1/payment/{reference_id}):
+  //   RUNNING     → Pago en proceso (3DS pendiente, etc.)
+  //   APPROVED    → Pago exitoso ✅
   //   REJECTED    → Pago rechazado
   //   CANCELLED   → Cancelado por usuario
-  //   EXPIRED     → Link vencido
   //
-  // Eventos Bold (webhook):
+  // Eventos Bold (webhook — Payment Intent API):
   //   SALE_APPROVED   → pago exitoso ✅
   //   SALE_REJECTED   → pago rechazado
-  //   VOID_APPROVED   → reembolso aprobado
-  //   VOID_REJECTED   → reembolso rechazado
+  //   VOID_APPROVED   → anulación aprobada (mismo día)
+  //   VOID_REJECTED   → anulación rechazada
 
   const isApproved =
     eventType === "SALE_APPROVED" ||
