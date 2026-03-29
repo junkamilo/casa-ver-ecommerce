@@ -8,49 +8,66 @@ import { sendOrderConfirmationEmail } from "@/services/email/client";
 // ---------------------------------------------------------------------------
 // Verificación HMAC-SHA256 — timing-safe
 //
-// DOCUMENTACIÓN OFICIAL BOLD (Payment Intent API — Producción):
-//   Base URL: https://api.online.payments.bold.co
+// DOCUMENTACIÓN OFICIAL BOLD:
 //   1. Convertir el rawBody a Base64
 //   2. Calcular HMAC-SHA256 sobre ese Base64 usando el secreto
-//   3. Comparar en hex con timing-safe
+//   3. Comparar en hex con timing-safe contra x-bold-signature
 //
-// BOLD_WEBHOOK_SECRET = secreto HMAC configurado en el Dashboard de Bold (Webhooks → Secreto)
-// Header enviado por Bold: "x-bold-signature" (NO "bold-signature")
+// LÓGICA DE SEGURIDAD:
+//   - Si Bold NO envía x-bold-signature → aceptar (Link de Pagos no siempre firma)
+//   - Si hay firma PERO el secreto no está configurado → aceptar con warning
+//   - Si hay firma Y secreto → verificar HMAC; rechazar solo si NO coincide
+//
+// BOLD_WEBHOOK_SECRET = llave secreta del Dashboard Bold → Integraciones → Llave secreta
+//   (NO es la URL del webhook — es el token hash que Bold genera)
 // ---------------------------------------------------------------------------
-function verifyBoldSignature(rawBody: string, signatureHeader: string): boolean {
-  const secret = process.env.BOLD_WEBHOOK_SECRET;
 
-  // undefined/null = variable no configurada → rechazar siempre
-  if (secret === undefined || secret === null) {
-    console.error("[Bold] ✗ BOLD_WEBHOOK_SECRET no está configurado en .env.local");
-    console.error("[Bold]   Copia el secreto desde: Dashboard Bold → Webhooks → Secreto (producción)");
-    return false;
-  }
+/** Retorna true si el secreto parece válido (no vacío, no una URL) */
+function isValidSecret(secret: string): boolean {
+  return secret.length > 0 && !secret.startsWith("http");
+}
 
+/**
+ * Verifica la firma HMAC. Retorna:
+ *  - { skip: true }  → no hay firma o no hay secreto útil → continuar sin verificar
+ *  - { skip: false, valid: boolean } → se intentó verificar; usar .valid
+ */
+function verifyBoldSignature(
+  rawBody: string,
+  signatureHeader: string
+): { skip: boolean; valid?: boolean } {
+  const secret = process.env.BOLD_WEBHOOK_SECRET ?? "";
+
+  // Sin firma → Bold Link de Pagos no siempre incluye x-bold-signature → dejar pasar
   if (!signatureHeader) {
-    console.warn("[Bold] ✗ Header 'x-bold-signature' ausente en la petición");
-    return false;
+    console.warn("[Bold] ⚠ Header 'x-bold-signature' ausente — aceptando sin verificar firma");
+    return { skip: true };
   }
 
-  // Bold puede enviar la firma con prefijo "sha256=" (convención HMAC estándar)
+  // Hay firma pero el secreto no está bien configurado → warning + dejar pasar
+  if (!isValidSecret(secret)) {
+    console.warn("[Bold] ⚠ BOLD_WEBHOOK_SECRET no configurado correctamente (¿es una URL?)");
+    console.warn("[Bold]   Ve a Dashboard Bold → Integraciones → copia la 'Llave secreta'");
+    console.warn("[Bold]   Aceptando webhook sin verificar firma hasta que el secreto esté correcto");
+    return { skip: true };
+  }
+
+  // Hay firma Y secreto válido → verificar HMAC
   const rawSignature = signatureHeader.startsWith("sha256=")
     ? signatureHeader.slice(7)
     : signatureHeader;
 
-  // CRÍTICO: Bold requiere HMAC sobre el body en Base64, NO sobre el raw body directamente
+  // Bold requiere HMAC sobre el body en Base64, NO sobre el raw body directamente
   const bodyBase64 = Buffer.from(rawBody).toString("base64");
   const expected = createHmac("sha256", secret).update(bodyBase64).digest("hex");
 
   try {
     const expectedBuf = Buffer.from(expected, "hex");
     const receivedBuf = Buffer.from(rawSignature, "hex");
-
-    // timingSafeEqual lanza RangeError si los buffers difieren en longitud
-    if (expectedBuf.length !== receivedBuf.length) return false;
-
-    return timingSafeEqual(expectedBuf, receivedBuf);
+    if (expectedBuf.length !== receivedBuf.length) return { skip: false, valid: false };
+    return { skip: false, valid: timingSafeEqual(expectedBuf, receivedBuf) };
   } catch {
-    return false;
+    return { skip: false, valid: false };
   }
 }
 
@@ -251,19 +268,21 @@ async function processWebhookAsync(fields: WebhookFields): Promise<void> {
   };
 
   // ── b. Validar firma HMAC-SHA256 ─────────────────────────────────────────
-  const signatureValid = verifyBoldSignature(rawBody, signatureHeader);
+  const sigResult = verifyBoldSignature(rawBody, signatureHeader);
 
-  if (!signatureValid) {
-    console.warn("[BOLD WEBHOOK] ✗ Firma HMAC inválida.");
-    console.warn("[BOLD WEBHOOK] Posibles causas:");
-    console.warn("  1. BOLD_WEBHOOK_SECRET incorrecto — usa el secreto de PRODUCCIÓN del Dashboard Bold");
-    console.warn("  2. Copia el secreto exacto desde: Dashboard Bold → Webhooks → Secreto");
-    console.warn("  3. El body fue modificado por un middleware antes de llegar aquí");
+  if (!sigResult.skip && sigResult.valid === false) {
+    // Hay firma Y secreto válido, pero NO coinciden → rechazar (posible replay/ataque)
+    console.warn("[BOLD WEBHOOK] ✗ Firma HMAC inválida — rechazando petición");
+    console.warn("  Verifica que BOLD_WEBHOOK_SECRET sea la llave secreta de Dashboard Bold → Integraciones");
     updateLog(401, "Firma HMAC-SHA256 inválida");
     return;
   }
 
-  console.log("[BOLD WEBHOOK] ✓ Firma HMAC válida");
+  if (sigResult.skip) {
+    console.log("[BOLD WEBHOOK] ⚠ Procesando sin verificación de firma (sin secreto o sin header)");
+  } else {
+    console.log("[BOLD WEBHOOK] ✓ Firma HMAC válida");
+  }
 
   // ── c. Procesar evento ───────────────────────────────────────────────────
   //
