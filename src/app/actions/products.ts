@@ -37,6 +37,10 @@ export type ProductPayload = {
   status?: string;
   isFeatured?: boolean;
   isNew?: boolean;
+  isProductNew?: boolean;
+  isProductNewAt?: string | null;
+  isOnSale?: boolean;
+  isOnSaleAt?: string | null;
   material?: string | null;
   videoUrl?: string | null;
   isSet?: boolean;
@@ -158,6 +162,7 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
   try {
     const {
       name, description, categoryId, status, isFeatured, isNew,
+      isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
       material, videoUrl, isSet, colors, sizes, items, subProducts,
     } = payload;
 
@@ -169,6 +174,14 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
     const slug =
       name.toLowerCase().trim().replace(/[\s\W-]+/g, "-").replace(/^-+|-+$/g, "") +
       "-" + Date.now();
+
+    // Si se activa isProductNew ahora mismo, usar timestamp actual
+    const resolvedProductNewAt = isProductNew
+      ? (isProductNewAt ? new Date(isProductNewAt) : new Date())
+      : null;
+    const resolvedOnSaleAt = isOnSale
+      ? (isOnSaleAt ? new Date(isOnSaleAt) : new Date())
+      : null;
 
     await db.$transaction(async (tx: any) => {
       const product = await tx.product.create({
@@ -182,6 +195,10 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
           status: status || "ACTIVE",
           isFeatured: isFeatured || false,
           isNew: isNew || false,
+          isProductNew: isProductNew || false,
+          isProductNewAt: resolvedProductNewAt,
+          isOnSale: isOnSale || false,
+          isOnSaleAt: resolvedOnSaleAt,
           material: material || null,
           videoUrl: videoUrl || null,
           isSet: isSet || false,
@@ -248,6 +265,7 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
   try {
     const {
       name, description, categoryId, status, isFeatured, isNew,
+      isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
       material, videoUrl, isSet, colors, sizes, items, subProducts,
     } = payload;
 
@@ -259,6 +277,14 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
     const slug = name
       ? name.toLowerCase().trim().replace(/[\s\W-]+/g, "-").replace(/^-+|-+$/g, "")
       : undefined;
+
+    // Si se activa isProductNew, usar timestamp del payload o generar uno nuevo
+    const resolvedProductNewAt = isProductNew
+      ? (isProductNewAt ? new Date(isProductNewAt) : new Date())
+      : null;
+    const resolvedOnSaleAt = isOnSale
+      ? (isOnSaleAt ? new Date(isOnSaleAt) : new Date())
+      : null;
 
     const result = await db.$transaction(async (tx: any) => {
       // Eliminar en paralelo lo que no tiene dependencias entre sí
@@ -284,6 +310,10 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
           status,
           isFeatured,
           isNew,
+          isProductNew: isProductNew ?? false,
+          isProductNewAt: resolvedProductNewAt,
+          isOnSale: isOnSale ?? false,
+          isOnSaleAt: resolvedOnSaleAt,
           material: material || null,
           videoUrl: videoUrl !== undefined ? (videoUrl || null) : undefined,
           isSet: isSet ?? false,

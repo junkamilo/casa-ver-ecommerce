@@ -16,6 +16,7 @@ import RecommendedProducts from "./RecommendedProducts";
 import ProductVideo from "./ProductVideo";
 import Testimonials from "@/components/layout/Testimonials";
 
+import BackButton from "@/components/ui/BackButton";
 import { UIProduct, UIColor, RecommendedProduct, ExistingReview } from "../types";
 import { formatPrice } from "../constants";
 import type { TestimonialItem } from "@/components/layout/Testimonials/types/types";
@@ -192,18 +193,11 @@ export default function ProductClient({
         </div>
       </div>
 
-      {/* Breadcrumb */}
-      <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100/50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-3 sm:py-4 text-[10px] sm:text-xs text-gray-400 uppercase tracking-[0.2em] font-medium flex items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide">
-          <Link href="/" className="hover:text-[#C19A6B] transition-colors shrink-0">Inicio</Link>
-          <span className="text-gray-300">/</span>
-          <Link href="/tienda" className="hover:text-[#C19A6B] transition-colors shrink-0">Tienda</Link>
-          <span className="text-gray-300">/</span>
-          <span className="text-[#154734] font-bold shrink-0">{product.name}</span>
-        </div>
-      </nav>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-4 sm:pt-6">
+        <BackButton />
+      </div>
 
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-4 pb-12 sm:pt-8 sm:pb-16 lg:pt-12 lg:pb-32">
+<main className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-4 pb-12 sm:pt-8 sm:pb-16 lg:pt-12 lg:pb-32">
         <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-5 sm:gap-8 lg:gap-16 xl:gap-20">
 
           {/* Galería — sticky mientras scrolleas los detalles */}
@@ -223,6 +217,20 @@ export default function ProductClient({
 
             {/* Nombre y Precio */}
             <div className="mb-4 sm:mb-5">
+              {/* Badge de etiqueta */}
+              {product.badge && (
+                <span className={`inline-block mb-3 text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-sm text-white ${
+                  product.badge === "Nuevo Producto"
+                    ? "bg-red-600"
+                    : product.badge === "En Oferta"
+                    ? "bg-[#C19A6B]"
+                    : product.badge === "Nuevo y en Oferta"
+                    ? "bg-[#154734]"
+                    : "bg-[#8B1A1A]"
+                }`}>
+                  {product.badge}
+                </span>
+              )}
               <h1
                 className="text-2xl sm:text-4xl lg:text-[2.75rem] xl:text-5xl font-light text-[#154734] mb-3 sm:mb-4 uppercase leading-tight tracking-tight"
                 style={{ fontFamily: "Georgia, serif" }}

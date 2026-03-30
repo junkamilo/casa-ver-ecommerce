@@ -25,6 +25,10 @@ export function useProductForm() {
   const [status, setStatus] = useState("ACTIVE");
   const [isFeatured, setIsFeatured] = useState(false);
   const [isNew, setIsNew] = useState(false);
+  const [isProductNew, setIsProductNew] = useState(false);
+  const [isProductNewAt, setIsProductNewAt] = useState<string | null>(null);
+  const [isOnSale, setIsOnSale] = useState(false);
+  const [isOnSaleAt, setIsOnSaleAt] = useState<string | null>(null);
   const [material, setMaterial] = useState("");
   const [selectedColors, setSelectedColors] = useState<SelectedColor[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
@@ -45,6 +49,10 @@ export function useProductForm() {
     setStatus("ACTIVE");
     setIsFeatured(false);
     setIsNew(false);
+    setIsProductNew(false);
+    setIsProductNewAt(null);
+    setIsOnSale(false);
+    setIsOnSaleAt(null);
     setMaterial("");
     setSelectedColors([]);
     setSelectedSizes([]);
@@ -65,6 +73,10 @@ export function useProductForm() {
     setStatus(data.status);
     setIsFeatured(data.isFeatured);
     setIsNew(data.isNew);
+    setIsProductNew(data.isProductNew || false);
+    setIsProductNewAt(data.isProductNewAt ? new Date(data.isProductNewAt).toISOString() : null);
+    setIsOnSale(data.isOnSale || false);
+    setIsOnSaleAt(data.isOnSaleAt ? new Date(data.isOnSaleAt).toISOString() : null);
     setMaterial(data.material || "");
     if (data.material) setShowMaterial(true);
     setVideoUrl(data.videoUrl || "");
@@ -137,6 +149,10 @@ export function useProductForm() {
     status,
     isFeatured,
     isNew,
+    isProductNew,
+    isProductNewAt: isProductNewAt ?? null,
+    isOnSale,
+    isOnSaleAt: isOnSaleAt ?? null,
     material,
     videoUrl: videoUrl || null,
     isSet,
@@ -301,6 +317,10 @@ export function useProductForm() {
     status, setStatus,
     isFeatured, setIsFeatured,
     isNew, setIsNew,
+    isProductNew, setIsProductNew,
+    isProductNewAt, setIsProductNewAt,
+    isOnSale, setIsOnSale,
+    isOnSaleAt, setIsOnSaleAt,
     material, setMaterial,
     selectedColors,
     selectedSizes,

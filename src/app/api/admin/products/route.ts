@@ -89,8 +89,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       name, description, basePrice, comparePrice, stock,
-      categoryId, status, isFeatured, isNew, material,
-      videoUrl, isSet, colors, sizes, items, subProducts,
+      categoryId, status, isFeatured, isNew,
+      isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
+      material, videoUrl, isSet, colors, sizes, items, subProducts,
     } = body;
 
     if (!name || !basePrice || !categoryId) {
@@ -102,6 +103,13 @@ export async function POST(req: NextRequest) {
       "-" + Date.now();
 
     const result = await prisma.$transaction(async (tx) => {
+      const resolvedProductNewAt = isProductNew
+        ? (isProductNewAt ? new Date(isProductNewAt) : new Date())
+        : null;
+      const resolvedOnSaleAt = isOnSale
+        ? (isOnSaleAt ? new Date(isOnSaleAt) : new Date())
+        : null;
+
       const product = await (tx as any).product.create({
         data: {
           name,
@@ -113,6 +121,10 @@ export async function POST(req: NextRequest) {
           status: status || "ACTIVE",
           isFeatured: isFeatured || false,
           isNew: isNew || false,
+          isProductNew: isProductNew || false,
+          isProductNewAt: resolvedProductNewAt,
+          isOnSale: isOnSale || false,
+          isOnSaleAt: resolvedOnSaleAt,
           material: material || null,
           videoUrl: videoUrl || null,
           isSet: isSet || false,

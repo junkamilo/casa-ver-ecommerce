@@ -113,12 +113,11 @@ export default {
           '0%, 100%': { opacity: '0.4' },
           '50%':       { opacity: '1' },
         },
-        // Texto "CASA VERDE" — destello barre de C (izq) → E (der), luego pausa larga
-        // 0–20%: barrido izq→der | 20–100%: reposo (sin brillo visible)
+        // Texto "CASA VERDE" — mismo shimmer que el hero de /tienda: barrido continuo ida y vuelta
         'text-shimmer': {
-          '0%':   { backgroundPosition: '-200% center' },
-          '20%':  { backgroundPosition: '200% center' },
-          '100%': { backgroundPosition: '200% center' },
+          '0%':   { backgroundPosition: '0% 50%' },
+          '50%':  { backgroundPosition: '100% 50%' },
+          '100%': { backgroundPosition: '0% 50%' },
         },
         // Menú móvil — entra deslizando desde arriba con elasticidad
         'menu-slide': {
@@ -152,7 +151,7 @@ export default {
         'diamond-breathe': 'diamond-breathe 2s ease-in-out infinite',
         'shine-sweep':     'shine-sweep 9s ease-in-out infinite',
         'border-shimmer':  'border-shimmer 3s ease-in-out infinite',
-        'text-shimmer':    'text-shimmer 6s ease-in-out infinite',
+        'text-shimmer':    'text-shimmer 14s ease-in-out infinite',
         'menu-slide':      'menu-slide 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         'scroll-line':     'scroll-line 2s ease-in-out infinite',
         'progress-fill':   'progress-fill 5s linear infinite',

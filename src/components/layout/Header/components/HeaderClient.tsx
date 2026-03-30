@@ -98,8 +98,8 @@ const HeaderClient = ({ categories }: HeaderClientProps) => {
                 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-light tracking-wide animate-text-shimmer bg-clip-text text-transparent inline-block transition-transform duration-300 group-hover:scale-[1.03]"
                 style={{
                   fontFamily: "Georgia, serif",
-                  backgroundImage: `linear-gradient(90deg, ${BRAND_GREEN} 0%, ${BRAND_GREEN} 40%, #C19A6B 45%, #F5E8D0 50%, #C19A6B 55%, ${BRAND_GREEN} 60%, ${BRAND_GREEN} 100%)`,
-                  backgroundSize: "300% auto",
+                  backgroundImage: `linear-gradient(90deg, ${BRAND_GREEN} 0%, #1d6349 20%, #C19A6B 50%, #1d6349 80%, ${BRAND_GREEN} 100%)`,
+                  backgroundSize: "250% 100%",
                 }}
               >
                 CASA VERDE

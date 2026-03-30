@@ -1,4 +1,6 @@
 import { fetchDashboardData } from "./queries/dashboard.queries";
+
+export const dynamic = "force-dynamic";
 import AdminPageHeader from "@/components/ui/AdminPageHeader";
 import { Plus } from "lucide-react";
 import StatsSection from "./components/StatsSection";

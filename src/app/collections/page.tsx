@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import CollectionHero from "@/app/collections/[slug]/components/CollectionHero";
 import CategoriesClient from "@/app/collections/components/CategoriesClient";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
+import BackButton from "@/components/ui/BackButton";
 
 export const revalidate = 3600;
 
@@ -35,6 +36,8 @@ export default async function CollectionsPage() {
       <main className="flex-1 w-full flex flex-col pt-6 pb-24 sm:pt-10 sm:pb-32 relative z-10">
         <div className="w-full max-w-400 mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
           <h1 className="sr-only">Colecciones</h1>
+
+          <BackButton className="mb-4 sm:mb-6" />
 
           <CollectionHero title="Nuestro Catálogo" />
 
