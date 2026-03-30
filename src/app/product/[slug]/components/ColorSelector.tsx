@@ -25,7 +25,7 @@ export default function ColorSelector({ colors, selected, onSelect }: Props) {
       </div>
 
       {/* Muestras */}
-      <div className="flex flex-wrap gap-4 sm:gap-5">
+      <div className="flex flex-nowrap overflow-x-auto gap-4 py-3 px-3 scrollbar-hide sm:flex-wrap sm:overflow-x-visible sm:py-0 sm:px-0 sm:gap-5">
         {colors.map((color) => {
           const isSelected = selected?.id === color.id;
           return (

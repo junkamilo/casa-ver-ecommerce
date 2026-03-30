@@ -74,7 +74,7 @@ export default function ProductGallery({
 
     // Swipe horizontal: navegar entre imágenes
     if (absX > 50 && absX > absY) {
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
       goTo(deltaX < 0 ? currentIndex + 1 : currentIndex - 1);
     }
 

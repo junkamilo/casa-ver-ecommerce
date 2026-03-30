@@ -1,22 +1,20 @@
 "use client";
 
-import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import SectionHeader from "@/components/ui/SectionHeader";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
-import ProductCard from "@/components/shared/ProductCarousel/components/ProductCard";
+import ProductCard from "@/components/ui/ProductCard";
 import { useCarousel } from "@/components/shared/ProductCarousel/hooks/useCarousel";
-import { ProductItem } from "@/components/shared/ProductCarousel/types";
+import type { CollectionProduct } from "@/components/shared/ProductCollection/types";
 
 const BRAND_GOLD = "#C19A6B";
 const BRAND_GREEN = "#154734";
 
 interface BestSellersClientProps {
-  items: ProductItem[];
+  items: CollectionProduct[];
 }
 
 const BestSellersClient = ({ items }: BestSellersClientProps) => {
-  // Hook del carrusel debe estar en un client component
   const { scrollRef, canScrollLeft, canScrollRight, scroll } = useCarousel();
 
   return (
@@ -29,7 +27,6 @@ const BestSellersClient = ({ items }: BestSellersClientProps) => {
       />
 
       <div className="relative max-w-7xl 2xl:max-w-6xl mx-auto z-10">
-        {/* ── Section Header Mejorado ── */}
         <SectionHeader
           title="Los mas"
           titleItalic="vendidos"
@@ -40,7 +37,6 @@ const BestSellersClient = ({ items }: BestSellersClientProps) => {
           fontClass="font-light"
         />
 
-        {/* ── Carousel Section ── */}
         {items.length === 0 && (
           <SectionEmptyState message="Pronto agregaremos los productos más vendidos." />
         )}
@@ -74,7 +70,7 @@ const BestSellersClient = ({ items }: BestSellersClientProps) => {
             >
               {items.map((item) => (
                 <div key={item.slug} className="snap-center md:snap-none">
-                  <ProductCard item={item} badgeVariant="white" />
+                  <ProductCard item={item} />
                 </div>
               ))}
             </div>

@@ -1,14 +1,15 @@
 "use client";
 
-import { ProductItem, SectionConfig } from "./types";
+import { SectionConfig } from "./types";
 import { useCarousel } from "./hooks/useCarousel";
 import GlobalSectionHeader from "@/components/ui/SectionHeader";
 import CarouselArrow from "./components/CarouselArrow";
-import ProductCard from "./components/ProductCard";
+import ProductCard from "@/components/ui/ProductCard";
+import type { CollectionProduct } from "@/components/shared/ProductCollection/types";
 
 interface ProductCarouselProps {
   config: SectionConfig;
-  items: ProductItem[];
+  items: CollectionProduct[];
 }
 
 const ProductCarousel = ({ config, items }: ProductCarouselProps) => {
@@ -53,7 +54,7 @@ const ProductCarousel = ({ config, items }: ProductCarouselProps) => {
           >
             {items.map((item) => (
               <div key={item.slug} className="snap-center md:snap-none">
-                <ProductCard item={item} badgeVariant={config.badgeVariant} />
+                <ProductCard item={item} />
               </div>
             ))}
           </div>

@@ -91,16 +91,12 @@ const HeaderClient = ({ categories }: HeaderClientProps) => {
             />
           </div>
 
-          {/* ── Centro: "CASA VERDE" con shimmer dorado — Solo visible en desktop (lg+), oculto en móvil/tablet ── */}
+          {/* ── Centro: "CASA VERDE" — Solo visible en desktop (lg+), oculto en móvil/tablet ── */}
           <div className="hidden lg:block absolute left-1/2 -translate-x-1/2 pointer-events-none">
-            <Link href="/" className="block group pointer-events-auto" aria-label="Casa Verde — inicio">
+            <Link href="/" className="block pointer-events-auto" aria-label="Casa Verde — inicio">
               <span
-                className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-light tracking-wide animate-text-shimmer bg-clip-text text-transparent inline-block transition-transform duration-300 group-hover:scale-[1.03]"
-                style={{
-                  fontFamily: "Georgia, serif",
-                  backgroundImage: `linear-gradient(90deg, ${BRAND_GREEN} 0%, #1d6349 20%, #C19A6B 50%, #1d6349 80%, ${BRAND_GREEN} 100%)`,
-                  backgroundSize: "250% 100%",
-                }}
+                className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-light tracking-wide text-[#154734] inline-block"
+                style={{ fontFamily: "Georgia, serif" }}
               >
                 CASA VERDE
               </span>

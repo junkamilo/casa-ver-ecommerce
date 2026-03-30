@@ -1,27 +1,37 @@
 import { prisma } from "@/lib/prisma";
 import { ProductStatus } from "@prisma/client";
-import { ProductItem } from "@/components/shared/ProductCarousel/types";
 import { computeProductBadge } from "@/lib/productBadge";
+import type { CollectionProduct } from "@/components/shared/ProductCollection/types";
 import NewCollectionClient from "./NewCollectionClient";
 
-const formatPrice = (price: number) =>
-  `$${Math.round(price).toLocaleString("es-CO")}`;
-
-async function fetchNewProducts(): Promise<ProductItem[]> {
+async function fetchNewProducts(): Promise<CollectionProduct[]> {
   const raw = await prisma.product.findMany({
     where: { isNew: true, status: ProductStatus.ACTIVE },
-    include: {
+    select: {
+      name: true,
+      slug: true,
+      basePrice: true,
+      comparePrice: true,
+      isProductNew: true,
+      isProductNewAt: true,
+      isOnSale: true,
+      images: {
+        orderBy: { order: "asc" },
+        take: 8,
+        select: { url: true },
+      },
       colors: {
-        include: {
-          images: { orderBy: { order: "asc" }, take: 1 },
+        select: {
+          name: true,
+          hexCode: true,
+          images: {
+            orderBy: { order: "asc" },
+            take: 1,
+            select: { url: true },
+          },
           variants: { select: { stock: true } },
         },
         orderBy: { id: "asc" },
-      },
-      images: {
-        where: { colorId: null },
-        orderBy: { order: "asc" },
-        take: 1,
       },
     },
     orderBy: { createdAt: "desc" },
@@ -30,10 +40,6 @@ async function fetchNewProducts(): Promise<ProductItem[]> {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (raw as any[]).map((p) => {
-    const firstColorImage = p.colors[0]?.images[0]?.url ?? null;
-    const firstGeneralImage = p.images[0]?.url ?? null;
-    const image = firstColorImage ?? firstGeneralImage ?? "/placeholder.jpg";
-
     const totalStock = p.colors.reduce(
       (acc: number, c: { variants: { stock: number }[] }) =>
         acc + c.variants.reduce((s: number, v: { stock: number }) => s + v.stock, 0),
@@ -41,19 +47,25 @@ async function fetchNewProducts(): Promise<ProductItem[]> {
     );
 
     return {
-      image,
+      images: p.images.map((i: { url: string }) => i.url),
       name: p.name,
       slug: p.slug,
-      price: formatPrice(Number(p.basePrice)),
-      oldPrice: p.comparePrice ? formatPrice(Number(p.comparePrice)) : undefined,
-      colors: p.colors.map((c: { hexCode: string }) => c.hexCode),
-      colorLabel: p.colors[0]?.name,
+      price: Number(p.basePrice),
+      oldPrice: p.comparePrice ? Number(p.comparePrice) : undefined,
       badge: computeProductBadge({
         isProductNew: p.isProductNew,
         isProductNewAt: p.isProductNewAt,
         isOnSale: p.isOnSale,
         stock: totalStock,
       }),
+      colors:
+        p.colors.length > 0
+          ? p.colors.map((c: { name: string; hexCode: string; images: { url: string }[] }) => ({
+              name: c.name,
+              hexCode: c.hexCode,
+              imageUrl: c.images[0]?.url ?? null,
+            }))
+          : undefined,
     };
   });
 }
