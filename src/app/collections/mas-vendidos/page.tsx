@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { ProductStatus } from "@prisma/client";
+import { computeProductBadge } from "@/lib/productBadge";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/Footer";
@@ -7,6 +8,7 @@ import CollectionHero from "@/app/collections/[slug]/components/CollectionHero";
 import CollectionClient from "@/app/collections/[slug]/components/CollectionClient";
 import type { CollectionProduct, FilterOptions } from "@/app/collections/[slug]/types";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
+import BackButton from "@/components/ui/BackButton";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +30,9 @@ async function fetchBestSellers(): Promise<{
       comparePrice: true,
       isNew: true,
       isFeatured: true,
+      isProductNew: true,
+      isProductNewAt: true,
+      isOnSale: true,
       images: {
         orderBy: { order: "asc" },
         take: 8,
@@ -51,21 +56,26 @@ async function fetchBestSellers(): Promise<{
   const colorMap = new Map<string, string>();
   let maxPriceDb = 0;
 
-  const products: CollectionProduct[] = raw.map((p) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const products: CollectionProduct[] = (raw as any[]).map((p) => {
     const price = Number(p.basePrice);
     if (price > maxPriceDb) maxPriceDb = price;
     for (const c of p.colors) colorMap.set(c.hexCode, c.name);
 
     return {
-      images: p.images.map((i) => i.url),
+      images: p.images.map((i: { url: string }) => i.url),
       name: p.name,
       slug: p.slug,
       price,
       oldPrice: p.comparePrice ? Number(p.comparePrice) : undefined,
-      badge: p.comparePrice ? "Oferta" : p.isNew ? "Nuevo" : undefined,
+      badge: computeProductBadge({
+        isProductNew: p.isProductNew,
+        isProductNewAt: p.isProductNewAt,
+        isOnSale: p.isOnSale,
+      }),
       colors:
         p.colors.length > 0
-          ? p.colors.map((c) => ({ name: c.name, hexCode: c.hexCode, imageUrl: c.images[0]?.url ?? null }))
+          ? p.colors.map((c: { name: string; hexCode: string; images: { url: string }[] }) => ({ name: c.name, hexCode: c.hexCode, imageUrl: c.images[0]?.url ?? null }))
           : undefined,
     };
   });
@@ -93,6 +103,8 @@ export default async function MasVendidosPage() {
       <main className="flex-1 w-full flex flex-col pt-6 pb-24 sm:pt-10 sm:pb-32 relative z-10">
         <div className="w-full max-w-[100rem] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
           <h1 className="sr-only">Los Más Deseados</h1>
+
+          <BackButton className="mb-4 sm:mb-6" />
 
           <CollectionHero title="Los Más Deseados" />
 

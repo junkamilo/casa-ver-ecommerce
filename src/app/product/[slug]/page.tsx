@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { computeProductBadge } from "@/lib/productBadge";
 import Footer from "@/components/Footer";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/layout/Header";
@@ -158,6 +159,12 @@ export default async function ProductPage({ params }: Props) {
     stock: totalStock,
     isSet: product.isSet ?? false,
     items: uiItems,
+    badge: computeProductBadge({
+      isProductNew: product.isProductNew as boolean | undefined,
+      isProductNewAt: product.isProductNewAt as Date | null | undefined,
+      isOnSale: product.isOnSale as boolean | undefined,
+      stock: totalStock,
+    }),
   };
 
   // Social proof: compradores reales de este producto

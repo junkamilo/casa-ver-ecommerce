@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { computeProductBadge } from "@/lib/productBadge";
 import Footer from "@/components/Footer";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/layout/Header";
@@ -83,6 +84,9 @@ async function getCollectionData(
         comparePrice: true,
         isFeatured: true,
         isNew: true,
+        isProductNew: true,
+        isProductNewAt: true,
+        isOnSale: true,
         images: {
           orderBy: { order: "asc" },
           take: 8,
@@ -103,22 +107,21 @@ async function getCollectionData(
       orderBy: { createdAt: "desc" },
     });
 
-    const products: CollectionProduct[] = raw.map((p) => ({
-      images: p.images.map((i) => i.url),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const products: CollectionProduct[] = (raw as any[]).map((p) => ({
+      images: p.images.map((i: { url: string }) => i.url),
       name: p.name,
       slug: p.slug,
       price: Number(p.basePrice),
       oldPrice: p.comparePrice ? Number(p.comparePrice) : undefined,
-      badge: p.comparePrice
-        ? "Oferta"
-        : p.isNew
-        ? "Nuevo"
-        : p.isFeatured
-        ? "Destacado"
-        : undefined,
+      badge: computeProductBadge({
+        isProductNew: p.isProductNew,
+        isProductNewAt: p.isProductNewAt,
+        isOnSale: p.isOnSale,
+      }),
       colors:
         p.colors.length > 0
-          ? p.colors.map((c) => ({ name: c.name, hexCode: c.hexCode, imageUrl: c.images[0]?.url ?? null }))
+          ? p.colors.map((c: { name: string; hexCode: string; images: { url: string }[] }) => ({ name: c.name, hexCode: c.hexCode, imageUrl: c.images[0]?.url ?? null }))
           : undefined,
     }));
 

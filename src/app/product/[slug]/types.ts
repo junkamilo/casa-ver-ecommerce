@@ -44,6 +44,7 @@ export interface UIProduct {
   stock: number;
   isSet: boolean;
   items: UIProductItem[];
+  badge?: string;
 }
 
 export interface RecommendedProduct {

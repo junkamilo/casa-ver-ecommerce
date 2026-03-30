@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown, ChevronUp, Check } from "lucide-react";
+import { ChevronDown, ChevronUp, Check, Star, Sparkles, Tag, Percent, BadgeCheck } from "lucide-react";
 import { Category } from "../../types";
 import { ProductFormErrors } from "../../schema";
 
@@ -12,6 +12,10 @@ interface Props {
   status: string; onStatus: (v: string) => void;
   isFeatured: boolean; onFeatured: (v: boolean) => void;
   isNew: boolean; onNew: (v: boolean) => void;
+  isProductNew: boolean; onProductNew: (v: boolean) => void;
+  isProductNewAt: string | null; onProductNewAt: (v: string | null) => void;
+  isOnSale: boolean; onOnSale: (v: boolean) => void;
+  isOnSaleAt: string | null; onOnSaleAt: (v: string | null) => void;
   categories: Category[];
   errors?: ProductFormErrors;
 }
@@ -46,6 +50,49 @@ function useDropdown() {
   return { open, setOpen, ref };
 }
 
+interface LabelToggleProps {
+  active: boolean;
+  onToggle: () => void;
+  icon: React.ElementType;
+  label: string;
+  description: string;
+  activeColor: string;
+  activeBg: string;
+  activeBorder: string;
+  infoText?: string;
+}
+
+function LabelToggle({ active, onToggle, icon: Icon, label, description, activeColor, activeBg, activeBorder, infoText }: LabelToggleProps) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`flex items-center justify-between gap-3 w-full rounded-xl border-2 px-4 py-3 transition-all duration-200 text-left ${
+        active
+          ? `${activeBorder} ${activeBg}`
+          : "border-gray-200 bg-gray-50 hover:border-gray-300"
+      }`}
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${active ? activeBg : "bg-gray-100"}`}>
+          <Icon className={`w-4 h-4 ${active ? activeColor : "text-gray-400"}`} />
+        </div>
+        <div className="min-w-0">
+          <p className={`text-xs font-bold uppercase tracking-wide ${active ? activeColor : "text-gray-500"}`}>
+            {label}
+          </p>
+          <p className="text-[10px] text-gray-400 truncate">{active && infoText ? infoText : description}</p>
+        </div>
+      </div>
+      <div className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+        active ? "bg-current" : "bg-gray-300"
+      }`} style={{ color: active ? undefined : undefined }}>
+        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ${active ? "translate-x-4" : "translate-x-0"}`} />
+      </div>
+    </button>
+  );
+}
+
 export default function GeneralInfoSection({
   name, onName,
   description, onDescription,
@@ -53,6 +100,8 @@ export default function GeneralInfoSection({
   status, onStatus,
   isFeatured, onFeatured,
   isNew, onNew,
+  isProductNew, onProductNew, onProductNewAt,
+  isOnSale, onOnSale, onOnSaleAt,
   categories,
   errors = {},
 }: Props) {
@@ -61,6 +110,19 @@ export default function GeneralInfoSection({
 
   const selectedCat = categories.find((c) => c.id === categoryId);
   const selectedStatus = STATUS_OPTIONS.find((s) => s.value === status) ?? STATUS_OPTIONS[0];
+
+  const handleProductNewToggle = () => {
+    const next = !isProductNew;
+    onProductNew(next);
+    // Al activar, guardar timestamp actual; al desactivar, limpiar
+    onProductNewAt(next ? new Date().toISOString() : null);
+  };
+
+  const handleOnSaleToggle = () => {
+    const next = !isOnSale;
+    onOnSale(next);
+    onOnSaleAt(next ? new Date().toISOString() : null);
+  };
 
   return (
     <div className="space-y-4">
@@ -120,7 +182,6 @@ export default function GeneralInfoSection({
 
             {cat.open && (
               <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                {/* Header del panel */}
                 <div className="px-4 py-2.5 border-b border-gray-100 bg-[#154734]/5">
                   <p className="text-[11px] font-bold text-[#154734] uppercase tracking-widest">
                     Categorías
@@ -208,23 +269,88 @@ export default function GeneralInfoSection({
         </div>
       </div>
 
-      {/* Checkboxes */}
-      <div className="flex flex-wrap gap-6 pt-1">
-        {[
-          { label: "Producto Destacado", value: isFeatured, onChange: onFeatured },
-          { label: "Marcar como Nuevo",  value: isNew,      onChange: onNew      },
-        ].map(({ label, value, onChange }) => (
-          <label key={label} className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={value}
-              onChange={(e) => onChange(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 text-[#154734] focus:ring-[#154734] accent-[#154734]"
-            />
-            <span className="text-sm text-gray-600">{label}</span>
-          </label>
-        ))}
+      {/* ── Etiquetas / Colecciones ── */}
+      <div className="space-y-2.5 pt-1">
+        <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+          Colecciones y Etiquetas
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <LabelToggle
+            active={isFeatured}
+            onToggle={() => onFeatured(!isFeatured)}
+            icon={Star}
+            label="Más Vendidos"
+            description="Aparece en sección Más Vendidos"
+            activeColor="text-amber-600"
+            activeBg="bg-amber-50"
+            activeBorder="border-amber-400"
+          />
+          <LabelToggle
+            active={isNew}
+            onToggle={() => onNew(!isNew)}
+            icon={Sparkles}
+            label="Nuevos Ingresos"
+            description="Aparece en Nueva Colección"
+            activeColor="text-[#154734]"
+            activeBg="bg-[#154734]/5"
+            activeBorder="border-[#154734]"
+          />
+          <LabelToggle
+            active={isProductNew}
+            onToggle={handleProductNewToggle}
+            icon={BadgeCheck}
+            label="Producto Nuevo"
+            description="Muestra etiqueta roja · dura 7 días"
+            infoText="Etiqueta activa · expira en 7 días"
+            activeColor="text-red-600"
+            activeBg="bg-red-50"
+            activeBorder="border-red-400"
+          />
+          <LabelToggle
+            active={isOnSale}
+            onToggle={handleOnSaleToggle}
+            icon={Percent}
+            label="Producto en Oferta"
+            description="Muestra etiqueta dorada de oferta"
+            infoText="Etiqueta de oferta activa"
+            activeColor="text-[#C19A6B]"
+            activeBg="bg-[#C19A6B]/10"
+            activeBorder="border-[#C19A6B]"
+          />
+        </div>
+
+        {/* Vista previa de etiqueta activa */}
+        {(isProductNew || isOnSale) && (
+          <div className="flex items-center gap-2 pt-1">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wide">Vista previa etiqueta:</p>
+            {isProductNew && isOnSale ? (
+              <span className="text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-[0.2em] bg-[#154734] text-white shadow-sm">
+                Nuevo y en Oferta
+              </span>
+            ) : isProductNew ? (
+              <span className="text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-[0.2em] bg-red-600 text-white shadow-sm">
+                Nuevo Producto
+              </span>
+            ) : (
+              <span className="text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-[0.2em] bg-[#C19A6B] text-white shadow-sm">
+                En Oferta
+              </span>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Nota informativa sobre expiración */}
+      {isProductNew && (
+        <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+          <BadgeCheck className="w-3.5 h-3.5 text-red-500 mt-0.5 shrink-0" />
+          <p className="text-[10px] text-red-600 leading-relaxed">
+            La etiqueta <strong>Nuevo Producto</strong> se mostrará durante 7 días desde su activación.
+            Puedes desactivarla manualmente desde edición en cualquier momento.
+            {isOnSale && " La etiqueta se verá combinada como «Nuevo y en Oferta»."}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

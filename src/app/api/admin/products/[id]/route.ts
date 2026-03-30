@@ -63,6 +63,10 @@ export async function GET(
       isFeatured: product.isFeatured,
       isNew: product.isNew,
       isSet: product.isSet ?? false,
+      isProductNew: product.isProductNew ?? false,
+      isProductNewAt: product.isProductNewAt ?? null,
+      isOnSale: product.isOnSale ?? false,
+      isOnSaleAt: product.isOnSaleAt ?? null,
       metaTitle: product.metaTitle,
       metaDescription: product.metaDescription,
       material: product.material,
@@ -153,13 +157,21 @@ export async function PATCH(
 
     const {
       name, description, basePrice, comparePrice, stock,
-      categoryId, status, isFeatured, isNew, material,
-      videoUrl, isSet, colors, sizes, items, subProducts,
+      categoryId, status, isFeatured, isNew,
+      isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
+      material, videoUrl, isSet, colors, sizes, items, subProducts,
     } = body;
 
     const slug = name
       ? name.toLowerCase().trim().replace(/[\s\W-]+/g, "-").replace(/^-+|-+$/g, "")
       : undefined;
+
+    const resolvedProductNewAt = isProductNew
+      ? (isProductNewAt ? new Date(isProductNewAt) : new Date())
+      : null;
+    const resolvedOnSaleAt = isOnSale
+      ? (isOnSaleAt ? new Date(isOnSaleAt) : new Date())
+      : null;
 
     const result = await prisma.$transaction(async (tx) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -190,6 +202,10 @@ export async function PATCH(
           status,
           isFeatured,
           isNew,
+          isProductNew: isProductNew ?? false,
+          isProductNewAt: resolvedProductNewAt,
+          isOnSale: isOnSale ?? false,
+          isOnSaleAt: resolvedOnSaleAt,
           material: material || null,
           videoUrl: videoUrl !== undefined ? (videoUrl || null) : undefined,
           isSet: isSet ?? false,

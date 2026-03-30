@@ -33,6 +33,10 @@ interface Props {
   status: string; setStatus: (v: string) => void;
   isFeatured: boolean; setIsFeatured: (v: boolean) => void;
   isNew: boolean; setIsNew: (v: boolean) => void;
+  isProductNew: boolean; setIsProductNew: (v: boolean) => void;
+  isProductNewAt: string | null; setIsProductNewAt: (v: string | null) => void;
+  isOnSale: boolean; setIsOnSale: (v: boolean) => void;
+  isOnSaleAt: string | null; setIsOnSaleAt: (v: string | null) => void;
   material: string; setMaterial: (v: string) => void;
   selectedColors: SelectedColor[];
   selectedSizes: string[];
@@ -105,6 +109,10 @@ export default function ProductModal({
   status, setStatus,
   isFeatured, setIsFeatured,
   isNew, setIsNew,
+  isProductNew, setIsProductNew,
+  isProductNewAt, setIsProductNewAt,
+  isOnSale, setIsOnSale,
+  isOnSaleAt, setIsOnSaleAt,
   material, setMaterial,
   selectedColors,
   selectedSizes,
@@ -248,6 +256,10 @@ export default function ProductModal({
                   status={status} onStatus={setStatus}
                   isFeatured={isFeatured} onFeatured={setIsFeatured}
                   isNew={isNew} onNew={setIsNew}
+                  isProductNew={isProductNew} onProductNew={setIsProductNew}
+                  isProductNewAt={isProductNewAt} onProductNewAt={setIsProductNewAt}
+                  isOnSale={isOnSale} onOnSale={setIsOnSale}
+                  isOnSaleAt={isOnSaleAt} onOnSaleAt={setIsOnSaleAt}
                   categories={categories}
                   errors={errors}
                 />

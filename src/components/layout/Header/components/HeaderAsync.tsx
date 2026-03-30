@@ -13,9 +13,21 @@ async function getNavCategories(): Promise<NavCategory[]> {
           orderBy: { name: "asc" },
           select: { id: true, name: true, slug: true },
         },
+        products: {
+          where: { status: "ACTIVE" },
+          orderBy: { name: "asc" },
+          select: { id: true, name: true, slug: true },
+          take: 8,
+        },
       },
     });
-    return categories as NavCategory[];
+    return categories.map((cat) => ({
+      id: cat.id,
+      name: cat.name,
+      slug: cat.slug,
+      subcategories: cat.subcategories,
+      products: cat.products,
+    }));
   } catch {
     return [];
   }

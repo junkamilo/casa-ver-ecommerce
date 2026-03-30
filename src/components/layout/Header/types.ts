@@ -5,11 +5,18 @@ export interface NavSubcategory {
   slug: string;
 }
 
+export interface NavProduct {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export interface NavCategory {
   id: string;
   name: string;
   slug: string;
   subcategories: NavSubcategory[];
+  products: NavProduct[];
 }
 
 // ── Component Props ──────────────────────────────────────────────────────────

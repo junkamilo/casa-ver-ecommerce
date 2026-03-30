@@ -8,8 +8,19 @@ interface ProductCardProps {
   badgeVariant?: "white" | "gold";
 }
 
+const badgeColorClass = (badge?: string, variant: "white" | "gold" = "gold") => {
+  if (!badge) return "";
+  const b = badge.toLowerCase();
+  if (b === "agotado") return "bg-[#8B1A1A] text-white";
+  if (b === "nuevo producto") return "bg-red-600 text-white";
+  if (b === "en oferta") return "bg-[#C19A6B] text-white";
+  if (b === "nuevo y en oferta") return "bg-[#154734] text-white";
+  // fallback legacy badges
+  if (variant === "white") return "bg-white/95 backdrop-blur-sm text-[#154734]";
+  return "bg-[#C19A6B] text-white";
+};
+
 const ProductCard = ({ item, badgeVariant = "gold" }: ProductCardProps) => {
-  const isAgotado = item.badge?.toLowerCase() === "agotado";
 
   return (
     <Link
@@ -26,16 +37,10 @@ const ProductCard = ({ item, badgeVariant = "gold" }: ProductCardProps) => {
           {...(typeof item.image !== "string" && { placeholder: "blur" })}
         />
 
-        {/* Badge (Etiqueta Premium) */}
+        {/* Badge (Etiqueta) */}
         {item.badge && (
           <span
-            className={`absolute top-3 right-3 z-20 text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-md ${
-              isAgotado
-                ? "bg-[#8B1A1A]"
-                : badgeVariant === "white"
-                ? "bg-white/95 backdrop-blur-sm text-[#154734]"
-                : "bg-[#C19A6B]"
-            }`}
+            className={`absolute top-3 right-3 z-20 text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-md ${badgeColorClass(item.badge, badgeVariant)}`}
           >
             {item.badge}
           </span>
@@ -53,9 +58,9 @@ const ProductCard = ({ item, badgeVariant = "gold" }: ProductCardProps) => {
 
         {/* Precios */}
         <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-base sm:text-sm md:text-base mb-1">
-          <span className="font-medium text-[#154734]">${item.price}</span>
+          <span className="font-medium text-[#154734]">{item.price}</span>
           {item.oldPrice && (
-            <span className="text-gray-400 line-through text-sm font-light">${item.oldPrice}</span>
+            <span className="text-gray-400 line-through text-sm font-light">{item.oldPrice}</span>
           )}
         </div>
 

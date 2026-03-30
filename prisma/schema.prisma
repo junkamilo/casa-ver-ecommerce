@@ -208,6 +208,12 @@ model Product {
   isFeatured      Boolean        @default(false)
   isNew           Boolean        @default(false)
 
+  // Etiquetas de Producto (con control de tiempo)
+  isProductNew    Boolean        @default(false)
+  isProductNewAt  DateTime?      // Timestamp cuando se activó — expira automáticamente a los 7 días
+  isOnSale        Boolean        @default(false)
+  isOnSaleAt      DateTime?      // Timestamp cuando se activó la oferta
+
   // SEO
   metaTitle       String?
   metaDescription String?
