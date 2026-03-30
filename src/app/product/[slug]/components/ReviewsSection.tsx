@@ -33,21 +33,21 @@ export default function ReviewsSection({
   const maxCount = Math.max(...distribution.map((d) => d.count), 1);
 
   return (
-    <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-360 mx-auto w-full flex justify-center">
+    <section className="py-8 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-360 mx-auto w-full flex justify-center">
       <div className="w-full max-w-6xl">
 
         {/* Cabecera editorial */}
-        <div className="flex flex-col items-center justify-center mb-12 sm:mb-16 px-4">
-          <div className="flex items-center gap-4 mb-5">
-            <span className="h-px w-10 sm:w-16 bg-linear-to-r from-transparent to-[#C19A6B]" />
-            <span className="text-[10px] sm:text-xs font-black tracking-[0.4em] uppercase text-[#C19A6B] flex items-center gap-2 drop-shadow-sm">
-              <Sparkles className="w-3.5 h-3.5" />
+        <div className="flex flex-col items-center justify-center mb-6 sm:mb-16 px-4">
+          <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-5">
+            <span className="h-px w-8 sm:w-16 bg-linear-to-r from-transparent to-[#C19A6B]" />
+            <span className="text-[9px] sm:text-xs font-black tracking-[0.3em] sm:tracking-[0.4em] uppercase text-[#C19A6B] flex items-center gap-1.5 sm:gap-2 drop-shadow-sm">
+              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               Testimonios
             </span>
-            <span className="h-px w-10 sm:w-16 bg-linear-to-l from-transparent to-[#C19A6B]" />
+            <span className="h-px w-8 sm:w-16 bg-linear-to-l from-transparent to-[#C19A6B]" />
           </div>
           <h2
-            className="text-4xl sm:text-5xl lg:text-6xl text-[#154734] text-center leading-[1.1] tracking-tight"
+            className="text-3xl sm:text-5xl lg:text-6xl text-[#154734] text-center leading-[1.1] tracking-tight"
             style={{ fontFamily: "Georgia, serif" }}
           >
             Voces de nuestras <span className="italic text-[#C19A6B]">clientas</span>
@@ -55,10 +55,10 @@ export default function ReviewsSection({
         </div>
 
         {/* Contenedor Unificado (50/50) */}
-        <div className="flex flex-col lg:flex-row w-full rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden shadow-[0_20px_60px_-15px_rgba(21,71,52,0.25)] border border-gray-100 bg-white">
+        <div className="flex flex-col lg:flex-row w-full rounded-2xl sm:rounded-[3rem] overflow-hidden shadow-[0_20px_60px_-15px_rgba(21,71,52,0.25)] border border-gray-100 bg-white">
 
           {/* Columna Izquierda: Estadísticas (Verde) */}
-          <div className="w-full lg:w-1/2 bg-[#154734] p-10 sm:p-14 lg:p-16 relative flex flex-col justify-center isolate">
+          <div className="w-full lg:w-1/2 bg-[#154734] p-6 sm:p-14 lg:p-16 relative flex flex-col justify-center isolate">
             {/* Decoración de fondo */}
             <div
               className="absolute inset-0 opacity-[0.06] pointer-events-none"
@@ -67,42 +67,42 @@ export default function ReviewsSection({
             <div className="absolute top-0 left-0 w-full h-1.5 bg-linear-to-r from-[#C19A6B]/30 via-[#C19A6B] to-[#C19A6B]/30 opacity-80" />
 
             <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col items-center">
-              <h3 className="text-white/80 text-xs sm:text-sm font-bold tracking-[0.3em] uppercase mb-8 text-center">
+              <h3 className="text-white/80 text-[10px] sm:text-sm font-bold tracking-[0.3em] uppercase mb-4 sm:mb-8 text-center">
                 Calificación General
               </h3>
 
-              <div className="text-center mb-10">
+              <div className="text-center mb-5 sm:mb-10">
                 <p
-                  className="text-7xl sm:text-8xl lg:text-9xl font-light text-white mb-4 tracking-tighter drop-shadow-md"
+                  className="text-6xl sm:text-8xl lg:text-9xl font-light text-white mb-3 sm:mb-4 tracking-tighter drop-shadow-md"
                   style={{ fontFamily: "Georgia, serif" }}
                 >
                   {rating.toFixed(1)}
                 </p>
-                <div className="flex text-[#C19A6B] justify-center mb-5 gap-1">
+                <div className="flex text-[#C19A6B] justify-center mb-3 sm:mb-5 gap-1">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star
                       key={star}
-                      className={`w-6 h-6 sm:w-7 sm:h-7 ${
+                      className={`w-5 h-5 sm:w-7 sm:h-7 ${
                         star <= rounded ? "fill-current drop-shadow-[0_0_8px_rgba(193,154,107,0.5)] scale-110" : "fill-none text-white/20"
                       } transition-all duration-300`}
                       strokeWidth={1.5}
                     />
                   ))}
                 </div>
-                <p className="text-xs sm:text-sm text-white/60 uppercase tracking-widest font-medium">
+                <p className="text-[10px] sm:text-sm text-white/60 uppercase tracking-widest font-medium">
                   Basado en <span className="text-[#C19A6B] font-bold">{numReviews}</span> reseña{numReviews !== 1 ? "s" : ""}
                 </p>
               </div>
 
               {/* Barras de distribución real */}
-              <div className="w-full space-y-4">
+              <div className="w-full space-y-3 sm:space-y-4">
                 {distribution.map(({ star, count }) => (
-                  <div key={star} className="flex items-center gap-4 text-xs group cursor-default">
+                  <div key={star} className="flex items-center gap-3 sm:gap-4 text-xs group cursor-default">
                     <div className="flex text-[#C19A6B] shrink-0 transition-transform duration-300 group-hover:scale-105">
                       {[1, 2, 3, 4, 5].map((i) => (
                         <Star
                           key={i}
-                          className={`w-3.5 h-3.5 ${
+                          className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${
                             i <= star ? "fill-current" : "text-white/10 fill-white/10"
                           }`}
                         />
@@ -116,7 +116,7 @@ export default function ReviewsSection({
                         <div className="absolute inset-0 w-full h-full bg-white/20 -translate-x-full animate-[shimmer_2s_infinite]" />
                       </div>
                     </div>
-                    <span className="w-6 text-right text-white/70 font-bold group-hover:text-white transition-colors duration-300">
+                    <span className="w-5 sm:w-6 text-right text-white/70 font-bold group-hover:text-white transition-colors duration-300">
                       {count}
                     </span>
                   </div>
@@ -126,7 +126,7 @@ export default function ReviewsSection({
           </div>
 
           {/* Columna Derecha: Formulario (Blanco) */}
-          <div className="w-full lg:w-1/2 bg-white p-10 sm:p-14 lg:p-16 flex items-center justify-center relative">
+          <div className="w-full lg:w-1/2 bg-white p-6 sm:p-14 lg:p-16 flex items-center justify-center relative">
             <ReviewForm
               productId={productId}
               productSlug={productSlug}

@@ -3,25 +3,23 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import SectionHeader from "@/components/ui/SectionHeader";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
-import ProductCard from "@/components/shared/ProductCarousel/components/ProductCard";
+import ProductCard from "@/components/ui/ProductCard";
 import { useCarousel } from "@/components/shared/ProductCarousel/hooks/useCarousel";
-import { ProductItem } from "@/components/shared/ProductCarousel/types";
+import type { CollectionProduct } from "@/components/shared/ProductCollection/types";
 
 const BRAND_GOLD = "#C19A6B";
 const BRAND_GREEN = "#154734";
 
 interface NewCollectionClientProps {
-  items: ProductItem[];
+  items: CollectionProduct[];
 }
 
 const NewCollectionClient = ({ items }: NewCollectionClientProps) => {
-  // Hook del carrusel debe estar en un client component
   const { scrollRef, canScrollLeft, canScrollRight, scroll } = useCarousel();
 
   return (
     <section className="relative w-full bg-white border-t border-[#C19A6B]/10 overflow-hidden py-12 sm:py-16 md:py-20 lg:py-20 px-4 sm:px-6 md:px-8 lg:px-12">
       <div className="relative max-w-7xl 2xl:max-w-6xl mx-auto z-10">
-        {/* ── Section Header Mejorado ── */}
         <SectionHeader
           title="Nuevos"
           titleItalic="Ingresos"
@@ -32,7 +30,6 @@ const NewCollectionClient = ({ items }: NewCollectionClientProps) => {
           fontClass="font-light"
         />
 
-        {/* ── Carousel Section ── */}
         {items.length === 0 && (
           <SectionEmptyState message="Pronto agregaremos nuevos ingresos." />
         )}
@@ -66,7 +63,7 @@ const NewCollectionClient = ({ items }: NewCollectionClientProps) => {
             >
               {items.map((item) => (
                 <div key={item.slug} className="snap-center md:snap-none">
-                  <ProductCard item={item} badgeVariant="gold" />
+                  <ProductCard item={item} />
                 </div>
               ))}
             </div>

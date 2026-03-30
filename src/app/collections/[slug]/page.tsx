@@ -170,7 +170,7 @@ export default async function CollectionPage({
           />
 
           {/* Grilla de Productos */}
-          <div className="mt-12 sm:mt-16 lg:mt-24 w-full">
+          <div className="mt-4 sm:mt-6 lg:mt-8 w-full">
             <CollectionClient products={products} filterOptions={filterOptions} />
           </div>
 

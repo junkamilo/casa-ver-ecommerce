@@ -7,7 +7,8 @@ import Footer from "@/components/Footer";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/layout/Header";
 import ProductClient from "./components/ProductClient";
-import { UIProduct, UIProductItem, RecommendedProduct } from "./types";
+import { UIProduct, UIProductItem } from "./types";
+import type { CollectionProduct } from "@/components/shared/ProductCollection/types";
 import type { TestimonialItem } from "@/components/layout/Testimonials/types/types";
 
 interface Props {
@@ -65,20 +66,31 @@ export default async function ProductPage({ params }: Props) {
           products: {
             where: { status: "ACTIVE", slug: { not: slug } },
             take: 4,
-            include: {
+            select: {
+              name: true,
+              slug: true,
+              basePrice: true,
+              comparePrice: true,
+              isProductNew: true,
+              isProductNewAt: true,
+              isOnSale: true,
               images: {
-                where: { colorId: null },
-                take: 1,
                 orderBy: { order: "asc" },
+                take: 8,
+                select: { url: true },
               },
               colors: {
-                take: 1,
-                include: {
+                select: {
+                  name: true,
+                  hexCode: true,
                   images: {
-                    take: 1,
                     orderBy: { order: "asc" },
+                    take: 1,
+                    select: { url: true },
                   },
+                  variants: { select: { stock: true } },
                 },
+                orderBy: { id: "asc" },
               },
             },
           },
@@ -181,12 +193,25 @@ export default async function ProductPage({ params }: Props) {
     avatar: o.user.image ?? null,
   }));
 
-  const recommended: RecommendedProduct[] = (product.category.products as any[]).map((p) => ({
-    id: p.id,
+  const recommended: CollectionProduct[] = (product.category.products as any[]).map((p) => ({
+    images: (p.images as { url: string }[]).map((i) => i.url),
     name: p.name,
     slug: p.slug,
     price: Number(p.basePrice),
-    imageUrl: p.images[0]?.url ?? p.colors[0]?.images[0]?.url ?? null,
+    oldPrice: p.comparePrice ? Number(p.comparePrice) : undefined,
+    badge: computeProductBadge({
+      isProductNew: p.isProductNew,
+      isProductNewAt: p.isProductNewAt,
+      isOnSale: p.isOnSale,
+    }),
+    colors:
+      (p.colors as any[]).length > 0
+        ? (p.colors as any[]).map((c) => ({
+            name: c.name,
+            hexCode: c.hexCode,
+            imageUrl: c.images[0]?.url ?? null,
+          }))
+        : undefined,
   }));
 
   const productReviews: TestimonialItem[] = (product.reviews as any[]).map((r) => ({

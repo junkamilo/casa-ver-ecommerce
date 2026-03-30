@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Star, Check, ShoppingBag, Sparkles } from "lucide-react";
+import { Star, Check, ShoppingBag, Sparkles, ChevronRight } from "lucide-react";
 
 import { useCart } from "@/context/CartContext";
 import ProductGallery from "./ProductGallery";
@@ -14,10 +13,12 @@ import ProductAccordion from "./ProductAccordion";
 import ReviewsSection from "./ReviewsSection";
 import RecommendedProducts from "./RecommendedProducts";
 import ProductVideo from "./ProductVideo";
+import PaymentCarousel, { PAYMENT_METHODS } from "./PaymentCarousel";
 import Testimonials from "@/components/layout/Testimonials";
 
 import BackButton from "@/components/ui/BackButton";
-import { UIProduct, UIColor, RecommendedProduct, ExistingReview } from "../types";
+import { UIProduct, UIColor, ExistingReview } from "../types";
+import type { CollectionProduct } from "@/components/shared/ProductCollection/types";
 import { formatPrice } from "../constants";
 import type { TestimonialItem } from "@/components/layout/Testimonials/types/types";
 
@@ -28,7 +29,7 @@ interface BuyerInfo {
 
 interface Props {
   product: UIProduct;
-  recommended: RecommendedProduct[];
+  recommended: CollectionProduct[];
   existingReview: ExistingReview | null;
   isAuthenticated: boolean;
   reviews: TestimonialItem[];
@@ -54,6 +55,7 @@ export default function ProductClient({
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [showAddedNotification, setShowAddedNotification] = useState(false);
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
+  const [descOpen, setDescOpen] = useState(false);
 
   // 'main' = producto principal, cualquier otro string = item.id de subcategoría
   const [activeView, setActiveView] = useState<string>("main");
@@ -232,46 +234,88 @@ export default function ProductClient({
                 </span>
               )}
               <h1
-                className="text-2xl sm:text-4xl lg:text-[2.75rem] xl:text-5xl font-light text-[#154734] mb-3 sm:mb-4 uppercase leading-tight tracking-tight"
+                className="text-3xl sm:text-4xl lg:text-[2.75rem] xl:text-5xl font-light text-[#154734] mb-3 sm:mb-4 uppercase leading-tight tracking-tight text-center sm:text-left"
                 style={{ fontFamily: "Georgia, serif" }}
               >
                 {product.name}
               </h1>
-              <div className="flex items-end gap-3">
-                <p className="text-2xl sm:text-3xl font-medium text-gray-900">
-                  {formatPrice(activePrice)}
-                </p>
-                {product.comparePrice && (
-                  <p className="text-base text-gray-400 line-through mb-1">
-                    {formatPrice(product.comparePrice)}
+              {/* ── Precio / Antes / Stock — móvil ── */}
+              <div className="flex sm:hidden items-stretch pt-1">
+                {/* Precio */}
+                <div className="flex flex-col flex-1 pr-4">
+                  <span className="text-[10px] uppercase tracking-[0.18em] text-gray-400 font-bold mb-1.5">Precio</span>
+                  <p className="text-3xl font-medium text-gray-900 leading-none">
+                    {formatPrice(activePrice)}
+                  </p>
+                </div>
+
+                {/* Separador */}
+                <div className="w-px bg-gray-200 shrink-0" />
+
+                {/* Antes */}
+                {product.comparePrice ? (
+                  <>
+                    <div className="flex flex-col flex-1 px-4">
+                      <span className="text-[10px] uppercase tracking-[0.18em] text-gray-400 font-bold mb-1.5">Antes</span>
+                      <p className="text-3xl text-gray-300 line-through leading-none">
+                        {formatPrice(product.comparePrice)}
+                      </p>
+                    </div>
+                    <div className="w-px bg-gray-200 shrink-0" />
+                  </>
+                ) : (
+                  <>
+                    <div className="flex-1" />
+                    <div className="w-px bg-gray-200 shrink-0" />
+                  </>
+                )}
+
+                {/* Stock */}
+                <div className="flex flex-col flex-1 pl-4">
+                  <span className="text-[10px] uppercase tracking-[0.18em] text-gray-400 font-bold mb-1.5">Stock</span>
+                  {activeStock === 0 ? (
+                    <p className="text-2xl font-semibold text-red-500 leading-none">Agotado</p>
+                  ) : (
+                    <p className="text-3xl font-medium text-gray-900 leading-none">{activeStock}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* ── Precio / Stock — desktop (como estaba) ── */}
+              <div className="hidden sm:block">
+                <div className="flex items-end gap-3">
+                  <p className="text-3xl font-medium text-gray-900">{formatPrice(activePrice)}</p>
+                  {product.comparePrice && (
+                    <p className="text-base text-gray-400 line-through mb-1">{formatPrice(product.comparePrice)}</p>
+                  )}
+                </div>
+                {activeStock === 0 ? (
+                  <p className="text-xs font-semibold uppercase tracking-widest text-red-500 mt-2">Agotado</p>
+                ) : (
+                  <p className="text-xs text-gray-400 mt-2">
+                    Stock disponible: <span className="font-semibold text-gray-600">{activeStock}</span>
                   </p>
                 )}
               </div>
-              {activeStock === 0 ? (
-                <p className="text-xs font-semibold uppercase tracking-widest text-red-500 mt-2">Agotado</p>
-              ) : (
-                <p className="text-xs text-gray-400 mt-2">
-                  Stock disponible: <span className="font-semibold text-gray-600">{activeStock}</span>
-                </p>
-              )}
             </div>
 
             {/* Rating */}
             <button
               type="button"
               onClick={scrollToReviews}
-              className="flex items-center gap-3 mb-5 sm:mb-8 cursor-pointer group w-fit focus:outline-none"
+              className="flex flex-col items-center sm:items-start sm:flex-row sm:gap-3 mb-5 sm:mb-8 cursor-pointer group w-full sm:w-fit focus:outline-none"
             >
-              <div className="flex text-[#C19A6B]">
+              <div className="flex gap-1 text-[#C19A6B]">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
-                    className={`w-4 h-4 transition-transform duration-200 group-hover:scale-110 ${star <= Math.round(product.rating) ? "fill-current" : "fill-none text-gray-300"
-                      }`}
+                    className={`w-8 h-8 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 ${
+                      star <= Math.round(product.rating) ? "fill-current" : "fill-none text-gray-300"
+                    }`}
                   />
                 ))}
               </div>
-              <span className="text-[11px] uppercase tracking-widest text-gray-500 group-hover:text-[#154734] transition-colors">
+              <span className="mt-1.5 sm:mt-0 text-sm sm:text-[11px] uppercase tracking-widest text-gray-500 group-hover:text-[#154734] transition-colors text-center sm:text-left">
                 {product.numReviews > 0 ? (
                   <span className="underline decoration-gray-300 group-hover:decoration-[#154734] underline-offset-4">
                     {product.rating.toFixed(1)} · {product.numReviews} reseña{product.numReviews !== 1 ? "s" : ""}
@@ -378,9 +422,27 @@ export default function ProductClient({
               </div>
             )}
 
-            {/* Descripción — reactiva al tab activo */}
-            <div className="prose prose-sm prose-gray mb-5 sm:mb-8">
-              <p className="text-gray-600 leading-relaxed sm:leading-loose font-light">{activeDescription}</p>
+            {/* Descripción — desplegable */}
+            <div className="mb-5 sm:mb-8 border border-gray-100 rounded-xl overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setDescOpen((o) => !o)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-[#FAFAFA] hover:bg-[#f4f4f4] transition-colors duration-200 focus:outline-none"
+              >
+                <span className="text-xs uppercase tracking-[0.2em] font-bold text-[#154734]">Descripción</span>
+                <ChevronRight
+                  className={`w-4 h-4 text-[#154734] transition-transform duration-300 ${descOpen ? "rotate-90" : ""}`}
+                />
+              </button>
+              <div
+                className={`grid transition-all duration-300 ease-in-out ${descOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+              >
+                <div className="overflow-hidden">
+                  <p className="px-4 py-3 text-gray-600 leading-relaxed font-light text-sm border-t border-gray-100">
+                    {activeDescription}
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Selectores de color y talla */}
@@ -442,11 +504,18 @@ export default function ProductClient({
               </button>
             </div>
 
-            {/* Métodos de pago */}
-            <div className="flex flex-wrap justify-center gap-3 mb-7 sm:mb-10 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500">
-              {["GPay", "Apple", "PayPal", "Master", "Visa", "PSE"].map((item) => (
-                <div key={item} className="h-8 px-3 bg-white border border-gray-200 rounded flex items-center justify-center">
-                  <span className="text-[10px] font-bold text-gray-500">{item}</span>
+            {/* Métodos de pago — móvil: carrusel animado / desktop: grid estático */}
+            <div className="sm:hidden">
+              <PaymentCarousel />
+            </div>
+            <div className="hidden sm:flex flex-wrap justify-center gap-3 mb-7 sm:mb-10">
+              {PAYMENT_METHODS.map(({ id, label, Logo }) => (
+                <div
+                  key={id}
+                  aria-label={label}
+                  className="flex items-center justify-center h-11 px-4 bg-white border border-gray-100 rounded-xl shadow-sm"
+                >
+                  <Logo />
                 </div>
               ))}
             </div>
@@ -463,7 +532,7 @@ export default function ProductClient({
 
         {/* Video editorial — reactivo al tab activo */}
         {activeVideoUrl && (
-          <div className="mt-12 sm:mt-24 md:mt-32 mb-10 sm:mb-16 mx-3 sm:mx-6 lg:mx-8 xl:mx-12 relative bg-[#154734] border border-[#C19A6B]/20 rounded-2xl sm:rounded-[2.5rem] md:rounded-[3rem] shadow-[0_20px_50px_-15px_rgba(21,71,52,0.4)] overflow-hidden flex flex-row items-center justify-between gap-4 sm:gap-10 lg:gap-16 p-5 sm:p-10 lg:p-16 group isolate transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(21,71,52,0.5)]">
+          <div className="mt-12 sm:mt-24 md:mt-32 mb-10 sm:mb-16 mx-3 sm:mx-6 lg:mx-8 xl:mx-12 relative bg-[#154734] border border-[#C19A6B]/20 rounded-2xl sm:rounded-[2.5rem] md:rounded-[3rem] shadow-[0_20px_50px_-15px_rgba(21,71,52,0.4)] overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-5 sm:gap-10 lg:gap-16 p-6 sm:p-10 lg:p-16 group isolate transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(21,71,52,0.5)]">
 
             {/* Decoración de fondo */}
             <div
@@ -472,26 +541,28 @@ export default function ProductClient({
             />
             <div className="absolute top-0 right-0 w-72 h-72 bg-linear-to-bl from-[#C19A6B]/20 to-transparent rounded-bl-full pointer-events-none -z-10 transition-transform duration-1000 group-hover:scale-110" />
 
-            {/* Columna izquierda: texto */}
-            <div className="flex-1 min-w-0 text-left z-10">
+            {/* Video — arriba en móvil, derecha en desktop */}
+            <div className="shrink-0 flex justify-center sm:order-last sm:justify-end z-10 w-full sm:w-auto">
+              <div className="relative w-[55vw] max-w-55 sm:w-60 md:w-70 lg:w-[320px] aspect-3/4 sm:aspect-4/5 bg-white rounded-2xl sm:rounded-4xl overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.3)] border border-[#C19A6B]/30 transition-all duration-700 ease-in-out hover:-translate-y-2 hover:shadow-[0_25px_50px_rgba(193,154,107,0.25)] hover:border-[#C19A6B]/60">
+                <ProductVideo url={activeVideoUrl} />
+              </div>
+            </div>
 
-              {/* Etiqueta móvil compacta */}
-              <p className="sm:hidden text-[8px] font-black tracking-[0.3em] uppercase text-[#C19A6B] mb-2 flex items-center gap-1.5">
-                <Sparkles className="w-2.5 h-2.5 shrink-0" />
-                Lookbook
-              </p>
+            {/* Texto — debajo del video en móvil, izquierda en desktop */}
+            <div className="flex-1 min-w-0 text-center sm:text-left z-10 w-full sm:w-auto">
 
-              {/* Etiqueta sm+ con separadores */}
-              <div className="hidden sm:flex items-center md:justify-start gap-4 mb-6">
-                <span className="h-px w-10 sm:w-12 bg-linear-to-r from-transparent to-[#C19A6B]" />
-                <span className="text-[10px] sm:text-xs font-black tracking-[0.4em] uppercase text-[#C19A6B] flex items-center gap-2 drop-shadow-sm">
-                  <Sparkles className="w-3.5 h-3.5" />
+              {/* Etiqueta con separadores */}
+              <div className="flex items-center justify-center sm:justify-start gap-3 sm:gap-4 mb-4 sm:mb-6">
+                <span className="h-px w-8 sm:w-12 bg-linear-to-r from-transparent to-[#C19A6B]" />
+                <span className="text-[9px] sm:text-xs font-black tracking-[0.3em] sm:tracking-[0.4em] uppercase text-[#C19A6B] flex items-center gap-1.5 sm:gap-2 drop-shadow-sm">
+                  <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   Lookbook Exclusivo
                 </span>
+                <span className="h-px w-8 sm:hidden bg-linear-to-l from-transparent to-[#C19A6B]" />
               </div>
 
               <h2
-                className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl text-white mb-2 sm:mb-6 leading-[1.1] tracking-tight"
+                className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl text-white mb-3 sm:mb-6 leading-[1.1] tracking-tight"
                 style={{ fontFamily: "Georgia, serif" }}
               >
                 Movimiento <br />
@@ -503,13 +574,6 @@ export default function ProductClient({
                 Descubre cómo esta prenda se adapta a tu cuerpo. Diseñada para brindarte
                 comodidad absoluta sin perder la elegancia en cada uno de tus pasos.
               </p>
-            </div>
-
-            {/* Columna derecha: video */}
-            <div className="shrink-0 flex justify-center md:justify-end z-10">
-              <div className="relative w-45 sm:w-60 md:w-70 lg:w-[320px] aspect-3/4 sm:aspect-4/5 bg-white rounded-xl sm:rounded-4xl overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.3)] border border-[#C19A6B]/30 transition-all duration-700 ease-in-out hover:-translate-y-2 hover:shadow-[0_25px_50px_rgba(193,154,107,0.25)] hover:border-[#C19A6B]/60">
-                <ProductVideo url={activeVideoUrl} />
-              </div>
             </div>
 
             {/* Texto decorativo — oculto en móvil */}

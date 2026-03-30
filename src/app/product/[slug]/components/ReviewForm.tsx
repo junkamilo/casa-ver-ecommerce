@@ -78,12 +78,12 @@ export default function ReviewForm({
           <MessageSquareQuote className="w-8 h-8 text-[#C19A6B] group-hover:text-[#154734] transition-colors duration-500" strokeWidth={1.5} />
         </div>
         <h3
-          className="text-3xl sm:text-4xl text-[#154734] mb-4 tracking-tight leading-[1.1]"
+          className="text-2xl sm:text-4xl text-[#154734] mb-3 sm:mb-4 tracking-tight leading-[1.1]"
           style={{ fontFamily: "Georgia, serif" }}
         >
           Tu opinión es <span className="italic text-[#C19A6B]">invaluable</span>
         </h3>
-        <p className="text-sm sm:text-base text-gray-500 font-light mb-10 leading-relaxed">
+        <p className="text-sm sm:text-base text-gray-500 font-light mb-6 sm:mb-10 leading-relaxed">
           Para garantizar la autenticidad de nuestras reseñas y mantener la exclusividad de
           Casa Verde, te invitamos a iniciar sesión.
         </p>
@@ -115,9 +115,9 @@ export default function ReviewForm({
 
       <form onSubmit={handleSubmit} className="w-full flex flex-col items-center">
         
-        <div className="text-center mb-8">
+        <div className="text-center mb-5 sm:mb-8">
           <h3
-            className="text-3xl sm:text-4xl text-[#154734] mb-3 tracking-tight leading-[1.1]"
+            className="text-2xl sm:text-4xl text-[#154734] mb-2 sm:mb-3 tracking-tight leading-[1.1]"
             style={{ fontFamily: "Georgia, serif" }}
           >
             {existing ? "Actualiza tu " : "Déjanos tu "}
@@ -125,13 +125,13 @@ export default function ReviewForm({
               {existing ? "reseña" : "opinión"}
             </span>
           </h3>
-          <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-gray-400">
+          <p className="text-[9px] sm:text-xs font-black uppercase tracking-[0.3em] text-gray-400">
             ¿Cómo calificarías este producto?
           </p>
         </div>
 
         {/* Estrellas interactivas */}
-        <div className="flex gap-2 sm:gap-3 bg-[#FAFAFA] px-6 py-3 sm:py-4 rounded-full border border-gray-100 shadow-inner mb-8" onMouseLeave={() => setHover(0)}>
+        <div className="flex gap-1.5 sm:gap-3 bg-[#FAFAFA] px-4 sm:px-6 py-2.5 sm:py-4 rounded-full border border-gray-100 shadow-inner mb-5 sm:mb-8" onMouseLeave={() => setHover(0)}>
           {[1, 2, 3, 4, 5].map((star) => (
             <button
               key={star}
@@ -143,7 +143,7 @@ export default function ReviewForm({
               aria-label={`Calificar con ${star} estrella${star !== 1 ? "s" : ""}`}
             >
               <Star
-                className={`w-8 h-8 sm:w-10 sm:h-10 transition-colors duration-300 ${
+                className={`w-7 h-7 sm:w-10 sm:h-10 transition-colors duration-300 ${
                   star <= (hover || rating)
                     ? "fill-current drop-shadow-[0_0_10px_rgba(193,154,107,0.5)]"
                     : "fill-none text-gray-300"

@@ -47,10 +47,3 @@ export interface UIProduct {
   badge?: string;
 }
 
-export interface RecommendedProduct {
-  id: string;
-  name: string;
-  slug: string;
-  price: number;
-  imageUrl: string | null;
-}

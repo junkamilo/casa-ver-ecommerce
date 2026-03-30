@@ -1,6 +1,5 @@
 "use client";
 
-import { ALL_SIZES } from "../constants";
 
 interface Props {
   availableSizes: string[];
@@ -27,38 +26,23 @@ export default function SizeSelector({ availableSizes, selectedSize, onSelect }:
       </div>
 
       {/* Botones de talla */}
-      <div className="flex flex-wrap gap-2 sm:gap-3">
-        {ALL_SIZES.map((size) => {
-          const available = availableSizes.includes(size);
+      <div className="flex flex-nowrap overflow-x-auto gap-2 pb-2 scrollbar-hide sm:flex-wrap sm:overflow-x-visible sm:pb-0 sm:gap-3">
+        {availableSizes.map((size) => {
           const isSelected = selectedSize === size;
 
           return (
             <button
               key={size}
-              onClick={() => available && onSelect(size)}
-              disabled={!available}
+              onClick={() => onSelect(size)}
               aria-label={`Seleccionar talla ${size}`}
               aria-pressed={isSelected}
-              className={`relative min-w-14 h-12 px-4 rounded-xl border text-sm font-bold tracking-widest transition-all duration-300 ease-out overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C19A6B] focus-visible:ring-offset-2 ${
+              className={`shrink-0 min-w-14 h-12 px-4 rounded-xl border text-sm font-bold tracking-widest transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C19A6B] focus-visible:ring-offset-2 ${
                 isSelected
                   ? "border-[#154734] bg-[#154734] text-white shadow-md scale-105"
-                  : available
-                  ? "border-gray-200 bg-white text-gray-600 hover:border-[#C19A6B] hover:text-[#154734] hover:shadow-sm"
-                  : "border-gray-100 bg-[#FAFAFA] text-gray-300 cursor-not-allowed"
+                  : "border-gray-200 bg-white text-gray-600 hover:border-[#C19A6B] hover:text-[#154734] hover:shadow-sm"
               }`}
             >
-              <span className="relative z-10">{size}</span>
-
-              {/* Línea diagonal "Agotado" */}
-              {!available && (
-                <svg
-                  className="absolute inset-0 w-full h-full text-gray-200 z-0 pointer-events-none"
-                  viewBox="0 0 100 100"
-                  preserveAspectRatio="none"
-                >
-                  <line x1="0" y1="100" x2="100" y2="0" stroke="currentColor" strokeWidth="1.5" />
-                </svg>
-              )}
+              {size}
             </button>
           );
         })}

@@ -108,7 +108,7 @@ export default async function NuevaColeccionPage() {
 
           <CollectionHero title="Nueva Colección" />
 
-          <div className="mt-12 sm:mt-16 lg:mt-24 w-full">
+          <div className="mt-4 sm:mt-6 lg:mt-8 w-full">
             {products.length === 0 ? (
               <SectionEmptyState message="Pronto agregaremos nuevos ingresos." />
             ) : (
