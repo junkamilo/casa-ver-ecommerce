@@ -2,6 +2,7 @@
 
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
+import { EARLY_BIRD_DISCOUNT_PCT } from "@/lib/earlybird.constants";
 
 export interface CreateOrderInput {
   // Datos del comprador
@@ -49,6 +50,7 @@ export interface CreateOrderResult {
   success: boolean;
   orderId?: string;
   orderNumber?: string;
+  earlyBirdApplied?: boolean;
   error?: string;
 }
 
@@ -110,8 +112,6 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     return { success: false, error: "Cantidad por producto excede el límite permitido" };
   }
 
-  const total = subtotal + shippingCost - discount;
-
   try {
     const result = await prisma.$transaction(async (tx) => {
       // 1. Buscar o crear usuario guest/registrado
@@ -125,6 +125,15 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
           },
         });
       }
+
+      // Early Bird: si el usuario tiene el descuento, calcularlo server-side (no confiar en el cliente)
+      const earlyBirdApplied = user.earlyBirdDiscount === true;
+      const earlyBirdDiscountAmount = earlyBirdApplied
+        ? Math.round((subtotal * EARLY_BIRD_DISCOUNT_PCT) / 100)
+        : 0;
+      // El descuento final es: cupón (validado en frontend + aquí) + early bird
+      const finalDiscount = discount + earlyBirdDiscountAmount;
+      const total = subtotal + shippingCost - finalDiscount;
 
       // 2. Validar stock
       const variantTypeMap = new Map<string, "product" | "item">();
@@ -191,8 +200,9 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
           shippingPhone: phone,
           subtotal,
           shippingCost,
-          discount,
+          discount: finalDiscount,
           total,
+          earlyBirdDiscountApplied: earlyBirdApplied,
           status: "PENDING",
           paymentMethod: "BOLD",
           items: {
@@ -239,15 +249,16 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         });
       }
 
-      return { order };
+      return { order, earlyBirdApplied };
     });
 
-    const { order } = result;
+    const { order, earlyBirdApplied } = result;
 
     return {
       success: true,
       orderId: order.id,
       orderNumber: order.orderNumber,
+      earlyBirdApplied: result.earlyBirdApplied,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error interno al crear la orden";

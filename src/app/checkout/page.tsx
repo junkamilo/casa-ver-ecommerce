@@ -55,6 +55,9 @@ export default function CheckoutPage() {
     items,
     subtotal,
     discount,
+    couponDiscount,
+    earlyBirdDiscount,
+    earlyBird,
     total,
     coupon,
     handleApplyCoupon,
@@ -74,6 +77,9 @@ export default function CheckoutPage() {
           items={items}
           subtotal={subtotal}
           discount={discount}
+          couponDiscount={couponDiscount}
+          earlyBirdDiscount={earlyBirdDiscount}
+          earlyBirdActive={earlyBird.hasDiscount}
           total={total}
           coupon={coupon}
           onApplyCoupon={handleApplyCoupon}
@@ -119,6 +125,9 @@ export default function CheckoutPage() {
           items={items}
           subtotal={subtotal}
           discount={discount}
+          couponDiscount={couponDiscount}
+          earlyBirdDiscount={earlyBirdDiscount}
+          earlyBirdActive={earlyBird.hasDiscount}
           total={total}
           coupon={coupon}
           onApplyCoupon={handleApplyCoupon}

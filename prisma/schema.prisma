@@ -88,6 +88,10 @@ model User {
   phone         String?
   recoveryEmail String?
   
+  // Programa Early Bird: primeros 10 registros obtienen 10% de descuento permanente
+  earlyBirdDiscount     Boolean   @default(false)
+  earlyBirdDiscountAt   DateTime?
+
   // Relaciones
   accounts              Account[]
   addresses             Address[]
@@ -480,10 +484,13 @@ model Order {
   shippingPhone      String
 
   // Montos
-  subtotal           Decimal       @db.Decimal(10, 2)
-  shippingCost       Decimal       @db.Decimal(10, 2) @default(0)
-  discount           Decimal       @db.Decimal(10, 2) @default(0)
-  total              Decimal       @db.Decimal(10, 2)
+  subtotal                  Decimal       @db.Decimal(10, 2)
+  shippingCost              Decimal       @db.Decimal(10, 2) @default(0)
+  discount                  Decimal       @db.Decimal(10, 2) @default(0)
+  total                     Decimal       @db.Decimal(10, 2)
+
+  // Descuento Early Bird
+  earlyBirdDiscountApplied  Boolean       @default(false)
 
   // Estado y Pago
   status             OrderStatus   @default(PENDING)

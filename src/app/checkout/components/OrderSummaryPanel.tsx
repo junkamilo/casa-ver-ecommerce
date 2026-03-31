@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Sparkles, Tag, X, Loader2, CheckCircle2 } from "lucide-react";
+import { Sparkles, Tag, X, Loader2, CheckCircle2, Star } from "lucide-react";
 import { useState } from "react";
 import { LOCALE } from "../constants/constants";
 import type { CheckoutItem, CouponState } from "../types/types";
@@ -10,6 +10,9 @@ interface OrderSummaryPanelProps {
   items: CheckoutItem[];
   subtotal: number;
   discount: number;
+  couponDiscount: number;
+  earlyBirdDiscount: number;
+  earlyBirdActive: boolean;
   total: number;
   coupon: CouponState;
   onApplyCoupon: (code: string) => Promise<void>;
@@ -20,6 +23,9 @@ const OrderSummaryPanel = ({
   items,
   subtotal,
   discount,
+  couponDiscount,
+  earlyBirdDiscount,
+  earlyBirdActive,
   total,
   coupon,
   onApplyCoupon,
@@ -67,6 +73,17 @@ const OrderSummaryPanel = ({
             </div>
           ))}
         </div>
+
+        {/* Badge Early Bird */}
+        {earlyBirdActive && (
+          <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3.5 mb-6">
+            <Star className="w-4 h-4 text-amber-500 shrink-0 fill-amber-400" />
+            <div>
+              <p className="text-xs font-black text-amber-700 uppercase tracking-widest">Early Bird · 10% de descuento</p>
+              <p className="text-[11px] text-amber-600">Eres uno de los primeros 10 clientes de Casa Verde</p>
+            </div>
+          </div>
+        )}
 
         {/* Cupón */}
         <div className="flex flex-col gap-3 mb-10">
@@ -125,10 +142,19 @@ const OrderSummaryPanel = ({
             <span>Subtotal</span>
             <span className="text-[#154734] font-bold">${subtotal.toLocaleString(LOCALE)}</span>
           </div>
-          {discount > 0 && (
+          {earlyBirdDiscount > 0 && (
+            <div className="flex justify-between items-center text-amber-600">
+              <span className="flex items-center gap-1.5">
+                <Star className="w-3 h-3 fill-amber-400" />
+                Early Bird (10%)
+              </span>
+              <span className="font-bold">-${earlyBirdDiscount.toLocaleString(LOCALE)}</span>
+            </div>
+          )}
+          {couponDiscount > 0 && (
             <div className="flex justify-between items-center text-green-600">
               <span>Descuento cupón</span>
-              <span className="font-bold">-${discount.toLocaleString(LOCALE)}</span>
+              <span className="font-bold">-${couponDiscount.toLocaleString(LOCALE)}</span>
             </div>
           )}
         </div>

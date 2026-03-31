@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useTransition, useCallback } from "react";
+import { useState, useTransition, useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import type { Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCart } from "@/context/CartContext";
 import { validateCoupon } from "@/app/actions/coupons";
 import { createOrder } from "@/app/actions/checkout";
+import { checkEarlyBirdStatus } from "@/app/actions/earlybird";
+import { EARLY_BIRD_DISCOUNT_PCT } from "@/lib/earlybird.constants";
 import { checkoutSchema } from "../types/schema";
 import type { CheckoutFormData } from "../types/schema";
 import type { CouponState } from "../types/types";
@@ -38,6 +40,13 @@ export function useCheckout(options?: UseCheckoutOptions) {
   const [isPending, startTransition] = useTransition();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Early Bird
+  const [earlyBird, setEarlyBird] = useState<{ hasDiscount: boolean; checked: boolean }>({
+    hasDiscount: false,
+    checked: false,
+  });
+  const lastCheckedEmail = useRef<string>("");
+
   // Cupón
   const [coupon, setCoupon] = useState<CouponState>({
     code: "",
@@ -46,10 +55,14 @@ export function useCheckout(options?: UseCheckoutOptions) {
   });
 
   // Cálculos derivados
-  const discount =
+  const earlyBirdDiscount = earlyBird.hasDiscount
+    ? Math.round((subtotal * EARLY_BIRD_DISCOUNT_PCT) / 100)
+    : 0;
+  const couponDiscount =
     coupon.status === "valid"
       ? Math.round((subtotal * coupon.discountPercentage) / 100)
       : 0;
+  const discount = couponDiscount + earlyBirdDiscount;
   const total = subtotal - discount;
 
   // Formulario
@@ -59,6 +72,28 @@ export function useCheckout(options?: UseCheckoutOptions) {
       paymentMethod: "BOLD",
     },
   });
+
+  // ---------------------------------------------------------------------------
+  // Verificar estado Early Bird cuando el email cambia (debounce 800ms)
+  // ---------------------------------------------------------------------------
+  const emailValue = form.watch("email");
+
+  useEffect(() => {
+    if (!emailValue || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+      setEarlyBird({ hasDiscount: false, checked: false });
+      lastCheckedEmail.current = "";
+      return;
+    }
+    if (emailValue === lastCheckedEmail.current) return;
+
+    const timer = setTimeout(async () => {
+      lastCheckedEmail.current = emailValue;
+      const status = await checkEarlyBirdStatus(emailValue);
+      setEarlyBird({ hasDiscount: status.hasDiscount, checked: true });
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [emailValue]);
 
   // ---------------------------------------------------------------------------
   // Validar cupón
@@ -142,7 +177,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
           })),
           subtotal,
           shippingCost: 0,
-          discount,
+          discount: couponDiscount, // El servidor re-calcula el early bird; aquí solo va el cupón
           couponId: coupon.couponId,
           couponCode: coupon.status === "valid" ? coupon.code : undefined,
         });
@@ -201,7 +236,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [checkoutItems, subtotal, discount, coupon, options, closeCart, clearBuyNow]
+    [checkoutItems, subtotal, couponDiscount, coupon, options, closeCart, clearBuyNow]
   );
 
   return {
@@ -209,6 +244,9 @@ export function useCheckout(options?: UseCheckoutOptions) {
     items: checkoutItems,
     subtotal,
     discount,
+    couponDiscount,
+    earlyBirdDiscount,
+    earlyBird,
     total,
     coupon,
     handleApplyCoupon,
