@@ -116,6 +116,7 @@ model EmailVerificationToken {
 
   createdAt DateTime @default(now())
 
+  @@index([expires])
   @@map("email_verification_tokens")
 }
 
@@ -130,6 +131,7 @@ model PasswordResetToken {
 
   createdAt DateTime @default(now())
 
+  @@index([expires])
   @@map("password_reset_tokens")
 }
 
@@ -147,6 +149,7 @@ model PendingRegistration {
   attempts      Int      @default(0)
   createdAt     DateTime @default(now())
 
+  @@index([expires])
   @@map("pending_registrations")
 }
 
@@ -170,6 +173,7 @@ model Address {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  @@index([userId])
   @@map("addresses")
 }
 

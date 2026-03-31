@@ -1,6 +1,6 @@
 "use client";
 
-import { Package } from "lucide-react";
+import { Package, AlertCircle } from "lucide-react";
 import { useOrders } from "../hooks/useOrders";
 import { OrderCard } from "./OrderCard";
 import { OrderEmptyState } from "./OrderEmptyState";
@@ -13,6 +13,7 @@ export function OrdersSection() {
     activeFilter,
     setFilter,
     isLoading,
+    error,
     expandedId,
     toggleExpand,
     orderCountByStatus,
@@ -28,15 +29,19 @@ export function OrdersSection() {
             <Package className="w-5 h-5 text-[#154734]" />
             Mis Pedidos
           </h2>
-          <span className="text-xs text-gray-400">
-            {filteredOrders.length} {filteredOrders.length === 1 ? "pedido" : "pedidos"}
-          </span>
+          {!error && (
+            <span className="text-xs text-gray-400">
+              {filteredOrders.length} {filteredOrders.length === 1 ? "pedido" : "pedidos"}
+            </span>
+          )}
         </div>
-        <OrderFilters
-          active={activeFilter}
-          onChange={setFilter}
-          countByStatus={orderCountByStatus}
-        />
+        {!error && (
+          <OrderFilters
+            active={activeFilter}
+            onChange={setFilter}
+            countByStatus={orderCountByStatus}
+          />
+        )}
       </div>
 
       {/* Content */}
@@ -47,6 +52,14 @@ export function OrdersSection() {
             <OrderSkeleton />
             <OrderSkeleton />
           </>
+        ) : error ? (
+          <div className="flex items-start gap-3 px-4 py-4 bg-red-50 border border-red-200 rounded-xl">
+            <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-red-700">No pudimos cargar tus pedidos</p>
+              <p className="text-xs text-red-600 mt-0.5">{error}</p>
+            </div>
+          </div>
         ) : filteredOrders.length === 0 ? (
           <OrderEmptyState hasActiveFilter={activeFilter !== "ALL"} />
         ) : (

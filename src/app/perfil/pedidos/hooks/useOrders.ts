@@ -7,6 +7,7 @@ export interface UseOrdersResult {
   activeFilter: OrderFilter;
   setFilter: (filter: OrderFilter) => void;
   isLoading: boolean;
+  error: string | null;
   expandedId: string | null;
   toggleExpand: (id: string) => void;
   orderCountByStatus: Record<string, number>;
@@ -18,12 +19,22 @@ export function useOrders(): UseOrdersResult {
   const [activeFilter, setActiveFilter] = useState<OrderFilter>("ALL");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/profile/orders")
-      .then((res) => res.json())
-      .then((data) => setOrders(Array.isArray(data) ? data : []))
-      .catch(() => setOrders([]))
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data: unknown) => {
+        setOrders(Array.isArray(data) ? (data as Order[]) : []);
+        setError(null);
+      })
+      .catch(() => {
+        setOrders([]);
+        setError("No se pudieron cargar tus pedidos. Intenta recargar la página.");
+      })
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -56,6 +67,7 @@ export function useOrders(): UseOrdersResult {
     activeFilter,
     setFilter: setActiveFilter,
     isLoading,
+    error,
     expandedId,
     toggleExpand,
     orderCountByStatus,

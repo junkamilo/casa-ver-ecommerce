@@ -3,16 +3,25 @@ import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
 import { sendVerificationEmail } from "@/services/email/client";
 import { generateSecureCode } from "@/lib/auth/validation";
+import { z } from "zod";
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
+// Validación estricta: tokenId opaco solamente
+const resendSchema = z.object({
+  tokenId: z.string().min(1).max(128),
+});
+
 export async function POST(request: Request) {
   try {
-    const { tokenId } = await request.json();
+    const body = await request.json();
+    const parsed = resendSchema.safeParse(body);
 
-    if (!tokenId || typeof tokenId !== "string") {
-      return NextResponse.json({ message: "tokenId requerido" }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json({ message: "tokenId inválido" }, { status: 400 });
     }
+
+    const { tokenId } = parsed.data;
 
     // ── Buscar en registros pendientes (flujo de nuevo registro) ──────────────
     const pending = await (prisma as any).pendingRegistration.findUnique({
@@ -102,7 +111,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, tokenId: newToken.id });
   } catch (error) {
-    console.error("[ResendVerification]", error);
+    console.error("[ResendVerification]", error instanceof Error ? error.message : "Error desconocido");
     return NextResponse.json({ message: "Error en el servidor" }, { status: 500 });
   }
 }

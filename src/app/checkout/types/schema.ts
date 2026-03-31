@@ -6,7 +6,7 @@ import { z } from "zod";
  * El pago se completa en Bold (hosted checkout).
  */
 export const checkoutSchema = z.object({
-  email: z.string().email("Ingresa un correo válido"),
+  email: z.string().trim().email("Ingresa un correo válido").max(254, "Correo demasiado largo"),
 
   firstName: z
     .string()
@@ -38,13 +38,13 @@ export const checkoutSchema = z.object({
 
   addressDetail: z.string().max(100, "Máximo 100 caracteres").optional(),
 
-  city: z.string().min(2, "Ciudad requerida"),
+  city: z.string().trim().min(2, "Ciudad requerida").max(100, "Ciudad inválida"),
 
-  department: z.string().min(2, "Departamento requerido"),
+  department: z.string().trim().min(2, "Departamento requerido").max(100, "Departamento inválido"),
 
   paymentMethod: z.literal("BOLD"),
 
-  savedAddressId: z.string().optional(),
+  savedAddressId: z.string().max(40, "ID inválido").optional(),
 
   couponCode: z.string().max(30, "Código demasiado largo").optional(),
 });

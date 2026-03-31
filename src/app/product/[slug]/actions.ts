@@ -20,78 +20,87 @@ export async function saveReview(
   slug: string,
   input: ReviewInput
 ): Promise<{ success: boolean; error?: string }> {
-  const userId = await getDbUserId();
-  if (!userId) return { success: false, error: "Debes iniciar sesión para calificar" };
+  try {
+    if (!productId || typeof productId !== "string") {
+      return { success: false, error: "Producto inválido" };
+    }
 
-  const parsed = reviewSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0].message };
+    const userId = await getDbUserId();
+    if (!userId) return { success: false, error: "Debes iniciar sesión para calificar" };
+
+    const parsed = reviewSchema.safeParse(input);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0].message };
+    }
+
+    const { rating, comment } = parsed.data;
+
+    await prisma.review.upsert({
+      where: { userId_productId: { userId, productId } },
+      update: { rating, comment },
+      create: { userId, productId, rating, comment },
+    });
+
+    const agg = await prisma.review.aggregate({
+      where: { productId },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+
+    await prisma.product.update({
+      where: { id: productId },
+      data: {
+        rating: agg._avg.rating ?? 0,
+        numReviews: agg._count.rating,
+      },
+    });
+
+    revalidatePath(`/product/${slug}`);
+    return { success: true };
+  } catch (err) {
+    console.error("[saveReview]", err instanceof Error ? err.message : "Error desconocido");
+    return { success: false, error: "Error al guardar la reseña. Intenta de nuevo." };
   }
-
-  const { rating, comment } = parsed.data;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const reviewClient = prisma.review as any;
-
-  await reviewClient.upsert({
-    where: { userId_productId: { userId, productId } },
-    update: { rating, comment },
-    create: { userId, productId, rating, comment },
-  });
-
-  const agg = await reviewClient.aggregate({
-    where: { productId },
-    _avg: { rating: true },
-    _count: { rating: true },
-  });
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (prisma as any).product.update({
-    where: { id: productId },
-    data: {
-      rating: agg._avg.rating ?? 0,
-      numReviews: agg._count.rating,
-    },
-  });
-
-  revalidatePath(`/product/${slug}`);
-  return { success: true };
 }
 
 export async function deleteReview(
   productId: string,
   slug: string
 ): Promise<{ success: boolean; error?: string }> {
-  const userId = await getDbUserId();
-  if (!userId) return { success: false, error: "Debes iniciar sesión para eliminar tu reseña" };
+  try {
+    if (!productId || typeof productId !== "string") {
+      return { success: false, error: "Producto inválido" };
+    }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const reviewClient = prisma.review as any;
+    const userId = await getDbUserId();
+    if (!userId) return { success: false, error: "Debes iniciar sesión para eliminar tu reseña" };
 
-  const existing = await reviewClient.findUnique({
-    where: { userId_productId: { userId, productId } },
-    select: { id: true },
-  });
-  if (!existing) return { success: false, error: "No tienes una reseña para eliminar" };
+    const existing = await prisma.review.findUnique({
+      where: { userId_productId: { userId, productId } },
+      select: { id: true },
+    });
+    if (!existing) return { success: false, error: "No tienes una reseña para eliminar" };
 
-  await reviewClient.delete({ where: { userId_productId: { userId, productId } } });
+    await prisma.review.delete({ where: { userId_productId: { userId, productId } } });
 
-  const agg = await reviewClient.aggregate({
-    where: { productId },
-    _avg: { rating: true },
-    _count: { rating: true },
-  });
+    const agg = await prisma.review.aggregate({
+      where: { productId },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (prisma as any).product.update({
-    where: { id: productId },
-    data: {
-      rating: agg._avg.rating ?? 0,
-      numReviews: agg._count.rating,
-    },
-  });
+    await prisma.product.update({
+      where: { id: productId },
+      data: {
+        rating: agg._avg.rating ?? 0,
+        numReviews: agg._count.rating,
+      },
+    });
 
-  revalidatePath(`/product/${slug}`);
-  return { success: true };
+    revalidatePath(`/product/${slug}`);
+    return { success: true };
+  } catch (err) {
+    console.error("[deleteReview]", err instanceof Error ? err.message : "Error desconocido");
+    return { success: false, error: "Error al eliminar la reseña. Intenta de nuevo." };
+  }
 }
-

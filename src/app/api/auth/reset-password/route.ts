@@ -5,7 +5,12 @@ import { resetPasswordServerSchema } from "@/lib/auth/validation";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ message: "Cuerpo de solicitud inválido" }, { status: 400 });
+    }
 
     // ── Validación server-side con Zod (incluye complejidad de contraseña) ────
     const parsed = resetPasswordServerSchema.safeParse(body);
@@ -17,8 +22,9 @@ export async function POST(req: NextRequest) {
     const { tokenId, password } = parsed.data;
 
     // ── Buscar token por su ID opaco ──────────────────────────────────────────
-    const record = await (prisma as any).passwordResetToken.findUnique({
+    const record = await prisma.passwordResetToken.findUnique({
       where: { id: tokenId },
+      select: { userId: true, verified: true, expires: true },
     });
 
     if (!record) {
@@ -37,8 +43,8 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Verificar vigencia ────────────────────────────────────────────────────
-    if (new Date() > new Date(record.expires)) {
-      await (prisma as any).passwordResetToken.delete({ where: { id: tokenId } });
+    if (new Date() > record.expires) {
+      await prisma.passwordResetToken.delete({ where: { id: tokenId } });
       return NextResponse.json(
         { message: "La sesión de recuperación expiró. Solicita un nuevo código." },
         { status: 400 }
@@ -46,18 +52,18 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Actualizar contraseña y eliminar token (transacción atómica) ──────────
-    const passwordHash = await hash(password, 10);
+    const passwordHash = await hash(password, 12);
     await prisma.$transaction([
       prisma.user.update({
         where: { id: record.userId },
         data:  { password: passwordHash },
       }),
-      (prisma as any).passwordResetToken.delete({ where: { id: tokenId } }),
+      prisma.passwordResetToken.delete({ where: { id: tokenId } }),
     ]);
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    console.error("[reset-password]", error);
+    console.error("[reset-password]", error instanceof Error ? error.message : "Error desconocido");
     return NextResponse.json({ message: "Error interno del servidor" }, { status: 500 });
   }
 }

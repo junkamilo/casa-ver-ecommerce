@@ -29,7 +29,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // Fuerza el selector de cuentas de Google en cada intento de login.
       // Sin esto, Google reutiliza la sesión activa del navegador silenciosamente.
       authorization: {
-        params: { prompt: "select_account" },
+        params: {
+          prompt: "select_account consent", // "consent" fuerza a Google a re-emitir refresh_token
+          access_type: "offline",            // solicita refresh_token
+        },
       },
     }),
 
@@ -60,7 +63,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
 
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 días — expira sesión aunque no haya logout
+  },
 
   pages: { signIn: "/login" },
 
