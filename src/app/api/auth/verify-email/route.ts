@@ -56,22 +56,43 @@ export async function POST(request: Request) {
       }
 
       // ── Código correcto → crear usuario y eliminar registro pendiente ────────
+      const EARLY_BIRD_LIMIT = 10;
+      const EARLY_BIRD_DISCOUNT_PCT = 10;
+
       await prisma.$transaction(async (tx) => {
+        // Verificar cuántos cupos early bird quedan (atómico dentro de la tx)
+        const earlyBirdCount = await tx.user.count({
+          where: { earlyBirdDiscount: true },
+        });
+        const isEarlyBird = earlyBirdCount < EARLY_BIRD_LIMIT;
+
         await tx.user.create({
           data: {
-            name:          pending.name,
-            email:         pending.email,
-            password:      pending.passwordHash,
-            role:          "USER",
-            phone:         pending.phone,
-            recoveryEmail: pending.recoveryEmail,
-            emailVerified: new Date(),
+            name:               pending.name,
+            email:              pending.email,
+            password:           pending.passwordHash,
+            role:               "USER",
+            phone:              pending.phone,
+            recoveryEmail:      pending.recoveryEmail,
+            emailVerified:      new Date(),
+            earlyBirdDiscount:  isEarlyBird,
+            earlyBirdDiscountAt: isEarlyBird ? new Date() : undefined,
           },
         });
         await (tx as any).pendingRegistration.delete({ where: { id: tokenId } });
       });
 
-      return NextResponse.json({ success: true });
+      // Responder indicando si el nuevo usuario es early bird
+      const createdUser = await prisma.user.findUnique({
+        where: { email: pending.email },
+        select: { earlyBirdDiscount: true },
+      });
+
+      return NextResponse.json({
+        success: true,
+        earlyBirdDiscount: createdUser?.earlyBirdDiscount ?? false,
+        earlyBirdDiscountPct: createdUser?.earlyBirdDiscount ? EARLY_BIRD_DISCOUNT_PCT : 0,
+      });
     }
 
     // ── Fallback: buscar en EmailVerificationToken (usuarios ya existentes) ───

@@ -1,4 +1,4 @@
-import { DollarSign, ShoppingCart, Package, Users } from "lucide-react";
+import { DollarSign, ShoppingCart, Package, Users, Star } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatCOP } from "../constants";
 import type { DashboardData, RecentOrder, StatItem } from "../types";
@@ -24,7 +24,9 @@ export async function fetchDashboardData(): Promise<DashboardData> {
   const { startDate: todayStart, endDate: todayEnd } = getTodayRange();
   const thirtyDaysAgo = getLast30DaysStart();
 
-  const [salesResult, todayOrdersCount, activeProductsCount, newCustomersCount, rawOrders] =
+  const EARLY_BIRD_LIMIT = 10;
+
+  const [salesResult, todayOrdersCount, activeProductsCount, newCustomersCount, earlyBirdCount, rawOrders] =
     await Promise.all([
       prisma.order.aggregate({
         where: { status: "PAID", createdAt: { gte: todayStart, lte: todayEnd } },
@@ -38,6 +40,9 @@ export async function fetchDashboardData(): Promise<DashboardData> {
       }),
       prisma.user.count({
         where: { role: "USER", createdAt: { gte: thirtyDaysAgo } },
+      }),
+      prisma.user.count({
+        where: { earlyBirdDiscount: true },
       }),
       prisma.order.findMany({
         where: { status: "PAID" },
@@ -93,6 +98,17 @@ export async function fetchDashboardData(): Promise<DashboardData> {
       color: "text-purple-600",
       bg: "bg-purple-50",
       border: "border-purple-100",
+    },
+    {
+      label: "Early Bird",
+      value: `${earlyBirdCount}/${EARLY_BIRD_LIMIT}`,
+      change: earlyBirdCount >= EARLY_BIRD_LIMIT ? "Agotado" : `${EARLY_BIRD_LIMIT - earlyBirdCount} libres`,
+      icon: Star,
+      color: "text-amber-600",
+      bg: "bg-amber-50",
+      border: "border-amber-100",
+      changeBg: earlyBirdCount >= EARLY_BIRD_LIMIT ? "bg-red-50" : "bg-amber-50",
+      changeColor: earlyBirdCount >= EARLY_BIRD_LIMIT ? "text-red-600" : "text-amber-600",
     },
   ];
 

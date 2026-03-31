@@ -8,6 +8,8 @@ export interface StatItem {
   color: string;
   bg: string;
   border: string;
+  changeBg?: string;
+  changeColor?: string;
 }
 
 export interface NavItem {

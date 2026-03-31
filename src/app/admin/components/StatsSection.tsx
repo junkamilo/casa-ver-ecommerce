@@ -1,4 +1,4 @@
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, Star } from "lucide-react";
 import type { StatItem } from "../types";
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
 
 export default function StatsSection({ stats }: Props) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
       {stats.map((stat) => (
         <div
           key={stat.label}
@@ -23,8 +23,10 @@ export default function StatsSection({ stats }: Props) {
               <div className={`p-2 sm:p-2.5 ${stat.bg} rounded-xl ${stat.color} shrink-0`}>
                 <stat.icon className="w-5 h-5" />
               </div>
-              <span className="flex items-center gap-0.5 text-[10px] sm:text-xs font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full shrink-0">
-                <TrendingUp className="w-2.5 h-2.5 shrink-0" />
+              <span className={`flex items-center gap-0.5 text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0 ${stat.changeBg ?? "bg-emerald-50"} ${stat.changeColor ?? "text-emerald-600"}`}>
+                {stat.icon === Star
+                  ? <Star className="w-2.5 h-2.5 shrink-0 fill-current" />
+                  : <TrendingUp className="w-2.5 h-2.5 shrink-0" />}
                 <span className="whitespace-nowrap">{stat.change}</span>
               </span>
             </div>
