@@ -34,8 +34,9 @@ export const registerServerSchema = z.object({
     }),
   email: z
     .string()
+    .trim()
     .email({ message: "Correo electrónico inválido" })
-    .max(100, { message: "El correo no puede superar los 100 caracteres" }),
+    .max(254, { message: "El correo no puede superar los 254 caracteres" }),
   password: passwordSchema,
   recoveryEmail: z
     .string()
@@ -52,7 +53,7 @@ export const registerServerSchema = z.object({
 
 // ─── Schema nueva contraseña (servidor) ─────────────────────────────────────
 export const resetPasswordServerSchema = z.object({
-  tokenId:  z.string().min(1, { message: "Token requerido" }),
+  tokenId:  z.string().min(1, { message: "Token requerido" }).max(128),
   password: passwordSchema,
 });
 

@@ -77,7 +77,7 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("[Register]", error);
+    console.error("[Register]", error instanceof Error ? error.message : "Error desconocido");
     return NextResponse.json({ message: "Error en el servidor" }, { status: 500 });
   }
 }

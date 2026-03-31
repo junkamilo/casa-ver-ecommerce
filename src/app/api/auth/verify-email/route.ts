@@ -1,16 +1,31 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { compare } from "bcryptjs";
+import { z } from "zod";
 
 const MAX_ATTEMPTS = 5;
 
+// Validación estricta: tokenId opaco (1-128 chars) + código exactamente 6 dígitos
+const verifyEmailSchema = z.object({
+  tokenId: z.string().min(1).max(128),
+  code: z
+    .string()
+    .regex(/^\d{6}$/, "El código debe ser exactamente 6 dígitos numéricos"),
+});
+
 export async function POST(request: Request) {
   try {
-    const { tokenId, code } = await request.json();
+    const body = await request.json();
+    const parsed = verifyEmailSchema.safeParse(body);
 
-    if (!tokenId || !code || typeof tokenId !== "string" || typeof code !== "string") {
-      return NextResponse.json({ message: "Datos requeridos" }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json(
+        { message: "Datos inválidos" },
+        { status: 400 }
+      );
     }
+
+    const { tokenId, code } = parsed.data;
 
     // ── Buscar en registros pendientes (flujo de nuevo registro) ──────────────
     const pending = await (prisma as any).pendingRegistration.findUnique({
@@ -36,7 +51,7 @@ export async function POST(request: Request) {
       }
 
       // ── Comparar código ─────────────────────────────────────────────────────
-      const isValid = await compare(code.trim(), pending.codeHash);
+      const isValid = await compare(code, pending.codeHash);
 
       if (!isValid) {
         await (prisma as any).pendingRegistration.update({
@@ -60,7 +75,6 @@ export async function POST(request: Request) {
       const EARLY_BIRD_DISCOUNT_PCT = 10;
 
       await prisma.$transaction(async (tx) => {
-        // Verificar cuántos cupos early bird quedan (atómico dentro de la tx)
         const earlyBirdCount = await tx.user.count({
           where: { earlyBirdDiscount: true },
         });
@@ -68,21 +82,20 @@ export async function POST(request: Request) {
 
         await tx.user.create({
           data: {
-            name:               pending.name,
-            email:              pending.email,
-            password:           pending.passwordHash,
-            role:               "USER",
-            phone:              pending.phone,
-            recoveryEmail:      pending.recoveryEmail,
-            emailVerified:      new Date(),
-            earlyBirdDiscount:  isEarlyBird,
+            name:                pending.name,
+            email:               pending.email,
+            password:            pending.passwordHash,
+            role:                "USER",
+            phone:               pending.phone,
+            recoveryEmail:       pending.recoveryEmail,
+            emailVerified:       new Date(),
+            earlyBirdDiscount:   isEarlyBird,
             earlyBirdDiscountAt: isEarlyBird ? new Date() : undefined,
           },
         });
         await (tx as any).pendingRegistration.delete({ where: { id: tokenId } });
       });
 
-      // Responder indicando si el nuevo usuario es early bird
       const createdUser = await prisma.user.findUnique({
         where: { email: pending.email },
         select: { earlyBirdDiscount: true },
@@ -125,7 +138,7 @@ export async function POST(request: Request) {
     }
 
     // ── Comparar código ───────────────────────────────────────────────────────
-    const isValid = await compare(code.trim(), record.codeHash);
+    const isValid = await compare(code, record.codeHash);
 
     if (!isValid) {
       await (prisma as any).emailVerificationToken.update({
@@ -155,7 +168,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[VerifyEmail]", error);
+    console.error("[VerifyEmail]", error instanceof Error ? error.message : "Error desconocido");
     return NextResponse.json({ message: "Error en el servidor" }, { status: 500 });
   }
 }

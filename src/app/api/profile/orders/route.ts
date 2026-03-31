@@ -2,18 +2,50 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
+// Máximo de pedidos devueltos por consulta — evita exponer volúmenes ilimitados de datos.
+const ORDER_PAGE_LIMIT = 50;
+
 export async function GET() {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ message: "No autorizado" }, { status: 401 });
     }
-    const userId = (session.user as any).id as string;
+
+    const userId = (session.user as { id: string }).id;
+    if (!userId) {
+      return NextResponse.json({ message: "No autorizado" }, { status: 401 });
+    }
 
     const orders = await prisma.order.findMany({
       where: { userId },
-      include: { items: true },
+      select: {
+        id:                true,
+        orderNumber:       true,
+        status:            true,
+        createdAt:         true,
+        updatedAt:         true,
+        total:             true,
+        trackingNumber:    true,
+        shippingName:      true,
+        shippingAddress:   true,
+        shippingCity:      true,
+        shippingDepartment: true,
+        // Sólo los campos necesarios de cada item — nunca el variantId interno
+        items: {
+          select: {
+            id:        true,
+            name:      true,
+            imageUrl:  true,
+            colorName: true,
+            size:      true,
+            quantity:  true,
+            price:     true,
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
+      take: ORDER_PAGE_LIMIT,
     });
 
     const result = orders.map((o) => ({

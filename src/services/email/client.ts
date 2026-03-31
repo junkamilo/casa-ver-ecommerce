@@ -229,7 +229,7 @@ export async function sendOrderConfirmationEmail(
   }
 
   try {
-    console.log(`[Email] Preparando correo de confirmación para ${customerEmail}`);
+    console.log(`[Email] Preparando correo de confirmación para orden ${orderNumber}`);
 
     // Generar HTML del email
     const emailHtml = generateOrderConfirmationHTML({
@@ -256,8 +256,8 @@ export async function sendOrderConfirmationEmail(
     // Validar respuesta
     if (response.error) {
       console.error(
-        `[Email] Error enviando confirmación a ${customerEmail}:`,
-        response.error
+        `[Email] Error enviando confirmación orden ${orderNumber}:`,
+        response.error.message || "Error desconocido"
       );
       return {
         success: false,
@@ -266,7 +266,7 @@ export async function sendOrderConfirmationEmail(
     }
 
     console.log(
-      `[Email] ✓ Confirmación enviada a ${customerEmail} (messageId: ${response.data?.id})`
+      `[Email] ✓ Confirmación enviada para orden ${orderNumber} (messageId: ${response.data?.id})`
     );
 
     return {
@@ -276,7 +276,7 @@ export async function sendOrderConfirmationEmail(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Error desconocido";
     console.error(
-      `[Email] Excepción al enviar confirmación a ${customerEmail}:`,
+      `[Email] Excepción al enviar confirmación orden ${orderNumber}:`,
       errorMessage
     );
 

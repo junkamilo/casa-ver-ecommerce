@@ -25,9 +25,7 @@ export default async function ProductPage({ params }: Props) {
   const userId = dbUser?.id ?? null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = prisma as any;
-
-  const product = await db.product.findUnique({
+  const product = await (prisma as any).product.findUnique({
     where: { slug, status: "ACTIVE" },
     include: {
       images: { orderBy: { order: "asc" } },
@@ -233,7 +231,7 @@ export default async function ProductPage({ params }: Props) {
           product={uiProduct}
           recommended={recommended}
           existingReview={userReview}
-          isAuthenticated={!!userEmail}
+          isAuthenticated={!!userId}
           reviews={productReviews}
           socialProof={{ totalBuyers, recentBuyers }}
         />
