@@ -82,9 +82,10 @@ export async function POST(req: NextRequest) {
   try {
     token = await getAddiToken();
   } catch (err) {
-    console.error("[Addi] Error obteniendo token:", err);
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[Addi] Error obteniendo token:", errMsg);
     return NextResponse.json(
-      { error: "Error de autenticación con Addi" },
+      { error: "Error de autenticación con Addi", detail: errMsg },
       { status: 502 }
     );
   }
