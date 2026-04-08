@@ -2,6 +2,7 @@
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { cancelAddiApplication } from "@/services/addi/cancel";
 import type { Order } from "@/app/admin/pedidos/types";
 
 async function requireAdmin() {
@@ -59,10 +60,10 @@ export async function updateOrderStatus(orderNumber: string, statusEs: string): 
   const dbStatus = STATUS_ES_TO_DB[statusEs];
   if (!dbStatus) throw new Error(`Estado inválido: ${statusEs}`);
 
-  // Leer estado actual para validar la transición
+  // Leer estado actual + datos necesarios para validar la transición y cancelar con Addi
   const current = await prisma.order.findUnique({
     where:  { orderNumber },
-    select: { status: true },
+    select: { status: true, paymentMethod: true, transactionId: true, total: true },
   });
   if (!current) throw new Error(`Pedido no encontrado: ${orderNumber}`);
 
@@ -71,6 +72,23 @@ export async function updateOrderStatus(orderNumber: string, statusEs: string): 
     throw new Error(
       `Transición no permitida: el pedido está en "${STATUS_MAP[current.status]}" y no puede pasar a "${statusEs}".`
     );
+  }
+
+  // Si el pedido fue pagado con Addi y se está cancelando/reembolsando, notificar a Addi
+  const isCancellation = dbStatus === "CANCELLED" || dbStatus === "REFUNDED";
+  if (isCancellation && current.paymentMethod === "ADDI" && current.transactionId) {
+    const cancelResult = await cancelAddiApplication(
+      current.transactionId,
+      Number(current.total)
+    );
+    if (!cancelResult.success) {
+      // Logear el error pero no bloquear el cambio de estado en nuestra BD —
+      // el admin ya decidió cancelar; Addi puede gestionarse manualmente si falla.
+      console.error(
+        `[updateOrderStatus] Fallo al cancelar crédito Addi para orden ${orderNumber}:`,
+        cancelResult.error
+      );
+    }
   }
 
   const now = new Date();
