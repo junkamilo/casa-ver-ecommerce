@@ -196,43 +196,80 @@ export function useCheckout(options?: UseCheckoutOptions) {
           }
         }
 
-        // PASO 2: Crear payment link en Bold y redirigir al checkout
-        const boldRes = await fetch("/api/payments/bold", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId: orderResult.orderId,
-            payer: {
-              name: `${data.firstName} ${data.lastName}`,
-              email: data.email,
-              phone: data.phone,
-              cedula: data.cedula,
-              address: data.address,
-              addressDetail: data.addressDetail,
-              city: data.city,
-              department: data.department,
-            },
-          }),
-        });
+        // PASO 2: Crear link de pago según método seleccionado y redirigir
+        if (data.paymentMethod === "ADDI") {
+          // ── Addi ──────────────────────────────────────────────────────────
+          const addiRes = await fetch("/api/payments/addi", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderId: orderResult.orderId,
+              payer: {
+                firstName: data.firstName,
+                lastName: data.lastName,
+                email: data.email,
+                phone: data.phone,
+                cedula: data.cedula,
+                address: data.address,
+                city: data.city,
+                department: data.department,
+              },
+            }),
+          });
 
-        const boldData = await boldRes.json();
+          const addiData = await addiRes.json();
 
-        if (!boldRes.ok) {
-          setSubmitError(boldData.error ?? "Error al conectar con Bold");
-          return;
+          if (!addiRes.ok) {
+            setSubmitError(addiData.error ?? "Error al conectar con Addi");
+            return;
+          }
+
+          closeCart();
+          clearBuyNow();
+
+          if (addiData.redirectUrl) {
+            window.location.href = addiData.redirectUrl;
+            return;
+          }
+
+          setSubmitError("No se recibió URL de Addi. Intenta de nuevo.");
+        } else {
+          // ── Bold ───────────────────────────────────────────────────────────
+          const boldRes = await fetch("/api/payments/bold", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderId: orderResult.orderId,
+              payer: {
+                name: `${data.firstName} ${data.lastName}`,
+                email: data.email,
+                phone: data.phone,
+                cedula: data.cedula,
+                address: data.address,
+                addressDetail: data.addressDetail,
+                city: data.city,
+                department: data.department,
+              },
+            }),
+          });
+
+          const boldData = await boldRes.json();
+
+          if (!boldRes.ok) {
+            setSubmitError(boldData.error ?? "Error al conectar con Bold");
+            return;
+          }
+
+          closeCart();
+          clearBuyNow();
+
+          if (boldData.redirectUrl) {
+            window.location.href = boldData.redirectUrl;
+            return;
+          }
+
+          setSubmitError("No se recibió URL de pago de Bold. Intenta de nuevo.");
         }
-
-        // Limpiar carrito antes de redirigir
-        closeCart();
-        clearBuyNow();
-
-        // PASO 3: Redirigir a Bold hosted checkout
-        if (boldData.redirectUrl) {
-          window.location.href = boldData.redirectUrl;
-          return;
-        }
-
-        setSubmitError("No se recibió URL de pago de Bold. Intenta de nuevo.");
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps

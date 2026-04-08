@@ -42,7 +42,7 @@ export const checkoutSchema = z.object({
 
   department: z.string().trim().min(2, "Departamento requerido").max(100, "Departamento inválido"),
 
-  paymentMethod: z.literal("BOLD"),
+  paymentMethod: z.enum(["BOLD", "ADDI"]),
 
   savedAddressId: z.string().max(40, "ID inválido").optional(),
 

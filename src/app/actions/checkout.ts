@@ -21,7 +21,7 @@ export interface CreateOrderInput {
   savedAddressId?: string;
 
   // Pago
-  paymentMethod: "BOLD";
+  paymentMethod: "BOLD" | "ADDI";
 
   // Carrito
   items: {
@@ -204,7 +204,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
           total,
           earlyBirdDiscountApplied: earlyBirdApplied,
           status: "PENDING",
-          paymentMethod: "BOLD",
+          paymentMethod: input.paymentMethod,
           items: {
             create: items.map((item) => ({
               productId: item.productId,
@@ -250,6 +250,12 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       }
 
       return { order, earlyBirdApplied };
+    }, {
+      // Neon usa PgBouncer (connection pooler) que agrega latencia por query.
+      // Con múltiples items + dirección guardada + early bird la transacción
+      // excede fácilmente el default de 5 s → aumentamos a 20 s.
+      timeout: 20000,
+      maxWait: 10000,
     });
 
     const { order, earlyBirdApplied } = result;
