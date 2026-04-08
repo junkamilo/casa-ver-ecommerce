@@ -2,22 +2,245 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import type { NextRequest } from "next/server";
+import { createColorVariants, createSetItems, createSubProducts } from "../_helpers";
+
+// ── Constantes permitidas ─────────────────────────────────────────────────────
+
+const ALLOWED_STATUSES = ["ACTIVE", "INACTIVE"] as const;
+const ALLOWED_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "ONESIZE"] as const;
+const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
+
+// ── Helpers de validación ─────────────────────────────────────────────────────
+
+/** Valida URLs de video — permite http/https (YouTube, Vimeo, Cloudinary) */
+function isHttpUrl(v: unknown): boolean {
+  if (typeof v !== "string" || !v) return false;
+  try {
+    const u = new URL(v);
+    return u.protocol === "https:" || u.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Valida URLs de imágenes de producto.
+ * Solo acepta archivos servidos desde Cloudinary (res.cloudinary.com).
+ * Previene inyección de URLs externas arbitrarias en la base de datos.
+ */
+function isValidImageUrl(v: unknown): boolean {
+  if (typeof v !== "string" || !v.trim()) return false;
+  try {
+    const u = new URL(v);
+    return u.protocol === "https:" && u.hostname === "res.cloudinary.com";
+  } catch {
+    return false;
+  }
+}
+
+/** Parsea fecha ISO de forma segura — retorna null si el string es inválido */
+function parseSafeDate(v: unknown): Date | null {
+  if (!v || typeof v !== "string") return null;
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? null : d;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const db = prisma as any;
+function validateProductBody(body: any): string | null {
+  const {
+    name, categoryId, description, basePrice, comparePrice,
+    stock, status, sizes, colors, items, videoUrl, material, isSet,
+  } = body;
 
-// --- GET: Obtener producto completo por ID ---
+  // ── Nombre ────────────────────────────────────────────────────────────────
+  if (!name || typeof name !== "string" || name.trim().length < 3)
+    return "El nombre debe tener al menos 3 caracteres";
+  if (name.trim().length > 200)
+    return "El nombre no puede superar 200 caracteres";
+
+  // ── Categoría ─────────────────────────────────────────────────────────────
+  if (!categoryId || typeof categoryId !== "string" || !categoryId.trim())
+    return "La categoría es requerida";
+  if (categoryId.trim().length > 50)
+    return "ID de categoría inválido";
+
+  // ── Descripción ───────────────────────────────────────────────────────────
+  if (!isSet) {
+    if (!description || typeof description !== "string" || description.trim().length < 10)
+      return "La descripción debe tener al menos 10 caracteres";
+    if (description.trim().length > 5000)
+      return "La descripción no puede superar 5000 caracteres";
+  }
+
+  // ── Precio ────────────────────────────────────────────────────────────────
+  if (!isSet) {
+    const price = Number(basePrice);
+    if (isNaN(price) || price <= 0) return "El precio debe ser mayor a 0";
+  }
+
+  if (comparePrice !== undefined && comparePrice !== null && comparePrice !== "") {
+    const cp = Number(comparePrice);
+    if (isNaN(cp) || cp < 0) return "El precio de comparación no es válido";
+  }
+
+  // ── Stock ─────────────────────────────────────────────────────────────────
+  const globalStock = Number(stock ?? 0);
+  if (!isNaN(globalStock) && globalStock > 9_999_999)
+    return "El stock total parece inusualmente alto";
+
+  // ── Estado ────────────────────────────────────────────────────────────────
+  if (status && !ALLOWED_STATUSES.includes(status as never))
+    return `Estado inválido: ${status}`;
+
+  // ── Material ──────────────────────────────────────────────────────────────
+  if (material !== undefined && material !== null && material !== "") {
+    if (typeof material !== "string") return "Material inválido";
+    if (material.trim().length > 500) return "El material no puede superar 500 caracteres";
+  }
+
+  // ── Tallas ────────────────────────────────────────────────────────────────
+  if (Array.isArray(sizes)) {
+    if (sizes.length > 20) return "Demasiadas tallas (máximo 20)";
+    const invalid = sizes.filter((s: unknown) => !ALLOWED_SIZES.includes(s as never));
+    if (invalid.length) return `Tallas inválidas: ${invalid.join(", ")}`;
+  }
+
+  // ── Colores y tallas requeridos ───────────────────────────────────────────
+  if (!Array.isArray(colors) || colors.length === 0)
+    return "Debes seleccionar al menos 1 color para el producto";
+  if (!Array.isArray(sizes) || sizes.length === 0)
+    return "Debes seleccionar al menos 1 talla para el producto";
+
+  // ── Colores ───────────────────────────────────────────────────────────────
+  if (colors.length > 30) return "Demasiados colores (máximo 30)";
+  for (const c of colors) {
+    if (!c.name || typeof c.name !== "string") return "Nombre de color inválido";
+    if (c.name.trim().length > 100) return "Nombre de color demasiado largo";
+    if (!HEX_RE.test(c.hexCode ?? "")) return `Código de color inválido: ${c.hexCode}`;
+    if (c.variantStocks && typeof c.variantStocks === "object") {
+      for (const [size, stockVal] of Object.entries(c.variantStocks)) {
+        if (!ALLOWED_SIZES.includes(size as never)) return `Talla inválida en stock: ${size}`;
+        const s = Number(stockVal);
+        if (isNaN(s) || s < 0) return `Stock inválido para variante ${c.name} - ${size}`;
+        if (s > 999_999) return `Stock excesivo para variante ${c.name} - ${size} (máximo 999999)`;
+      }
+    }
+    if (Array.isArray(c.images)) {
+      if (c.images.length > 10) return "Máximo 10 imágenes por color";
+      for (const url of c.images) {
+        if (!isValidImageUrl(url)) return "URL de imagen inválida (debe provenir de Cloudinary)";
+      }
+    }
+  }
+
+  // ── Video URL ─────────────────────────────────────────────────────────────
+  if (videoUrl && !isHttpUrl(videoUrl))
+    return "URL de video inválida (debe ser http/https)";
+
+  // ── Subcategorías ─────────────────────────────────────────────────────────
+  if (Array.isArray(items)) {
+    if (items.length > 20) return "Demasiadas subcategorías (máximo 20)";
+    for (const item of items) {
+      if (!item.name || typeof item.name !== "string" || item.name.trim().length < 2)
+        return "Nombre de subcategoría inválido (mínimo 2 caracteres)";
+      if (item.name.trim().length > 200)
+        return "Nombre de subcategoría demasiado largo (máximo 200 caracteres)";
+      if (item.price !== undefined && item.price !== null && item.price !== "") {
+        const p = Number(item.price);
+        if (isNaN(p) || p < 0) return "Precio de subcategoría inválido";
+        if (p > 100_000_000) return "Precio de subcategoría parece inusualmente alto";
+      }
+      if (item.comparePrice !== undefined && item.comparePrice !== null && item.comparePrice !== "") {
+        const cp = Number(item.comparePrice);
+        if (isNaN(cp) || cp < 0) return "Precio anterior de subcategoría inválido";
+        if (cp > 100_000_000) return "Precio anterior de subcategoría parece inusualmente alto";
+      }
+      if (item.videoUrl && !isHttpUrl(item.videoUrl))
+        return "URL de video de subcategoría inválida";
+      if (Array.isArray(item.colors)) {
+        if (item.colors.length > 30) return "Demasiados colores en subcategoría";
+        for (const c of item.colors) {
+          if (!c.name || typeof c.name !== "string") return "Nombre de color de subcategoría inválido";
+          if (c.name.trim().length > 100) return "Nombre de color de subcategoría demasiado largo";
+          if (!HEX_RE.test(c.hexCode ?? "")) return `Código de color inválido en subcategoría: ${c.hexCode}`;
+          if (c.variantStocks && typeof c.variantStocks === "object") {
+            for (const [size, stockVal] of Object.entries(c.variantStocks)) {
+              if (!ALLOWED_SIZES.includes(size as never)) return `Talla inválida en stock de subcategoría: ${size}`;
+              const s = Number(stockVal);
+              if (isNaN(s) || s < 0) return `Stock inválido para variante ${c.name} - ${size}`;
+              if (s > 999_999) return `Stock excesivo para variante ${c.name} - ${size} (máximo 999999)`;
+            }
+          }
+          if (Array.isArray(c.images)) {
+            if (c.images.length > 10) return "Máximo 10 imágenes por color de subcategoría";
+            for (const url of c.images) {
+              if (!isValidImageUrl(url)) return "URL de imagen de subcategoría inválida (debe provenir de Cloudinary)";
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // ── Sub-productos vendibles independientemente ────────────────────────────
+  if (Array.isArray(body.subProducts)) {
+    const subs = body.subProducts;
+    if (subs.length > 20) return "Demasiados sub-productos (máximo 20)";
+    for (const sub of subs) {
+      if (!sub.name || typeof sub.name !== "string" || sub.name.trim().length < 2)
+        return "Nombre de sub-producto inválido (mínimo 2 caracteres)";
+      if (sub.name.trim().length > 200)
+        return "Nombre de sub-producto demasiado largo (máximo 200 caracteres)";
+      if (sub.price !== undefined && sub.price !== null && sub.price !== "") {
+        const p = Number(sub.price);
+        if (isNaN(p) || p < 0) return "Precio de sub-producto inválido";
+        if (p > 100_000_000) return "Precio de sub-producto parece inusualmente alto";
+      }
+      if (sub.videoUrl && !isHttpUrl(sub.videoUrl))
+        return "URL de video de sub-producto inválida";
+      if (Array.isArray(sub.colors)) {
+        if (sub.colors.length > 30) return "Demasiados colores en sub-producto";
+        for (const c of sub.colors) {
+          if (!c.name || typeof c.name !== "string") return "Nombre de color de sub-producto inválido";
+          if (c.name.trim().length > 100) return "Nombre de color de sub-producto demasiado largo";
+          if (!HEX_RE.test(c.hexCode ?? "")) return `Código de color inválido en sub-producto: ${c.hexCode}`;
+          if (c.variantStocks && typeof c.variantStocks === "object") {
+            for (const [size, stockVal] of Object.entries(c.variantStocks)) {
+              if (!ALLOWED_SIZES.includes(size as never)) return `Talla inválida en sub-producto: ${size}`;
+              const s = Number(stockVal);
+              if (isNaN(s) || s < 0) return `Stock inválido en sub-producto ${c.name} - ${size}`;
+              if (s > 999_999) return `Stock excesivo en sub-producto ${c.name} - ${size} (máximo 999999)`;
+            }
+          }
+          if (Array.isArray(c.images)) {
+            if (c.images.length > 10) return "Máximo 10 imágenes por color de sub-producto";
+            for (const url of c.images) {
+              if (!isValidImageUrl(url)) return "URL de imagen de sub-producto inválida (debe provenir de Cloudinary)";
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+// ── GET: Obtener producto completo por ID ─────────────────────────────────────
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
-    if (!session?.user || (session.user as any).role !== "ADMIN") {
+    if (!session?.user || (session.user as { role?: string }).role !== "ADMIN") {
       return new NextResponse("Acceso denegado", { status: 403 });
     }
     const { id } = await params;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = prisma as any;
     const product = await db.product.findUnique({
       where: { id },
       include: {
@@ -25,6 +248,17 @@ export async function GET(
         images: { orderBy: { order: "asc" } },
         colors: { include: { images: { orderBy: { order: "asc" } }, variants: true } },
         items: {
+          orderBy: { order: "asc" },
+          include: {
+            colors: {
+              include: {
+                images: { orderBy: { order: "asc" } },
+                variants: true,
+              },
+            },
+          },
+        },
+        subProducts: {
           orderBy: { order: "asc" },
           include: {
             colors: {
@@ -104,6 +338,7 @@ export async function GET(
         name: item.name,
         description: item.description ?? null,
         price: item.price ? Number(item.price) : null,
+        comparePrice: item.comparePrice ? Number(item.comparePrice) : null,
         videoUrl: item.videoUrl,
         order: item.order,
         stock: item.colors.reduce(
@@ -123,6 +358,31 @@ export async function GET(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         sizes: [...new Set(item.colors.flatMap((c: any) => c.variants.map((v: any) => v.size)))],
       })),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      subProducts: (product.subProducts || []).map((sub: any) => ({
+        id: sub.id,
+        name: sub.name,
+        description: sub.description ?? null,
+        price: sub.price ? Number(sub.price) : null,
+        videoUrl: sub.videoUrl ?? null,
+        order: sub.order,
+        stock: sub.colors.reduce(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (acc: number, c: any) => acc + c.variants.reduce((s: number, v: any) => s + v.stock, 0), 0
+        ),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        colors: sub.colors.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          hexCode: c.hexCode,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          images: c.images.map((img: any) => img.url),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          variantStocks: Object.fromEntries(c.variants.map((v: any) => [v.size, v.stock])),
+        })),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        sizes: [...new Set(sub.colors.flatMap((c: any) => c.variants.map((v: any) => v.size)))],
+      })),
     };
 
     return NextResponse.json(mapped);
@@ -132,28 +392,41 @@ export async function GET(
   }
 }
 
-// --- PATCH: Actualizar Producto completo ---
+// ── PATCH: Actualizar Producto completo ───────────────────────────────────────
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
-    if (!session?.user || (session.user as any).role !== "ADMIN") {
-      return new NextResponse("Unauthorized", { status: 403 });
+    if (!session?.user || (session.user as { role?: string }).role !== "ADMIN") {
+      return new NextResponse("Acceso denegado", { status: 403 });
     }
 
     const { id } = await params;
-    const body = await req.json();
 
-    // Toggle rápido de active (desde la tabla)
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return new NextResponse("Cuerpo de solicitud inválido", { status: 400 });
+    }
+
+    // ── Toggle rápido de active (desde la tabla) ──────────────────────────────
     if (body.active !== undefined && Object.keys(body).length === 1) {
+      if (typeof body.active !== "boolean") {
+        return new NextResponse("Valor de estado inválido", { status: 400 });
+      }
       const product = await prisma.product.update({
         where: { id },
         data: { status: body.active ? "ACTIVE" : "INACTIVE" },
       });
       return NextResponse.json(product);
     }
+
+    const validationError = validateProductBody(body);
+    if (validationError) return new NextResponse(validationError, { status: 400 });
 
     const {
       name, description, basePrice, comparePrice, stock,
@@ -162,43 +435,62 @@ export async function PATCH(
       material, videoUrl, isSet, colors, sizes, items, subProducts,
     } = body;
 
-    const slug = name
-      ? name.toLowerCase().trim().replace(/[\s\W-]+/g, "-").replace(/^-+|-+$/g, "")
-      : undefined;
+    // ── Verificar que la categoría existe y está activa en DB ─────────────────
+    const category = await prisma.category.findUnique({
+      where: { id: (categoryId as string).trim() },
+      select: { id: true, isActive: true, name: true },
+    });
+    if (!category) {
+      return new NextResponse("La categoría seleccionada no existe", { status: 400 });
+    }
+    if (!category.isActive) {
+      return new NextResponse(`La categoría "${category.name}" está inactiva`, { status: 400 });
+    }
 
+    // ── Fechas con parsing seguro ──────────────────────────────────────────────
     const resolvedProductNewAt = isProductNew
-      ? (isProductNewAt ? new Date(isProductNewAt) : new Date())
+      ? (parseSafeDate(isProductNewAt) ?? new Date())
       : null;
     const resolvedOnSaleAt = isOnSale
-      ? (isOnSaleAt ? new Date(isOnSaleAt) : new Date())
+      ? (parseSafeDate(isOnSaleAt) ?? new Date())
       : null;
 
     const result = await prisma.$transaction(async (tx) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const txDb = tx as any;
 
-      // 1. Eliminar imágenes existentes (product level)
+      // 1. Liberar reservas de stock activas antes de borrar variantes.
+      //    Previene que carritos de clientes queden apuntando a variantes eliminadas.
+      await txDb.stockReservation.updateMany({
+        where: {
+          variant: { productId: id },
+          released: false,
+          expiresAt: { gt: new Date() },
+        },
+        data: { released: true },
+      });
+
+      // 2. Eliminar imágenes del producto (nivel producto y por color)
       await txDb.productImage.deleteMany({ where: { productId: id } });
 
-      // 2. Eliminar colores y variantes del producto simple
+      // 3. Eliminar colores — cascade a variants y reservas ya liberadas
       await txDb.productColor.deleteMany({ where: { productId: id } });
 
-      // 3. Eliminar items del conjunto (cascade a colors/images/variants)
+      // 4. Eliminar items del conjunto (cascade a colors/images/variants)
       await txDb.productItem.deleteMany({ where: { productId: id } });
 
-      // 4a. Eliminar subproductos (cascade a colors/images/variants)
+      // 5. Eliminar sub-productos anteriores (cascade a colors/images/variants)
       await txDb.subProduct.deleteMany({ where: { productId: id } });
 
-      // 4. Actualizar producto
+      // 5. Actualizar producto — el slug NO se regenera para preservar URLs existentes
       const product = await txDb.product.update({
         where: { id },
         data: {
-          name,
-          slug,
-          description,
+          name: (name as string).trim(),
+          description: description ? (description as string).trim() : "",
           basePrice: basePrice != null ? basePrice : undefined,
           comparePrice: comparePrice != null ? comparePrice : undefined,
-          categoryId,
+          categoryId: (categoryId as string).trim(),
           status,
           isFeatured,
           isNew,
@@ -206,26 +498,29 @@ export async function PATCH(
           isProductNewAt: resolvedProductNewAt,
           isOnSale: isOnSale ?? false,
           isOnSaleAt: resolvedOnSaleAt,
-          material: material || null,
+          material: material ? (material as string).trim() || null : null,
           videoUrl: videoUrl !== undefined ? (videoUrl || null) : undefined,
           isSet: isSet ?? false,
-          metaTitle: name ? name.trim().slice(0, 60) : undefined,
-          metaDescription: description != null
-            ? description.replace(/\s+/g, " ").trim().slice(0, 160)
-            : undefined,
+          metaTitle: (name as string).trim().slice(0, 60),
+          metaDescription: description
+            ? (description as string).replace(/\s+/g, " ").trim().slice(0, 160)
+            : "",
         },
       });
 
-      const slugForSku = slug || product.slug;
+      const slugForSku = product.slug;
 
-      // Parent product colors are ALWAYS recreated regardless of isSet.
-      // When isSet=true, subcategory items are created on top.
-      await createColorVariants(txDb, id, slugForSku, colors || [], sizes || [], stock ?? 0);
+      // 6. Recrear colores/variantes del padre (siempre, independientemente de isSet)
+      await createColorVariants(
+        txDb, id, slugForSku,
+        (colors as any) || [], (sizes as any) || [], (stock as number) ?? 0,
+      );
+
       if (isSet) {
-        await createSetItems(txDb, id, slugForSku, items || []);
+        await createSetItems(txDb, id, slugForSku, (items as any) || []);
       }
-      if (subProducts?.length) {
-        await createSubProducts(txDb, id, slugForSku, subProducts);
+      if (Array.isArray(subProducts) && (subProducts as any[]).length > 0) {
+        await createSubProducts(txDb, id, slugForSku, (subProducts as any));
       }
 
       return product;
@@ -238,15 +533,16 @@ export async function PATCH(
   }
 }
 
-// --- DELETE: Eliminar Producto ---
+// ── DELETE: Eliminar Producto ─────────────────────────────────────────────────
+
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
-    if (!session?.user || (session.user as any).role !== "ADMIN") {
-      return new NextResponse("Unauthorized", { status: 403 });
+    if (!session?.user || (session.user as { role?: string }).role !== "ADMIN") {
+      return new NextResponse("Acceso denegado", { status: 403 });
     }
 
     const { id } = await params;
@@ -254,6 +550,17 @@ export async function DELETE(
     await prisma.$transaction(async (tx) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const txDb = tx as any;
+
+      // Liberar reservas activas antes de eliminar para evitar errores en carritos
+      await txDb.stockReservation.updateMany({
+        where: {
+          variant: { productId: id },
+          released: false,
+          expiresAt: { gt: new Date() },
+        },
+        data: { released: true },
+      });
+
       await txDb.productImage.deleteMany({ where: { productId: id } });
       await txDb.productColor.deleteMany({ where: { productId: id } });
       await txDb.productItem.deleteMany({ where: { productId: id } });
@@ -265,155 +572,5 @@ export async function DELETE(
   } catch (error) {
     console.error("[PRODUCT_DELETE]", error);
     return new NextResponse("Internal Error", { status: 500 });
-  }
-}
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-type ColorInput = { name: string; hexCode: string; images?: string[]; variantStocks?: { [size: string]: number } };
-type SetItemInput = {
-  name: string;
-  description?: string | null;
-  price?: number | null;
-  videoUrl?: string | null;
-  stock?: number;
-  colors: ColorInput[];
-  sizes: string[];
-};
-type SubProductInput = {
-  name: string;
-  description?: string | null;
-  price?: number | null;
-  stock?: number;
-  videoUrl?: string | null;
-  colors: ColorInput[];
-  sizes: string[];
-};
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function createColorVariants(tx: any, productId: string, slug: string, colors: ColorInput[], sizes: string[], globalStock: number) {
-  // Si hay variantStocks proporcionados, usarlos; de lo contrario, dividir el stock global uniformemente
-  const hasVariantStocks = colors.some((c) => c.variantStocks && Object.keys(c.variantStocks).length > 0);
-
-  const totalVariants = colors.length * sizes.length;
-  const base = !hasVariantStocks && totalVariants > 0 ? Math.floor(globalStock / totalVariants) : 0;
-  const rem = !hasVariantStocks && totalVariants > 0 ? globalStock % totalVariants : 0;
-  let idx = 0;
-
-  for (const colorData of colors) {
-    if (!colorData.name) continue;
-    const color = await tx.productColor.create({
-      data: { productId, name: colorData.name, hexCode: colorData.hexCode || "#000000" },
-    });
-    if (colorData.images?.length) {
-      await tx.productImage.createMany({
-        data: colorData.images.map((url: string, i: number) => ({
-          productId, colorId: color.id, url, altText: colorData.name, order: i,
-        })),
-      });
-    }
-    for (const size of sizes) {
-      const sku = `${slug}-${colorData.name.toLowerCase().replace(/\s+/g, "-")}-${size.toLowerCase()}`;
-      // Usar variantStocks si existen; si no, usar división uniforme con minStock = 2
-      const variantStock = colorData.variantStocks?.[size] !== undefined
-        ? Number(colorData.variantStocks[size])
-        : base + (idx < rem ? 1 : 0);
-
-      await tx.productVariant.create({
-        data: {
-          productId,
-          colorId: color.id,
-          size: size as never,
-          sku,
-          stock: variantStock,
-          minStock: 2, // minStock fijo en 2 como especificó el cliente
-        },
-      });
-      idx++;
-    }
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function createSubProducts(tx: any, productId: string, slug: string, subProducts: SubProductInput[]) {
-  for (let order = 0; order < subProducts.length; order++) {
-    const sub = subProducts[order];
-    if (!sub.name) continue;
-
-    const subProduct = await tx.subProduct.create({
-      data: { productId, name: sub.name, description: sub.description || null, price: sub.price || null, stock: sub.stock || 0, videoUrl: sub.videoUrl || null, order },
-    });
-
-    const subStock = sub.stock ?? 0;
-    const totalVariants = (sub.colors?.length ?? 0) * (sub.sizes?.length ?? 0);
-    const base = totalVariants > 0 ? Math.floor(subStock / totalVariants) : 0;
-    const rem = totalVariants > 0 ? subStock % totalVariants : 0;
-    let idx = 0;
-
-    for (const colorData of sub.colors || []) {
-      if (!colorData.name) continue;
-      const subColor = await tx.subProductColor.create({
-        data: { subProductId: subProduct.id, name: colorData.name, hexCode: colorData.hexCode || "#000000" },
-      });
-      if (colorData.images?.length) {
-        await tx.subProductImage.createMany({
-          data: colorData.images.map((url: string, i: number) => ({
-            colorId: subColor.id, url, altText: colorData.name, order: i,
-          })),
-        });
-      }
-      for (const size of sub.sizes || []) {
-        const sku = `${slug}-sub-${sub.name.toLowerCase().replace(/\s+/g, "-")}-${colorData.name.toLowerCase().replace(/\s+/g, "-")}-${size.toLowerCase()}`;
-        await tx.subProductVariant.create({
-          data: { colorId: subColor.id, size: size as never, sku, stock: base + (idx < rem ? 1 : 0) },
-        });
-        idx++;
-      }
-    }
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function createSetItems(tx: any, productId: string, slug: string, items: SetItemInput[]) {
-  for (let order = 0; order < items.length; order++) {
-    const itemData = items[order];
-    if (!itemData.name) continue;
-
-    const productItem = await tx.productItem.create({
-      data: { productId, name: itemData.name, description: itemData.description || null, price: itemData.price || null, videoUrl: itemData.videoUrl || null, order },
-    });
-
-    const itemStock = itemData.stock ?? 0;
-    const hasVariantStocks = (itemData.colors || []).some(
-      (c) => c.variantStocks && Object.keys(c.variantStocks).length > 0
-    );
-    const totalVariants = (itemData.colors?.length ?? 0) * (itemData.sizes?.length ?? 0);
-    const base = !hasVariantStocks && totalVariants > 0 ? Math.floor(itemStock / totalVariants) : 0;
-    const rem = !hasVariantStocks && totalVariants > 0 ? itemStock % totalVariants : 0;
-    let idx = 0;
-
-    for (const colorData of itemData.colors || []) {
-      if (!colorData.name) continue;
-      const itemColor = await tx.productItemColor.create({
-        data: { itemId: productItem.id, name: colorData.name, hexCode: colorData.hexCode || "#000000" },
-      });
-      if (colorData.images?.length) {
-        await tx.productItemImage.createMany({
-          data: colorData.images.map((url: string, i: number) => ({
-            colorId: itemColor.id, url, altText: colorData.name, order: i,
-          })),
-        });
-      }
-      for (const size of itemData.sizes || []) {
-        const sku = `${slug}-${itemData.name.toLowerCase().replace(/\s+/g, "-")}-${colorData.name.toLowerCase().replace(/\s+/g, "-")}-${size.toLowerCase()}`;
-        const variantStock = colorData.variantStocks?.[size] !== undefined
-          ? Number(colorData.variantStocks[size])
-          : base + (idx < rem ? 1 : 0);
-        await tx.productItemVariant.create({
-          data: { colorId: itemColor.id, size: size as never, sku, stock: variantStock },
-        });
-        idx++;
-      }
-    }
   }
 }

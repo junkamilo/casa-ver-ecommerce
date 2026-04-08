@@ -1,7 +1,14 @@
 import { z } from "zod";
 
 export const reviewSchema = z.object({
-  rating: z.number().int().min(1, "La calificación mínima es 1").max(5, "La calificación máxima es 5"),
+  rating: z
+    .number()
+    .refine((v) => typeof v === "number" && Number.isFinite(v), {
+      message: "La calificación debe ser un número",
+    })
+    .int("La calificación debe ser un número entero")
+    .min(1, "La calificación mínima es 1")
+    .max(5, "La calificación máxima es 5"),
   comment: z
     .string()
     .trim()
@@ -11,7 +18,8 @@ export const reviewSchema = z.object({
       "El comentario no puede contener etiquetas HTML"
     )
     .optional()
-    .transform((v) => (v === "" ? undefined : v)),
+    // Convierte string vacío o undefined a null para limpiar el campo en la BD
+    .transform((v) => (v === undefined || v === "" ? null : v)),
 });
 
 export type ReviewInput = z.infer<typeof reviewSchema>;

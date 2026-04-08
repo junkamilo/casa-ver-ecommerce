@@ -147,8 +147,12 @@ const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
             {item.name}
           </h3>
           <div className="flex items-center gap-3 mb-1">
-            <span className="font-medium text-[#154734] text-sm">${item.price.toLocaleString("es-CO")}</span>
-            {item.oldPrice && (
+            <span className="font-medium text-[#154734] text-sm">
+              {item.isSet && item.minPrice != null
+                ? `Desde $${item.minPrice.toLocaleString("es-CO")}`
+                : `$${item.price.toLocaleString("es-CO")}`}
+            </span>
+            {!item.isSet && item.oldPrice && (
               <span className="text-gray-400 line-through text-xs font-light">${item.oldPrice.toLocaleString("es-CO")}</span>
             )}
           </div>
@@ -294,8 +298,12 @@ const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
           {item.name}
         </h3>
         <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-sm mb-1">
-          <span className="font-medium text-[#154734] text-sm sm:text-sm">${item.price.toLocaleString("es-CO")}</span>
-          {item.oldPrice && (
+          <span className="font-medium text-[#154734] text-sm sm:text-sm">
+            {item.isSet && item.minPrice != null
+              ? `Desde $${item.minPrice.toLocaleString("es-CO")}`
+              : `$${item.price.toLocaleString("es-CO")}`}
+          </span>
+          {!item.isSet && item.oldPrice && (
             <span className="text-gray-400 line-through text-xs font-light">${item.oldPrice.toLocaleString("es-CO")}</span>
           )}
         </div>

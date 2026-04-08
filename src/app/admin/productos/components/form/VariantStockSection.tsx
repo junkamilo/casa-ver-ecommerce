@@ -4,13 +4,13 @@ import { useState } from "react";
 import { SelectedColor } from "../../types";
 import { AlertTriangle, Zap } from "lucide-react";
 
-const MIN_STOCK = 2; // Umbral de alerta — cuando stock <= minStock
+const MIN_STOCK = 2;   // Umbral de alerta
+const MAX_STOCK = 9999; // Límite máximo por variante
 
 interface Props {
   selectedColors: SelectedColor[];
   selectedSizes: string[];
   disabled: boolean;
-  productId?: string; // Para actualizar en tiempo real si existe (edición)
   onUpdate: (colorName: string, size: string, stock: number) => void;
 }
 
@@ -18,7 +18,6 @@ export default function VariantStockSection({
   selectedColors,
   selectedSizes,
   disabled,
-  productId,
   onUpdate,
 }: Props) {
   const [bulkStock, setBulkStock] = useState("");
@@ -51,22 +50,13 @@ export default function VariantStockSection({
       .map((size) => `${color.name} - ${size}`)
   );
 
-  // Manejar cambio de stock (local + opcional servidor en edición)
-  const handleStockChange = async (
-    color: SelectedColor,
-    size: string,
-    newStock: number
-  ) => {
-    // Actualizar estado local inmediatamente (optimistic update)
+  const handleStockChange = (color: SelectedColor, size: string, newStock: number) => {
     onUpdate(color.name, size, newStock);
-
-    // Si es edición y tenemos productId y colorId, sincronizar con servidor
-    // Esto requeriría pasar el color.id completo desde el backend
   };
 
   const handleBulkFill = () => {
     const value = parseInt(bulkStock, 10);
-    if (isNaN(value) || value < 0) return;
+    if (isNaN(value) || value < 0 || value > MAX_STOCK) return;
     for (const color of selectedColors) {
       for (const size of selectedSizes) {
         onUpdate(color.name, size, value);
@@ -86,6 +76,7 @@ export default function VariantStockSection({
         <input
           type="number"
           min="0"
+          max={MAX_STOCK}
           value={bulkStock}
           onChange={(e) => setBulkStock(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleBulkFill())}
@@ -124,13 +115,13 @@ export default function VariantStockSection({
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="text-left px-4 py-2.5 text-xs font-bold text-gray-500 uppercase tracking-wide min-w-[120px]">
+              <th className="text-left px-4 py-2.5 text-xs font-bold text-gray-500 uppercase tracking-wide min-w-30">
                 Color
               </th>
               {selectedSizes.map((size) => (
                 <th
                   key={size}
-                  className="text-center px-3 py-2.5 text-xs font-bold text-gray-500 uppercase tracking-wide min-w-[90px]"
+                  className="text-center px-3 py-2.5 text-xs font-bold text-gray-500 uppercase tracking-wide min-w-22.5"
                 >
                   {size}
                   <div className="text-[10px] font-normal text-gray-400 mt-0.5">
@@ -168,11 +159,13 @@ export default function VariantStockSection({
                         <input
                           type="number"
                           min="0"
+                          max={MAX_STOCK}
                           disabled={disabled}
                           value={rawStock !== undefined ? stock : ""}
-                          onChange={(e) =>
-                            handleStockChange(color, size, e.target.value === "" ? NaN : Number(e.target.value))
-                          }
+                          onChange={(e) => {
+                            const val = e.target.value === "" ? NaN : Math.min(Number(e.target.value), MAX_STOCK);
+                            handleStockChange(color, size, val);
+                          }}
                           className={`w-14 text-center px-2 py-1.5 rounded-lg border text-sm outline-none transition-colors ${
                             isLowStock
                               ? "border-amber-300 bg-amber-50 focus:border-amber-500 focus:ring-amber-100"

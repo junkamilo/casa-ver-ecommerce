@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Edit2 } from "lucide-react";
+import { Edit2, Trash2 } from "lucide-react";
 import { ProductListItem } from "../types";
 import { formatPrice, getStockStatus } from "../constants";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
@@ -7,10 +7,11 @@ import SectionEmptyState from "@/components/ui/SectionEmptyState";
 interface Props {
   products: ProductListItem[];
   onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
   onToggleActive: (id: string, active: boolean) => void;
 }
 
-export default function ProductMobileList({ products, onEdit, onToggleActive }: Props) {
+export default function ProductMobileList({ products, onEdit, onDelete, onToggleActive }: Props) {
   if (products.length === 0) {
     return (
       <div className="md:hidden">
@@ -24,6 +25,7 @@ export default function ProductMobileList({ products, onEdit, onToggleActive }: 
       {products.map((product) => {
         const stockStatus = getStockStatus(product.stock);
         const mainImage = product.images[0]?.url || "/placeholder.jpg";
+        const isSetWithItems = product.isSet && product.setItems && product.setItems.length > 0;
 
         return (
           <div
@@ -43,11 +45,27 @@ export default function ProductMobileList({ products, onEdit, onToggleActive }: 
               <p className="text-base font-bold text-[#154734] mt-1">
                 {formatPrice(product.price)}
               </p>
-              <span
-                className={`inline-flex items-center mt-2 px-2.5 py-1 rounded-full text-xs font-semibold border ${stockStatus.color}`}
-              >
-                {stockStatus.label} ({product.stock})
-              </span>
+              {isSetWithItems ? (
+                <div className="flex flex-col gap-1 mt-2">
+                  {product.setItems!.map((item) => {
+                    const s = getStockStatus(item.stock);
+                    return (
+                      <span
+                        key={item.name}
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${s.color}`}
+                      >
+                        {item.name} ({item.stock})
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : (
+                <span
+                  className={`inline-flex items-center mt-2 px-2.5 py-1 rounded-full text-xs font-semibold border ${stockStatus.color}`}
+                >
+                  {stockStatus.label} ({product.stock})
+                </span>
+              )}
             </div>
 
             {/* Acciones */}
@@ -74,6 +92,15 @@ export default function ProductMobileList({ products, onEdit, onToggleActive }: 
                 title="Editar producto"
               >
                 <Edit2 className="w-5 h-5" />
+              </button>
+
+              {/* Eliminar */}
+              <button
+                onClick={() => onDelete(product.id)}
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50 text-red-400 active:scale-90 transition-transform"
+                title="Eliminar producto"
+              >
+                <Trash2 className="w-5 h-5" />
               </button>
             </div>
           </div>

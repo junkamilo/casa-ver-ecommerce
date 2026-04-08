@@ -75,7 +75,8 @@ async function getCollectionData(
     const availableColors = Array.from(colorMap.entries()).map(([hexCode, name]) => ({ hexCode, name }));
 
     // --- Fetch filtered products ---
-    const raw = await prisma.product.findMany({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw = await (prisma as any).product.findMany({
       where,
       select: {
         name: true,
@@ -84,6 +85,7 @@ async function getCollectionData(
         comparePrice: true,
         isFeatured: true,
         isNew: true,
+        isSet: true,
         isProductNew: true,
         isProductNewAt: true,
         isOnSale: true,
@@ -91,6 +93,13 @@ async function getCollectionData(
           orderBy: { order: "asc" },
           take: 8,
           select: { url: true },
+        },
+        items: {
+          orderBy: { order: "asc" },
+          select: {
+            price: true,
+            colors: { take: 1, select: { images: { orderBy: { order: "asc" }, take: 1, select: { url: true } } } },
+          },
         },
         colors: {
           select: {
@@ -108,22 +117,36 @@ async function getCollectionData(
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const products: CollectionProduct[] = (raw as any[]).map((p) => ({
-      images: p.images.map((i: { url: string }) => i.url),
-      name: p.name,
-      slug: p.slug,
-      price: Number(p.basePrice),
-      oldPrice: p.comparePrice ? Number(p.comparePrice) : undefined,
-      badge: computeProductBadge({
-        isProductNew: p.isProductNew,
-        isProductNewAt: p.isProductNewAt,
-        isOnSale: p.isOnSale,
-      }),
-      colors:
-        p.colors.length > 0
-          ? p.colors.map((c: { name: string; hexCode: string; images: { url: string }[] }) => ({ name: c.name, hexCode: c.hexCode, imageUrl: c.images[0]?.url ?? null }))
-          : undefined,
-    }));
+    const products: CollectionProduct[] = (raw as any[]).map((p) => {
+      const parentImages: string[] = p.images.map((i: { url: string }) => i.url);
+      const fallbackUrl = p.isSet && parentImages.length === 0
+        ? (p.items?.[0]?.colors?.[0]?.images?.[0]?.url ?? null)
+        : null;
+      const cardImages = fallbackUrl ? [fallbackUrl] : parentImages;
+      const itemPrices: number[] = p.isSet && p.items?.length > 0
+        ? p.items.map((it: { price: unknown }) => it.price ? Number(it.price) : null).filter((v: number | null): v is number => v !== null)
+        : [];
+      const minPrice = itemPrices.length > 0 ? Math.min(...itemPrices) : undefined;
+
+      return {
+        images: cardImages,
+        name: p.name,
+        slug: p.slug,
+        price: Number(p.basePrice),
+        oldPrice: p.comparePrice ? Number(p.comparePrice) : undefined,
+        isSet: p.isSet || false,
+        minPrice,
+        badge: computeProductBadge({
+          isProductNew: p.isProductNew,
+          isProductNewAt: p.isProductNewAt,
+          isOnSale: p.isOnSale,
+        }),
+        colors:
+          p.colors.length > 0
+            ? p.colors.map((c: { name: string; hexCode: string; images: { url: string }[] }) => ({ name: c.name, hexCode: c.hexCode, imageUrl: c.images[0]?.url ?? null }))
+            : undefined,
+      };
+    });
 
     return { category, products, filterOptions: { availableColors, maxPriceDb } };
   } catch {

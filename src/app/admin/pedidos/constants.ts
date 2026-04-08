@@ -2,6 +2,42 @@ export const ALL_STATUSES = [
   "Todos", "Pendiente", "Procesando", "Pagado", "Enviado", "Entregado", "Cancelado", "Fallido", "Reembolsado",
 ];
 
+/**
+ * Estados que el sistema de pagos gestiona automáticamente.
+ * El admin NO puede establecerlos manualmente.
+ */
+export const PAYMENT_MANAGED_STATUSES = new Set(["Pendiente", "Pagado", "Fallido"]);
+
+/**
+ * Estados terminales: una vez alcanzados no se pueden cambiar.
+ */
+export const TERMINAL_STATUSES = new Set(["Cancelado", "Reembolsado"]);
+
+/**
+ * Transiciones válidas que el admin puede ejecutar.
+ * La llave es el estado ACTUAL del pedido.
+ * El valor es la lista de estados a los que puede avanzar.
+ *
+ * Reglas de negocio:
+ * - El flujo es hacia adelante: no se puede revertir un estado ya aplicado.
+ * - CANCELADO y REEMBOLSADO son terminales (no permiten más cambios).
+ * - PENDIENTE, PAGADO y FALLIDO los gestiona exclusivamente el sistema de pagos.
+ */
+export const VALID_ADMIN_TRANSITIONS: Record<string, string[]> = {
+  Pagado:      ["Procesando", "Cancelado", "Reembolsado"],
+  Procesando:  ["Enviado", "Cancelado", "Reembolsado"],
+  Enviado:     ["Entregado", "Reembolsado"],
+  Entregado:   ["Reembolsado"],
+  Pendiente:   [],
+  Fallido:     [],
+  Cancelado:   [],
+  Reembolsado: [],
+};
+
+export function getValidTransitions(currentStatus: string): string[] {
+  return VALID_ADMIN_TRANSITIONS[currentStatus] ?? [];
+}
+
 export const ALL_METHODS = [
   "Todos", "Bold", "Addi", "Nequi", "Bancolombia", "Daviplata",
 ];

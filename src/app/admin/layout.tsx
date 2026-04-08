@@ -5,8 +5,15 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import LoadingScreen from "./components/layout/LoadingScreen";
 import AccessDenied from "./components/layout/AccessDenied";
-import AdminSidebar from "./components/layout/AdminSidebar";
-import AdminTopHeader from "./components/layout/AdminTopHeader";
+import AppTopHeader from "@/components/layout/AppTopHeader";
+import NotificationsBell from "./components/layout/NotificationsBell";
+import AppSidebar from "@/components/layout/AppSidebar";
+import { ADMIN_NAV } from "./constants";
+
+const getPageLabel = (pathname: string): string => {
+  if (pathname === "/admin") return "Dashboard";
+  return pathname.split("/").pop() ?? "Panel";
+};
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
@@ -15,16 +22,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const isAdmin = (session?.user as { role?: string })?.role === "ADMIN";
-  const userInitial = session?.user?.name?.charAt(0).toUpperCase() ?? "A";
+  const userName = session?.user?.name;
+  const userInitial = userName?.charAt(0).toUpperCase() ?? "A";
 
-  // Redirige a login si no hay sesión
   useEffect(() => {
     if (status === "unauthenticated") {
       router.replace("/login");
     }
   }, [status, router]);
 
-  // Cierra el menú móvil al cambiar de ruta (solo en mobile)
   useEffect(() => {
     if (window.innerWidth < 768) setIsSidebarOpen(false);
   }, [pathname]);
@@ -32,20 +38,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (status === "loading") return <LoadingScreen />;
   if (!isAdmin) return <AccessDenied />;
 
+  const isActive = (href: string) =>
+    href === "/admin"
+      ? pathname === "/admin"
+      : pathname === href || pathname.startsWith(href + "/");
+
   return (
     <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
-      <AdminSidebar
+      <AppSidebar
         isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(!isSidebarOpen)}
-        pathname={pathname}
-        userName={session?.user?.name}
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        navItems={ADMIN_NAV.map((item) => ({
+          id: item.href,
+          label: item.label,
+          icon: item.icon,
+          isActive: isActive(item.href),
+          href: item.href,
+        }))}
+        brandSubtitle="Admin Panel"
+        userName={userName}
         userInitial={userInitial}
+        userRole="Administrador"
+        backLink={{ href: "/", label: "Ir a la Tienda" }}
       />
 
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        <AdminTopHeader
-          pathname={pathname}
+        <AppTopHeader
           onMenuOpen={() => setIsSidebarOpen(!isSidebarOpen)}
+          breadcrumbRoot="Admin"
+          breadcrumbCurrent={getPageLabel(pathname)}
+          rightSlot={<NotificationsBell />}
         />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-gray-50 scrollbar-hide">
           <div className="max-w-7xl mx-auto">

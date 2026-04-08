@@ -77,7 +77,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
             Seguir comprando
           </Link>
           <Link
-            href="/perfil/pedidos"
+            href="/perfil?section=pedidos"
             className="w-full border border-gray-200 text-[#154734] text-sm font-bold uppercase tracking-[0.15em] py-4 rounded-xl hover:border-[#154734] transition-colors duration-300 flex items-center justify-center gap-2"
           >
             Mis pedidos

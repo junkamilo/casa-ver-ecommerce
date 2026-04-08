@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Trash2, Upload, Loader2, PlayCircle } from "lucide-react";
-import { uploadToCloudinary } from "@/lib/cloudinary";
+import { Trash2, Upload, Loader2, PlayCircle, AlertCircle } from "lucide-react";
+import { uploadToCloudinary, validateFileSize } from "@/lib/cloudinary";
 
 const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".ogg", ".mkv"];
 
@@ -31,15 +31,27 @@ export default function ImageUpload({
 }: MediaUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState<{ id: string; previewUrl: string; isVideo: boolean }[]>([]);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const remaining = maxImages - value.length - uploading.length;
   const total = value.length + uploading.length;
 
   const handleFiles = async (files: FileList) => {
-    const toUpload = Array.from(files).slice(0, Math.max(0, remaining));
-    if (!toUpload.length) return;
+    setUploadError(null);
 
-    const pending = toUpload.map((file) => ({
+    const candidates = Array.from(files).slice(0, Math.max(0, remaining));
+    if (!candidates.length) return;
+
+    // Validar tamaño antes de subir
+    for (const file of candidates) {
+      const sizeError = validateFileSize(file);
+      if (sizeError) {
+        setUploadError(sizeError);
+        return;
+      }
+    }
+
+    const pending = candidates.map((file) => ({
       id: crypto.randomUUID(),
       previewUrl: URL.createObjectURL(file),
       isVideo: file.type.startsWith("video"),
@@ -48,7 +60,7 @@ export default function ImageUpload({
 
     setUploading((prev) => [
       ...prev,
-      ...pending.map(({ id, previewUrl, isVideo }) => ({ id, previewUrl, isVideo })),
+      ...pending.map(({ id, previewUrl, isVideo: isVid }) => ({ id, previewUrl, isVideo: isVid })),
     ]);
 
     const results = await Promise.allSettled(
@@ -67,12 +79,22 @@ export default function ImageUpload({
 
     if (uploadedUrls.length) onChange(uploadedUrls);
 
-    results.forEach((r, i) => {
-      if (r.status === "rejected") {
-        URL.revokeObjectURL(pending[i].previewUrl);
-        setUploading((prev) => prev.filter((u) => u.id !== pending[i].id));
-      }
-    });
+    const failures = results.filter((r) => r.status === "rejected");
+    if (failures.length) {
+      const firstError = (failures[0] as PromiseRejectedResult).reason;
+      setUploadError(
+        firstError instanceof Error
+          ? firstError.message
+          : "Error al subir uno o más archivos"
+      );
+      // Limpiar previews fallidos
+      results.forEach((r, i) => {
+        if (r.status === "rejected") {
+          URL.revokeObjectURL(pending[i].previewUrl);
+          setUploading((prev) => prev.filter((u) => u.id !== pending[i].id));
+        }
+      });
+    }
   };
 
   /* ── Layout COLOR ─────────────────────────────────────── */
@@ -119,10 +141,18 @@ export default function ImageUpload({
               Subir archivo
             </span>
             <span className="text-[9px] text-center text-gray-400 leading-tight">
-              JPEG, PNG, HEIC, MP4
+              JPEG, PNG, HEIC · máx 10 MB
             </span>
           </button>
         </div>
+
+        {/* Error de upload */}
+        {uploadError && (
+          <div className="flex items-start gap-2 p-2.5 rounded-lg bg-red-50 border border-red-200">
+            <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
+            <p className="text-xs text-red-600 leading-snug">{uploadError}</p>
+          </div>
+        )}
 
         {/* Portada hint */}
         <div className="flex items-center justify-between text-xs">
@@ -244,10 +274,18 @@ export default function ImageUpload({
               <span className="font-normal text-gray-400">(JPG, PNG, HEIC, MP4, MOV…)</span>
             </span>
             <span className="text-[10px] text-gray-400">
-              Puedes seleccionar varios a la vez · máx {maxImages}
+              Puedes seleccionar varios a la vez · imágenes máx 10 MB · videos máx 100 MB
             </span>
           </button>
         </>
+      )}
+
+      {/* Error de upload */}
+      {uploadError && (
+        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-red-50 border border-red-200">
+          <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
+          <p className="text-xs text-red-600 leading-snug">{uploadError}</p>
+        </div>
       )}
 
       <div className="flex items-center justify-between text-xs text-gray-500">

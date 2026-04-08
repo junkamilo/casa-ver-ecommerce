@@ -18,6 +18,7 @@ interface Props {
   isOnSaleAt: string | null; onOnSaleAt: (v: string | null) => void;
   categories: Category[];
   errors?: ProductFormErrors;
+  isSet?: boolean;
 }
 
 const STATUS_OPTIONS = [
@@ -104,6 +105,7 @@ export default function GeneralInfoSection({
   isOnSale, onOnSale, onOnSaleAt,
   categories,
   errors = {},
+  isSet = false,
 }: Props) {
   const cat = useDropdown();
   const est = useDropdown();
@@ -144,13 +146,16 @@ export default function GeneralInfoSection({
       {/* Descripción */}
       <div className="space-y-1.5">
         <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
-          Descripción *
+          Descripción{" "}
+          {isSet
+            ? <span className="font-normal text-gray-400 normal-case tracking-normal">(opcional para conjuntos)</span>
+            : <span className="text-red-500">*</span>}
         </label>
         <textarea
           rows={3}
           value={description}
           onChange={(e) => onDescription(e.target.value)}
-          placeholder="Describe el producto..."
+          placeholder={isSet ? "Descripción general del conjunto (opcional)..." : "Describe el producto..."}
           className={`${inputCls(!!errors.description)} resize-none`}
         />
         <FieldError msg={errors.description} />

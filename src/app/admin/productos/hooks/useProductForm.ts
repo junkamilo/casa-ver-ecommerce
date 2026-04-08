@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { SelectedColor, SetItemForm } from "../types";
+import { useRef, useState } from "react";
+import { SelectedColor, SetItemForm, SubProductForm } from "../types";
 
 const newSetItem = (): SetItemForm => ({
   localId: crypto.randomUUID(),
@@ -9,6 +9,17 @@ const newSetItem = (): SetItemForm => ({
   description: "",
   price: "",
   comparePrice: "",
+  videoUrl: "",
+  stock: "",
+  colors: [],
+  sizes: [],
+});
+
+const newSubProduct = (): SubProductForm => ({
+  localId: crypto.randomUUID(),
+  name: "",
+  description: "",
+  price: "",
   videoUrl: "",
   stock: "",
   colors: [],
@@ -31,13 +42,18 @@ export function useProductForm() {
   const [isOnSaleAt, setIsOnSaleAt] = useState<string | null>(null);
   const [material, setMaterial] = useState("");
   const [selectedColors, setSelectedColors] = useState<SelectedColor[]>([]);
+  // Cache de imágenes por nombre de color — se conservan aunque se deseleccione el color
+  const colorImageCache = useRef<Record<string, string[]>>({});
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [showMaterial, setShowMaterial] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
 
-  // Subcategorías
+  // Subcategorías (conjunto)
   const [isSet, setIsSet] = useState(false);
   const [setItems, setSetItems] = useState<SetItemForm[]>([]);
+
+  // Sub-productos vendibles de forma independiente
+  const [subProducts, setSubProducts] = useState<SubProductForm[]>([]);
 
   const reset = () => {
     setName("");
@@ -60,6 +76,8 @@ export function useProductForm() {
     setVideoUrl("");
     setIsSet(false);
     setSetItems([]);
+    setSubProducts([]);
+    colorImageCache.current = {};
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -83,15 +101,18 @@ export function useProductForm() {
     setIsSet(data.isSet || false);
 
     // Parent product colors/sizes always loaded regardless of isSet
-    setSelectedColors(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (data.colors || []).map((c: any) => ({
-        name: c.name,
-        hexCode: c.hexCode,
-        images: c.images || [],
-        variantStocks: c.variantStocks || {},
-      }))
-    );
+    const loadedColors = (data.colors || []).map((c: any) => ({
+      name: c.name,
+      hexCode: c.hexCode,
+      images: c.images || [],
+      variantStocks: c.variantStocks || {},
+    }));
+    // Precargar caché con imágenes existentes para preservarlas si el admin deselecciona
+    colorImageCache.current = {};
+    for (const c of loadedColors) {
+      if (c.images.length > 0) colorImageCache.current[c.name] = c.images;
+    }
+    setSelectedColors(loadedColors);
     setSelectedSizes(data.sizes || []);
 
     if (data.isSet && data.items?.length > 0) {
@@ -101,6 +122,7 @@ export function useProductForm() {
         name: item.name || "",
         description: item.description || "",
         price: item.price?.toString() || "",
+        comparePrice: item.comparePrice != null ? String(item.comparePrice) : "",
         videoUrl: item.videoUrl || "",
         stock: item.stock?.toString() || "",
         colors: (item.colors || []).map((c: any) => ({ name: c.name, hexCode: c.hexCode, images: c.images || [], variantStocks: c.variantStocks || {} })),
@@ -108,6 +130,22 @@ export function useProductForm() {
       })));
     } else {
       setSetItems([]);
+    }
+
+    if (data.subProducts?.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setSubProducts(data.subProducts.map((sub: any) => ({
+        localId: crypto.randomUUID(),
+        name: sub.name || "",
+        description: sub.description || "",
+        price: sub.price?.toString() || "",
+        videoUrl: sub.videoUrl || "",
+        stock: sub.stock?.toString() || "",
+        colors: (sub.colors || []).map((c: any) => ({ name: c.name, hexCode: c.hexCode, images: c.images || [], variantStocks: c.variantStocks || {} })),
+        sizes: sub.sizes || [],
+      })));
+    } else {
+      setSubProducts([]);
     }
   };
 
@@ -141,8 +179,8 @@ export function useProductForm() {
 
     return ({
     name,
-    description,
-    basePrice: parseFloat(basePrice),
+    description: description || "",
+    basePrice: basePrice ? parseFloat(basePrice) : 0,
     comparePrice: comparePrice ? parseFloat(comparePrice) : null,
     stock: effectiveStock,
     categoryId,
@@ -174,10 +212,34 @@ export function useProductForm() {
             name: item.name,
             description: item.description || null,
             price: item.price ? parseFloat(item.price) : null,
+            comparePrice: item.comparePrice ? parseFloat(item.comparePrice) : null,
             videoUrl: item.videoUrl || null,
             stock: effectiveStock,
             colors: item.colors,
             sizes: item.sizes,
+          };
+        })
+      : [],
+    subProducts: subProducts.length > 0
+      ? subProducts.map((sub) => {
+          const hasVariantStocks = sub.colors.some(
+            (c) => Object.keys(c.variantStocks || {}).length > 0
+          );
+          const effectiveStock = hasVariantStocks
+            ? sub.colors.reduce(
+                (sum, c) =>
+                  sum + Object.values(c.variantStocks || {}).reduce((s, v) => s + Number(v), 0),
+                0
+              )
+            : sub.stock ? parseInt(sub.stock, 10) : 0;
+          return {
+            name: sub.name,
+            description: sub.description || null,
+            price: sub.price ? parseFloat(sub.price) : null,
+            videoUrl: sub.videoUrl || null,
+            stock: effectiveStock,
+            colors: sub.colors,
+            sizes: sub.sizes,
           };
         })
       : [],
@@ -187,16 +249,17 @@ export function useProductForm() {
   // Helpers colores producto principal
   const toggleColor = (name: string, hexCode: string) =>
     setSelectedColors((prev) => {
-      const newColors = prev.some((c) => c.name === name)
-        ? prev.filter((c) => c.name !== name)
-        : [...prev, { name, hexCode, images: [], variantStocks: {} }];
-
-      // Inicializar variantStocks para el nuevo color con todas las tallas actuales
-      return newColors.map((c) => (
-        c.variantStocks && Object.keys(c.variantStocks).length > 0
-          ? c
-          : { ...c, variantStocks: {} }
-      ));
+      if (prev.some((c) => c.name === name)) {
+        // Al deseleccionar: guardar imágenes en caché antes de eliminar
+        const color = prev.find((c) => c.name === name);
+        if (color && color.images.length > 0) {
+          colorImageCache.current[name] = color.images;
+        }
+        return prev.filter((c) => c.name !== name);
+      }
+      // Al seleccionar: restaurar imágenes del caché si existen
+      const cachedImages = colorImageCache.current[name] ?? [];
+      return [...prev, { name, hexCode, images: cachedImages, variantStocks: {} }];
     });
 
   const setColorImages = (colorName: string, images: string[]) =>
@@ -307,6 +370,77 @@ export function useProductForm() {
       })
     );
 
+  // ── Helpers sub-productos ─────────────────────────────────────────────────
+
+  const addSubProduct = () =>
+    setSubProducts((prev) => [...prev, newSubProduct()]);
+
+  const removeSubProduct = (localId: string) =>
+    setSubProducts((prev) => prev.filter((s) => s.localId !== localId));
+
+  const updateSubProduct = (localId: string, updates: Partial<SubProductForm>) =>
+    setSubProducts((prev) =>
+      prev.map((s) => s.localId === localId ? { ...s, ...updates } : s)
+    );
+
+  const toggleSubProductColor = (localId: string, colorName: string, hexCode: string) =>
+    setSubProducts((prev) =>
+      prev.map((s) => {
+        if (s.localId !== localId) return s;
+        const has = s.colors.some((c) => c.name === colorName);
+        const newColors = has
+          ? s.colors.filter((c) => c.name !== colorName)
+          : [...s.colors, { name: colorName, hexCode, images: [], variantStocks: {} }];
+        return { ...s, colors: newColors };
+      })
+    );
+
+  const toggleSubProductSize = (localId: string, size: string) =>
+    setSubProducts((prev) =>
+      prev.map((s) => {
+        if (s.localId !== localId) return s;
+        const adding = !s.sizes.includes(size);
+        const newSizes = adding ? [...s.sizes, size] : s.sizes.filter((sz) => sz !== size);
+        const newColors = s.colors.map((c) => ({
+          ...c,
+          variantStocks: adding
+            ? { ...(c.variantStocks || {}) }
+            : Object.fromEntries(
+                Object.entries(c.variantStocks || {}).filter(([sz]) => sz !== size)
+              ),
+        }));
+        return { ...s, sizes: newSizes, colors: newColors };
+      })
+    );
+
+  const setSubProductColorImages = (localId: string, colorName: string, images: string[]) =>
+    setSubProducts((prev) =>
+      prev.map((s) => {
+        if (s.localId !== localId) return s;
+        return { ...s, colors: s.colors.map((c) => c.name === colorName ? { ...c, images } : c) };
+      })
+    );
+
+  const updateSubProductVariantStock = (localId: string, colorName: string, size: string, stock: number) =>
+    setSubProducts((prev) =>
+      prev.map((s) => {
+        if (s.localId !== localId) return s;
+        return {
+          ...s,
+          colors: s.colors.map((c) =>
+            c.name === colorName
+              ? {
+                  ...c,
+                  variantStocks: isNaN(stock)
+                    ? Object.fromEntries(Object.entries(c.variantStocks || {}).filter(([sz]) => sz !== size))
+                    : { ...(c.variantStocks || {}), [size]: stock },
+                }
+              : c
+          ),
+        };
+      })
+    );
+
   return {
     name, setName,
     description, setDescription,
@@ -342,5 +476,14 @@ export function useProductForm() {
     toggleSetItemSize,
     setSetItemColorImages,
     updateSetItemVariantStock,
+    // Sub-productos
+    subProducts,
+    addSubProduct,
+    removeSubProduct,
+    updateSubProduct,
+    toggleSubProductColor,
+    toggleSubProductSize,
+    setSubProductColorImages,
+    updateSubProductVariantStock,
   };
 }

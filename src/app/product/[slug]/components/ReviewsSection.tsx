@@ -6,7 +6,6 @@ import type { ExistingReview } from "../types";
 
 interface Props {
   productId: string;
-  productSlug: string;
   rating: number;
   numReviews: number;
   existingReview: ExistingReview | null;
@@ -16,7 +15,6 @@ interface Props {
 
 export default function ReviewsSection({
   productId,
-  productSlug,
   rating,
   numReviews,
   existingReview,
@@ -129,7 +127,6 @@ export default function ReviewsSection({
           <div className="w-full lg:w-1/2 bg-white p-6 sm:p-14 lg:p-16 flex items-center justify-center relative">
             <ReviewForm
               productId={productId}
-              productSlug={productSlug}
               existing={existingReview}
               isAuthenticated={isAuthenticated}
             />

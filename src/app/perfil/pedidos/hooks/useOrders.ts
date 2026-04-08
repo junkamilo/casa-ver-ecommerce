@@ -1,27 +1,50 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Order, OrderFilter } from "../types";
+
+const ORDERS_PER_PAGE = 8;
 
 export interface UseOrdersResult {
   orders: Order[];
   filteredOrders: Order[];
+  paginatedOrders: Order[];
   activeFilter: OrderFilter;
   setFilter: (filter: OrderFilter) => void;
   isLoading: boolean;
   error: string | null;
-  expandedId: string | null;
-  toggleExpand: (id: string) => void;
+  selectedOrder: Order | null;
+  openOrder: (order: Order) => void;
+  closeOrder: () => void;
   orderCountByStatus: Record<string, number>;
   markDelivered: (id: string) => void;
+  currentPage: number;
+  totalPages: number;
+  setPage: (page: number) => void;
 }
 
 export function useOrders(): UseOrdersResult {
   const [orders, setOrders] = useState<Order[]>([]);
   const [activeFilter, setActiveFilter] = useState<OrderFilter>("ALL");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const refreshOrders = useCallback(() => {
+    fetch("/api/profile/orders")
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data: unknown) => {
+        setOrders(Array.isArray(data) ? (data as Order[]) : []);
+        setError(null);
+      })
+      .catch(console.error);
+  }, []);
+
+  // Carga inicial
   useEffect(() => {
+    setIsLoading(true);
     fetch("/api/profile/orders")
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -38,10 +61,26 @@ export function useOrders(): UseOrdersResult {
       .finally(() => setIsLoading(false));
   }, []);
 
+  // Refresca cuando el cliente regresa a la pestaña
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refreshOrders();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [refreshOrders]);
+
   const filteredOrders = useMemo(() => {
     if (activeFilter === "ALL") return orders;
     return orders.filter((o) => o.status === activeFilter);
   }, [orders, activeFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ORDERS_PER_PAGE));
+
+  const paginatedOrders = useMemo(() => {
+    const start = (currentPage - 1) * ORDERS_PER_PAGE;
+    return filteredOrders.slice(start, start + ORDERS_PER_PAGE);
+  }, [filteredOrders, currentPage]);
 
   const orderCountByStatus = useMemo(() => {
     const counts: Record<string, number> = { ALL: orders.length };
@@ -51,26 +90,40 @@ export function useOrders(): UseOrdersResult {
     return counts;
   }, [orders]);
 
-  const toggleExpand = (id: string) => {
-    setExpandedId((prev) => (prev === id ? null : id));
+  const setFilter = (filter: OrderFilter) => {
+    setActiveFilter(filter);
+    setCurrentPage(1);
   };
+
+  const openOrder = (order: Order) => setSelectedOrder(order);
+  const closeOrder = () => setSelectedOrder(null);
 
   const markDelivered = (id: string) => {
     setOrders((prev) =>
       prev.map((o) => (o.id === id ? { ...o, status: "DELIVERED" as const } : o))
     );
+    // Actualiza el modal si está abierto con ese pedido
+    setSelectedOrder((prev) =>
+      prev?.id === id ? { ...prev, status: "DELIVERED" as const } : prev
+    );
+    refreshOrders();
   };
 
   return {
     orders,
     filteredOrders,
+    paginatedOrders,
     activeFilter,
-    setFilter: setActiveFilter,
+    setFilter,
     isLoading,
     error,
-    expandedId,
-    toggleExpand,
+    selectedOrder,
+    openOrder,
+    closeOrder,
     orderCountByStatus,
     markDelivered,
+    currentPage,
+    totalPages,
+    setPage: setCurrentPage,
   };
 }

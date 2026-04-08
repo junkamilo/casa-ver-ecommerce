@@ -48,8 +48,9 @@ export default function ProductClient({
 }: Props) {
   // ─── Estado principal ────────────────────────────────────────────────────
   const [selectedImage, setSelectedImage] = useState(0);
+  const initialItem = product.isSet && product.items.length > 0 ? product.items[0] : null;
   const [selectedColor, setSelectedColor] = useState<UIColor | null>(
-    product.colors[0] ?? null
+    initialItem ? (initialItem.colors[0] ?? null) : (product.colors[0] ?? null)
   );
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -58,7 +59,10 @@ export default function ProductClient({
   const [descOpen, setDescOpen] = useState(false);
 
   // 'main' = producto principal, cualquier otro string = item.id de subcategoría
-  const [activeView, setActiveView] = useState<string>("main");
+  // Para conjuntos: arrancar directamente en la primera subcategoría
+  const [activeView, setActiveView] = useState<string>(
+    product.isSet && product.items.length > 0 ? product.items[0].id : "main"
+  );
 
   const { addToCart, setBuyNow } = useCart();
   const router = useRouter();
@@ -386,22 +390,7 @@ export default function ProductClient({
                   Elige lo que quieres ver
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {/* Tab del producto principal */}
-                  <button
-                    type="button"
-                    onClick={() => handleViewSelect("main")}
-                    className={`px-5 py-2.5 rounded-xl border text-sm font-bold transition-all duration-200 ${activeView === "main"
-                        ? "bg-[#154734] text-white border-[#154734] shadow-md shadow-[#154734]/20"
-                        : "bg-white text-gray-700 border-gray-300 hover:border-[#154734] hover:text-[#154734]"
-                      }`}
-                  >
-                    {product.name}
-                    {product.stock === 0 && (
-                      <span className="ml-2 text-[10px] font-normal opacity-60">(agotado)</span>
-                    )}
-                  </button>
-
-                  {/* Tabs de subcategorías */}
+                  {/* Solo tabs de subcategorías — el padre no se muestra */}
                   {product.items.map((item) => (
                     <button
                       key={item.id}
@@ -590,7 +579,6 @@ export default function ProductClient({
           <div id="seccion-resenas" className="scroll-mt-32">
             <ReviewsSection
               productId={product.id}
-              productSlug={product.slug}
               rating={product.rating}
               numReviews={product.numReviews}
               existingReview={existingReview}
