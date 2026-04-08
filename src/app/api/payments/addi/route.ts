@@ -77,18 +77,6 @@ export async function POST(req: NextRequest) {
   // Addi usa el transactionId como orderId externo (UUID único por orden)
   const externalOrderId = order.transactionId!;
 
-  // Addi no aprueba créditos por montos muy bajos (mínimo ~150,000 COP en Colombia).
-  // Retornar error claro en lugar de dejar que Addi devuelva un 500 genérico.
-  const ADDI_MIN_AMOUNT = 150_000;
-  if (totalAmount < ADDI_MIN_AMOUNT) {
-    return NextResponse.json(
-      {
-        error: `El monto mínimo para pagar con Addi es ${new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(ADDI_MIN_AMOUNT)} COP`,
-      },
-      { status: 400 }
-    );
-  }
-
   // ── Obtener JWT de Addi ───────────────────────────────────────────────────
   let token: string;
   try {
