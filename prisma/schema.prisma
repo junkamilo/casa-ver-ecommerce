@@ -330,11 +330,12 @@ model ProductItem {
   productId String
   product   Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  name        String             // Ej: "Short", "Pantalón"
-  description String?            @db.Text
-  price       Decimal?           @db.Decimal(10, 2) // Precio propio (opcional)
-  videoUrl    String?
-  order     Int                @default(0)
+  name         String             // Ej: "Short", "Pantalón"
+  description  String?            @db.Text
+  price        Decimal?           @db.Decimal(10, 2) // Precio propio (opcional)
+  comparePrice Decimal?           @db.Decimal(10, 2) // Precio tachado (oferta)
+  videoUrl     String?
+  order        Int                @default(0)
 
   colors    ProductItemColor[]
 

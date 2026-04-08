@@ -52,6 +52,7 @@ export default function ProductTable({
           {products.map((product) => {
             const stockStatus = getStockStatus(product.stock);
             const mainImage = product.images[0]?.url || "/placeholder.jpg";
+            const isSetWithItems = product.isSet && product.setItems && product.setItems.length > 0;
             return (
               <tr
                 key={product.id}
@@ -74,14 +75,40 @@ export default function ProductTable({
                   </span>
                 </td>
                 <td className="px-6 py-4 font-medium text-gray-900">
-                  {formatPrice(product.price)}
+                  {isSetWithItems ? (
+                    <div className="flex flex-col items-start gap-1">
+                      {product.setItems!.map((item) => (
+                        <span key={item.name} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border border-gray-200 bg-gray-50 text-gray-700">
+                          {item.name} ({item.price != null ? formatPrice(item.price) : "—"})
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    formatPrice(product.price)
+                  )}
                 </td>
                 <td className="px-6 py-4">
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${stockStatus.color}`}
-                  >
-                    {stockStatus.label} ({product.stock})
-                  </span>
+                  {isSetWithItems ? (
+                    <div className="flex flex-col items-start gap-1">
+                      {product.setItems!.map((item) => {
+                        const s = getStockStatus(item.stock);
+                        return (
+                          <span
+                            key={item.name}
+                            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${s.color}`}
+                          >
+                            {item.name} ({item.stock})
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${stockStatus.color}`}
+                    >
+                      {stockStatus.label} ({product.stock})
+                    </span>
+                  )}
                 </td>
                 <td className="px-6 py-4">
                   <button
@@ -120,7 +147,7 @@ export default function ProductTable({
       </table>
 
       {/* Mobile */}
-      <ProductMobileList products={products} onEdit={onEdit} onToggleActive={onToggleActive} />
+      <ProductMobileList products={products} onEdit={onEdit} onDelete={onDelete} onToggleActive={onToggleActive} />
 
       {products.length === 0 && (
         <div className="hidden md:flex justify-center">

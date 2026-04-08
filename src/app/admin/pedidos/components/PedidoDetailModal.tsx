@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { X, User, Package, MapPin, CreditCard, Calendar, ChevronDown, CheckCircle2 } from "lucide-react";
-import { getStatusStyles, formatPrice } from "../constants";
+import { X, User, Package, MapPin, CreditCard, Calendar, ChevronDown, CheckCircle2, Lock, AlertCircle } from "lucide-react";
+import { getStatusStyles, formatPrice, getValidTransitions, PAYMENT_MANAGED_STATUSES, TERMINAL_STATUSES } from "../constants";
 import { updateOrderStatus } from "@/app/actions/orders";
+import { printOrder } from "@/lib/print/printOrder";
 import type { Order } from "../types";
-
-const ADMIN_STATUSES = ["Pendiente", "Procesando", "Pagado", "Enviado", "Entregado", "Cancelado", "Fallido", "Reembolsado"];
 
 interface PedidoDetailModalProps {
   order: Order;
@@ -15,16 +14,41 @@ interface PedidoDetailModalProps {
 }
 
 export function PedidoDetailModal({ order, onClose, onStatusUpdated }: PedidoDetailModalProps) {
-  const [selectedStatus, setSelectedStatus] = useState(order.status);
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const isDirty = selectedStatus !== order.status;
+  const validTransitions = getValidTransitions(order.status);
+  const isPaymentManaged = PAYMENT_MANAGED_STATUSES.has(order.status);
+  const isTerminal = TERMINAL_STATUSES.has(order.status);
+  const canChange = validTransitions.length > 0;
+
+  function handlePrint() {
+    printOrder({
+      orderNumber:  order.id,
+      date:         order.date,
+      status:       order.status,
+      customer:     { name: order.customer, email: order.email, phone: order.phone },
+      shipping:     { address: order.address },
+      payment:      { method: order.paymentMethod },
+      items:        order.items.map((i) => ({ name: i.name, qty: i.qty, unitPrice: i.price })),
+      subtotal:     order.subtotal     ?? order.total,
+      shippingCost: order.shippingCost ?? 0,
+      discount:     order.discount     ?? 0,
+      total:        order.total,
+    });
+  }
 
   async function handleSave() {
+    if (!selectedStatus) return;
+    setError(null);
     setSaving(true);
     try {
       await updateOrderStatus(order.id, selectedStatus);
       onStatusUpdated(order.id, selectedStatus);
+      setSelectedStatus("");
+    } catch (e: any) {
+      setError(e?.message ?? "Error al cambiar el estado");
     } finally {
       setSaving(false);
     }
@@ -71,26 +95,58 @@ export function PedidoDetailModal({ order, onClose, onStatusUpdated }: PedidoDet
             {/* Cambio de estado */}
             <div className="pt-2 border-t border-gray-100">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Cambiar Estado</p>
-              <div className="relative">
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 pr-8 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#154734]/30 focus:border-[#154734] cursor-pointer"
-                >
-                  {ADMIN_STATUSES.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
-              {isDirty && (
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="mt-2 w-full py-2 bg-[#154734] text-white text-sm font-bold rounded-lg hover:bg-[#103a2a] transition-colors disabled:opacity-60"
-                >
-                  {saving ? "Guardando..." : "Guardar cambio"}
-                </button>
+
+              {isPaymentManaged && (
+                <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 text-xs text-amber-700">
+                  <Lock className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                  <span>
+                    Este estado (<strong>{order.status}</strong>) lo gestiona automáticamente el sistema de pagos. No puede modificarse manualmente.
+                  </span>
+                </div>
+              )}
+
+              {isTerminal && (
+                <div className="flex items-start gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs text-gray-600">
+                  <Lock className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                  <span>
+                    El pedido está en estado <strong>{order.status}</strong>. Este es un estado final y no puede modificarse.
+                  </span>
+                </div>
+              )}
+
+              {canChange && (
+                <>
+                  <div className="relative">
+                    <select
+                      value={selectedStatus}
+                      onChange={(e) => { setSelectedStatus(e.target.value); setError(null); }}
+                      className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 pr-8 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#154734]/30 focus:border-[#154734] cursor-pointer"
+                    >
+                      <option value="">— Seleccionar nuevo estado —</option>
+                      {validTransitions.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
+
+                  {error && (
+                    <div className="mt-2 flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700">
+                      <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                      <span>{error}</span>
+                    </div>
+                  )}
+
+                  {selectedStatus && (
+                    <button
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="mt-2 w-full py-2 bg-[#154734] text-white text-sm font-bold rounded-lg hover:bg-[#103a2a] transition-colors disabled:opacity-60"
+                    >
+                      {saving ? "Guardando..." : `Cambiar a "${selectedStatus}"`}
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -184,7 +240,10 @@ export function PedidoDetailModal({ order, onClose, onStatusUpdated }: PedidoDet
 
         {/* Footer */}
         <div className="p-4 bg-gray-50 border-t border-gray-100 flex gap-3">
-          <button className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
+          <button
+            onClick={handlePrint}
+            className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+          >
             Descargar PDF
           </button>
           <button

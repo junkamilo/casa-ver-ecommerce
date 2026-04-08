@@ -55,8 +55,17 @@ export default function AdminProductos() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.basePrice || !form.categoryId) {
-      showToast("error", "Completa nombre, precio y categoría");
+    const missingRequired = !form.name || !form.categoryId || (!form.isSet && !form.basePrice);
+    if (missingRequired) {
+      showToast("error", form.isSet ? "Completa nombre y categoría" : "Completa nombre, precio y categoría");
+      return;
+    }
+    if (form.selectedColors.length === 0) {
+      showToast("error", "Debes seleccionar al menos 1 color para el producto");
+      return;
+    }
+    if (form.selectedSizes.length === 0) {
+      showToast("error", "Debes seleccionar al menos 1 talla para el producto");
       return;
     }
     setSubmitting(true);
@@ -93,6 +102,12 @@ export default function AdminProductos() {
         title="Inventario"
         action={{ label: "Nuevo Producto", onClick: openNew, icon: Plus }}
       />
+
+      {list.fetchError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-medium">
+          {list.fetchError}
+        </div>
+      )}
 
       <ProductFilters
         search={list.search}

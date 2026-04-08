@@ -10,18 +10,24 @@ export function useProductList() {
   const [filteredProducts, setFilteredProducts] = useState<ProductListItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("Todos");
   const [page, setPage] = useState(1);
 
   const fetchProducts = useCallback(async () => {
+    setFetchError(null);
     try {
       const res = await fetch("/api/admin/products");
-      if (res.ok) {
-        const data = await res.json();
-        setProducts(data);
-        setFilteredProducts(data);
+      if (!res.ok) {
+        setFetchError("No se pudieron cargar los productos. Intenta de nuevo.");
+        return;
       }
+      const data = await res.json();
+      setProducts(data);
+      setFilteredProducts(data);
+    } catch {
+      setFetchError("Error de conexión al cargar los productos.");
     } finally {
       setLoading(false);
     }
@@ -66,18 +72,24 @@ export function useProductList() {
     }
   };
 
-  const toggleActive = async (id: string, currentState: boolean) => {
+  const toggleActive = async (id: string, currentState: boolean): Promise<boolean> => {
     setProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, active: !currentState } : p))
     );
     try {
-      await fetch(`/api/admin/products/${id}`, {
+      const res = await fetch(`/api/admin/products/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active: !currentState }),
       });
+      if (!res.ok) throw new Error("Failed");
+      return true;
     } catch {
-      fetchProducts();
+      // Roll back optimistic update
+      setProducts((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, active: currentState } : p))
+      );
+      return false;
     }
   };
 
@@ -93,6 +105,7 @@ export function useProductList() {
     paginatedProducts,
     categories,
     loading,
+    fetchError,
     search,
     setSearch,
     filterCategory,

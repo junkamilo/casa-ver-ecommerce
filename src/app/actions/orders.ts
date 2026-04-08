@@ -41,22 +41,44 @@ const STATUS_ES_TO_DB: Record<string, string> = {
   Reembolsado:  "REFUNDED",
 };
 
+/**
+ * Transiciones permitidas a nivel de base de datos.
+ * Sólo el admin puede avanzar entre estos estados.
+ * PENDING, PAID y FAILED los gestiona exclusivamente el sistema de pagos (webhooks).
+ */
+const VALID_TRANSITIONS_DB: Record<string, string[]> = {
+  PAID:       ["PROCESSING", "CANCELLED", "REFUNDED"],
+  PROCESSING: ["SHIPPED",    "CANCELLED", "REFUNDED"],
+  SHIPPED:    ["DELIVERED",  "REFUNDED"],
+  DELIVERED:  ["REFUNDED"],
+};
+
 export async function updateOrderStatus(orderNumber: string, statusEs: string): Promise<void> {
   await requireAdmin();
+
   const dbStatus = STATUS_ES_TO_DB[statusEs];
   if (!dbStatus) throw new Error(`Estado inválido: ${statusEs}`);
 
+  // Leer estado actual para validar la transición
+  const current = await prisma.order.findUnique({
+    where:  { orderNumber },
+    select: { status: true },
+  });
+  if (!current) throw new Error(`Pedido no encontrado: ${orderNumber}`);
+
+  const allowed = VALID_TRANSITIONS_DB[current.status] ?? [];
+  if (!allowed.includes(dbStatus)) {
+    throw new Error(
+      `Transición no permitida: el pedido está en "${STATUS_MAP[current.status]}" y no puede pasar a "${statusEs}".`
+    );
+  }
+
   const now = new Date();
-  const extraData: Record<string, Date | null> = {};
+  const extraData: Record<string, Date> = {};
   if (dbStatus === "SHIPPED")    extraData.shippedAt   = now;
   if (dbStatus === "DELIVERED")  extraData.deliveredAt = now;
   if (dbStatus === "CANCELLED")  extraData.cancelledAt = now;
-  // Si se revierte desde Enviado/Entregado/Cancelado, limpiar la fecha
-  if (dbStatus === "PAID" || dbStatus === "PROCESSING" || dbStatus === "PENDING") {
-    extraData.shippedAt   = null;
-    extraData.deliveredAt = null;
-    extraData.cancelledAt = null;
-  }
+  if (dbStatus === "REFUNDED")   extraData.cancelledAt = now;
 
   await prisma.order.update({
     where: { orderNumber },

@@ -37,63 +37,36 @@ const mockOrder: Order = {
 
 describe("OrderCard", () => {
   it("muestra el número de pedido", () => {
-    render(<OrderCard order={mockOrder} isExpanded={false} onToggle={jest.fn()} />);
+    render(<OrderCard order={mockOrder} onOpenDetail={jest.fn()} />);
     expect(screen.getByText("CV-2024-001")).toBeInTheDocument();
   });
 
   it("muestra el badge de estado", () => {
-    render(<OrderCard order={mockOrder} isExpanded={false} onToggle={jest.fn()} />);
+    render(<OrderCard order={mockOrder} onOpenDetail={jest.fn()} />);
     expect(screen.getByText("Entregado")).toBeInTheDocument();
   });
 
   it("muestra el precio total", () => {
-    render(<OrderCard order={mockOrder} isExpanded={false} onToggle={jest.fn()} />);
-    // El precio se muestra en la cabecera en pantallas sm+
+    render(<OrderCard order={mockOrder} onOpenDetail={jest.fn()} />);
     const priceElements = screen.getAllByText(/285\.000/);
     expect(priceElements.length).toBeGreaterThan(0);
   });
 
-  it("llama onToggle al hacer click en el header", () => {
-    const onToggle = jest.fn();
-    render(<OrderCard order={mockOrder} isExpanded={false} onToggle={onToggle} />);
-    fireEvent.click(screen.getByRole("button"));
-    expect(onToggle).toHaveBeenCalled();
+  it("muestra la cantidad de ítems", () => {
+    render(<OrderCard order={mockOrder} onOpenDetail={jest.fn()} />);
+    expect(screen.getByText(/1 ítem/)).toBeInTheDocument();
   });
 
-  it("no muestra el detalle cuando isExpanded es false", () => {
-    render(<OrderCard order={mockOrder} isExpanded={false} onToggle={jest.fn()} />);
+  it("llama onOpenDetail al hacer click en el botón de ojo", () => {
+    const onOpenDetail = jest.fn();
+    render(<OrderCard order={mockOrder} onOpenDetail={onOpenDetail} />);
+    fireEvent.click(screen.getByRole("button", { name: /ver detalle/i }));
+    expect(onOpenDetail).toHaveBeenCalledWith(mockOrder);
+  });
+
+  it("no muestra el detalle del pedido inline (usa modal)", () => {
+    render(<OrderCard order={mockOrder} onOpenDetail={jest.fn()} />);
     expect(screen.queryByText("Camiseta Lino Premium Verde")).not.toBeInTheDocument();
-  });
-
-  it("muestra los items del pedido cuando está expandido", () => {
-    render(<OrderCard order={mockOrder} isExpanded={true} onToggle={jest.fn()} />);
-    expect(screen.getByText("Camiseta Lino Premium Verde")).toBeInTheDocument();
-  });
-
-  it("muestra la dirección de envío cuando está expandido", () => {
-    render(<OrderCard order={mockOrder} isExpanded={true} onToggle={jest.fn()} />);
-    expect(screen.getByText("Juan Pérez")).toBeInTheDocument();
-    expect(screen.getByText(/Bogotá/)).toBeInTheDocument();
-  });
-
-  it("muestra el código de seguimiento cuando está expandido", () => {
-    render(<OrderCard order={mockOrder} isExpanded={true} onToggle={jest.fn()} />);
-    expect(screen.getByText("TCC123456789")).toBeInTheDocument();
-  });
-
-  it("no muestra el código de seguimiento si no existe", () => {
-    const orderWithoutTracking = { ...mockOrder, trackingCode: undefined };
-    render(<OrderCard order={orderWithoutTracking} isExpanded={true} onToggle={jest.fn()} />);
-    expect(screen.queryByText("Código de seguimiento")).not.toBeInTheDocument();
-  });
-
-  it("el botón tiene aria-expanded correcto", () => {
-    const { rerender } = render(
-      <OrderCard order={mockOrder} isExpanded={false} onToggle={jest.fn()} />
-    );
-    expect(screen.getByRole("button")).toHaveAttribute("aria-expanded", "false");
-
-    rerender(<OrderCard order={mockOrder} isExpanded={true} onToggle={jest.fn()} />);
-    expect(screen.getByRole("button")).toHaveAttribute("aria-expanded", "true");
+    expect(screen.queryByText("Juan Pérez")).not.toBeInTheDocument();
   });
 });

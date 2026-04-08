@@ -69,6 +69,7 @@ export default async function ProductPage({ params }: Props) {
               slug: true,
               basePrice: true,
               comparePrice: true,
+              isSet: true,
               isProductNew: true,
               isProductNewAt: true,
               isOnSale: true,
@@ -76,6 +77,13 @@ export default async function ProductPage({ params }: Props) {
                 orderBy: { order: "asc" },
                 take: 8,
                 select: { url: true },
+              },
+              items: {
+                orderBy: { order: "asc" },
+                select: {
+                  price: true,
+                  colors: { take: 1, select: { images: { orderBy: { order: "asc" }, take: 1, select: { url: true } } } },
+                },
               },
               colors: {
                 select: {
@@ -142,9 +150,13 @@ export default async function ProductPage({ params }: Props) {
     colors: (item.colors as any[]).map(mapUIColor),
   }));
 
-  const totalStock = (product.colors as any[]).reduce(
+  const parentStock = (product.colors as any[]).reduce(
     (acc: number, color: any) => acc + (color.variants as any[]).reduce((s: number, v: any) => s + v.stock, 0), 0
   );
+  // Para sets: el stock real es la suma de los stocks de sus subcategorías
+  const totalStock = (product.isSet && uiItems.length > 0)
+    ? uiItems.reduce((acc, item) => acc + item.stock, 0)
+    : parentStock;
 
   const liveReviews = product.reviews as any[];
   const liveNumReviews = liveReviews.length;
@@ -191,26 +203,40 @@ export default async function ProductPage({ params }: Props) {
     avatar: o.user.image ?? null,
   }));
 
-  const recommended: CollectionProduct[] = (product.category.products as any[]).map((p) => ({
-    images: (p.images as { url: string }[]).map((i) => i.url),
-    name: p.name,
-    slug: p.slug,
-    price: Number(p.basePrice),
-    oldPrice: p.comparePrice ? Number(p.comparePrice) : undefined,
-    badge: computeProductBadge({
-      isProductNew: p.isProductNew,
-      isProductNewAt: p.isProductNewAt,
-      isOnSale: p.isOnSale,
-    }),
-    colors:
-      (p.colors as any[]).length > 0
-        ? (p.colors as any[]).map((c) => ({
-            name: c.name,
-            hexCode: c.hexCode,
-            imageUrl: c.images[0]?.url ?? null,
-          }))
-        : undefined,
-  }));
+  const recommended: CollectionProduct[] = (product.category.products as any[]).map((p) => {
+    const parentImages: string[] = (p.images as { url: string }[]).map((i) => i.url);
+    const fallbackUrl = p.isSet && parentImages.length === 0
+      ? (p.items?.[0]?.colors?.[0]?.images?.[0]?.url ?? null)
+      : null;
+    const cardImages = fallbackUrl ? [fallbackUrl] : parentImages;
+    const itemPrices: number[] = p.isSet && (p.items as any[])?.length > 0
+      ? (p.items as any[]).map((it) => it.price ? Number(it.price) : null).filter((v: number | null): v is number => v !== null)
+      : [];
+    const minPrice = itemPrices.length > 0 ? Math.min(...itemPrices) : undefined;
+
+    return {
+      images: cardImages,
+      name: p.name,
+      slug: p.slug,
+      price: Number(p.basePrice),
+      oldPrice: p.comparePrice ? Number(p.comparePrice) : undefined,
+      isSet: p.isSet || false,
+      minPrice,
+      badge: computeProductBadge({
+        isProductNew: p.isProductNew,
+        isProductNewAt: p.isProductNewAt,
+        isOnSale: p.isOnSale,
+      }),
+      colors:
+        (p.colors as any[]).length > 0
+          ? (p.colors as any[]).map((c) => ({
+              name: c.name,
+              hexCode: c.hexCode,
+              imageUrl: c.images[0]?.url ?? null,
+            }))
+          : undefined,
+    };
+  });
 
   const productReviews: TestimonialItem[] = (product.reviews as any[]).map((r) => ({
     rating: r.rating as number,

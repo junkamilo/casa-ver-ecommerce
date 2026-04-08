@@ -13,6 +13,10 @@ function generateSlug(raw: string): string {
 
 export async function GET() {
   try {
+    const session = await auth();
+    if (!session?.user || (session.user as { role?: string }).role !== "ADMIN") {
+      return new NextResponse("Acceso denegado", { status: 403 });
+    }
     const categories = await prisma.category.findMany({
       orderBy: { name: "asc" },
       select: {

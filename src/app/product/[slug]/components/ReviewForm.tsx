@@ -8,14 +8,12 @@ import type { ExistingReview } from "../types";
 
 interface Props {
   productId: string;
-  productSlug: string;
   existing: ExistingReview | null;
   isAuthenticated: boolean;
 }
 
 export default function ReviewForm({
   productId,
-  productSlug,
   existing,
   isAuthenticated,
 }: Props) {
@@ -40,7 +38,7 @@ export default function ReviewForm({
   const handleDelete = () => {
     setError("");
     startTransition(async () => {
-      const result = await deleteReview(productId, productSlug);
+      const result = await deleteReview(productId);
       if (result.success) {
         showToast("deleted");
         router.refresh();
@@ -58,9 +56,9 @@ export default function ReviewForm({
     setError("");
 
     startTransition(async () => {
-      const result = await saveReview(productId, productSlug, {
+      const result = await saveReview(productId, {
         rating,
-        comment: comment || undefined,
+        comment: comment || null,
       });
       if (result.success) {
         showToast("saved");

@@ -22,9 +22,9 @@ export async function PATCH(
     const body = await req.json();
     const { stock } = body;
 
-    if (typeof stock !== "number" || stock < 0) {
+    if (typeof stock !== "number" || !Number.isInteger(stock) || stock < 0 || stock > 999_999) {
       return new NextResponse(
-        JSON.stringify({ error: "Stock debe ser un número no negativo" }),
+        JSON.stringify({ error: "Stock debe ser un entero entre 0 y 999999" }),
         { status: 400, headers: { "content-type": "application/json" } }
       );
     }

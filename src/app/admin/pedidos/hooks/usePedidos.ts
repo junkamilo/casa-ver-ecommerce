@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getOrders } from "@/app/actions/orders";
 import type { Order } from "../types";
 
@@ -37,11 +37,29 @@ export function usePedidos(): UsePedidosReturn {
   const [detailOrder, setDetailOrder] = useState<Order | null>(null);
   const [page, setPage] = useState(1);
 
+  // Función estable para re-cargar pedidos desde el servidor
+  const refreshOrders = useCallback(() => {
+    getOrders().then(setOrders).catch(console.error);
+  }, []);
+
+  // Carga inicial
   useEffect(() => {
+    setLoading(true);
     getOrders()
       .then(setOrders)
       .finally(() => setLoading(false));
   }, []);
+
+  // Refresca automáticamente cuando el usuario regresa a la pestaña.
+  // Esto cubre cambios hechos en otras pestañas, webhooks de pago, o
+  // modificaciones directas en la base de datos.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refreshOrders();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [refreshOrders]);
 
   const filteredOrders = orders.filter((o) => {
     const matchSearch =
@@ -64,12 +82,15 @@ export function usePedidos(): UsePedidosReturn {
   );
 
   function handleStatusUpdated(orderNumber: string, newStatus: string) {
+    // 1. Actualización optimista: refleja el cambio en la tabla de inmediato
     setOrders((prev) =>
       prev.map((o) => (o.id === orderNumber ? { ...o, status: newStatus } : o))
     );
     setDetailOrder((prev) =>
       prev?.id === orderNumber ? { ...prev, status: newStatus } : prev
     );
+    // 2. Sincronización real con el servidor en segundo plano
+    refreshOrders();
   }
 
   return {

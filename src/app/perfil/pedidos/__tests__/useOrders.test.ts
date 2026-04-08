@@ -50,10 +50,27 @@ describe("useOrders", () => {
     expect(result.current.error).not.toBeNull();
   });
 
-  it("expandedId inicia en null", async () => {
+  it("selectedOrder inicia en null", async () => {
     const { result } = renderHook(() => useOrders());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.expandedId).toBeNull();
+    expect(result.current.selectedOrder).toBeNull();
+  });
+
+  it("openOrder establece el pedido seleccionado", async () => {
+    const { result } = renderHook(() => useOrders());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => result.current.openOrder(MOCK_ORDERS[0]));
+    expect(result.current.selectedOrder?.id).toBe(MOCK_ORDERS[0].id);
+  });
+
+  it("closeOrder limpia el pedido seleccionado", async () => {
+    const { result } = renderHook(() => useOrders());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => result.current.openOrder(MOCK_ORDERS[0]));
+    act(() => result.current.closeOrder());
+    expect(result.current.selectedOrder).toBeNull();
   });
 
   it("filtra pedidos por estado DELIVERED", async () => {
@@ -89,30 +106,22 @@ describe("useOrders", () => {
     expect(result.current.filteredOrders).toHaveLength(MOCK_ORDERS.length);
   });
 
-  it("toggleExpand abre un pedido", async () => {
+  it("setFilter resetea currentPage a 1", async () => {
     const { result } = renderHook(() => useOrders());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    act(() => result.current.toggleExpand(MOCK_ORDERS[0].id));
-    expect(result.current.expandedId).toBe(MOCK_ORDERS[0].id);
+    act(() => result.current.setPage(2));
+    act(() => result.current.setFilter("PENDING"));
+    expect(result.current.currentPage).toBe(1);
   });
 
-  it("toggleExpand cierra el pedido si ya estaba abierto", async () => {
+  it("paginatedOrders contiene un subconjunto de filteredOrders", async () => {
     const { result } = renderHook(() => useOrders());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    act(() => result.current.toggleExpand(MOCK_ORDERS[0].id));
-    act(() => result.current.toggleExpand(MOCK_ORDERS[0].id));
-    expect(result.current.expandedId).toBeNull();
-  });
-
-  it("toggleExpand cambia al nuevo id si había uno abierto", async () => {
-    const { result } = renderHook(() => useOrders());
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    act(() => result.current.toggleExpand(MOCK_ORDERS[0].id));
-    act(() => result.current.toggleExpand(MOCK_ORDERS[1].id));
-    expect(result.current.expandedId).toBe(MOCK_ORDERS[1].id);
+    result.current.paginatedOrders.forEach((o) => {
+      expect(result.current.filteredOrders).toContainEqual(o);
+    });
   });
 
   it("orderCountByStatus incluye el total de ALL", async () => {
@@ -140,5 +149,17 @@ describe("useOrders", () => {
     act(() => result.current.markDelivered(shippedOrder.id));
     const updated = result.current.orders.find((o) => o.id === shippedOrder.id);
     expect(updated?.status).toBe("DELIVERED");
+  });
+
+  it("markDelivered actualiza selectedOrder si coincide con el id", async () => {
+    const { result } = renderHook(() => useOrders());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const shippedOrder = MOCK_ORDERS.find((o) => o.status === "SHIPPED");
+    if (!shippedOrder) return;
+
+    act(() => result.current.openOrder(shippedOrder));
+    act(() => result.current.markDelivered(shippedOrder.id));
+    expect(result.current.selectedOrder?.status).toBe("DELIVERED");
   });
 });

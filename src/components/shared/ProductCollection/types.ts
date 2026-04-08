@@ -6,6 +6,8 @@ export interface CollectionProduct {
   badge?: string;
   slug: string;
   colors?: { name: string; hexCode: string; imageUrl?: string | null }[];
+  isSet?: boolean;
+  minPrice?: number;
 }
 
 export interface FilterOptions {

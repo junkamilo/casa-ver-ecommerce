@@ -8,6 +8,8 @@ export interface ProductListItem {
   images: { url: string }[];
   description?: string;
   categoryId: string;
+  isSet?: boolean;
+  setItems?: { name: string; price: number | null; stock: number }[];
 }
 
 export interface Category {
@@ -28,6 +30,17 @@ export interface SetItemForm {
   description: string;
   price: string;
   comparePrice: string;
+  videoUrl: string;
+  stock: string;
+  colors: SelectedColor[];
+  sizes: string[];
+}
+
+export interface SubProductForm {
+  localId: string;
+  name: string;
+  description: string;
+  price: string;
   videoUrl: string;
   stock: string;
   colors: SelectedColor[];
