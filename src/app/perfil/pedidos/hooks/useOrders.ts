@@ -1,25 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Order, OrderFilter } from "../types";
-
-const ORDERS_PER_PAGE = 8;
-
-export interface UseOrdersResult {
-  orders: Order[];
-  filteredOrders: Order[];
-  paginatedOrders: Order[];
-  activeFilter: OrderFilter;
-  setFilter: (filter: OrderFilter) => void;
-  isLoading: boolean;
-  error: string | null;
-  selectedOrder: Order | null;
-  openOrder: (order: Order) => void;
-  closeOrder: () => void;
-  orderCountByStatus: Record<string, number>;
-  markDelivered: (id: string) => void;
-  currentPage: number;
-  totalPages: number;
-  setPage: (page: number) => void;
-}
+import { Order, OrderFilter, UseOrdersResult } from "../types";
+import { ORDERS_PER_PAGE } from "../constants";
 
 export function useOrders(): UseOrdersResult {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -102,7 +83,6 @@ export function useOrders(): UseOrdersResult {
     setOrders((prev) =>
       prev.map((o) => (o.id === id ? { ...o, status: "DELIVERED" as const } : o))
     );
-    // Actualiza el modal si está abierto con ese pedido
     setSelectedOrder((prev) =>
       prev?.id === id ? { ...prev, status: "DELIVERED" as const } : prev
     );

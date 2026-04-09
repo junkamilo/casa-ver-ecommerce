@@ -11,7 +11,7 @@ import {
   SECTION_TITLE_CLS,
   INPUT_CLS,
   LABEL_CLS,
-} from "../constants/constants";
+} from "../constants";
 import type { CheckoutFormData } from "../types/schema";
 
 const ContactSection = () => {

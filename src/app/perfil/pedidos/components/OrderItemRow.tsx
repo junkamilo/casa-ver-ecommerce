@@ -1,12 +1,8 @@
 import Image from "next/image";
-import { OrderItem } from "../types";
+import { OrderItemRowProps } from "../types";
 import { formatOrderPrice } from "../constants";
 
-interface Props {
-  item: OrderItem;
-}
-
-export function OrderItemRow({ item }: Props) {
+export function OrderItemRow({ item }: OrderItemRowProps) {
   return (
     <div className="flex items-center gap-3 py-3">
       <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-gray-100 shrink-0 border border-gray-200">

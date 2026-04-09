@@ -11,7 +11,7 @@ import { checkEarlyBirdStatus } from "@/app/actions/earlybird";
 import { EARLY_BIRD_DISCOUNT_PCT } from "@/lib/earlybird.constants";
 import { checkoutSchema } from "../types/schema";
 import type { CheckoutFormData } from "../types/schema";
-import type { CouponState } from "../types/types";
+import type { CouponState } from "../types";
 
 export type { CheckoutFormData };
 

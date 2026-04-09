@@ -1,15 +1,15 @@
 import { Truck } from "lucide-react";
-import { LOCALE } from "../constants/constants";
+import { LOCALE, SECTION_CLS, ACCENT_BAR_CLS, SECTION_TITLE_CLS } from "../constants";
 
 interface ShippingMethodSectionProps {
   shippingCost: number;
 }
 
 const ShippingMethodSection = ({ shippingCost }: ShippingMethodSectionProps) => (
-  <section className="mb-8 sm:mb-10 bg-white p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-4xl border border-gray-100 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] relative overflow-hidden group/section hover:border-[#C19A6B]/30 transition-colors duration-300">
-    <div className="absolute top-0 left-0 w-1.5 h-full bg-[#154734] scale-y-0 group-hover/section:scale-y-100 origin-top transition-transform duration-500" />
+  <section className={SECTION_CLS}>
+    <div className={ACCENT_BAR_CLS} />
     <h2
-      className="text-lg sm:text-xl md:text-2xl text-[#154734] mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3"
+      className={`${SECTION_TITLE_CLS} mb-4 sm:mb-6`}
       style={{ fontFamily: "Georgia, serif" }}
     >
       <Truck className="w-4 sm:w-5 h-4 sm:h-5 text-[#C19A6B] shrink-0" /> Método de envío

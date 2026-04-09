@@ -1,47 +1,20 @@
 "use client";
 
-import { useState } from "react";
 import { MapPin, Pencil, Trash2, Star, Loader2 } from "lucide-react";
-import type { SavedAddress } from "../types";
+import { AddressCardProps } from "../types";
+import { useAddressCard } from "../hooks/useAddressCard";
 
-interface Props {
-  address: SavedAddress;
-  onEdit: (address: SavedAddress) => void;
-  onDelete: (id: string) => Promise<boolean>;
-  onSetDefault: (id: string) => Promise<boolean>;
-  disabled?: boolean;
-}
+export function AddressCard({ address, onEdit, onDelete, onSetDefault, disabled }: AddressCardProps) {
+  const {
+    confirmDelete,
+    actionLoading,
+    isLoading: cardLoading,
+    handleDelete,
+    handleSetDefault,
+    cancelDelete,
+  } = useAddressCard({ addressId: address.id, onDelete, onSetDefault });
 
-export function AddressCard({
-  address,
-  onEdit,
-  onDelete,
-  onSetDefault,
-  disabled,
-}: Props) {
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [actionLoading, setActionLoading] = useState<
-    "delete" | "default" | null
-  >(null);
-
-  async function handleDelete() {
-    if (!confirmDelete) {
-      setConfirmDelete(true);
-      return;
-    }
-    setActionLoading("delete");
-    await onDelete(address.id);
-    setActionLoading(null);
-    setConfirmDelete(false);
-  }
-
-  async function handleSetDefault() {
-    setActionLoading("default");
-    await onSetDefault(address.id);
-    setActionLoading(null);
-  }
-
-  const isLoading = actionLoading !== null || disabled;
+  const isLoading = cardLoading || disabled;
 
   return (
     <div
@@ -113,7 +86,7 @@ export function AddressCard({
           {confirmDelete ? (
             <div className="flex items-center gap-1">
               <button
-                onClick={() => setConfirmDelete(false)}
+                onClick={cancelDelete}
                 disabled={isLoading}
                 className="px-2 py-1 text-xs text-gray-500 hover:text-gray-700 rounded-lg transition-colors"
               >

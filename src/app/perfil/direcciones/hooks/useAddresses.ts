@@ -1,24 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { SavedAddress, AddressFormValues } from "../types";
-
-export interface UseAddressesResult {
-  addresses: SavedAddress[];
-  loading: boolean;
-  error: string | null;
-  // Modal state
-  modalOpen: boolean;
-  editingAddress: SavedAddress | null;
-  openCreate: () => void;
-  openEdit: (address: SavedAddress) => void;
-  closeModal: () => void;
-  // CRUD
-  saveAddress: (values: AddressFormValues) => Promise<boolean>;
-  deleteAddress: (id: string) => Promise<boolean>;
-  setDefault: (id: string) => Promise<boolean>;
-  submitting: boolean;
-}
+import { SavedAddress, AddressFormValues, UseAddressesResult } from "../types";
 
 export function useAddresses(): UseAddressesResult {
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);

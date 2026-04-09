@@ -5,19 +5,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { loginSchema, ERROR_MESSAGES } from "../constants/constants";
-import type { LoginFormData, UseLoginFormReturn } from "../types/types";
-
-// Códigos de error devueltos por NextAuth credentials provider
-const CREDENTIAL_ERROR_MAP: Record<string, string> = {
-  invalid_credentials: ERROR_MESSAGES.invalidCredentials,
-  use_google:          ERROR_MESSAGES.useGoogle,
-  email_not_verified:  ERROR_MESSAGES.notVerified,
-};
+import { loginSchema, ERROR_MESSAGES, CREDENTIAL_ERROR_MAP } from "../constants";
+import type { LoginFormData, UseLoginFormReturn } from "../types";
 
 export function useLoginForm(): UseLoginFormReturn {
   const router = useRouter();
-  const [error, setError]       = useState<string | null>(null);
+  const [error, setError]         = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const {

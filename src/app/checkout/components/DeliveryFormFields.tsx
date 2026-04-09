@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 import { useFormContext, useController } from "react-hook-form";
 import { DEPARTAMENTOS, MUNICIPIOS } from "@/lib/constants/colombia";
-import { INPUT_CLS, LABEL_CLS } from "../constants/constants";
+import { INPUT_CLS, LABEL_CLS } from "../constants";
 import type { CheckoutFormData } from "../types/schema";
 import CustomSelect from "./CustomSelect";
 

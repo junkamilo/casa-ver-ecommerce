@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useState } from "react";
 import { FormProvider } from "react-hook-form";
 import { useCheckout } from "./hooks/useCheckout";
+import { useAutoSaveAddress } from "./hooks/useAutoSaveAddress";
 import CheckoutMobileSummary from "./components/CheckoutMobileSummary";
 import CheckoutHeader from "./components/CheckoutHeader";
 import ContactSection from "./components/ContactSection";
@@ -14,41 +14,10 @@ import BillingSection from "./components/BillingSection";
 import CheckoutSubmitButton from "./components/CheckoutSubmitButton";
 import CheckoutFooterLinks from "./components/CheckoutFooterLinks";
 import OrderSummaryPanel from "./components/OrderSummaryPanel";
-import type { CheckoutFormData } from "./types/schema";
 
 export default function CheckoutPage() {
-  const { status } = useSession();
-  const isAuthenticated = status === "authenticated";
-
-  // Controla si el usuario autenticado (sin direcciones previas) quiere
-  // guardar su dirección al completar la compra.
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
-
-  // Guardar automáticamente la dirección SOLO si:
-  // 1. El usuario está autenticado
-  // 2. Activó el toggle de auto-guardar
-  // 3. No seleccionó una dirección existente (escribió una nueva)
-  const onBeforePayment = useCallback(
-    async (data: CheckoutFormData) => {
-      if (!isAuthenticated || !autoSaveEnabled || data.savedAddressId) return;
-
-      await fetch("/api/profile/addresses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullName: `${data.firstName} ${data.lastName}`,
-          cedula: data.cedula || undefined,
-          phone: data.phone,
-          department: data.department,
-          city: data.city,
-          address: data.address,
-          addressDetail: data.addressDetail || undefined,
-          isDefault: true,
-        }),
-      });
-    },
-    [isAuthenticated, autoSaveEnabled]
-  );
+  const { saveAddress, isAuthenticated } = useAutoSaveAddress({ enabled: autoSaveEnabled });
 
   const {
     form,
@@ -65,7 +34,7 @@ export default function CheckoutPage() {
     isPending,
     submitError,
     onSubmit,
-  } = useCheckout({ onBeforePayment });
+  } = useCheckout({ onBeforePayment: saveAddress });
 
   return (
     <FormProvider {...form}>

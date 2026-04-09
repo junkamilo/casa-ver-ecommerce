@@ -1,10 +1,7 @@
 import { ShoppingBag } from "lucide-react";
+import { OrderEmptyStateProps } from "../types";
 
-interface Props {
-  hasActiveFilter: boolean;
-}
-
-export function OrderEmptyState({ hasActiveFilter }: Props) {
+export function OrderEmptyState({ hasActiveFilter }: OrderEmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
       <div className="p-4 bg-gray-100 rounded-full mb-4">

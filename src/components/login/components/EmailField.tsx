@@ -1,6 +1,7 @@
 import { Mail } from "lucide-react";
 import type { UseFormRegister, FieldErrors } from "react-hook-form";
-import type { LoginFormData } from "../types/types";
+import { LoginFormData } from "../types";
+
 
 interface EmailFieldProps {
   register: UseFormRegister<LoginFormData>;

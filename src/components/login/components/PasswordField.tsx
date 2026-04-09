@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Lock, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import type { UseFormRegister, FieldErrors } from "react-hook-form";
-import type { LoginFormData } from "../types/types";
+import { LoginFormData } from "../types";
+
 
 interface PasswordFieldProps {
   register: UseFormRegister<LoginFormData>;

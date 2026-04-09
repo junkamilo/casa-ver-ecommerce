@@ -2,13 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { ProfileSection } from "../types";
-
-export interface UseProfileNavResult {
-  activeSection: ProfileSection;
-  setActiveSection: (section: ProfileSection) => void;
-  isActive: (section: ProfileSection) => boolean;
-}
+import { ProfileSection, UseProfileNavResult } from "../types";
 
 export function useProfileNav(initial: ProfileSection = "perfil"): UseProfileNavResult {
   const searchParams = useSearchParams();

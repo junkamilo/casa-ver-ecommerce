@@ -6,14 +6,55 @@ import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/layout/Header";
 import CollectionHero from "./components/CollectionHero";
 import CollectionClient from "./components/CollectionClient";
-import type { CollectionProduct, FilterOptions } from "./types";
+import type { CollectionProduct, FilterOptions, CollectionFilters } from "./types";
 
-interface CollectionFilters {
-  minPrice?: string;
-  maxPrice?: string;
-  color?: string;
-}
+// ── Product query select shape ────────────────────────────────────────────────
+const PRODUCT_SELECT = {
+  name: true,
+  slug: true,
+  basePrice: true,
+  comparePrice: true,
+  isFeatured: true,
+  isNew: true,
+  isSet: true,
+  isProductNew: true,
+  isProductNewAt: true,
+  isOnSale: true,
+  images: {
+    orderBy: { order: "asc" as const },
+    take: 8,
+    select: { url: true },
+  },
+  items: {
+    orderBy: { order: "asc" as const },
+    select: {
+      price: true,
+      colors: {
+        take: 1,
+        select: {
+          images: {
+            orderBy: { order: "asc" as const },
+            take: 1,
+            select: { url: true },
+          },
+        },
+      },
+    },
+  },
+  colors: {
+    select: {
+      name: true,
+      hexCode: true,
+      images: {
+        orderBy: { order: "asc" as const },
+        take: 1,
+        select: { url: true },
+      },
+    },
+  },
+};
 
+// ── Data fetcher ──────────────────────────────────────────────────────────────
 async function getCollectionData(
   slug: string,
   filters: CollectionFilters
@@ -32,7 +73,7 @@ async function getCollectionData(
 
     if (!category) return empty;
 
-    // --- Build dynamic where clause ---
+    // Build dynamic where clause
     const where: Prisma.ProductWhereInput = {
       category: { slug },
       status: "ACTIVE",
@@ -53,7 +94,7 @@ async function getCollectionData(
       where.colors = { some: { hexCode: `#${filters.color}` } };
     }
 
-    // --- Fetch sidebar option data (unfiltered, same category) ---
+    // Fetch sidebar option data (unfiltered, same category)
     const allForFilters = await prisma.product.findMany({
       where: { category: { slug }, status: "ACTIVE" },
       select: {
@@ -74,58 +115,28 @@ async function getCollectionData(
 
     const availableColors = Array.from(colorMap.entries()).map(([hexCode, name]) => ({ hexCode, name }));
 
-    // --- Fetch filtered products ---
+    // Fetch filtered products
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const raw = await (prisma as any).product.findMany({
       where,
-      select: {
-        name: true,
-        slug: true,
-        basePrice: true,
-        comparePrice: true,
-        isFeatured: true,
-        isNew: true,
-        isSet: true,
-        isProductNew: true,
-        isProductNewAt: true,
-        isOnSale: true,
-        images: {
-          orderBy: { order: "asc" },
-          take: 8,
-          select: { url: true },
-        },
-        items: {
-          orderBy: { order: "asc" },
-          select: {
-            price: true,
-            colors: { take: 1, select: { images: { orderBy: { order: "asc" }, take: 1, select: { url: true } } } },
-          },
-        },
-        colors: {
-          select: {
-            name: true,
-            hexCode: true,
-            images: {
-              orderBy: { order: "asc" },
-              take: 1,
-              select: { url: true },
-            },
-          },
-        },
-      },
+      select: PRODUCT_SELECT,
       orderBy: { createdAt: "desc" },
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const products: CollectionProduct[] = (raw as any[]).map((p) => {
       const parentImages: string[] = p.images.map((i: { url: string }) => i.url);
-      const fallbackUrl = p.isSet && parentImages.length === 0
-        ? (p.items?.[0]?.colors?.[0]?.images?.[0]?.url ?? null)
-        : null;
+      const fallbackUrl =
+        p.isSet && parentImages.length === 0
+          ? (p.items?.[0]?.colors?.[0]?.images?.[0]?.url ?? null)
+          : null;
       const cardImages = fallbackUrl ? [fallbackUrl] : parentImages;
-      const itemPrices: number[] = p.isSet && p.items?.length > 0
-        ? p.items.map((it: { price: unknown }) => it.price ? Number(it.price) : null).filter((v: number | null): v is number => v !== null)
-        : [];
+      const itemPrices: number[] =
+        p.isSet && p.items?.length > 0
+          ? p.items
+              .map((it: { price: unknown }) => (it.price ? Number(it.price) : null))
+              .filter((v: number | null): v is number => v !== null)
+          : [];
       const minPrice = itemPrices.length > 0 ? Math.min(...itemPrices) : undefined;
 
       return {
@@ -143,7 +154,11 @@ async function getCollectionData(
         }),
         colors:
           p.colors.length > 0
-            ? p.colors.map((c: { name: string; hexCode: string; images: { url: string }[] }) => ({ name: c.name, hexCode: c.hexCode, imageUrl: c.images[0]?.url ?? null }))
+            ? p.colors.map((c: { name: string; hexCode: string; images: { url: string }[] }) => ({
+                name: c.name,
+                hexCode: c.hexCode,
+                imageUrl: c.images[0]?.url ?? null,
+              }))
             : undefined,
       };
     });
@@ -154,6 +169,7 @@ async function getCollectionData(
   }
 }
 
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default async function CollectionPage({
   params,
   searchParams,
@@ -169,7 +185,6 @@ export default async function CollectionPage({
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFA] selection:bg-[#C19A6B]/20 relative overflow-hidden">
 
-      {/* Fondo decorativo global sutil */}
       <div
         className="fixed inset-0 opacity-[0.02] pointer-events-none z-0"
         style={{ backgroundImage: "radial-gradient(#154734 1px, transparent 1px)", backgroundSize: "40px 40px" }}
@@ -181,18 +196,12 @@ export default async function CollectionPage({
       </div>
 
       <main className="flex-1 w-full flex flex-col pt-6 pb-24 sm:pt-10 sm:pb-32 relative z-10">
+        <div className="w-full max-w-400 mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
 
-        <div className="w-full max-w-[100rem] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
-
-          {/* Título oculto para SEO */}
           <h1 className="sr-only">{title}</h1>
 
-          {/* Hero Section */}
-          <CollectionHero
-            title={title}
-          />
+          <CollectionHero title={title} />
 
-          {/* Grilla de Productos */}
           <div className="mt-4 sm:mt-6 lg:mt-8 w-full">
             <CollectionClient products={products} filterOptions={filterOptions} />
           </div>

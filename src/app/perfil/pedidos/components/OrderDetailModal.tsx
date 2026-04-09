@@ -1,44 +1,18 @@
 "use client";
 
-import { useState } from "react";
 import { X, Package, MapPin, Truck, CheckCircle2, AlertCircle } from "lucide-react";
-import { Order } from "../types";
+import { OrderDetailModalProps } from "../types";
 import { formatOrderDate, formatOrderPrice } from "../constants";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { OrderItemRow } from "./OrderItemRow";
+import { useOrderDelivery } from "../hooks/useOrderDelivery";
 
-interface Props {
-  order: Order;
-  onClose: () => void;
-  onDelivered?: (id: string) => void;
-}
-
-export function OrderDetailModal({ order, onClose, onDelivered }: Props) {
-  const [confirming, setConfirming] = useState(false);
-  const [confirmError, setConfirmError] = useState<string | null>(null);
-
-  async function handleConfirmDelivery() {
-    setConfirming(true);
-    setConfirmError(null);
-    try {
-      const res = await fetch(`/api/profile/orders/${order.id}/confirm-delivery`, {
-        method: "POST",
-      });
-      if (res.ok) {
-        onDelivered?.(order.id);
-        onClose();
-      } else {
-        const body = await res.json().catch(() => ({}));
-        setConfirmError(
-          (body as { message?: string }).message ?? "No se pudo confirmar. Intenta de nuevo."
-        );
-      }
-    } catch {
-      setConfirmError("Error de conexión. Verifica tu red e intenta de nuevo.");
-    } finally {
-      setConfirming(false);
-    }
-  }
+export function OrderDetailModal({ order, onClose, onDelivered }: OrderDetailModalProps) {
+  const { confirming, confirmError, handleConfirmDelivery } = useOrderDelivery({
+    orderId: order.id,
+    onDelivered,
+    onClose,
+  });
 
   return (
     <div
@@ -101,9 +75,7 @@ export function OrderDetailModal({ order, onClose, onDelivered }: Props) {
                 <div>
                   <p className="font-semibold text-gray-800">{order.shippingAddress.fullName}</p>
                   <p className="mt-0.5">{order.shippingAddress.address}</p>
-                  <p>
-                    {order.shippingAddress.city}, {order.shippingAddress.department}
-                  </p>
+                  <p>{order.shippingAddress.city}, {order.shippingAddress.department}</p>
                 </div>
               </div>
             </div>

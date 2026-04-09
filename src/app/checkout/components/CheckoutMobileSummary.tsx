@@ -2,18 +2,12 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import {
-  ShoppingBag,
-  ChevronUp,
-  X,
-  Sparkles,
-  Tag,
-  CheckCircle2,
-  Loader2,
-  Star,
-} from "lucide-react";
-import { LOCALE } from "../constants/constants";
-import type { CheckoutItem, CouponState } from "../types/types";
+import { ShoppingBag, ChevronUp, X, Sparkles } from "lucide-react";
+import { LOCALE } from "../constants";
+import type { CheckoutItem, CouponState } from "../types";
+import CouponInput from "./shared/CouponInput";
+import EarlyBirdBadge from "./shared/EarlyBirdBadge";
+import OrderTotals from "./shared/OrderTotals";
 
 interface CheckoutMobileSummaryProps {
   items: CheckoutItem[];
@@ -31,7 +25,6 @@ interface CheckoutMobileSummaryProps {
 export default function CheckoutMobileSummary({
   items,
   subtotal,
-  discount,
   couponDiscount,
   earlyBirdDiscount,
   earlyBirdActive,
@@ -41,13 +34,6 @@ export default function CheckoutMobileSummary({
   onRemoveCoupon,
 }: CheckoutMobileSummaryProps) {
   const [open, setOpen] = useState(false);
-  const [inputCode, setInputCode] = useState("");
-
-  async function handleApply() {
-    if (!inputCode.trim()) return;
-    await onApplyCoupon(inputCode.trim());
-  }
-
   const totalItems = items.reduce((acc, i) => acc + i.quantity, 0);
 
   return (
@@ -62,7 +48,7 @@ export default function CheckoutMobileSummary({
 
       {/* Drawer */}
       <div
-        className={`lg:hidden fixed left-0 right-0 bottom-[64px] z-50 transition-transform duration-300 ease-in-out ${
+        className={`lg:hidden fixed left-0 right-0 bottom-16 z-50 transition-transform duration-300 ease-in-out ${
           open ? "translate-y-0" : "translate-y-full"
         }`}
         style={{ maxHeight: "75dvh" }}
@@ -70,9 +56,7 @@ export default function CheckoutMobileSummary({
         <div className="bg-white rounded-t-3xl shadow-2xl border-t border-gray-100 flex flex-col h-full">
           {/* Drawer header */}
           <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-100 shrink-0">
-            <h3
-              className="text-xs font-black uppercase tracking-[0.25em] text-[#154734] flex items-center gap-2"
-            >
+            <h3 className="text-xs font-black uppercase tracking-[0.25em] text-[#154734] flex items-center gap-2">
               <Sparkles className="w-3.5 h-3.5 text-[#C19A6B]" />
               Tu Selección Casa Verde
             </h3>
@@ -96,12 +80,7 @@ export default function CheckoutMobileSummary({
                   className="flex gap-3 items-center bg-[#FAFAFA] p-3 rounded-2xl border border-gray-100"
                 >
                   <div className="relative w-14 h-16 rounded-xl overflow-hidden shrink-0 shadow-sm">
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      fill
-                      className="object-cover"
-                    />
+                    <Image src={item.image} alt={item.name} fill className="object-cover" />
                     <span className="absolute top-0 right-0 bg-[#154734] text-white text-[9px] font-bold w-5 h-5 flex items-center justify-center rounded-bl-xl z-10">
                       {item.quantity}
                     </span>
@@ -121,104 +100,21 @@ export default function CheckoutMobileSummary({
               ))}
             </div>
 
-            {/* Badge Early Bird */}
-            {earlyBirdActive && (
-              <div className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
-                <Star className="w-4 h-4 text-amber-500 shrink-0 fill-amber-400" />
-                <div>
-                  <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest">Early Bird · 10% de descuento</p>
-                  <p className="text-[9px] text-amber-600">Eres uno de los primeros 10 clientes</p>
-                </div>
-              </div>
-            )}
+            {earlyBirdActive && <EarlyBirdBadge compact />}
 
-            {/* Cupón */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#154734] flex items-center gap-2">
-                <Tag className="w-3 h-3 text-[#C19A6B]" />
-                ¿Tienes un código de descuento?
-              </label>
+            <CouponInput
+              coupon={coupon}
+              onApply={onApplyCoupon}
+              onRemove={onRemoveCoupon}
+              compact
+            />
 
-              {coupon.status === "valid" ? (
-                <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-2xl px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                    <div>
-                      <p className="text-xs font-bold text-green-700 uppercase tracking-widest">
-                        {coupon.code}
-                      </p>
-                      <p className="text-[10px] text-green-600">
-                        {coupon.discountPercentage}% de descuento aplicado
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={onRemoveCoupon}
-                    className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="flex gap-2 bg-white p-1.5 rounded-2xl border border-gray-200 focus-within:border-[#C19A6B] focus-within:ring-4 focus-within:ring-[#C19A6B]/15 transition-all shadow-sm">
-                    <input
-                      type="text"
-                      value={inputCode}
-                      onChange={(e) => setInputCode(e.target.value.toUpperCase())}
-                      onKeyDown={(e) =>
-                        e.key === "Enter" && (e.preventDefault(), handleApply())
-                      }
-                      placeholder="Ingresa tu cupón"
-                      className="flex-1 px-4 py-2.5 bg-transparent outline-none text-xs placeholder:text-gray-400 font-bold text-[#154734] uppercase tracking-widest"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleApply}
-                      disabled={coupon.status === "validating"}
-                      className="bg-[#154734] text-white text-[10px] font-bold uppercase tracking-widest px-5 rounded-xl transition-all active:scale-95 disabled:opacity-60 flex items-center gap-1.5"
-                    >
-                      {coupon.status === "validating" ? (
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                      ) : (
-                        "Aplicar"
-                      )}
-                    </button>
-                  </div>
-                  {coupon.status === "invalid" && (
-                    <p className="text-[10px] text-red-500 font-medium ml-1">
-                      {coupon.errorMessage}
-                    </p>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Totales */}
-            <div className="space-y-2.5 text-sm text-gray-500 font-medium pt-1 border-t border-gray-100">
-              <div className="flex justify-between items-center">
-                <span>Subtotal</span>
-                <span className="text-[#154734] font-bold">
-                  ${subtotal.toLocaleString(LOCALE)}
-                </span>
-              </div>
-              {earlyBirdDiscount > 0 && (
-                <div className="flex justify-between items-center text-amber-600">
-                  <span className="flex items-center gap-1.5">
-                    <Star className="w-3 h-3 fill-amber-400" />
-                    Early Bird (10%)
-                  </span>
-                  <span className="font-bold">-${earlyBirdDiscount.toLocaleString(LOCALE)}</span>
-                </div>
-              )}
-              {couponDiscount > 0 && (
-                <div className="flex justify-between items-center text-green-600">
-                  <span>Descuento cupón</span>
-                  <span className="font-bold">-${couponDiscount.toLocaleString(LOCALE)}</span>
-                </div>
-              )}
-            </div>
+            <OrderTotals
+              subtotal={subtotal}
+              earlyBirdDiscount={earlyBirdDiscount}
+              couponDiscount={couponDiscount}
+              compact
+            />
 
             {/* Total final */}
             <div className="flex justify-between items-end pt-3 pb-1 border-t border-gray-100">
@@ -248,7 +144,6 @@ export default function CheckoutMobileSummary({
           aria-expanded={open}
           aria-label="Ver resumen del pedido"
         >
-          {/* Izquierda: ícono + label + badge */}
           <div className="flex items-center gap-2.5">
             <div className="relative">
               <ShoppingBag className="w-5 h-5 text-[#C19A6B]" />
@@ -261,7 +156,6 @@ export default function CheckoutMobileSummary({
             </span>
           </div>
 
-          {/* Derecha: total + flecha */}
           <div className="flex items-center gap-3">
             <span
               className="text-lg font-light text-white tracking-tight"
