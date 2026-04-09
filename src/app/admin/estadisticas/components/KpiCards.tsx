@@ -1,9 +1,5 @@
 import { DollarSign, ShoppingCart, Package, Users, TrendingUp } from "lucide-react";
-import type { SalesPeriodData } from "../types";
-
-interface KpiCardsProps {
-  data: SalesPeriodData;
-}
+import type { KpiCardsProps } from "../types/types";
 
 export function KpiCards({ data }: KpiCardsProps) {
   return (

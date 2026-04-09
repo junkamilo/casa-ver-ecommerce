@@ -1,15 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import type { Period, SalesPeriodData, TopProduct, DailySale, CategorySale } from "../types";
+import { formatPrice, CATEGORY_COLORS } from "../constants/constants";
+import type { Period, SalesPeriodData, TopProduct, DailySale, CategorySale } from "../types/types";
 
-// --- HELPER: Formatea moneda COP ---
-export const formatPrice = (price: number): string =>
-  new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    minimumFractionDigits: 0,
-  }).format(price);
+// ── Helpers internos ──────────────────────────────────────────────────────────
 
-// --- HELPER: Obtiene rango de fechas según período ---
+const DAY_NAMES = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"] as const;
+
 const getPeriodDateRange = (period: Period): { start: Date; end: Date } => {
   const end = new Date();
   end.setUTCHours(23, 59, 59, 999);
@@ -20,12 +16,13 @@ const getPeriodDateRange = (period: Period): { start: Date; end: Date } => {
     case "day":
       start.setUTCHours(0, 0, 0, 0);
       break;
-    case "week":
+    case "week": {
       const dayOfWeek = start.getUTCDay();
-      const daysBack = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Lunes = 0
+      const daysBack = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Lunes como inicio
       start.setUTCDate(start.getUTCDate() - daysBack);
       start.setUTCHours(0, 0, 0, 0);
       break;
+    }
     case "month":
       start.setUTCDate(1);
       start.setUTCHours(0, 0, 0, 0);
@@ -35,279 +32,160 @@ const getPeriodDateRange = (period: Period): { start: Date; end: Date } => {
   return { start, end };
 };
 
-// --- HELPER: Calcula porcentaje de cambio (simulado, puede mejorarse) ---
 const calculatePercentageChange = (current: number, previous: number): string => {
   if (previous === 0) return "+0%";
   const change = ((current - previous) / previous) * 100;
-  const sign = change >= 0 ? "+" : "";
-  return `${sign}${Math.round(change)}%`;
+  return `${change >= 0 ? "+" : ""}${Math.round(change)}%`;
 };
 
+// ── Queries públicas ──────────────────────────────────────────────────────────
+
 /**
- * Obtiene datos de ventas para un período específico
+ * Obtiene métricas de ventas para un período (comparadas con el período anterior)
  */
 export async function getStatsByPeriod(period: Period): Promise<SalesPeriodData> {
   const { start, end } = getPeriodDateRange(period);
 
-  // Obtener órdenes pagadas en el período
-  const ordersInPeriod = await prisma.order.findMany({
-    where: {
-      status: "PAID",
-      createdAt: {
-        gte: start,
-        lte: end,
-      },
-    },
-    select: {
-      total: true,
-      createdAt: true,
-    },
-  });
+  const [ordersInPeriod, newCustomers] = await Promise.all([
+    prisma.order.findMany({
+      where: { status: "PAID", createdAt: { gte: start, lte: end } },
+      select: { total: true },
+    }),
+    prisma.user.count({
+      where: { role: "USER", createdAt: { gte: start, lte: end } },
+    }),
+  ]);
 
-  // Calcular totales
-  const totalRevenue = ordersInPeriod.reduce(
-    (sum, order) => sum + Number(order.total),
-    0
-  );
+  const totalRevenue = ordersInPeriod.reduce((sum, o) => sum + Number(o.total), 0);
   const orderCount = ordersInPeriod.length;
   const avgTicket = orderCount > 0 ? totalRevenue / orderCount : 0;
 
-  // Obtener período anterior para comparativa
-  let previousPeriod = { ...getPeriodDateRange(period) };
-  const daysDiff = Math.floor(
-    (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  // Período anterior para variación porcentual
+  const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  const prevEnd = new Date(start);
+  prevEnd.setUTCHours(23, 59, 59, 999);
+  const prevStart = new Date(start);
+  prevStart.setUTCDate(prevStart.getUTCDate() - daysDiff - 1);
+  prevStart.setUTCHours(0, 0, 0, 0);
 
-  previousPeriod.end = new Date(start);
-  previousPeriod.end.setUTCHours(23, 59, 59, 999);
-  previousPeriod.start = new Date(start);
-  previousPeriod.start.setUTCDate(previousPeriod.start.getUTCDate() - daysDiff - 1);
-  previousPeriod.start.setUTCHours(0, 0, 0, 0);
-
-  const ordersInPreviousPeriod = await prisma.order.findMany({
-    where: {
-      status: "PAID",
-      createdAt: {
-        gte: previousPeriod.start,
-        lte: previousPeriod.end,
-      },
-    },
-    select: {
-      total: true,
-    },
+  const prevOrders = await prisma.order.findMany({
+    where: { status: "PAID", createdAt: { gte: prevStart, lte: prevEnd } },
+    select: { total: true },
   });
 
-  const previousRevenue = ordersInPreviousPeriod.reduce(
-    (sum, order) => sum + Number(order.total),
-    0
-  );
-
-  const changePercentage = calculatePercentageChange(totalRevenue, previousRevenue);
-
-  // Obtener clientes nuevos en el período
-  const newCustomers = await prisma.user.count({
-    where: {
-      role: "USER",
-      createdAt: {
-        gte: start,
-        lte: end,
-      },
-    },
-  });
+  const previousRevenue = prevOrders.reduce((sum, o) => sum + Number(o.total), 0);
 
   return {
     total: formatPrice(totalRevenue),
     orders: orderCount,
     avgTicket: formatPrice(avgTicket),
     newCustomers,
-    change: changePercentage,
+    change: calculatePercentageChange(totalRevenue, previousRevenue),
   };
 }
 
 /**
- * Obtiene los productos más vendidos en un período
+ * Obtiene los N productos más vendidos en un período
  */
 export async function getTopProductsByPeriod(
   period: Period,
-  limit: number = 6
+  limit = 6
 ): Promise<TopProduct[]> {
   const { start, end } = getPeriodDateRange(period);
 
   const orderItems = await prisma.orderItem.findMany({
     where: {
-      order: {
-        status: "PAID",
-        createdAt: {
-          gte: start,
-          lte: end,
-        },
-      },
+      order: { status: "PAID", createdAt: { gte: start, lte: end } },
     },
-    select: {
-      productId: true,
-      name: true,
-      quantity: true,
-      total: true,
-    },
+    select: { productId: true, name: true, quantity: true, total: true },
   });
 
-  // Agrupar por producto
-  const productMap = new Map<
-    string,
-    { name: string; quantity: number; total: number }
-  >();
+  const productMap = new Map<string, { name: string; quantity: number; total: number }>();
 
-  orderItems.forEach((item) => {
-    const key = item.productId;
-    if (!productMap.has(key)) {
-      productMap.set(key, {
-        name: item.name,
-        quantity: 0,
-        total: 0,
-      });
-    }
-    const data = productMap.get(key)!;
-    data.quantity += item.quantity;
-    data.total += Number(item.total);
-  });
+  for (const item of orderItems) {
+    const entry = productMap.get(item.productId) ?? { name: item.name, quantity: 0, total: 0 };
+    entry.quantity += item.quantity;
+    entry.total += Number(item.total);
+    productMap.set(item.productId, entry);
+  }
 
-  // Convertir a array y ordenar por cantidad vendida
-  const topProducts = Array.from(productMap.values())
+  return Array.from(productMap.values())
     .sort((a, b) => b.quantity - a.quantity)
     .slice(0, limit)
     .map((product, idx) => ({
       name: product.name,
       sold: product.quantity,
       revenue: formatPrice(product.total),
-      trend: `${idx === 0 ? "+" : ""}${Math.random() > 0.5 ? "+" : "-"}${Math.floor(Math.random() * 25)}%`,
+      // TODO: calcular tendencia real comparando con período anterior
+      trend: `${idx === 0 ? "+" : Math.random() > 0.5 ? "+" : "-"}${Math.floor(Math.random() * 25)}%`,
     }));
-
-  return topProducts;
 }
 
 /**
- * Obtiene ventas diarias para la semana o mes
+ * Obtiene ventas agrupadas por día para el gráfico de barras
  */
 export async function getDailySalesByPeriod(period: Period): Promise<DailySale[]> {
   const { start, end } = getPeriodDateRange(period);
 
-  const ordersByDay = await prisma.order.findMany({
-    where: {
-      status: "PAID",
-      createdAt: {
-        gte: start,
-        lte: end,
-      },
-    },
-    select: {
-      total: true,
-      createdAt: true,
-    },
+  const orders = await prisma.order.findMany({
+    where: { status: "PAID", createdAt: { gte: start, lte: end } },
+    select: { total: true, createdAt: true },
   });
 
-  // Agrupar por día
+  // Inicializar mapa con todos los días del rango
   const dailyMap = new Map<string, number>();
-
-  const days = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-
-  // Inicializar días del período
-  const current = new Date(start);
-  while (current <= end) {
-    const dayName = days[current.getUTCDay()];
-    const key = `${current.getUTCDate()}-${dayName}`;
-    if (!dailyMap.has(key)) {
-      dailyMap.set(key, 0);
-    }
-    current.setUTCDate(current.getUTCDate() + 1);
+  const cursor = new Date(start);
+  while (cursor <= end) {
+    const key = `${cursor.getUTCDate()}-${DAY_NAMES[cursor.getUTCDay()]}`;
+    dailyMap.set(key, 0);
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
   }
 
-  // Agregar ventas
-  ordersByDay.forEach((order) => {
-    const date = new Date(order.createdAt);
-    const dayName = days[date.getUTCDay()];
-    const key = `${date.getUTCDate()}-${dayName}`;
+  // Acumular ventas por día
+  for (const order of orders) {
+    const d = new Date(order.createdAt);
+    const key = `${d.getUTCDate()}-${DAY_NAMES[d.getUTCDay()]}`;
+    dailyMap.set(key, (dailyMap.get(key) ?? 0) + Number(order.total));
+  }
 
-    const currentTotal = dailyMap.get(key) || 0;
-    dailyMap.set(key, currentTotal + Number(order.total));
-  });
-
-  // Convertir a array y ordenar
-  const result: DailySale[] = Array.from(dailyMap.entries())
-    .map(([key, amount]) => ({
-      day: key.split("-")[1], // Solo el nombre del día
-      amount,
-    }));
-
-  return result;
+  return Array.from(dailyMap.entries()).map(([key, amount]) => ({
+    day: key.split("-")[1],
+    amount,
+  }));
 }
 
 /**
- * Obtiene ventas por categoría
+ * Obtiene distribución de ventas por categoría
  */
-export async function getCategorySalesByPeriod(
-  period: Period
-): Promise<CategorySale[]> {
+export async function getCategorySalesByPeriod(period: Period): Promise<CategorySale[]> {
   const { start, end } = getPeriodDateRange(period);
 
-  const orderItems = await prisma.orderItem.findMany({
-    where: {
-      order: {
-        status: "PAID",
-        createdAt: {
-          gte: start,
-          lte: end,
-        },
-      },
-    },
-    select: {
-      total: true,
-      productId: true,
-    },
-  });
+  const [orderItems, products] = await Promise.all([
+    prisma.orderItem.findMany({
+      where: { order: { status: "PAID", createdAt: { gte: start, lte: end } } },
+      select: { total: true, productId: true },
+    }),
+    prisma.product.findMany({
+      select: { id: true, category: { select: { name: true } } },
+    }),
+  ]);
 
   const totalRevenue = orderItems.reduce((sum, item) => sum + Number(item.total), 0);
+  if (totalRevenue === 0) return [];
 
-  // Obtener productos con sus categorías
-  const products = await prisma.product.findMany({
-    select: {
-      id: true,
-      category: {
-        select: {
-          name: true,
-        },
-      },
-    },
-  });
+  const productCategoryMap = new Map(products.map((p) => [p.id, p.category.name]));
 
-  const productCategoryMap = new Map(
-    products.map((p) => [p.id, p.category.name])
-  );
-
-  // Agrupar ventas por categoría
   const categoryMap = new Map<string, number>();
+  for (const item of orderItems) {
+    const cat = productCategoryMap.get(item.productId) ?? "Otros";
+    categoryMap.set(cat, (categoryMap.get(cat) ?? 0) + Number(item.total));
+  }
 
-  orderItems.forEach((item) => {
-    const categoryName = productCategoryMap.get(item.productId) || "Otros";
-    const currentTotal = categoryMap.get(categoryName) || 0;
-    categoryMap.set(categoryName, currentTotal + Number(item.total));
-  });
-
-  // Calcular porcentajes y crear colores
-  const colors = [
-    "bg-[#154734]",
-    "bg-[#C19A6B]",
-    "bg-[#0f2e22]",
-    "bg-[#e5d0b1]",
-    "bg-gray-400",
-  ];
-
-  const result: CategorySale[] = Array.from(categoryMap.entries())
+  return Array.from(categoryMap.entries())
     .sort(([, a], [, b]) => b - a)
     .map(([name, total], idx) => ({
       name,
       percentage: Math.round((total / totalRevenue) * 100),
-      color: colors[idx % colors.length],
+      color: CATEGORY_COLORS[idx % CATEGORY_COLORS.length],
     }));
-
-  return result;
 }

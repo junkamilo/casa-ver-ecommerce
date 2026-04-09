@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Bell, CheckCircle2, Clock, ChevronDown, ArrowUpRight } from "lucide-react";
-import { mapOrderStatus, formatCOP, timeAgo } from "../constants";
+import { mapOrderStatus, formatCOP, timeAgo } from "../utils";
 import type { RecentOrder } from "../types";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
 

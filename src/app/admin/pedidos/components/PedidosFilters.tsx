@@ -3,15 +3,7 @@
 import { Search, Filter, CreditCard } from "lucide-react";
 import { ALL_STATUSES, ALL_METHODS } from "../constants";
 import AdminSelect from "@/components/ui/AdminSelect";
-
-interface PedidosFiltersProps {
-  search: string;
-  onSearchChange: (s: string) => void;
-  statusFilter: string;
-  onStatusChange: (s: string) => void;
-  methodFilter: string;
-  onMethodChange: (s: string) => void;
-}
+import type { PedidosFiltersProps } from "../types/types";
 
 export function PedidosFilters({
   search,

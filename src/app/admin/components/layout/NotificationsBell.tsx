@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Bell, CheckCircle2, Clock, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
+import { timeAgo } from "../../utils";
 
 interface AdminNotification {
   id: string;
@@ -12,16 +13,6 @@ interface AdminNotification {
   body: string;
   isRead: boolean;
   createdAt: string;
-}
-
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Ahora mismo";
-  if (mins < 60) return `Hace ${mins} min`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `Hace ${hrs} h`;
-  return `Hace ${Math.floor(hrs / 24)} d`;
 }
 
 const POLL_INTERVAL = 30_000; // 30 segundos

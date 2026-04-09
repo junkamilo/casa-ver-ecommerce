@@ -1,14 +1,7 @@
 import { Loader2 } from "lucide-react";
 import CategoryCard from "./CategoryCard";
-import type { Category } from "../types/types";
+import type { CategoryGridProps } from "../types/types";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
-
-interface CategoryGridProps {
-  loading: boolean;
-  filtered: Category[];
-  onEdit: (category: Category) => void;
-  onToggleActive: (category: Category) => void;
-}
 
 const CategoryGrid = ({ loading, filtered, onEdit, onToggleActive }: CategoryGridProps) => {
   if (loading) {

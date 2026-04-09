@@ -1,12 +1,7 @@
 import { Eye } from "lucide-react";
 import { getStatusStyles, formatPrice } from "../constants";
-import type { Order } from "../types";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
-
-interface PedidosTableProps {
-  orders: Order[];
-  onViewDetail: (order: Order) => void;
-}
+import type { PedidosTableProps } from "../types/types";
 
 export function PedidosTable({ orders, onViewDetail }: PedidosTableProps) {
   return (

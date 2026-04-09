@@ -1,11 +1,7 @@
 import Image from "next/image";
 import { Calendar, ShieldCheck } from "lucide-react";
-import { formatDate } from "../constants/constants";
-import type { UserProfile } from "../types/types";
-
-interface ProfileCardProps {
-  profile: UserProfile;
-}
+import { formatDate } from "../utils";
+import type { ProfileCardProps } from "../types/types";
 
 export default function ProfileCard({ profile }: ProfileCardProps) {
   return (

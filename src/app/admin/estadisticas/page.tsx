@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import type { Period } from "./types";
+import type { Period } from "./types/types";
 import { EstadisticasHeader } from "./components/EstadisticasHeader";
 import { EstadisticasContent } from "./components/EstadisticasContent";
 import { EstadisticasLoadingSkeleton } from "./components/EstadisticasLoadingSkeleton";

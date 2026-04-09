@@ -1,0 +1,272 @@
+// ── Domain Types ─────────────────────────────────────────────────────────────
+
+export interface ProductListItem {
+  id: string;
+  name: string;
+  price: number;
+  stock: number;
+  category: { name: string };
+  active: boolean;
+  images: { url: string }[];
+  description?: string;
+  categoryId: string;
+  isSet?: boolean;
+  setItems?: { name: string; price: number | null; stock: number }[];
+}
+
+export interface Category {
+  id: string;
+  name: string;
+}
+
+export interface SelectedColor {
+  name: string;
+  hexCode: string;
+  images: string[];
+  variantStocks?: { [size: string]: number };
+}
+
+export interface SetItemForm {
+  localId: string;
+  name: string;
+  description: string;
+  price: string;
+  comparePrice: string;
+  videoUrl: string;
+  stock: string;
+  colors: SelectedColor[];
+  sizes: string[];
+}
+
+export interface SubProductForm {
+  localId: string;
+  name: string;
+  description: string;
+  price: string;
+  videoUrl: string;
+  stock: string;
+  colors: SelectedColor[];
+  sizes: string[];
+}
+
+export type ToastState = { type: "success" | "error"; message: string } | null;
+
+// ── Form Error Types (derivados de los schemas Zod) ───────────────────────────
+
+export type ProductFormErrors = Partial<
+  Record<
+    "name" | "description" | "basePrice" | "comparePrice" | "stock" | "categoryId" | "videoUrl",
+    string
+  >
+>;
+
+export type SingleItemFormErrors = Partial<
+  Record<"name" | "price" | "comparePrice" | "videoUrl", string>
+>;
+
+export type ItemFormErrors = Record<string, SingleItemFormErrors>;
+
+export type SingleSubProductFormErrors = Partial<
+  Record<"name" | "price" | "videoUrl", string>
+>;
+
+export type SubProductFormErrors = Record<string, SingleSubProductFormErrors>;
+
+// ── Component Props ───────────────────────────────────────────────────────────
+
+export interface BlockHeaderProps {
+  icon: React.ElementType;
+  title: string;
+  subtitle?: string;
+}
+
+export interface FieldErrorProps {
+  msg?: string | null;
+  withIcon?: boolean;
+}
+
+export interface ProductModalProps {
+  editingId: string | null;
+  formLoading: boolean;
+  submitting: boolean;
+  categories: Category[];
+  onClose: () => void;
+  onSubmit: (e: React.FormEvent) => void;
+  name: string; setName: (v: string) => void;
+  description: string; setDescription: (v: string) => void;
+  basePrice: string; setBasePrice: (v: string) => void;
+  comparePrice: string; setComparePrice: (v: string) => void;
+  stock: string; setStock: (v: string) => void;
+  categoryId: string; setCategoryId: (v: string) => void;
+  status: string; setStatus: (v: string) => void;
+  isFeatured: boolean; setIsFeatured: (v: boolean) => void;
+  isNew: boolean; setIsNew: (v: boolean) => void;
+  isProductNew: boolean; setIsProductNew: (v: boolean) => void;
+  isProductNewAt: string | null; setIsProductNewAt: (v: string | null) => void;
+  isOnSale: boolean; setIsOnSale: (v: boolean) => void;
+  isOnSaleAt: string | null; setIsOnSaleAt: (v: string | null) => void;
+  material: string; setMaterial: (v: string) => void;
+  selectedColors: SelectedColor[];
+  selectedSizes: string[];
+  showMaterial: boolean; setShowMaterial: (v: boolean) => void;
+  videoUrl: string; setVideoUrl: (v: string) => void;
+  toggleColor: (name: string, hexCode: string) => void;
+  toggleSize: (size: string) => void;
+  setColorImages: (colorName: string, images: string[]) => void;
+  updateVariantStock: (colorName: string, size: string, stock: number) => void;
+  isSet: boolean; setIsSet: (v: boolean) => void;
+  setItems: SetItemForm[];
+  addSetItem: () => void;
+  removeSetItem: (localId: string) => void;
+  updateSetItem: (localId: string, updates: Partial<SetItemForm>) => void;
+  toggleSetItemColor: (localId: string, name: string, hexCode: string) => void;
+  toggleSetItemSize: (localId: string, size: string) => void;
+  setSetItemColorImages: (localId: string, colorName: string, images: string[]) => void;
+  updateSetItemVariantStock: (localId: string, colorName: string, size: string, stock: number) => void;
+  subProducts: SubProductForm[];
+  addSubProduct: () => void;
+  removeSubProduct: (localId: string) => void;
+  updateSubProduct: (localId: string, updates: Partial<SubProductForm>) => void;
+  toggleSubProductColor: (localId: string, name: string, hexCode: string) => void;
+  toggleSubProductSize: (localId: string, size: string) => void;
+  setSubProductColorImages: (localId: string, colorName: string, images: string[]) => void;
+  updateSubProductVariantStock: (localId: string, colorName: string, size: string, stock: number) => void;
+}
+
+export interface ProductTableProps {
+  products: ProductListItem[];
+  loading: boolean;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+  onToggleActive: (id: string, active: boolean) => void;
+}
+
+export interface ProductMobileListProps {
+  products: ProductListItem[];
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+  onToggleActive: (id: string, active: boolean) => void;
+}
+
+export interface ProductFiltersProps {
+  search: string;
+  onSearchChange: (v: string) => void;
+  filterCategory: string;
+  onCategoryChange: (v: string) => void;
+  categories: Category[];
+}
+
+export interface ToastNotificationProps {
+  toast: ToastState;
+}
+
+export interface LabelToggleProps {
+  active: boolean;
+  onToggle: () => void;
+  icon: React.ElementType;
+  label: string;
+  description: string;
+  activeColor: string;
+  activeBg: string;
+  activeBorder: string;
+  infoText?: string;
+}
+
+export interface GeneralInfoSectionProps {
+  name: string; onName: (v: string) => void;
+  description: string; onDescription: (v: string) => void;
+  categoryId: string; onCategory: (v: string) => void;
+  status: string; onStatus: (v: string) => void;
+  isFeatured: boolean; onFeatured: (v: boolean) => void;
+  isNew: boolean; onNew: (v: boolean) => void;
+  isProductNew: boolean; onProductNew: (v: boolean) => void;
+  isProductNewAt: string | null; onProductNewAt: (v: string | null) => void;
+  isOnSale: boolean; onOnSale: (v: boolean) => void;
+  isOnSaleAt: string | null; onOnSaleAt: (v: string | null) => void;
+  categories: Category[];
+  errors?: ProductFormErrors;
+  isSet?: boolean;
+}
+
+export interface ColorsSectionProps {
+  selectedColors: SelectedColor[];
+  selectedSizes: string[];
+  disabled: boolean;
+  colorError?: string | null;
+  sizeError?: string | null;
+  onToggleColor: (name: string, hexCode: string) => void;
+  onToggleSize: (size: string) => void;
+  onSetColorImages: (colorName: string, images: string[]) => void;
+}
+
+export interface SetItemCardProps {
+  item: SetItemForm;
+  index: number;
+  disabled: boolean;
+  errors?: SingleItemFormErrors;
+  onRemove: (id: string) => void;
+  onUpdate: (id: string, u: Partial<SetItemForm>) => void;
+  onToggleColor: (id: string, name: string, hex: string) => void;
+  onToggleSize: (id: string, size: string) => void;
+  onSetColorImages: (id: string, colorName: string, images: string[]) => void;
+  onUpdateVariantStock: (id: string, colorName: string, size: string, stock: number) => void;
+}
+
+export interface SetItemsSectionProps {
+  items: SetItemForm[];
+  disabled: boolean;
+  itemErrors?: ItemFormErrors;
+  onAdd: () => void;
+  onRemove: (localId: string) => void;
+  onUpdate: (localId: string, updates: Partial<SetItemForm>) => void;
+  onToggleColor: (localId: string, name: string, hexCode: string) => void;
+  onToggleSize: (localId: string, size: string) => void;
+  onSetColorImages: (localId: string, colorName: string, images: string[]) => void;
+  onUpdateVariantStock: (localId: string, colorName: string, size: string, stock: number) => void;
+}
+
+export interface SubProductCardProps {
+  item: SubProductForm;
+  index: number;
+  disabled: boolean;
+  errors?: SingleSubProductFormErrors;
+  onRemove: (id: string) => void;
+  onUpdate: (id: string, u: Partial<SubProductForm>) => void;
+  onToggleColor: (id: string, name: string, hex: string) => void;
+  onToggleSize: (id: string, size: string) => void;
+  onSetColorImages: (id: string, colorName: string, images: string[]) => void;
+  onUpdateVariantStock: (id: string, colorName: string, size: string, stock: number) => void;
+}
+
+export interface SubProductsSectionProps {
+  items: SubProductForm[];
+  disabled: boolean;
+  itemErrors?: SubProductFormErrors;
+  onAdd: () => void;
+  onRemove: (localId: string) => void;
+  onUpdate: (localId: string, updates: Partial<SubProductForm>) => void;
+  onToggleColor: (localId: string, name: string, hexCode: string) => void;
+  onToggleSize: (localId: string, size: string) => void;
+  onSetColorImages: (localId: string, colorName: string, images: string[]) => void;
+  onUpdateVariantStock: (localId: string, colorName: string, size: string, stock: number) => void;
+}
+
+export interface VariantStockSectionProps {
+  selectedColors: SelectedColor[];
+  selectedSizes: string[];
+  disabled: boolean;
+  onUpdate: (colorName: string, size: string, stock: number) => void;
+}
+
+export interface MaterialSectionProps {
+  show: boolean;
+  onToggle: () => void;
+  material: string;
+  onMaterial: (v: string) => void;
+}
+
+export interface VideoSectionProps {
+  videoUrl: string;
+  onVideoUrl: (v: string) => void;
+  disabled: boolean;
+}

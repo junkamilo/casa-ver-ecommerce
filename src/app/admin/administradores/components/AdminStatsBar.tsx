@@ -1,11 +1,5 @@
 import { Users, ShieldCheck, Search } from "lucide-react";
-
-interface AdminStatsBarProps {
-  total: number;
-  loading: boolean;
-  searchTerm: string;
-  onSearchChange: (term: string) => void;
-}
+import type { AdminStatsBarProps } from "../types/types";
 
 const AdminStatsBar = ({ total, loading, searchTerm, onSearchChange }: AdminStatsBarProps) => (
   <div className="flex flex-col gap-4">

@@ -1,25 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { SelectedColor } from "../../types";
 import { AlertTriangle, Zap } from "lucide-react";
-
-const MIN_STOCK = 2;   // Umbral de alerta
-const MAX_STOCK = 9999; // Límite máximo por variante
-
-interface Props {
-  selectedColors: SelectedColor[];
-  selectedSizes: string[];
-  disabled: boolean;
-  onUpdate: (colorName: string, size: string, stock: number) => void;
-}
+import { VariantStockSectionProps } from "../../types";
+import { MIN_STOCK, MAX_STOCK } from "../../constants";
 
 export default function VariantStockSection({
   selectedColors,
   selectedSizes,
   disabled,
   onUpdate,
-}: Props) {
+}: VariantStockSectionProps) {
   const [bulkStock, setBulkStock] = useState("");
 
   if (!selectedColors.length || !selectedSizes.length) {
@@ -40,7 +31,6 @@ export default function VariantStockSection({
     0
   );
 
-  // Detectar variantes con stock bajo
   const lowStockVariants = selectedColors.flatMap((color) =>
     selectedSizes
       .filter((size) => {
@@ -49,10 +39,6 @@ export default function VariantStockSection({
       })
       .map((size) => `${color.name} - ${size}`)
   );
-
-  const handleStockChange = (color: SelectedColor, size: string, newStock: number) => {
-    onUpdate(color.name, size, newStock);
-  };
 
   const handleBulkFill = () => {
     const value = parseInt(bulkStock, 10);
@@ -164,7 +150,7 @@ export default function VariantStockSection({
                           value={rawStock !== undefined ? stock : ""}
                           onChange={(e) => {
                             const val = e.target.value === "" ? NaN : Math.min(Number(e.target.value), MAX_STOCK);
-                            handleStockChange(color, size, val);
+                            onUpdate(color.name, size, val);
                           }}
                           className={`w-14 text-center px-2 py-1.5 rounded-lg border text-sm outline-none transition-colors ${
                             isLowStock

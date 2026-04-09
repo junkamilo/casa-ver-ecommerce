@@ -1,39 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Check, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
-import { SelectedColor } from "../../types";
-import { PRESET_COLORS, SIZES } from "../../constants";
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import { ColorsSectionProps } from "../../types";
+import { PRESET_COLORS, SIZES, MAX_IMAGES_PER_COLOR } from "../../constants";
 import ImageUpload from "@/components/ui/image-upload";
-
-interface Props {
-  selectedColors: SelectedColor[];
-  selectedSizes: string[];
-  disabled: boolean;
-  colorError?: string | null;
-  sizeError?: string | null;
-  onToggleColor: (name: string, hexCode: string) => void;
-  onToggleSize: (size: string) => void;
-  onSetColorImages: (colorName: string, images: string[]) => void;
-}
-
-const MAX_IMAGES_PER_COLOR = 8;
-
-const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <h3 className="text-sm font-bold text-[#154734] border-l-4 border-[#C19A6B] pl-3 uppercase tracking-wide">
-    {children}
-  </h3>
-);
-
-function FieldError({ msg }: { msg?: string | null }) {
-  if (!msg) return null;
-  return (
-    <div className="flex items-center gap-1.5 mt-1.5">
-      <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />
-      <p className="text-red-500 text-xs font-medium">{msg}</p>
-    </div>
-  );
-}
+import FieldError from "../shared/FieldError";
+import SectionTitle from "./SectionTitle";
 
 export default function ColorsSection({
   selectedColors,
@@ -44,7 +17,7 @@ export default function ColorsSection({
   onToggleColor,
   onToggleSize,
   onSetColorImages,
-}: Props) {
+}: ColorsSectionProps) {
   const [open, setOpen] = useState(false);
   const [sizesOpen, setSizesOpen] = useState(false);
   const [collapsedColors, setCollapsedColors] = useState<Set<string>>(new Set());
@@ -61,7 +34,6 @@ export default function ColorsSection({
   const isColorSelected = (name: string) =>
     selectedColors.some((c) => c.name === name);
 
-  // Cierra dropdowns al hacer click fuera
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
@@ -73,7 +45,6 @@ export default function ColorsSection({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Agrega URLs nuevas deduplicadas, respetando el límite máximo
   const handleAddImages = (colorName: string, existingImages: string[], newUrls: string[]) => {
     const merged = [...existingImages];
     for (const url of newUrls) {
@@ -169,7 +140,7 @@ export default function ColorsSection({
           )}
         </div>
 
-        <FieldError msg={colorError} />
+        <FieldError msg={colorError} withIcon />
       </div>
 
       {/* ── Imágenes por color ─────────────────────────────────── */}
@@ -301,7 +272,7 @@ export default function ColorsSection({
           )}
         </div>
 
-        <FieldError msg={sizeError} />
+        <FieldError msg={sizeError} withIcon />
       </div>
     </section>
   );

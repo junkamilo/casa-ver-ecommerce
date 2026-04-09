@@ -1,6 +1,6 @@
 import { DollarSign, ShoppingCart, Package, Users, Star } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { formatCOP } from "../constants";
+import { formatCOP } from "../utils";
 import type { DashboardData, RecentOrder, StatItem } from "../types";
 
 // --- Helpers de rango de fechas (privados a este módulo) ---

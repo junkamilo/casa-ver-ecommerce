@@ -1,17 +1,7 @@
 import Image from "next/image";
 import { Mail, Loader2, Trash2 } from "lucide-react";
 import { formatDate } from "../constants/constants";
-import type { Admin } from "../types/types";
-
-interface AdminTableProps {
-  filteredAdmins: Admin[];
-  currentUserId: string | undefined;
-  confirmDelete: string | null;
-  deleting: boolean;
-  onConfirmDelete: (id: string) => void;
-  onCancelDelete: () => void;
-  onDelete: (id: string) => void;
-}
+import type { AdminTableProps } from "../types/types";
 
 const AdminTable = ({
   filteredAdmins,

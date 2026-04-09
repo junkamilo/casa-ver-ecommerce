@@ -1,16 +1,5 @@
 import { User, Mail, Loader2, Save, Edit3 } from "lucide-react";
-import type { UserProfile } from "../types/types";
-
-interface PersonalInfoSectionProps {
-  profile: UserProfile;
-  editingName: boolean;
-  name: string;
-  savingName: boolean;
-  onStartEdit: () => void;
-  onNameChange: (value: string) => void;
-  onSave: () => void;
-  onCancel: () => void;
-}
+import type { PersonalInfoSectionProps } from "../types/types";
 
 export default function PersonalInfoSection({
   profile,

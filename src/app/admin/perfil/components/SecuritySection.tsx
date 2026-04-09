@@ -1,22 +1,5 @@
 import { Lock, Eye, EyeOff, Loader2, KeyRound } from "lucide-react";
-
-interface SecuritySectionProps {
-  showPasswordSection: boolean;
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-  showCurrentPw: boolean;
-  showNewPw: boolean;
-  savingPassword: boolean;
-  onOpen: () => void;
-  onCancel: () => void;
-  onSubmit: (e: React.FormEvent) => void;
-  onCurrentPasswordChange: (value: string) => void;
-  onNewPasswordChange: (value: string) => void;
-  onConfirmPasswordChange: (value: string) => void;
-  onToggleCurrentPw: () => void;
-  onToggleNewPw: () => void;
-}
+import type { SecuritySectionProps } from "../types/types";
 
 export default function SecuritySection({
   showPasswordSection,

@@ -1,98 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { ChevronDown, ChevronUp, Check, Star, Sparkles, Tag, Percent, BadgeCheck } from "lucide-react";
-import { Category } from "../../types";
-import { ProductFormErrors } from "../../schema";
-
-interface Props {
-  name: string; onName: (v: string) => void;
-  description: string; onDescription: (v: string) => void;
-  categoryId: string; onCategory: (v: string) => void;
-  status: string; onStatus: (v: string) => void;
-  isFeatured: boolean; onFeatured: (v: boolean) => void;
-  isNew: boolean; onNew: (v: boolean) => void;
-  isProductNew: boolean; onProductNew: (v: boolean) => void;
-  isProductNewAt: string | null; onProductNewAt: (v: string | null) => void;
-  isOnSale: boolean; onOnSale: (v: boolean) => void;
-  isOnSaleAt: string | null; onOnSaleAt: (v: string | null) => void;
-  categories: Category[];
-  errors?: ProductFormErrors;
-  isSet?: boolean;
-}
-
-const STATUS_OPTIONS = [
-  { value: "ACTIVE",   label: "Activo",    dot: "bg-emerald-500" },
-  { value: "INACTIVE", label: "Inactivo",  dot: "bg-gray-400"    },
-];
-
-const inputCls = (hasError = false) =>
-  `w-full px-4 py-2.5 rounded-lg border ${
-    hasError
-      ? "border-red-400 focus:border-red-400 focus:ring-red-100"
-      : "border-gray-200 focus:border-[#C19A6B] focus:ring-[#C19A6B]/10"
-  } focus:ring-4 outline-none text-sm transition-colors`;
-
-function FieldError({ msg }: { msg?: string }) {
-  if (!msg) return null;
-  return <p className="text-red-500 text-sm mt-1">{msg}</p>;
-}
-
-function useDropdown() {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-  return { open, setOpen, ref };
-}
-
-interface LabelToggleProps {
-  active: boolean;
-  onToggle: () => void;
-  icon: React.ElementType;
-  label: string;
-  description: string;
-  activeColor: string;
-  activeBg: string;
-  activeBorder: string;
-  infoText?: string;
-}
-
-function LabelToggle({ active, onToggle, icon: Icon, label, description, activeColor, activeBg, activeBorder, infoText }: LabelToggleProps) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className={`flex items-center justify-between gap-3 w-full rounded-xl border-2 px-4 py-3 transition-all duration-200 text-left ${
-        active
-          ? `${activeBorder} ${activeBg}`
-          : "border-gray-200 bg-gray-50 hover:border-gray-300"
-      }`}
-    >
-      <div className="flex items-center gap-3 min-w-0">
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${active ? activeBg : "bg-gray-100"}`}>
-          <Icon className={`w-4 h-4 ${active ? activeColor : "text-gray-400"}`} />
-        </div>
-        <div className="min-w-0">
-          <p className={`text-xs font-bold uppercase tracking-wide ${active ? activeColor : "text-gray-500"}`}>
-            {label}
-          </p>
-          <p className="text-[10px] text-gray-400 truncate">{active && infoText ? infoText : description}</p>
-        </div>
-      </div>
-      <div className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
-        active ? "bg-current" : "bg-gray-300"
-      }`} style={{ color: active ? undefined : undefined }}>
-        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ${active ? "translate-x-4" : "translate-x-0"}`} />
-      </div>
-    </button>
-  );
-}
+import { ChevronDown, ChevronUp, Check, Star, Sparkles, Percent, BadgeCheck } from "lucide-react";
+import { GeneralInfoSectionProps } from "../../types";
+import { STATUS_OPTIONS, inputCls } from "../../constants";
+import { useDropdown } from "../../hooks/useDropdown";
+import FieldError from "../shared/FieldError";
+import LabelToggle from "./LabelToggle";
 
 export default function GeneralInfoSection({
   name, onName,
@@ -106,7 +19,7 @@ export default function GeneralInfoSection({
   categories,
   errors = {},
   isSet = false,
-}: Props) {
+}: GeneralInfoSectionProps) {
   const cat = useDropdown();
   const est = useDropdown();
 
@@ -116,7 +29,6 @@ export default function GeneralInfoSection({
   const handleProductNewToggle = () => {
     const next = !isProductNew;
     onProductNew(next);
-    // Al activar, guardar timestamp actual; al desactivar, limpiar
     onProductNewAt(next ? new Date().toISOString() : null);
   };
 

@@ -1,22 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { X, User, Package, MapPin, CreditCard, Calendar, ChevronDown, CheckCircle2, Lock, AlertCircle } from "lucide-react";
-import { getStatusStyles, formatPrice, getValidTransitions, PAYMENT_MANAGED_STATUSES, TERMINAL_STATUSES } from "../constants";
-import { updateOrderStatus } from "@/app/actions/orders";
+import {
+  X, User, Package, MapPin, CreditCard, Calendar,
+  ChevronDown, CheckCircle2, Lock, AlertCircle,
+} from "lucide-react";
+import {
+  getStatusStyles, formatPrice, getValidTransitions,
+  PAYMENT_MANAGED_STATUSES, TERMINAL_STATUSES,
+} from "../constants";
 import { printOrder } from "@/lib/print/printOrder";
-import type { Order } from "../types";
-
-interface PedidoDetailModalProps {
-  order: Order;
-  onClose: () => void;
-  onStatusUpdated: (orderNumber: string, newStatus: string) => void;
-}
+import { usePedidoDetail } from "../hooks/usePedidoDetail";
+import type { PedidoDetailModalProps } from "../types/types";
 
 export function PedidoDetailModal({ order, onClose, onStatusUpdated }: PedidoDetailModalProps) {
-  const [selectedStatus, setSelectedStatus] = useState<string>("");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { selectedStatus, setSelectedStatus, saving, error, setError, handleSave } =
+    usePedidoDetail({ onStatusUpdated });
 
   const validTransitions = getValidTransitions(order.status);
   const isPaymentManaged = PAYMENT_MANAGED_STATUSES.has(order.status);
@@ -37,21 +35,6 @@ export function PedidoDetailModal({ order, onClose, onStatusUpdated }: PedidoDet
       discount:     order.discount     ?? 0,
       total:        order.total,
     });
-  }
-
-  async function handleSave() {
-    if (!selectedStatus) return;
-    setError(null);
-    setSaving(true);
-    try {
-      await updateOrderStatus(order.id, selectedStatus);
-      onStatusUpdated(order.id, selectedStatus);
-      setSelectedStatus("");
-    } catch (e: any) {
-      setError(e?.message ?? "Error al cambiar el estado");
-    } finally {
-      setSaving(false);
-    }
   }
 
   return (
@@ -139,7 +122,7 @@ export function PedidoDetailModal({ order, onClose, onStatusUpdated }: PedidoDet
 
                   {selectedStatus && (
                     <button
-                      onClick={handleSave}
+                      onClick={() => handleSave(order.id)}
                       disabled={saving}
                       className="mt-2 w-full py-2 bg-[#154734] text-white text-sm font-bold rounded-lg hover:bg-[#103a2a] transition-colors disabled:opacity-60"
                     >

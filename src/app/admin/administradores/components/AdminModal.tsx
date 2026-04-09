@@ -3,29 +3,7 @@ import {
   X, Crown, Mail, User, Lock, Eye, EyeOff, Loader2,
   AlertCircle, CheckCircle, ShieldCheck, Copy, UserPlus,
 } from "lucide-react";
-import type { LookupResult } from "../types/types";
-
-interface AdminModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  submitting: boolean;
-  onSubmit: (e: React.FormEvent) => Promise<void>;
-  name: string;
-  setName: (v: string) => void;
-  email: string;
-  setEmail: (v: string) => void;
-  password: string;
-  setPassword: (v: string) => void;
-  showPassword: boolean;
-  setShowPassword: (v: boolean) => void;
-  lookupResult: LookupResult | null;
-  lookingUp: boolean;
-  lookupDone: boolean;
-  isExistingUser: boolean;
-  isAlreadyAdmin: boolean;
-  onGeneratePassword: () => void;
-  onCopyPassword: () => void;
-}
+import type { AdminModalProps } from "../types/types";
 
 const AdminModal = ({
   isOpen, onClose, submitting, onSubmit,
