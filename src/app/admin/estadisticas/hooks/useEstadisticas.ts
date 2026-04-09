@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { SALES_DATA } from "../constants";
-import type { Period, SalesPeriodData } from "../types";
+import { SALES_DATA } from "../constants/constants";
+import type { Period, SalesPeriodData } from "../types/types";
 
 interface UseEstadisticasReturn {
   period: Period;

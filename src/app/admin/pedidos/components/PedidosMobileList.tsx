@@ -2,15 +2,8 @@
 
 import { ChevronDown, ChevronUp, CreditCard, MapPin } from "lucide-react";
 import { getStatusStyles, formatPrice } from "../constants";
-import type { Order } from "../types";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
-
-interface PedidosMobileListProps {
-  orders: Order[];
-  expandedOrder: string | null;
-  onToggleExpand: (id: string | null) => void;
-  onViewDetail: (order: Order) => void;
-}
+import type { PedidosMobileListProps } from "../types/types";
 
 export function PedidosMobileList({
   orders,

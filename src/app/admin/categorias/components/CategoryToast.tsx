@@ -1,9 +1,5 @@
 import { Check, AlertCircle } from "lucide-react";
-import type { ToastState } from "../types/types";
-
-interface CategoryToastProps {
-  toast: ToastState;
-}
+import type { CategoryToastProps } from "../types/types";
 
 const CategoryToast = ({ toast }: CategoryToastProps) => {
   if (!toast) return null;

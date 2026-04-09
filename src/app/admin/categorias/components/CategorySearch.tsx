@@ -1,9 +1,5 @@
 import { Search } from "lucide-react";
-
-interface CategorySearchProps {
-  value: string;
-  onChange: (v: string) => void;
-}
+import type { CategorySearchProps } from "../types/types";
 
 const CategorySearch = ({ value, onChange }: CategorySearchProps) => (
   <div className="relative w-full max-w-xs sm:max-w-md md:max-w-xl lg:max-w-2xl 2xl:max-w-3xl mx-auto mt-8 mb-10 group">

@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 import { PieChart, ChevronDown } from "lucide-react";
-import type { CategorySale } from "../types";
-
-interface CategoryChartProps {
-  categorySales: CategorySale[];
-}
+import type { CategoryChartProps } from "../types/types";
 
 export function CategoryChart({ categorySales }: CategoryChartProps) {
   const [open, setOpen] = useState(true);

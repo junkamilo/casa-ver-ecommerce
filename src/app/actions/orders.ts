@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { cancelAddiApplication } from "@/services/addi/cancel";
-import type { Order } from "@/app/admin/pedidos/types";
+import type { Order } from "@/app/admin/pedidos/types/types";
 
 async function requireAdmin() {
   const session = await auth();

@@ -1,8 +1,7 @@
 "use client";
 
-import { BarChart3 } from "lucide-react";
-import { PERIOD_LABELS } from "../constants";
-import type { Period } from "../types";
+import { PERIOD_LABELS } from "../constants/constants";
+import type { Period } from "../types/types";
 import { useRouter, useSearchParams } from "next/navigation";
 import AdminPageHeader from "@/components/ui/AdminPageHeader";
 

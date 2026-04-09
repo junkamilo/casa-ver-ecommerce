@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import type { Period } from "../types";
+import type { Period } from "../types/types";
 import { getStatsByPeriod, getTopProductsByPeriod, getDailySalesByPeriod, getCategorySalesByPeriod } from "../utils/stats";
 import { KpiCards } from "./KpiCards";
 import { SalesChart } from "./SalesChart";

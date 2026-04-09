@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { ArrowUpRight, TrendingUp, TrendingDown, ChevronDown } from "lucide-react";
-import type { TopProduct } from "../types";
+import type { TopProductsTableProps, RankBadgeProps, TrendBadgeProps } from "../types/types";
 
-function RankBadge({ rank }: { rank: number }) {
+function RankBadge({ rank }: RankBadgeProps) {
   const className = `w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ${
     rank === 1
       ? "bg-[#C19A6B] text-white ring-2 ring-[#C19A6B]/30"
@@ -17,7 +17,7 @@ function RankBadge({ rank }: { rank: number }) {
   return <span className={className}>{rank}</span>;
 }
 
-function TrendBadge({ trend, variant = "desktop" }: { trend: string; variant?: "desktop" | "mobile" }) {
+function TrendBadge({ trend, variant = "desktop" }: TrendBadgeProps) {
   const isPositive = trend.startsWith("+");
 
   if (variant === "desktop") {
@@ -43,10 +43,6 @@ function TrendBadge({ trend, variant = "desktop" }: { trend: string; variant?: "
       {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
     </span>
   );
-}
-
-interface TopProductsTableProps {
-  products: TopProduct[];
 }
 
 export function TopProductsTable({ products }: TopProductsTableProps) {

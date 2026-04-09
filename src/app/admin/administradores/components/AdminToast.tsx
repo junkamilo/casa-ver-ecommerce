@@ -1,10 +1,5 @@
 import { CheckCircle, AlertCircle, X } from "lucide-react";
-import type { ToastState } from "../types/types";
-
-interface AdminToastProps {
-  toast: ToastState;
-  onClose: () => void;
-}
+import type { AdminToastProps } from "../types/types";
 
 const AdminToast = ({ toast, onClose }: AdminToastProps) => {
   if (!toast) return null;

@@ -2,16 +2,16 @@ import { useState } from "react";
 import {
   X, Save, Loader2, Info, LayoutGrid, Tag, Package, Video, Boxes,
 } from "lucide-react";
-import { Category, SelectedColor, SetItemForm, SubProductForm } from "../types";
+import { ProductModalProps, ProductFormErrors, ItemFormErrors, SubProductFormErrors } from "../types";
 import {
   productFormSchema,
   setProductFormSchema,
   setItemFormSchema,
   subProductFormSchema,
-  ProductFormErrors,
-  ItemFormErrors,
-  SubProductFormErrors,
-} from "../schema";
+} from "../schemas";
+import { inputCls } from "../constants";
+import BlockHeader from "./shared/BlockHeader";
+import FieldError from "./shared/FieldError";
 import GeneralInfoSection from "./form/GeneralInfoSection";
 import ColorsSection from "./form/ColorsSection";
 import MaterialSection from "./form/MaterialSection";
@@ -19,92 +19,6 @@ import VideoSection from "./form/VideoSection";
 import SetItemsSection from "./form/SetItemsSection";
 import SubProductsSection from "./form/SubProductsSection";
 import VariantStockSection from "./form/VariantStockSection";
-
-interface Props {
-  editingId: string | null;
-  formLoading: boolean;
-  submitting: boolean;
-  categories: Category[];
-  onClose: () => void;
-  onSubmit: (e: React.FormEvent) => void;
-
-  name: string; setName: (v: string) => void;
-  description: string; setDescription: (v: string) => void;
-  basePrice: string; setBasePrice: (v: string) => void;
-  comparePrice: string; setComparePrice: (v: string) => void;
-  stock: string; setStock: (v: string) => void;
-  categoryId: string; setCategoryId: (v: string) => void;
-  status: string; setStatus: (v: string) => void;
-  isFeatured: boolean; setIsFeatured: (v: boolean) => void;
-  isNew: boolean; setIsNew: (v: boolean) => void;
-  isProductNew: boolean; setIsProductNew: (v: boolean) => void;
-  isProductNewAt: string | null; setIsProductNewAt: (v: string | null) => void;
-  isOnSale: boolean; setIsOnSale: (v: boolean) => void;
-  isOnSaleAt: string | null; setIsOnSaleAt: (v: string | null) => void;
-  material: string; setMaterial: (v: string) => void;
-  selectedColors: SelectedColor[];
-  selectedSizes: string[];
-  showMaterial: boolean; setShowMaterial: (v: boolean) => void;
-  videoUrl: string; setVideoUrl: (v: string) => void;
-  toggleColor: (name: string, hexCode: string) => void;
-  toggleSize: (size: string) => void;
-  setColorImages: (colorName: string, images: string[]) => void;
-
-  updateVariantStock: (colorName: string, size: string, stock: number) => void;
-  isSet: boolean; setIsSet: (v: boolean) => void;
-  setItems: SetItemForm[];
-  addSetItem: () => void;
-  removeSetItem: (localId: string) => void;
-  updateSetItem: (localId: string, updates: Partial<SetItemForm>) => void;
-  toggleSetItemColor: (localId: string, name: string, hexCode: string) => void;
-  toggleSetItemSize: (localId: string, size: string) => void;
-  setSetItemColorImages: (localId: string, colorName: string, images: string[]) => void;
-  updateSetItemVariantStock: (localId: string, colorName: string, size: string, stock: number) => void;
-  // Sub-productos
-  subProducts: SubProductForm[];
-  addSubProduct: () => void;
-  removeSubProduct: (localId: string) => void;
-  updateSubProduct: (localId: string, updates: Partial<SubProductForm>) => void;
-  toggleSubProductColor: (localId: string, name: string, hexCode: string) => void;
-  toggleSubProductSize: (localId: string, size: string) => void;
-  setSubProductColorImages: (localId: string, colorName: string, images: string[]) => void;
-  updateSubProductVariantStock: (localId: string, colorName: string, size: string, stock: number) => void;
-}
-
-// ── Componente auxiliar: cabecera de bloque ────────────────────────────────
-function BlockHeader({
-  icon: Icon,
-  title,
-  subtitle,
-}: {
-  icon: React.ElementType;
-  title: string;
-  subtitle?: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
-      <div className="w-8 h-8 rounded-lg bg-[#154734]/8 flex items-center justify-center shrink-0">
-        <Icon className="w-4 h-4 text-[#154734]" />
-      </div>
-      <div>
-        <p className="text-sm font-bold text-gray-900">{title}</p>
-        {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
-      </div>
-    </div>
-  );
-}
-
-function FieldError({ msg }: { msg?: string }) {
-  if (!msg) return null;
-  return <p className="text-red-500 text-sm mt-1">{msg}</p>;
-}
-
-const inputCls = (hasError = false) =>
-  `w-full px-4 py-2.5 rounded-lg border ${
-    hasError
-      ? "border-red-400 focus:border-red-400 focus:ring-red-100"
-      : "border-gray-200 focus:border-[#C19A6B] focus:ring-[#C19A6B]/10"
-  } focus:ring-4 outline-none text-sm transition-colors`;
 
 export default function ProductModal({
   editingId,
@@ -152,17 +66,13 @@ export default function ProductModal({
   toggleSubProductSize,
   setSubProductColorImages,
   updateSubProductVariantStock,
-}: Props) {
+}: ProductModalProps) {
   const [errors, setErrors] = useState<ProductFormErrors>({});
   const [itemErrors, setItemErrors] = useState<ItemFormErrors>({});
   const [subProductErrors, setSubProductErrors] = useState<SubProductFormErrors>({});
   const [colorError, setColorError] = useState<string | null>(null);
   const [sizeError, setSizeError] = useState<string | null>(null);
 
-  const hasVariantStocks =
-    selectedColors.some((c) => Object.keys(c.variantStocks || {}).length > 0);
-
-  // Mostrar tabla de stock cuando hay colores Y tallas (en creación y edición)
   const shouldShowStockTable = selectedColors.length > 0 && selectedSizes.length > 0;
 
   const handleValidatedSubmit = (e: React.FormEvent) => {
@@ -174,8 +84,6 @@ export default function ProductModal({
       description,
       basePrice: basePrice || undefined,
       comparePrice: comparePrice || undefined,
-      // Cuando se muestran variantes, el stock se calcula desde variantStocks
-      // Si no hay tabla de stock, se usa el stock general
       stock: shouldShowStockTable ? "0" : (stock || undefined),
       categoryId,
       videoUrl: videoUrl || undefined,
@@ -209,7 +117,6 @@ export default function ProductModal({
       }
     }
 
-    // Validar sub-productos
     const newSubProductErrors: SubProductFormErrors = {};
     for (const sub of subProducts) {
       const subResult = subProductFormSchema.safeParse({
@@ -227,7 +134,6 @@ export default function ProductModal({
       }
     }
 
-    // Validar colores y tallas requeridos
     const newColorError = selectedColors.length === 0
       ? "Debes seleccionar al menos 1 color"
       : null;
@@ -359,7 +265,6 @@ export default function ProductModal({
                   </button>
                 </div>
 
-                {/* Indicador visual del modo activo */}
                 <div className="mt-4 flex gap-3 transition-all duration-300">
                   <div className={`flex-1 rounded-xl border-2 px-4 py-3 text-center transition-all ${
                     !isSet
@@ -398,7 +303,6 @@ export default function ProductModal({
                     subtitle="Configura el precio, stock, colores disponibles y material visual"
                   />
                   <div className="space-y-6">
-                    {/* Precio y Stock */}
                     <div className={`grid grid-cols-1 gap-4 ${shouldShowStockTable ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
@@ -430,7 +334,6 @@ export default function ProductModal({
                       </div>
                     </div>
 
-                    {/* Colores, Imágenes por color y Tallas */}
                     <ColorsSection
                       selectedColors={selectedColors}
                       selectedSizes={selectedSizes}
@@ -442,7 +345,6 @@ export default function ProductModal({
                       sizeError={sizeError}
                     />
 
-                    {/* Stock por variante — aparece debajo de tallas cuando hay colores Y tallas */}
                     {shouldShowStockTable && (
                       <div className="space-y-2">
                         <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
@@ -457,7 +359,6 @@ export default function ProductModal({
                       </div>
                     )}
 
-                    {/* Video */}
                     <div className="pt-2 border-t border-gray-100">
                       <div className="flex items-center gap-2 mb-3">
                         <Video className="w-4 h-4 text-gray-400" />
@@ -479,7 +380,6 @@ export default function ProductModal({
 
               {/* ╔══════════════════════════════════════╗
                   ║  BLOQUE 4 — Subcategorías            ║
-                  ║  (solo visible cuando isSet=true)    ║
                   ╚══════════════════════════════════════╝ */}
               {isSet && (
                 <div className="bg-white rounded-2xl border border-[#C19A6B]/30 shadow-sm p-6">
@@ -505,8 +405,6 @@ export default function ProductModal({
 
               {/* ╔══════════════════════════════════════╗
                   ║  BLOQUE 5 — Sub-productos            ║
-                  ║  (siempre disponible, independiente  ║
-                  ║   de isSet)                          ║
                   ╚══════════════════════════════════════╝ */}
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
                 <BlockHeader

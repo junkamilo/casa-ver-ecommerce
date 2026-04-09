@@ -15,11 +15,13 @@ export function useCategories() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/admin/categories")
-      .then((r) => r.json())
-      .then((data: Category[]) =>
-        setCategories(data.filter((c) => c.isActive))
-      )
+    fetch("/api/categories")
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((data: Category[]) => setCategories(data))
+      .catch((err) => console.error("[useCategories]", err))
       .finally(() => setLoading(false));
   }, []);
 

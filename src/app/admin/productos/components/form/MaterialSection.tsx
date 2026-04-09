@@ -1,18 +1,12 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
-
-interface Props {
-  show: boolean;
-  onToggle: () => void;
-  material: string;
-  onMaterial: (v: string) => void;
-}
+import { MaterialSectionProps } from "../../types";
 
 export default function MaterialSection({
   show,
   onToggle,
   material,
   onMaterial,
-}: Props) {
+}: MaterialSectionProps) {
   return (
     <section>
       <button

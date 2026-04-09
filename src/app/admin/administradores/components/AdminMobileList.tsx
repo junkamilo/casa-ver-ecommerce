@@ -1,17 +1,8 @@
 import Image from "next/image";
 import { Trash2 } from "lucide-react";
 import { formatDate } from "../constants/constants";
-import type { Admin } from "../types/types";
+import type { AdminMobileListProps } from "../types/types";
 
-interface AdminMobileListProps {
-  filteredAdmins: Admin[];
-  currentUserId: string | undefined;
-  confirmDelete: string | null;
-  deleting: boolean;
-  onConfirmDelete: (id: string) => void;
-  onCancelDelete: () => void;
-  onDelete: (id: string) => void;
-}
 
 const AdminMobileList = ({
   filteredAdmins,

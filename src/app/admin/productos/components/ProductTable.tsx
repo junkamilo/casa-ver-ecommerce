@@ -1,17 +1,9 @@
 import Image from "next/image";
 import { Edit2, Trash2, Loader2 } from "lucide-react";
-import { ProductListItem } from "../types";
+import { ProductTableProps } from "../types";
 import { formatPrice, getStockStatus } from "../constants";
 import ProductMobileList from "./ProductMobileList";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
-
-interface Props {
-  products: ProductListItem[];
-  loading: boolean;
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
-  onToggleActive: (id: string, active: boolean) => void;
-}
 
 export default function ProductTable({
   products,
@@ -19,7 +11,7 @@ export default function ProductTable({
   onEdit,
   onDelete,
   onToggleActive,
-}: Props) {
+}: ProductTableProps) {
   if (loading) {
     return (
       <div className="py-20 flex justify-center">

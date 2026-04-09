@@ -1,11 +1,5 @@
 import { Pencil, Eye, EyeOff } from "lucide-react";
-import type { Category } from "../types/types";
-
-interface CategoryCardProps {
-  category: Category;
-  onEdit: (category: Category) => void;
-  onToggleActive: (category: Category) => void;
-}
+import type { CategoryCardProps } from "../types/types";
 
 const CategoryCard = ({ category, onEdit, onToggleActive }: CategoryCardProps) => (
   <div

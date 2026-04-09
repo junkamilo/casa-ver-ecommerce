@@ -2,29 +2,7 @@
 
 import { useRef, useState } from "react";
 import { SelectedColor, SetItemForm, SubProductForm } from "../types";
-
-const newSetItem = (): SetItemForm => ({
-  localId: crypto.randomUUID(),
-  name: "",
-  description: "",
-  price: "",
-  comparePrice: "",
-  videoUrl: "",
-  stock: "",
-  colors: [],
-  sizes: [],
-});
-
-const newSubProduct = (): SubProductForm => ({
-  localId: crypto.randomUUID(),
-  name: "",
-  description: "",
-  price: "",
-  videoUrl: "",
-  stock: "",
-  colors: [],
-  sizes: [],
-});
+import { calcEffectiveStock, newSetItem, newSubProduct } from "../utils";
 
 export function useProductForm() {
   const [name, setName] = useState("");
@@ -101,6 +79,7 @@ export function useProductForm() {
     setIsSet(data.isSet || false);
 
     // Parent product colors/sizes always loaded regardless of isSet
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const loadedColors = (data.colors || []).map((c: any) => ({
       name: c.name,
       hexCode: c.hexCode,
@@ -125,7 +104,13 @@ export function useProductForm() {
         comparePrice: item.comparePrice != null ? String(item.comparePrice) : "",
         videoUrl: item.videoUrl || "",
         stock: item.stock?.toString() || "",
-        colors: (item.colors || []).map((c: any) => ({ name: c.name, hexCode: c.hexCode, images: c.images || [], variantStocks: c.variantStocks || {} })),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        colors: (item.colors || []).map((c: any) => ({
+          name: c.name,
+          hexCode: c.hexCode,
+          images: c.images || [],
+          variantStocks: c.variantStocks || {},
+        })),
         sizes: item.sizes || [],
       })));
     } else {
@@ -141,7 +126,13 @@ export function useProductForm() {
         price: sub.price?.toString() || "",
         videoUrl: sub.videoUrl || "",
         stock: sub.stock?.toString() || "",
-        colors: (sub.colors || []).map((c: any) => ({ name: c.name, hexCode: c.hexCode, images: c.images || [], variantStocks: c.variantStocks || {} })),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        colors: (sub.colors || []).map((c: any) => ({
+          name: c.name,
+          hexCode: c.hexCode,
+          images: c.images || [],
+          variantStocks: c.variantStocks || {},
+        })),
         sizes: sub.sizes || [],
       })));
     } else {
@@ -165,24 +156,12 @@ export function useProductForm() {
 
   // Parent product fields are ALWAYS included in payload regardless of isSet.
   // When isSet=true, subcategory items are added on top.
-  const buildPayload = () => {
-    const hasVariantStocks = selectedColors.some(
-      (c) => Object.keys(c.variantStocks || {}).length > 0
-    );
-    const effectiveStock = hasVariantStocks
-      ? selectedColors.reduce(
-          (sum, c) =>
-            sum + Object.values(c.variantStocks || {}).reduce((s, v) => s + Number(v), 0),
-          0
-        )
-      : stock ? parseInt(stock, 10) : 0;
-
-    return ({
+  const buildPayload = () => ({
     name,
     description: description || "",
     basePrice: basePrice ? parseFloat(basePrice) : 0,
     comparePrice: comparePrice ? parseFloat(comparePrice) : null,
-    stock: effectiveStock,
+    stock: calcEffectiveStock(selectedColors, stock),
     categoryId,
     status,
     isFeatured,
@@ -197,56 +176,32 @@ export function useProductForm() {
     colors: selectedColors,
     sizes: selectedSizes,
     items: isSet
-      ? setItems.map((item) => {
-          const hasVariantStocks = item.colors.some(
-            (c) => Object.keys(c.variantStocks || {}).length > 0
-          );
-          const effectiveStock = hasVariantStocks
-            ? item.colors.reduce(
-                (sum, c) =>
-                  sum + Object.values(c.variantStocks || {}).reduce((s, v) => s + Number(v), 0),
-                0
-              )
-            : item.stock ? parseInt(item.stock, 10) : 0;
-          return {
-            name: item.name,
-            description: item.description || null,
-            price: item.price ? parseFloat(item.price) : null,
-            comparePrice: item.comparePrice ? parseFloat(item.comparePrice) : null,
-            videoUrl: item.videoUrl || null,
-            stock: effectiveStock,
-            colors: item.colors,
-            sizes: item.sizes,
-          };
-        })
+      ? setItems.map((item) => ({
+          name: item.name,
+          description: item.description || null,
+          price: item.price ? parseFloat(item.price) : null,
+          comparePrice: item.comparePrice ? parseFloat(item.comparePrice) : null,
+          videoUrl: item.videoUrl || null,
+          stock: calcEffectiveStock(item.colors, item.stock),
+          colors: item.colors,
+          sizes: item.sizes,
+        }))
       : [],
     subProducts: subProducts.length > 0
-      ? subProducts.map((sub) => {
-          const hasVariantStocks = sub.colors.some(
-            (c) => Object.keys(c.variantStocks || {}).length > 0
-          );
-          const effectiveStock = hasVariantStocks
-            ? sub.colors.reduce(
-                (sum, c) =>
-                  sum + Object.values(c.variantStocks || {}).reduce((s, v) => s + Number(v), 0),
-                0
-              )
-            : sub.stock ? parseInt(sub.stock, 10) : 0;
-          return {
-            name: sub.name,
-            description: sub.description || null,
-            price: sub.price ? parseFloat(sub.price) : null,
-            videoUrl: sub.videoUrl || null,
-            stock: effectiveStock,
-            colors: sub.colors,
-            sizes: sub.sizes,
-          };
-        })
+      ? subProducts.map((sub) => ({
+          name: sub.name,
+          description: sub.description || null,
+          price: sub.price ? parseFloat(sub.price) : null,
+          videoUrl: sub.videoUrl || null,
+          stock: calcEffectiveStock(sub.colors, sub.stock),
+          colors: sub.colors,
+          sizes: sub.sizes,
+        }))
       : [],
   });
-  };
 
-  // Helpers colores producto principal
+  // ── Helpers colores producto principal ────────────────────────────────────
+
   const toggleColor = (name: string, hexCode: string) =>
     setSelectedColors((prev) => {
       if (prev.some((c) => c.name === name)) {
@@ -264,7 +219,7 @@ export function useProductForm() {
 
   const setColorImages = (colorName: string, images: string[]) =>
     setSelectedColors((prev) =>
-      prev.map((c) => c.name === colorName ? { ...c, images } : c)
+      prev.map((c) => (c.name === colorName ? { ...c, images } : c))
     );
 
   const toggleSize = (size: string) => {
@@ -277,8 +232,6 @@ export function useProductForm() {
           ...c,
           variantStocks: {
             ...c.variantStocks,
-            // Si se agregó una talla, iniciarla con 0; si se quitó, eliminarla
-            ...(!prev.includes(size) && newSizes.includes(size) && {}),
             ...(prev.includes(size) &&
               !newSizes.includes(size) &&
               Object.fromEntries(
@@ -292,16 +245,16 @@ export function useProductForm() {
     });
   };
 
-  // Helpers subcategorías
-  const addSetItem = () =>
-    setSetItems((prev) => [...prev, newSetItem()]);
+  // ── Helpers subcategorías ─────────────────────────────────────────────────
+
+  const addSetItem = () => setSetItems((prev) => [...prev, newSetItem()]);
 
   const removeSetItem = (localId: string) =>
     setSetItems((prev) => prev.filter((i) => i.localId !== localId));
 
   const updateSetItem = (localId: string, updates: Partial<SetItemForm>) =>
     setSetItems((prev) =>
-      prev.map((i) => i.localId === localId ? { ...i, ...updates } : i)
+      prev.map((i) => (i.localId === localId ? { ...i, ...updates } : i))
     );
 
   const toggleSetItemColor = (localId: string, colorName: string, hexCode: string) =>
@@ -311,12 +264,7 @@ export function useProductForm() {
         const has = i.colors.some((c) => c.name === colorName);
         const newColors = has
           ? i.colors.filter((c) => c.name !== colorName)
-          : [...i.colors, {
-              name: colorName,
-              hexCode,
-              images: [],
-              variantStocks: {},
-            }];
+          : [...i.colors, { name: colorName, hexCode, images: [], variantStocks: {} }];
         return { ...i, colors: newColors };
       })
     );
@@ -339,7 +287,12 @@ export function useProductForm() {
       })
     );
 
-  const updateSetItemVariantStock = (localId: string, colorName: string, size: string, stock: number) =>
+  const updateSetItemVariantStock = (
+    localId: string,
+    colorName: string,
+    size: string,
+    stock: number
+  ) =>
     setSetItems((prev) =>
       prev.map((i) => {
         if (i.localId !== localId) return i;
@@ -350,7 +303,9 @@ export function useProductForm() {
               ? {
                   ...c,
                   variantStocks: isNaN(stock)
-                    ? Object.fromEntries(Object.entries(c.variantStocks || {}).filter(([s]) => s !== size))
+                    ? Object.fromEntries(
+                        Object.entries(c.variantStocks || {}).filter(([s]) => s !== size)
+                      )
                     : { ...(c.variantStocks || {}), [size]: stock },
                 }
               : c
@@ -365,22 +320,21 @@ export function useProductForm() {
         if (i.localId !== localId) return i;
         return {
           ...i,
-          colors: i.colors.map((c) => c.name === colorName ? { ...c, images } : c),
+          colors: i.colors.map((c) => (c.name === colorName ? { ...c, images } : c)),
         };
       })
     );
 
   // ── Helpers sub-productos ─────────────────────────────────────────────────
 
-  const addSubProduct = () =>
-    setSubProducts((prev) => [...prev, newSubProduct()]);
+  const addSubProduct = () => setSubProducts((prev) => [...prev, newSubProduct()]);
 
   const removeSubProduct = (localId: string) =>
     setSubProducts((prev) => prev.filter((s) => s.localId !== localId));
 
   const updateSubProduct = (localId: string, updates: Partial<SubProductForm>) =>
     setSubProducts((prev) =>
-      prev.map((s) => s.localId === localId ? { ...s, ...updates } : s)
+      prev.map((s) => (s.localId === localId ? { ...s, ...updates } : s))
     );
 
   const toggleSubProductColor = (localId: string, colorName: string, hexCode: string) =>
@@ -417,11 +371,16 @@ export function useProductForm() {
     setSubProducts((prev) =>
       prev.map((s) => {
         if (s.localId !== localId) return s;
-        return { ...s, colors: s.colors.map((c) => c.name === colorName ? { ...c, images } : c) };
+        return { ...s, colors: s.colors.map((c) => (c.name === colorName ? { ...c, images } : c)) };
       })
     );
 
-  const updateSubProductVariantStock = (localId: string, colorName: string, size: string, stock: number) =>
+  const updateSubProductVariantStock = (
+    localId: string,
+    colorName: string,
+    size: string,
+    stock: number
+  ) =>
     setSubProducts((prev) =>
       prev.map((s) => {
         if (s.localId !== localId) return s;
@@ -432,7 +391,9 @@ export function useProductForm() {
               ? {
                   ...c,
                   variantStocks: isNaN(stock)
-                    ? Object.fromEntries(Object.entries(c.variantStocks || {}).filter(([sz]) => sz !== size))
+                    ? Object.fromEntries(
+                        Object.entries(c.variantStocks || {}).filter(([sz]) => sz !== size)
+                      )
                     : { ...(c.variantStocks || {}), [size]: stock },
                 }
               : c

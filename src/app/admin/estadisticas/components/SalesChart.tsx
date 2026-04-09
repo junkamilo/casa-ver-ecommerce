@@ -1,10 +1,6 @@
 import { Calendar } from "lucide-react";
-import type { DailySale } from "../types";
-import { formatPrice } from "../utils/stats";
-
-interface SalesChartProps {
-  salesData: DailySale[];
-}
+import type { SalesChartProps } from "../types/types";
+import { formatPrice } from "../constants/constants";
 
 export function SalesChart({ salesData }: SalesChartProps) {
   const maxSale = Math.max(...salesData.map((d) => d.amount), 1);

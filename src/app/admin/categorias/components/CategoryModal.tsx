@@ -2,18 +2,7 @@
 
 import { X, Loader2, ImageIcon } from "lucide-react";
 import ImageUpload from "@/components/ui/image-upload";
-
-interface CategoryModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  submitting: boolean;
-  onSubmit: (e: React.FormEvent) => Promise<void>;
-  name: string;
-  setName: (v: string) => void;
-  image: string;
-  setImage: (v: string) => void;
-  mode?: "create" | "edit";
-}
+import type { CategoryModalProps } from "../types/types";
 
 const CategoryModal = ({
   isOpen,

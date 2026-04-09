@@ -1,17 +1,10 @@
 import Image from "next/image";
 import { Edit2, Trash2 } from "lucide-react";
-import { ProductListItem } from "../types";
+import { ProductMobileListProps } from "../types";
 import { formatPrice, getStockStatus } from "../constants";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
 
-interface Props {
-  products: ProductListItem[];
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
-  onToggleActive: (id: string, active: boolean) => void;
-}
-
-export default function ProductMobileList({ products, onEdit, onDelete, onToggleActive }: Props) {
+export default function ProductMobileList({ products, onEdit, onDelete, onToggleActive }: ProductMobileListProps) {
   if (products.length === 0) {
     return (
       <div className="md:hidden">
@@ -70,7 +63,6 @@ export default function ProductMobileList({ products, onEdit, onDelete, onToggle
 
             {/* Acciones */}
             <div className="flex flex-col items-center gap-3 shrink-0">
-              {/* Toggle activo */}
               <button
                 onClick={() => onToggleActive(product.id, product.active)}
                 className={`relative inline-flex h-7 w-13 items-center rounded-full transition-colors duration-200 ${
@@ -85,7 +77,6 @@ export default function ProductMobileList({ products, onEdit, onDelete, onToggle
                 />
               </button>
 
-              {/* Editar */}
               <button
                 onClick={() => onEdit(product.id)}
                 className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#C19A6B]/10 text-[#C19A6B] active:scale-90 transition-transform"
@@ -94,7 +85,6 @@ export default function ProductMobileList({ products, onEdit, onDelete, onToggle
                 <Edit2 className="w-5 h-5" />
               </button>
 
-              {/* Eliminar */}
               <button
                 onClick={() => onDelete(product.id)}
                 className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50 text-red-400 active:scale-90 transition-transform"

@@ -1,13 +1,5 @@
 import { Search, Filter } from "lucide-react";
-import { Category } from "../types";
-
-interface Props {
-  search: string;
-  onSearchChange: (v: string) => void;
-  filterCategory: string;
-  onCategoryChange: (v: string) => void;
-  categories: Category[];
-}
+import { ProductFiltersProps } from "../types";
 
 export default function ProductFilters({
   search,
@@ -15,7 +7,7 @@ export default function ProductFilters({
   filterCategory,
   onCategoryChange,
   categories,
-}: Props) {
+}: ProductFiltersProps) {
   return (
     <div className="flex flex-row gap-2 items-center">
       {/* Buscador */}
