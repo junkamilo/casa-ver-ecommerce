@@ -1,58 +1,58 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { markOrderPaid } from "@/app/actions/checkout";
+import { sendOrderConfirmationEmail } from "@/services/email/client";
 
 // ---------------------------------------------------------------------------
 // Bold Fallback — Consulta directa al estado del pago en Bold
 //
-// Propósito: plan B si el webhook no llega.
+// Propósito: plan B si el webhook de Bold no llega.
 // Busca órdenes PENDING con más de 3 minutos, consulta Bold y actualiza.
 //
-// Llamado por el cron definido en vercel.json (cada 5 minutos).
+// Llamado por el cron definido en vercel.json (cada 10 minutos).
 // También puede llamarse manualmente: GET /api/admin/bold-fallback
+//
+// Autorización:
+//   - Vercel cron envía automáticamente: Authorization: Bearer {CRON_SECRET}
+//   - También acepta BOLD_FALLBACK_SECRET para compatibilidad y llamadas manuales
+//   - En desarrollo se permite sin autenticación
 //
 // Endpoint de consulta Bold:
 //   GET /payments/webhook/notifications/{reference}?is_external_reference=true
 //   Authorization: x-api-key {API_KEY}
-//
-// Referencia de estados del link (GET /online/link/v1/{id}):
-//   ACTIVE      → No pagado
-//   PROCESSING  → Pago en curso
-//   PAID        → Pago exitoso ✅
-//   REJECTED    → Pago rechazado
-//   CANCELLED   → Cancelado
-//   EXPIRED     → Link vencido
 // ---------------------------------------------------------------------------
 
 const BOLD_API_BASE = "https://api.online.payments.bold.co";
 const PENDING_THRESHOLD_MS = 3 * 60 * 1000; // 3 minutos
 
-// Clave secreta para proteger el endpoint (evita que cualquiera lo llame)
 function isAuthorized(req: NextRequest): boolean {
-  const secret = process.env.BOLD_FALLBACK_SECRET;
-  // Si no está configurada, sólo se permite en desarrollo
-  if (!secret) return process.env.NODE_ENV === "development";
+  if (process.env.NODE_ENV === "development") return true;
 
   const authorization = req.headers.get("authorization");
-  return authorization === `Bearer ${secret}`;
+  if (!authorization) return false;
+
+  // Vercel cron usa CRON_SECRET automáticamente
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret && authorization === `Bearer ${cronSecret}`) return true;
+
+  // Compatibilidad con llamadas manuales autenticadas
+  const fallbackSecret = process.env.BOLD_FALLBACK_SECRET;
+  if (fallbackSecret && authorization === `Bearer ${fallbackSecret}`) return true;
+
+  return false;
 }
 
-// ---------------------------------------------------------------------------
-// Consulta el estado de una orden en Bold usando la referencia externa
-// ---------------------------------------------------------------------------
 async function queryBoldByReference(transactionId: string): Promise<{
   status?: string;
   boldPaymentId?: string;
   error?: string;
 }> {
-  const apiKey = process.env.NEXT_PUBLIC_BOLD_IDENTITY_KEY;
-  if (!apiKey) return { error: "NEXT_PUBLIC_BOLD_IDENTITY_KEY no configurada" };
+  // BOLD_IDENTITY_KEY es server-side únicamente — NUNCA usar NEXT_PUBLIC_ para llaves privadas de API
+  const apiKey = process.env.BOLD_IDENTITY_KEY;
+  if (!apiKey) return { error: "BOLD_IDENTITY_KEY no configurada" };
 
   try {
-    // Opción 1: usar el endpoint de notificaciones por referencia externa
     const url = `${BOLD_API_BASE}/payments/webhook/notifications/${encodeURIComponent(transactionId)}?is_external_reference=true`;
-
-    console.log("[BOLD FALLBACK] Consultando link:", transactionId);
 
     const response = await fetch(url, {
       method: "GET",
@@ -64,15 +64,11 @@ async function queryBoldByReference(transactionId: string): Promise<{
 
     if (!response.ok) {
       const body = await response.text();
-      console.error(`[BOLD FALLBACK] Error Bold API: ${response.status} ${body}`);
       return { error: `Bold API ${response.status}: ${body.slice(0, 200)}` };
     }
 
     const data = await response.json();
-    console.log("[BOLD FALLBACK] Respuesta de Bold:", JSON.stringify(data, null, 2));
 
-    // La respuesta puede ser una notificación o el estado del link
-    // Intentamos ambas estructuras
     const status =
       data?.data?.status ??
       data?.status ??
@@ -83,19 +79,12 @@ async function queryBoldByReference(transactionId: string): Promise<{
       data?.id ??
       data?.payload?.id;
 
-    console.log("[BOLD FALLBACK] Estado actual:", status);
-
     return { status, boldPaymentId };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Error desconocido";
-    console.error("[BOLD FALLBACK] Error de red:", message);
-    return { error: message };
+    return { error: err instanceof Error ? err.message : "Error de red" };
   }
 }
 
-// ---------------------------------------------------------------------------
-// GET handler — cron o llamada manual
-// ---------------------------------------------------------------------------
 export async function GET(req: NextRequest) {
   if (!isAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -103,7 +92,6 @@ export async function GET(req: NextRequest) {
 
   const cutoff = new Date(Date.now() - PENDING_THRESHOLD_MS);
 
-  // Buscar órdenes PENDING con más de 3 minutos de antigüedad
   const pendingOrders = await prisma.order.findMany({
     where: {
       status: "PENDING",
@@ -118,7 +106,7 @@ export async function GET(req: NextRequest) {
       createdAt: true,
     },
     orderBy: { createdAt: "asc" },
-    take: 50, // procesar máximo 50 por ejecución
+    take: 50,
   });
 
   if (pendingOrders.length === 0) {
@@ -149,20 +137,59 @@ export async function GET(req: NextRequest) {
 
     if (statusUpper === "PAID" || statusUpper === "APPROVED") {
       try {
-        await markOrderPaid(order.transactionId, boldPaymentId ?? "fallback");
+        // boldPaymentId debe venir de Bold; si no, usar un prefijo descriptivo para auditoría
+        const resolvedPaymentId = boldPaymentId ?? `bold-fallback-${order.transactionId}`;
+        const paidOrder = await markOrderPaid(order.transactionId, resolvedPaymentId);
         results.updated++;
         results.details.push({ orderId: order.id, orderNumber: order.orderNumber, boldStatus: status, action: "marked_paid" });
-        console.log(`[BOLD FALLBACK] ✓ Orden ${order.orderNumber} marcada como PAID (fallback)`);
+        console.log(`[BOLD FALLBACK] Orden ${order.orderNumber} marcada como PAID`);
+
+        // Enviar email de confirmación — "best effort"
+        if (!paidOrder.confirmationEmailSentAt && paidOrder.user?.email) {
+          try {
+            const emailResult = await sendOrderConfirmationEmail({
+              customerEmail: paidOrder.user.email,
+              customerName: paidOrder.shippingName,
+              orderNumber: paidOrder.orderNumber,
+              items: paidOrder.items.map((item) => ({
+                name: item.name,
+                quantity: item.quantity,
+                price: Number(item.price),
+                color: item.colorName,
+                size: item.size,
+                imageUrl: item.imageUrl ?? undefined,
+              })),
+              subtotal: Number(paidOrder.subtotal),
+              shippingCost: Number(paidOrder.shippingCost),
+              discount: Number(paidOrder.discount),
+              total: Number(paidOrder.total),
+            });
+
+            await prisma.order.update({
+              where: { id: paidOrder.id },
+              data: emailResult.success
+                ? { confirmationEmailSentAt: new Date() }
+                : {
+                    confirmationEmailFailedAt: new Date(),
+                    confirmationEmailError: emailResult.error ?? "Error desconocido",
+                  },
+            });
+          } catch (emailErr) {
+            console.error("[BOLD FALLBACK] Error enviando email:", emailErr);
+          }
+        }
       } catch (err) {
         results.errors++;
         const msg = err instanceof Error ? err.message : "Error desconocido";
         results.details.push({ orderId: order.id, orderNumber: order.orderNumber, boldStatus: status, action: `error_marking_paid: ${msg}` });
       }
     } else if (statusUpper === "REJECTED" || statusUpper === "CANCELLED" || statusUpper === "EXPIRED") {
-      await prisma.order.update({
-        where: { id: order.id },
-        data: { status: "FAILED" },
-      }).catch(() => null);
+      await prisma.order
+        .updateMany({
+          where: { id: order.id, status: "PENDING" },
+          data: { status: "FAILED" },
+        })
+        .catch(() => null);
       results.updated++;
       results.details.push({ orderId: order.id, orderNumber: order.orderNumber, boldStatus: status, action: "marked_failed" });
     } else {
@@ -170,7 +197,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  console.log("[BOLD FALLBACK] Resultado:", results);
+  console.log("[BOLD FALLBACK] Resultado:", { checked: results.checked, updated: results.updated, errors: results.errors });
 
   return NextResponse.json(results);
 }

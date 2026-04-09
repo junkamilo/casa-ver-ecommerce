@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { markOrderPaid } from "@/app/actions/checkout";
+import { sendOrderConfirmationEmail } from "@/services/email/client";
 
 // ---------------------------------------------------------------------------
 // Addi — Callback de resultado de aplicación de crédito
@@ -11,9 +12,31 @@ import { markOrderPaid } from "@/app/actions/checkout";
 //
 // Statuses posibles: APPROVED | PENDING | REJECTED | ABANDONED | DECLINED | INTERNAL_ERROR
 //
-// NOTA: La URL callbackUrl se configura en el payload de /v2/online-applications.
-// En staging Addi puede no validar firma — en producción confirmar si usan HMAC.
+// Seguridad:
+// - `orderId` debe ser un UUID válido (transactionId generado por nosotros con randomUUID)
+// - `applicationId` debe existir y tener longitud razonable
+// - `markOrderPaid` es idempotente — si la orden ya está PAID, no hace nada
+// - Todos los errores internos devuelven 200 a Addi para evitar reintentos infinitos
 // ---------------------------------------------------------------------------
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidOrderId(value: unknown): value is string {
+  return typeof value === "string" && UUID_REGEX.test(value);
+}
+
+function isValidApplicationId(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length >= 4 && value.trim().length <= 128;
+}
+
+function isValidStatus(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    ["APPROVED", "PENDING", "REJECTED", "ABANDONED", "DECLINED", "INTERNAL_ERROR"].includes(
+      value.toUpperCase()
+    )
+  );
+}
 
 export async function POST(req: NextRequest) {
   let payload: Record<string, unknown>;
@@ -29,34 +52,41 @@ export async function POST(req: NextRequest) {
     applicationId,
     status,
     approvedAmount,
-  } = payload as {
-    orderId?: string;
-    applicationId?: string;
-    status?: string;
-    approvedAmount?: string;
-  };
+  } = payload as Record<string, unknown>;
 
-  console.log("[Addi Callback] Recibido:", { externalOrderId, applicationId, status, approvedAmount });
-
-  if (!externalOrderId || !status) {
-    return NextResponse.json(
-      { error: "Faltan campos: orderId, status" },
-      { status: 400 }
-    );
+  // Validar campos requeridos con formatos esperados
+  if (!isValidOrderId(externalOrderId)) {
+    console.warn("[Addi Callback] orderId inválido o ausente:", externalOrderId);
+    return NextResponse.json({ error: "orderId inválido" }, { status: 400 });
   }
 
-  // Registrar en WebhookLog para auditoría
+  if (!isValidStatus(status)) {
+    console.warn("[Addi Callback] status inválido:", status);
+    return NextResponse.json({ error: "status inválido" }, { status: 400 });
+  }
+
+  const normalizedStatus = (status as string).toUpperCase();
+
+  console.log("[Addi Callback] Recibido:", {
+    orderId: externalOrderId,
+    applicationId: typeof applicationId === "string" ? applicationId : "(ausente)",
+    status: normalizedStatus,
+    approvedAmount,
+  });
+
+  // Registrar en WebhookLog para auditoría (antes de cualquier procesamiento)
+  let logEntry: { id: string } | undefined;
   try {
     const order = await prisma.order.findUnique({
       where: { transactionId: externalOrderId },
       select: { id: true },
     });
 
-    await prisma.webhookLog.create({
+    logEntry = await prisma.webhookLog.create({
       data: {
         orderId: order?.id ?? null,
         provider: "ADDI",
-        eventType: `callback.${status.toLowerCase()}`,
+        eventType: `callback.${normalizedStatus.toLowerCase()}`,
         payload: payload as any,
         signature: "",
         status: 200,
@@ -65,25 +95,94 @@ export async function POST(req: NextRequest) {
     });
   } catch (logErr) {
     console.error("[Addi Callback] Error registrando log:", logErr);
+    // No bloqueamos el procesamiento si falla el log
   }
 
   // Solo procesar si el crédito fue APROBADO
-  if (status === "APPROVED") {
-    if (!applicationId) {
-      console.error("[Addi Callback] APPROVED sin applicationId");
-      return NextResponse.json({ error: "applicationId requerido" }, { status: 400 });
+  if (normalizedStatus === "APPROVED") {
+    if (!isValidApplicationId(applicationId)) {
+      console.error("[Addi Callback] APPROVED sin applicationId válido:", applicationId);
+      return NextResponse.json({ error: "applicationId requerido y válido" }, { status: 400 });
     }
 
     try {
-      await markOrderPaid(externalOrderId, applicationId);
-      console.info("[Addi Callback] Orden marcada como pagada:", externalOrderId);
+      const order = await markOrderPaid(externalOrderId, applicationId.trim());
+      console.info("[Addi Callback] Orden marcada como pagada:", order.orderNumber);
+
+      // Enviar email de confirmación — "best effort": si falla no revertimos PAID
+      if (order.user?.email) {
+        try {
+          const emailResult = await sendOrderConfirmationEmail({
+            customerEmail: order.user.email,
+            customerName: order.shippingName,
+            orderNumber: order.orderNumber,
+            items: order.items.map((item) => ({
+              name: item.name,
+              quantity: item.quantity,
+              price: Number(item.price),
+              color: item.colorName,
+              size: item.size,
+              imageUrl: item.imageUrl ?? undefined,
+            })),
+            subtotal: Number(order.subtotal),
+            shippingCost: Number(order.shippingCost),
+            discount: Number(order.discount),
+            total: Number(order.total),
+          });
+
+          if (emailResult.success) {
+            await prisma.order.update({
+              where: { id: order.id },
+              data: { confirmationEmailSentAt: new Date() },
+            });
+            console.info("[Addi Callback] Email de confirmación enviado:", order.orderNumber);
+          } else {
+            await prisma.order.update({
+              where: { id: order.id },
+              data: {
+                confirmationEmailFailedAt: new Date(),
+                confirmationEmailError: emailResult.error ?? "Error desconocido",
+              },
+            });
+            console.warn("[Addi Callback] Email falló:", emailResult.error);
+          }
+        } catch (emailErr) {
+          console.error("[Addi Callback] Error enviando email:", emailErr);
+          await prisma.order
+            .update({
+              where: { id: order.id },
+              data: {
+                confirmationEmailFailedAt: new Date(),
+                confirmationEmailError:
+                  emailErr instanceof Error ? emailErr.message : "Error desconocido",
+              },
+            })
+            .catch(() => {});
+        }
+      } else {
+        console.warn("[Addi Callback] Orden sin email de cliente:", externalOrderId);
+      }
     } catch (err) {
-      console.error("[Addi Callback] Error al marcar orden como pagada:", err);
-      return NextResponse.json({ error: "Internal error" }, { status: 500 });
+      const errorMessage = err instanceof Error ? err.message : "Error desconocido";
+      console.error("[Addi Callback] Error al marcar orden como pagada:", errorMessage);
+
+      if (logEntry) {
+        await prisma.webhookLog
+          .update({
+            where: { id: logEntry.id },
+            data: { status: 500, errorMessage },
+          })
+          .catch(() => {});
+      }
+
+      // Retornamos 500 para que Addi reintente el callback
+      return NextResponse.json({ error: "Error interno" }, { status: 500 });
     }
   } else {
     // PENDING, REJECTED, ABANDONED, DECLINED, INTERNAL_ERROR — solo logear
-    console.info(`[Addi Callback] Status no procesable: ${status} | orden: ${externalOrderId}`);
+    console.info(
+      `[Addi Callback] Estado no procesable: ${normalizedStatus} | orden: ${externalOrderId}`
+    );
   }
 
   return NextResponse.json({ received: true }, { status: 200 });

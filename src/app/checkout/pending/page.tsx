@@ -83,7 +83,7 @@ export default async function CheckoutPendingPage({ searchParams }: PendingPageP
         {method === "ADDI" && (
           <div className="bg-[#00C2A8]/5 border border-[#00C2A8]/20 rounded-2xl p-6 mb-6 text-left">
             <p className="text-sm text-gray-600 leading-relaxed">
-              Recibirás un enlace de <strong className="text-[#00C2A8]">Addi</strong> por correo electrónico para completar tu pago a cuotas.
+              Tu solicitud de crédito con <strong className="text-[#00C2A8]">Addi</strong> está siendo procesada. Recibirás un correo de confirmación cuando tu pedido sea aprobado.
             </p>
           </div>
         )}
