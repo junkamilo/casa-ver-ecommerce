@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CheckCircle2, Package, ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import SuccessOrderCard from "./components/SuccessOrderCard";
 
 interface SuccessPageProps {
   searchParams: Promise<{ orderId?: string }>;
@@ -18,7 +19,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white rounded-[2rem] p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-gray-100 text-center">
+      <div className="max-w-md w-full bg-white rounded-4xl p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-gray-100 text-center">
         {/* Ícono */}
         <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-green-100">
           <CheckCircle2 className="w-10 h-10 text-green-500" strokeWidth={1.5} />
@@ -32,36 +33,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
         </h1>
 
         {order ? (
-          <>
-            <p className="text-gray-500 text-sm mb-6 leading-relaxed">
-              Gracias, <strong className="text-[#154734]">{order.shippingName}</strong>.{" "}
-              {order.status === "PAID"
-                ? "Tu pago fue procesado correctamente."
-                : "Tu pedido fue recibido y está siendo procesado."}
-            </p>
-            <div className="bg-[#FAFAFA] border border-gray-100 rounded-2xl p-5 mb-8 text-left space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Número de orden</span>
-                <span className="font-bold text-[#154734]">{order.orderNumber}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Total pagado</span>
-                <span className="font-bold text-[#154734]">
-                  ${Number(order.total).toLocaleString("es-CO")} COP
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Estado</span>
-                <span
-                  className={`font-bold uppercase tracking-wider text-xs ${
-                    order.status === "PAID" ? "text-green-600" : "text-amber-600"
-                  }`}
-                >
-                  {order.status === "PAID" ? "Pagado" : "En proceso"}
-                </span>
-              </div>
-            </div>
-          </>
+          <SuccessOrderCard order={order} />
         ) : (
           <p className="text-gray-500 text-sm mb-8 leading-relaxed">
             Tu pedido fue recibido. Recibirás un correo de confirmación en breve.

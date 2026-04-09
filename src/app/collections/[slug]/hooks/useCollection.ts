@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { CategoryData } from "../types";
+import type { CategoryData } from "../types/index";
 
 interface UseCollectionReturn {
   isAvailabilityOpen: boolean;

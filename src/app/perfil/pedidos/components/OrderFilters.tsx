@@ -1,13 +1,7 @@
-import { OrderFilter } from "../types";
+import { OrderFiltersProps } from "../types";
 import { ORDER_FILTER_LABELS, VISIBLE_FILTERS } from "../constants";
 
-interface Props {
-  active: OrderFilter;
-  onChange: (filter: OrderFilter) => void;
-  countByStatus: Record<string, number>;
-}
-
-export function OrderFilters({ active, onChange, countByStatus }: Props) {
+export function OrderFilters({ active, onChange, countByStatus }: OrderFiltersProps) {
   return (
     <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
       {VISIBLE_FILTERS.map((filter) => {

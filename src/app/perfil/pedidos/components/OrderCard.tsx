@@ -1,16 +1,11 @@
 "use client";
 
 import { Package, Eye } from "lucide-react";
-import { Order } from "../types";
+import { OrderCardProps } from "../types";
 import { formatOrderDate, formatOrderPrice } from "../constants";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 
-interface Props {
-  order: Order;
-  onOpenDetail: (order: Order) => void;
-}
-
-export function OrderCard({ order, onOpenDetail }: Props) {
+export function OrderCard({ order, onOpenDetail }: OrderCardProps) {
   return (
     <div className="flex items-center gap-3 p-4 sm:p-5 bg-white rounded-xl border border-gray-200 shadow-sm hover:border-[#154734]/30 hover:shadow-md transition-all">
       {/* Icono */}

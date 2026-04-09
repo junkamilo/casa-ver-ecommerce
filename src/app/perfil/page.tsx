@@ -1,71 +1,36 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, CheckCircle, AlertCircle, X, User, Package, MapPin } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, X } from "lucide-react";
 import AppTopHeader from "@/components/layout/AppTopHeader";
 
-import AppSidebar from "@/components/layout/AppSidebar";
-import { UserProfile } from "./types";
+import { useProfile } from "./hooks/useProfile";
 import { useProfileNav } from "./sidebar/hooks/useProfileNav";
-import { ProfileInfoSection } from "./sections/ProfileInfoSection";
+import { ProfileSidebar } from "./sidebar/components/ProfileSidebar";
+import { ProfileInfoSection } from "./sections/components/ProfileInfoSection";
 import { OrdersSection } from "./pedidos/components/OrdersSection";
 import { AddressesSection } from "./direcciones/components/AddressesSection";
-import { ProfileSection } from "./sidebar/types";
-
-
-const PERFIL_NAV = [
-  { id: "perfil" as ProfileSection,      label: "Mi Perfil",       description: "Información personal",  icon: User    },
-  { id: "pedidos" as ProfileSection,     label: "Mis Pedidos",     description: "Historial de compras",   icon: Package },
-  { id: "direcciones" as ProfileSection, label: "Mis Direcciones", description: "Direcciones de envío",   icon: MapPin  },
-];
+import { BREADCRUMB_LABELS } from "./constants";
 
 function PerfilContent() {
   const { status } = useSession();
-  const router = useRouter();
 
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const {
+    profile,
+    setProfile,
+    loading,
+    fetchError,
+    toast,
+    showToast,
+    dismissToast,
+    isSidebarOpen,
+    openSidebar,
+    toggleSidebar,
+  } = useProfile();
 
   const { activeSection, setActiveSection } = useProfileNav();
-
-  const showToast = (type: "success" | "error", message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 4000);
-  };
-
-  useEffect(() => {
-    if (status === "unauthenticated") router.replace("/login");
-  }, [status, router]);
-
-  useEffect(() => {
-    if (window.innerWidth < 768) setIsSidebarOpen(false);
-  }, []);
-
-  useEffect(() => {
-    if (status === "authenticated") {
-      setFetchError(null);
-      fetch("/api/profile")
-        .then(async (res) => {
-          if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            throw new Error(data.message || `Error ${res.status}`);
-          }
-          return res.json();
-        })
-        .then((data) => setProfile(data))
-        .catch((err: unknown) => {
-          const msg = err instanceof Error ? err.message : "Error al cargar el perfil";
-          setFetchError(msg);
-        })
-        .finally(() => setLoading(false));
-    }
-  }, [status]);
 
   /* ── Loading ── */
   if (status === "loading" || loading) {
@@ -98,9 +63,6 @@ function PerfilContent() {
     );
   }
 
-  const userInitial = profile?.name?.charAt(0).toUpperCase() ?? "U";
-  const userRole = profile?.role === "ADMIN" ? "Administrador" : "Cliente";
-
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
 
@@ -119,48 +81,41 @@ function PerfilContent() {
             <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
           )}
           <p className="text-sm font-medium">{toast.message}</p>
-          <button onClick={() => setToast(null)} className="ml-2 p-0.5 hover:bg-black/5 rounded">
+          <button onClick={dismissToast} className="ml-2 p-0.5 hover:bg-black/5 rounded">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {/* Sidebar */}
-      <AppSidebar
-        isOpen={isSidebarOpen}
-        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-        navItems={PERFIL_NAV.map((item) => ({
-          id: item.id,
-          label: item.label,
-          description: item.description,
-          icon: item.icon,
-          isActive: activeSection === item.id,
-          onClick: () => setActiveSection(item.id),
-        }))}
-        brandSubtitle="Mi Cuenta"
-        userName={profile?.name}
-        userInitial={userInitial}
-        userRole={userRole}
-        backLink={{ href: "/", label: "Volver a la tienda" }}
-        extraLink={
-          profile?.role === "ADMIN"
-            ? { href: "/admin", label: "Panel Admin" }
-            : undefined
-        }
-      />
+      <div
+        className={`shrink-0 transition-all duration-300 overflow-hidden ${
+          isSidebarOpen ? "w-64" : "w-0"
+        }`}
+      >
+        {profile && (
+          <ProfileSidebar
+            user={{
+              name: profile.name,
+              email: profile.email,
+              image: profile.image,
+              role: profile.role,
+            }}
+            activeSection={activeSection}
+            onSectionChange={setActiveSection}
+            isAdmin={profile.role === "ADMIN"}
+          />
+        )}
+      </div>
 
       {/* Right side */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
 
         {/* Top bar */}
         <AppTopHeader
-          onMenuOpen={() => setIsSidebarOpen(true)}
+          onMenuOpen={isSidebarOpen ? toggleSidebar : openSidebar}
           breadcrumbRoot="Mi Cuenta"
-          breadcrumbCurrent={
-            activeSection === "perfil" ? "Mi Perfil"
-            : activeSection === "pedidos" ? "Mis Pedidos"
-            : "Mis Direcciones"
-          }
+          breadcrumbCurrent={BREADCRUMB_LABELS[activeSection]}
         />
 
         {/* Main content */}

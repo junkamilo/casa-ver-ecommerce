@@ -2,11 +2,10 @@
 
 import { MapPin, Plus, Loader2, AlertCircle } from "lucide-react";
 import { useAddresses } from "../hooks/useAddresses";
+import { MAX_ADDRESSES } from "../constants";
 import { AddressCard } from "./AddressCard";
 import { AddressEmptyState } from "./AddressEmptyState";
 import { AddressFormModal } from "./AddressFormModal";
-
-const MAX_ADDRESSES = 5;
 
 export function AddressesSection() {
   const {

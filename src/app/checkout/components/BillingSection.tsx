@@ -1,5 +1,5 @@
 import { User, CheckCircle2 } from "lucide-react";
-import { SECTION_CLS, ACCENT_BAR_CLS, SECTION_TITLE_CLS } from "../constants/constants";
+import { SECTION_CLS, ACCENT_BAR_CLS, SECTION_TITLE_CLS } from "../constants";
 
 /**
  * Sección de facturación — informativa.

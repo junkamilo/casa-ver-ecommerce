@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import BoldPaymentClient from "./BoldPaymentClient";
+import BoldPaymentClient from "./components/BoldPaymentClient";
 
 interface PageProps {
   searchParams: Promise<{

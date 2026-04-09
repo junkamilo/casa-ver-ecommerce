@@ -8,10 +8,10 @@ import {
   SECTION_CLS,
   ACCENT_BAR_CLS,
   SECTION_TITLE_CLS,
-} from "../constants/constants";
+} from "../constants";
 import { DeliveryFormFields } from "./DeliveryFormFields";
 import type { CheckoutFormData } from "../types/schema";
-import type { SavedAddress } from "../types/types";
+import type { SavedAddress } from "../types";
 
 type LoadStatus = "loading" | "done";
 type DeliveryMode = "cards" | "manual";

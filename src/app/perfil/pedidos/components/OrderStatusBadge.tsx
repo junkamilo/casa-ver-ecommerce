@@ -1,11 +1,7 @@
+import { OrderStatusBadgeProps } from "../types";
 import { ORDER_STATUS_CONFIG } from "../constants";
-import { OrderStatus } from "../types";
 
-interface Props {
-  status: OrderStatus;
-}
-
-export function OrderStatusBadge({ status }: Props) {
+export function OrderStatusBadge({ status }: OrderStatusBadgeProps) {
   const config = ORDER_STATUS_CONFIG[status];
 
   return (
