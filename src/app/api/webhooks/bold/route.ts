@@ -107,7 +107,10 @@ export async function POST(req: NextRequest) {
   let rawBody: string;
   try {
     rawBody = await req.text();
-    console.log("[BOLD WEBHOOK] Body raw recibido:", rawBody.slice(0, 500));
+    // No loguear el body completo en producción — puede contener datos sensibles de pago
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[BOLD WEBHOOK] Body raw (dev only):", rawBody.slice(0, 300));
+    }
   } catch (err) {
     console.error("[BOLD WEBHOOK] ✗ No se pudo leer el body:", err);
     return NextResponse.json({ error: "Cannot read body" }, { status: 400 });
@@ -330,18 +333,25 @@ async function processWebhookAsync(fields: WebhookFields): Promise<void> {
     console.log(`[BOLD WEBHOOK] ℹ Evento ${eventType ?? boldStatus} → actualizando orden a ${newStatus}`);
 
     if (reference) {
-      try {
-        await prisma.order.update({
-          where: { transactionId: reference },
+      // updateMany con filtro de estado para evitar sobrescribir órdenes ya PAID
+      // (puede ocurrir si llega un webhook REJECTED después de que ya fue aprobada)
+      const updated = await prisma.order
+        .updateMany({
+          where: {
+            transactionId: reference,
+            status: { in: ["PENDING", "PROCESSING"] },
+          },
           data: { status: newStatus as any },
+        })
+        .catch((err) => {
+          const msg = err instanceof Error ? err.message : "Error desconocido";
+          console.error(`[BOLD WEBHOOK] ✗ Error al actualizar orden a ${newStatus}:`, msg);
+          updateLog(500, msg);
+          return null;
         });
-        console.log(`[BOLD WEBHOOK] ✓ Orden actualizada a ${newStatus}. transactionId:`, reference);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Error desconocido";
-        console.error(`[BOLD WEBHOOK] ✗ Error al actualizar orden a ${newStatus}:`, msg);
-        updateLog(500, msg);
-        return;
-      }
+
+      if (updated === null) return;
+      console.log(`[BOLD WEBHOOK] ✓ Orden actualizada a ${newStatus}. Filas afectadas: ${updated.count}`);
     }
 
     updateLog(200);

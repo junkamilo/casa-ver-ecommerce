@@ -204,16 +204,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               orderId: orderResult.orderId,
-              payer: {
-                firstName: data.firstName,
-                lastName: data.lastName,
-                email: data.email,
-                phone: data.phone,
-                cedula: data.cedula,
-                address: data.address,
-                city: data.city,
-                department: data.department,
-              },
+              cedula: data.cedula, // único dato personal que no está en la BD
             }),
           });
 
@@ -238,19 +229,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
           const boldRes = await fetch("/api/payments/bold", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              orderId: orderResult.orderId,
-              payer: {
-                name: `${data.firstName} ${data.lastName}`,
-                email: data.email,
-                phone: data.phone,
-                cedula: data.cedula,
-                address: data.address,
-                addressDetail: data.addressDetail,
-                city: data.city,
-                department: data.department,
-              },
-            }),
+            body: JSON.stringify({ orderId: orderResult.orderId }),
           });
 
           const boldData = await boldRes.json();

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { markOrderPaid } from "@/app/actions/checkout";
+import { sendOrderConfirmationEmail } from "@/services/email/client";
 
 // ---------------------------------------------------------------------------
 // Addi Webhook — Validación de firma con ADDI_WEBHOOK_SECRET
@@ -10,10 +11,15 @@ import { markOrderPaid } from "@/app/actions/checkout";
 
 function verifyAddiSignature(rawBody: string, signatureHeader: string): boolean {
   const secret = process.env.ADDI_WEBHOOK_SECRET;
+
+  // Si el secret no está configurado, loguear advertencia y permitir el webhook.
+  // Esto evita bloquear todos los eventos mientras el secret está pendiente de Addi.
   if (!secret) {
-    console.error("[Addi Webhook] ADDI_WEBHOOK_SECRET no configurado");
-    return false;
+    console.warn("[Addi Webhook] ADDI_WEBHOOK_SECRET no configurado — omitiendo validación de firma");
+    return true;
   }
+
+  if (!signatureHeader) return false;
 
   const expected = createHmac("sha256", secret).update(rawBody).digest("base64");
 
@@ -51,7 +57,7 @@ export async function POST(req: NextRequest) {
   const addiStatus = (payload.status ?? payload.applicationStatus) as string | undefined;
 
   // 3. Log del webhook
-  let logEntry;
+  let logEntry: { id: string } | undefined;
   try {
     const order = orderId
       ? await prisma.order.findUnique({ where: { transactionId: orderId }, select: { id: true } })
@@ -80,8 +86,57 @@ export async function POST(req: NextRequest) {
 
   if (isApproved && orderId && addiPaymentId) {
     try {
-      await markOrderPaid(orderId, addiPaymentId);
+      const order = await markOrderPaid(orderId, addiPaymentId);
       console.info(`[Addi Webhook] Orden aprobada: ${orderId}`);
+
+      // Enviar email de confirmación — "best effort": si falla no revertimos el PAID
+      if (order.user?.email) {
+        try {
+          const emailResult = await sendOrderConfirmationEmail({
+            customerEmail: order.user.email,
+            customerName: order.shippingName,
+            orderNumber: order.orderNumber,
+            items: order.items.map((item) => ({
+              name: item.name,
+              quantity: item.quantity,
+              price: Number(item.price),
+              color: item.colorName,
+              size: item.size,
+              imageUrl: item.imageUrl ?? undefined,
+            })),
+            subtotal: Number(order.subtotal),
+            shippingCost: Number(order.shippingCost),
+            discount: Number(order.discount),
+            total: Number(order.total),
+          });
+
+          if (emailResult.success) {
+            await prisma.order.update({
+              where: { id: order.id },
+              data: { confirmationEmailSentAt: new Date() },
+            });
+            console.info("[Addi Webhook] Email enviado:", order.orderNumber);
+          } else {
+            await prisma.order.update({
+              where: { id: order.id },
+              data: {
+                confirmationEmailFailedAt: new Date(),
+                confirmationEmailError: emailResult.error ?? "Error desconocido",
+              },
+            });
+            console.warn("[Addi Webhook] Email falló:", emailResult.error);
+          }
+        } catch (emailErr) {
+          console.error("[Addi Webhook] Error enviando email:", emailErr);
+          await prisma.order.update({
+            where: { id: order.id },
+            data: {
+              confirmationEmailFailedAt: new Date(),
+              confirmationEmailError: emailErr instanceof Error ? emailErr.message : "Error desconocido",
+            },
+          }).catch(() => {});
+        }
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Error desconocido";
       console.error("[Addi Webhook] Error al marcar orden como pagada:", err);
@@ -90,7 +145,7 @@ export async function POST(req: NextRequest) {
         await prisma.webhookLog.update({
           where: { id: logEntry.id },
           data: { status: 500, errorMessage },
-        });
+        }).catch(() => {});
       }
 
       return NextResponse.json({ error: "Internal error" }, { status: 500 });

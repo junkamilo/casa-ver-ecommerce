@@ -29,8 +29,8 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const apiKey =
-    process.env.BOLD_IDENTITY_KEY ?? process.env.NEXT_PUBLIC_BOLD_IDENTITY_KEY;
+  // BOLD_IDENTITY_KEY es server-side únicamente — NUNCA usar NEXT_PUBLIC_ para llaves privadas de API
+  const apiKey = process.env.BOLD_IDENTITY_KEY;
   if (!apiKey) {
     return NextResponse.json(
       { error: "BOLD_IDENTITY_KEY no configurada" },
@@ -83,23 +83,25 @@ export async function GET(req: NextRequest) {
   }
 
   const data = await boldRes.json();
-  console.log("[BOLD CALLBACK] Estado del link:", JSON.stringify(data));
+  console.log("[BOLD CALLBACK] Estado del link recibido:", { status: data?.status ?? data?.payload?.status });
 
-  // Bold Link de Pagos usa "PAID"; lo mapeamos a "APPROVED" para la UI
-  const boldStatus = (data.status ?? "UNKNOWN").toUpperCase() as string;
+  // Bold Link de Pagos puede retornar status en raíz o en payload — verificar ambos
+  const boldStatus = (
+    (data.status ?? data.payload?.status ?? "UNKNOWN") as string
+  ).toUpperCase();
   const uiStatus = boldStatus === "PAID" ? "APPROVED" : boldStatus;
 
   if (boldStatus === "PAID") {
     try {
-      // data.payment_id = ID real de la transacción Bold (preferido)
-      // data.id         = LNK_* (ID del link, NO es el payment ID)
-      // order.boldLinkId = fallback final
+      // data.payment_id / data.transaction_id = ID real de la transacción Bold (preferido)
+      // data.id         = LNK_* (ID del link, NO es el payment ID — último recurso)
       const boldPaymentId =
         (data.payment_id as string | undefined) ??
         (data.transaction_id as string | undefined) ??
         (data.id as string | undefined) ??
-        order.boldLinkId;
-      const paidOrder = await markOrderPaid(referenceId, boldPaymentId!);
+        order.boldLinkId ??
+        `bold-verify-${referenceId}`;
+      const paidOrder = await markOrderPaid(referenceId, boldPaymentId);
 
       // Enviar email de confirmación si no fue enviado aún (puede llegar antes que el webhook)
       if (!paidOrder.confirmationEmailSentAt && paidOrder.user?.email) {

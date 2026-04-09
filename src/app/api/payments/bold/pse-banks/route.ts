@@ -6,8 +6,8 @@ import { NextResponse } from "next/server";
 // Cachea 1 hora (la lista de bancos no cambia frecuentemente).
 // ---------------------------------------------------------------------------
 export async function GET() {
-  const apiKey =
-    process.env.BOLD_IDENTITY_KEY ?? process.env.NEXT_PUBLIC_BOLD_IDENTITY_KEY;
+  // BOLD_IDENTITY_KEY es server-side únicamente — NUNCA usar NEXT_PUBLIC_ en rutas API
+  const apiKey = process.env.BOLD_IDENTITY_KEY;
 
   if (!apiKey) {
     return NextResponse.json({ error: "Pasarela no configurada" }, { status: 500 });
