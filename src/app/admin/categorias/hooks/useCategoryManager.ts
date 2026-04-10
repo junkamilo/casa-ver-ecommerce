@@ -22,6 +22,5 @@ export function useCategoryManager() {
     setToast,
     ...list,
     ...form,
-    handleReorder: list.handleReorder,
   };
 }
