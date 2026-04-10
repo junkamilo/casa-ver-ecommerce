@@ -3,7 +3,7 @@ import CategoryCard from "./CategoryCard";
 import type { CategoryGridProps } from "../types/types";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
 
-const CategoryGrid = ({ loading, filtered, canReorder, onEdit, onToggleActive, onMoveUp, onMoveDown }: CategoryGridProps) => {
+const CategoryGrid = ({ loading, filtered, onEdit, onToggleActive }: CategoryGridProps) => {
   if (loading) {
     return (
       <div className="py-32 flex flex-col items-center justify-center animate-in fade-in duration-500">
@@ -23,13 +23,8 @@ const CategoryGrid = ({ loading, filtered, canReorder, onEdit, onToggleActive, o
         >
           <CategoryCard
             category={cat}
-            isFirst={index === 0}
-            isLast={index === filtered.length - 1}
-            canReorder={canReorder}
             onEdit={onEdit}
             onToggleActive={onToggleActive}
-            onMoveUp={onMoveUp}
-            onMoveDown={onMoveDown}
           />
         </div>
       ))}

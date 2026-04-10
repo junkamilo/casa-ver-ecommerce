@@ -33,7 +33,6 @@ export default function AdminCategorias() {
     closeEditModal,
     handleEditSubmit,
     handleToggleActive,
-    handleReorder,
   } = useCategoryManager();
 
   return (
@@ -52,11 +51,8 @@ export default function AdminCategorias() {
         <CategoryGrid
           loading={loading}
           filtered={filtered}
-          canReorder={!search}
           onEdit={openEditModal}
           onToggleActive={handleToggleActive}
-          onMoveUp={(cat) => handleReorder(cat, "up")}
-          onMoveDown={(cat) => handleReorder(cat, "down")}
         />
 
       </main>

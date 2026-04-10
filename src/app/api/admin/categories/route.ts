@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     }
 
     const maxOrderResult = await prisma.category.aggregate({ _max: { order: true } });
-    const nextOrder = (maxOrderResult._max.order ?? -1) + 1;
+    const nextOrder = (maxOrderResult._max.order ?? 0) + 1;
 
     const category = await prisma.category.create({
       data: {
@@ -98,26 +98,6 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json();
-
-    // --- Intercambiar orden entre dos categorías ---
-    if (body.action === "swap-orders") {
-      const { id1, id2 } = body;
-      if (!id1 || !id2) return new NextResponse("IDs requeridos", { status: 400 });
-
-      const [cat1, cat2] = await Promise.all([
-        prisma.category.findUnique({ where: { id: id1 }, select: { id: true, order: true } }),
-        prisma.category.findUnique({ where: { id: id2 }, select: { id: true, order: true } }),
-      ]);
-
-      if (!cat1 || !cat2) return new NextResponse("Categoría no encontrada", { status: 404 });
-
-      await prisma.$transaction([
-        prisma.category.update({ where: { id: id1 }, data: { order: cat2.order } }),
-        prisma.category.update({ where: { id: id2 }, data: { order: cat1.order } }),
-      ]);
-
-      return NextResponse.json({ ok: true });
-    }
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

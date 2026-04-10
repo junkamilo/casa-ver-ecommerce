@@ -1,14 +1,14 @@
-import { Pencil, Eye, EyeOff, ChevronUp, ChevronDown } from "lucide-react";
+import { Pencil, Eye, EyeOff } from "lucide-react";
 import type { CategoryCardProps } from "../types/types";
 
-const CategoryCard = ({ category, isFirst, isLast, canReorder, onEdit, onToggleActive, onMoveUp, onMoveDown }: CategoryCardProps) => (
+const CategoryCard = ({ category, onEdit, onToggleActive }: CategoryCardProps) => (
   <div
-    className={`group bg-white rounded-3xl overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
+    className={`group bg-white rounded-3xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl will-change-transform ${
       !category.isActive ? "opacity-60 border-gray-200 grayscale-[0.2]" : "border-[#C19A6B]/10 shadow-sm"
     }`}
   >
     {/* Imagen / Fallback Superior */}
-    <div className="relative h-32 border-b border-gray-100 overflow-hidden flex items-center justify-center">
+    <div className="relative h-32 border-b border-gray-100 overflow-hidden rounded-t-3xl flex items-center justify-center">
       {category.image ? (
         <>
           <img
@@ -23,28 +23,6 @@ const CategoryCard = ({ category, isFirst, isLast, canReorder, onEdit, onToggleA
           <span className="text-[#C19A6B] font-black uppercase tracking-widest text-sm text-center leading-tight group-hover:-translate-y-1 transition-transform duration-500 ease-in-out">
             {category.name}
           </span>
-        </div>
-      )}
-
-      {/* Botones de orden */}
-      {canReorder && (
-        <div className="absolute top-2 left-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <button
-            onClick={() => onMoveUp(category)}
-            disabled={isFirst}
-            className="p-1 rounded-lg bg-white/80 backdrop-blur-sm text-[#154734] hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
-            title="Mover arriba"
-          >
-            <ChevronUp className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => onMoveDown(category)}
-            disabled={isLast}
-            className="p-1 rounded-lg bg-white/80 backdrop-blur-sm text-[#154734] hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
-            title="Mover abajo"
-          >
-            <ChevronDown className="w-3.5 h-3.5" />
-          </button>
         </div>
       )}
 
@@ -65,7 +43,7 @@ const CategoryCard = ({ category, isFirst, isLast, canReorder, onEdit, onToggleA
     {/* Contenido */}
     <div className="p-6">
       <div className="mb-4">
-        <h3 
+        <h3
           className="text-2xl text-[#154734] truncate"
           style={{ fontFamily: "Georgia, serif" }}
         >
@@ -75,15 +53,10 @@ const CategoryCard = ({ category, isFirst, isLast, canReorder, onEdit, onToggleA
 
       {/* Footer de la tarjeta */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-        <div className="flex items-center gap-2">
-          <span className="bg-[#FAFAFA] text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#C19A6B]" />
-            {category._count?.products || 0} Productos
-          </span>
-          {canReorder && (
-            <span className="text-[10px] text-gray-400 font-mono">#{category.order + 1}</span>
-          )}
-        </div>
+        <span className="bg-[#FAFAFA] text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#C19A6B]" />
+          {category._count?.products || 0} Productos
+        </span>
 
         <div className="flex gap-2">
           <button
