@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { SITE_NAME } from "@/lib/seo";
 import { computeProductBadge } from "@/lib/productBadge";
 import Footer from "@/components/Footer";
 import AnnouncementBar from "@/components/AnnouncementBar";
@@ -169,6 +171,54 @@ async function getCollectionData(
   } catch {
     return empty;
   }
+}
+
+// ── SEO dinámico ─────────────────────────────────────────────────────────────
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+
+  const category = await prisma.category.findUnique({
+    where: { slug, isActive: true },
+    select: {
+      name: true,
+      description: true,
+      metaTitle: true,
+      metaDescription: true,
+      image: true,
+    },
+  });
+
+  if (!category) return { title: "Colección no encontrada" };
+
+  const title = category.metaTitle ?? category.name;
+  const description =
+    category.metaDescription ??
+    category.description ??
+    `Explora la colección ${category.name} de ${SITE_NAME}.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `${title} | ${SITE_NAME}`,
+      description,
+      type: "website",
+      ...(category.image && {
+        images: [{ url: category.image, alt: title }],
+      }),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      ...(category.image && { images: [category.image] }),
+    },
+  };
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────

@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
+import { NOINDEX_METADATA } from "@/lib/seo";
 import LoginForm from "@/components/login";
+
+export const metadata: Metadata = {
+  title: "Iniciar sesión",
+  description: "Accede a tu cuenta Casa Verde.",
+  ...NOINDEX_METADATA,
+};
 import AuthLayout, { BenefitItem } from "@/components/ui/auth/AuthLayout";
 import { LOGIN_BENEFITS, LOGIN_EYEBROW } from "./constants";
 

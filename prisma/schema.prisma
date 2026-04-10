@@ -182,22 +182,33 @@ model Address {
 // ============================================================
 
 model Category {
-  id            String     @id @default(cuid())
-  name          String
-  slug          String     @unique
-  image         String?
-  isActive      Boolean    @default(true)
+  id              String     @id @default(cuid())
+  name            String
+  slug            String     @unique
+  description     String?    @db.Text     // Descripción visible en la página de colección
+  image           String?                 // URL Cloudinary de portada
+  order           Int        @default(0)  // Orden de aparición en menú y listados
+  isActive        Boolean    @default(true)
 
-  // Subcategorías (Recursividad)
-  parentId      String?
-  parent        Category?  @relation("CategoryToSubcategory", fields: [parentId], references: [id])
-  subcategories Category[] @relation("CategoryToSubcategory")
+  // SEO
+  metaTitle       String?
+  metaDescription String?
 
-  products      Product[]
+  // Subcategorías (árbol recursivo)
+  // parentId = null  →  categoría raíz (Ej: "Conjuntos", "Camisetas")
+  // parentId = <id>  →  subcategoría   (Ej: "Conjuntos Mujer" hija de "Conjuntos")
+  parentId        String?
+  parent          Category?  @relation("CategoryToSubcategory", fields: [parentId], references: [id])
+  subcategories   Category[] @relation("CategoryToSubcategory")
 
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  products        Product[]
 
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([parentId])   // Búsqueda rápida de subcategorías y categorías raíz
+  @@index([isActive])   // Filtrar solo activas sin full-scan
+  @@index([order])      // Ordenamiento eficiente en menú
   @@map("categories")
 }
 

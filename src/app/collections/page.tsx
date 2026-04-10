@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/layout/Header";
@@ -9,9 +10,15 @@ import BackButton from "@/components/ui/BackButton";
 
 export const revalidate = 3600;
 
-export const metadata = {
-  title: "Colecciones | Casa Verde",
-  description: "Explora todas las colecciones de Casa Verde.",
+export const metadata: Metadata = {
+  title: "Colecciones",
+  description:
+    "Explora todas las colecciones de Casa Verde. Encuentra la categoría perfecta para tu estilo natural.",
+  openGraph: {
+    title: "Colecciones | Casa Verde",
+    description: "Explora todas las colecciones de Casa Verde.",
+    type: "website",
+  },
 };
 
 export default async function CollectionsPage() {

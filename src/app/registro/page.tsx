@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import { CheckCircle2 } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Crear cuenta",
+  description: "Únete a Casa Verde y disfruta de beneficios exclusivos.",
+};
 import RegisterForm from "@/components/register";
 import AuthLayout, { BenefitItem } from "@/components/ui/auth/AuthLayout";
 import { BENEFITS } from "./constants";
