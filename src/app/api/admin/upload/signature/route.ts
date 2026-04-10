@@ -24,15 +24,15 @@ export async function GET() {
     return new NextResponse("Acceso denegado", { status: 403 });
   }
 
-  // 2. Leer credenciales de servidor (nunca expuestas al cliente)
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  const apiKey = process.env.CLOUDINARY_API_KEY;
-  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+  // 2. Leer credenciales (soporta ambos prefijos para compatibilidad)
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY || process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET || process.env.CLOUDINARY_API_SECRET;
 
   if (!cloudName || !apiKey || !apiSecret) {
     console.error(
       "[UPLOAD_SIGNATURE] Faltan variables de entorno: " +
-      "CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY o CLOUDINARY_API_SECRET"
+      "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME, NEXT_PUBLIC_CLOUDINARY_API_KEY o NEXT_PUBLIC_CLOUDINARY_API_SECRET"
     );
     return new NextResponse(
       "Configuración de almacenamiento incompleta en el servidor",
