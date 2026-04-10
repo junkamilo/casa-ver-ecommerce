@@ -1,9 +1,5 @@
 import Link from "next/link";
-
-interface CartFooterProps {
-  subtotal: number;
-  onClose: () => void;
-}
+import type { CartFooterProps } from "../types";
 
 const CartFooter = ({ subtotal, onClose }: CartFooterProps) => (
   <div className="p-5 border-t-2 border-accent bg-background">

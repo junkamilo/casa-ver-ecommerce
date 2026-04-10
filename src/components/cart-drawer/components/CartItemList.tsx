@@ -1,13 +1,6 @@
-import type { CartDrawerItem } from "../types/types";
+import type { CartItemListProps } from "../types";
 import CartEmpty from "./CartEmpty";
 import CartItemCard from "./CartItemCard";
-
-interface CartItemListProps {
-  items: CartDrawerItem[];
-  onRemove: (id: string) => void;
-  onUpdateQty: (id: string, delta: number) => void;
-  onClose: () => void;
-}
 
 const CartItemList = ({ items, onRemove, onUpdateQty, onClose }: CartItemListProps) => (
   <div className="flex-1 overflow-y-auto p-5 space-y-6">

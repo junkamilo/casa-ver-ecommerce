@@ -1,14 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-export interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  image: string | null;
-  isActive: boolean;
-}
+import type { Category } from "../types";
 
 export function useCategories() {
   const [categories, setCategories] = useState<Category[]>([]);

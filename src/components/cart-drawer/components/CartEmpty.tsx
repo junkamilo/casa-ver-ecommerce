@@ -1,8 +1,5 @@
 import { ShoppingBag } from "lucide-react";
-
-interface CartEmptyProps {
-  onClose: () => void;
-}
+import type { CartEmptyProps } from "../types";
 
 const CartEmpty = ({ onClose }: CartEmptyProps) => (
   <div className="h-full flex flex-col items-center justify-center text-center opacity-60">

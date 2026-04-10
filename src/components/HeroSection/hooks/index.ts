@@ -1,0 +1,1 @@
+export { useHeroSection } from "./useHeroSection";

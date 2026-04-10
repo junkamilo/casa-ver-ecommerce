@@ -2,21 +2,11 @@
 
 import { useState } from "react";
 import { Lock, Eye, EyeOff, ShieldCheck } from "lucide-react";
-import type { UseFormRegister, UseFormHandleSubmit, FieldErrors } from "react-hook-form";
-import type { NewPasswordFormData } from "../types/types";
-import { PASSWORD_RULES } from "@/lib/auth/validation";
+import type { NewPasswordStepProps } from "../types";
+import { PASSWORD_RULES } from "../constants";
 import AuthAlert from "@/components/ui/auth/AuthAlert";
 import AuthFormHeader from "@/components/ui/auth/AuthFormHeader";
 import SubmitButton from "@/components/ui/auth/SubmitButton";
-
-interface NewPasswordStepProps {
-  register:     UseFormRegister<NewPasswordFormData>;
-  handleSubmit: UseFormHandleSubmit<NewPasswordFormData>;
-  errors:       FieldErrors<NewPasswordFormData>;
-  error:        string | null;
-  isLoading:    boolean;
-  onSubmit:     (data: NewPasswordFormData) => Promise<void>;
-}
 
 export default function NewPasswordStep({
   register,

@@ -7,13 +7,13 @@ import {
   recoveryEmailSchema,
   newPasswordSchema,
   ERROR_MESSAGES,
-} from "../constants/constants";
+} from "../constants";
 import type {
   ForgotPasswordStep,
   RecoveryEmailFormData,
   NewPasswordFormData,
   UseForgotPasswordFormReturn,
-} from "../types/types";
+} from "../types";
 
 export function useForgotPasswordForm(): UseForgotPasswordFormReturn {
   const [step, setStep]         = useState<ForgotPasswordStep>("email");

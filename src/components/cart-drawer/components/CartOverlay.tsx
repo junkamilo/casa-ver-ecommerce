@@ -1,6 +1,4 @@
-interface CartOverlayProps {
-  onClose: () => void;
-}
+import type { CartOverlayProps } from "../types";
 
 const CartOverlay = ({ onClose }: CartOverlayProps) => (
   <div
