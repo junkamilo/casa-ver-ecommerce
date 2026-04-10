@@ -3,7 +3,7 @@ import CategoryCard from "./CategoryCard";
 import type { CategoryGridProps } from "../types/types";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
 
-const CategoryGrid = ({ loading, filtered, onEdit, onToggleActive }: CategoryGridProps) => {
+const CategoryGrid = ({ loading, filtered, canReorder, onEdit, onToggleActive, onMoveUp, onMoveDown }: CategoryGridProps) => {
   if (loading) {
     return (
       <div className="py-32 flex flex-col items-center justify-center animate-in fade-in duration-500">
@@ -16,15 +16,20 @@ const CategoryGrid = ({ loading, filtered, onEdit, onToggleActive }: CategoryGri
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {filtered.map((cat, index) => (
-        <div 
-          key={cat.id} 
+        <div
+          key={cat.id}
           className="animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
           style={{ animationDelay: `${index * 100}ms` }}
         >
           <CategoryCard
             category={cat}
+            isFirst={index === 0}
+            isLast={index === filtered.length - 1}
+            canReorder={canReorder}
             onEdit={onEdit}
             onToggleActive={onToggleActive}
+            onMoveUp={onMoveUp}
+            onMoveDown={onMoveDown}
           />
         </div>
       ))}
