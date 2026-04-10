@@ -10,6 +10,7 @@ import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/layout/Header";
 import CollectionHero from "./components/CollectionHero";
 import CollectionClient from "./components/CollectionClient";
+import BackButton from "@/components/ui/BackButton";
 import type { CollectionProduct, FilterOptions, CollectionFilters } from "./types";
 
 // ── Product query select shape ────────────────────────────────────────────────
@@ -251,6 +252,8 @@ export default async function CollectionPage({
         <div className="w-full max-w-400 mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
 
           <h1 className="sr-only">{title}</h1>
+
+          <BackButton className="mb-4 sm:mb-6" />
 
           <CollectionHero title={title} />
 

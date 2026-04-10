@@ -31,8 +31,42 @@ export function useCategoryList({ showToast }: UseCategoryListOptions) {
     fetchCategories();
   }, [fetchCategories]);
 
-  const filtered = categories.filter((c) =>
+  const sorted = [...categories].sort((a, b) => a.order - b.order);
+
+  const filtered = sorted.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleReorder = useCallback(
+    async (category: Category, direction: "up" | "down") => {
+      const idx = sorted.findIndex((c) => c.id === category.id);
+      const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= sorted.length) return;
+
+      const other = sorted[swapIdx];
+
+      // Optimistic update
+      setCategories((prev) =>
+        prev.map((c) => {
+          if (c.id === category.id) return { ...c, order: other.order };
+          if (c.id === other.id) return { ...c, order: category.order };
+          return c;
+        })
+      );
+
+      try {
+        const res = await fetch("/api/admin/categories", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "swap-orders", id1: category.id, id2: other.id }),
+        });
+        if (!res.ok) throw new Error(ERROR_MESSAGES.unknown);
+      } catch (err: unknown) {
+        showToast("error", err instanceof Error ? err.message : ERROR_MESSAGES.unknown);
+        fetchCategories(); // revert on error
+      }
+    },
+    [sorted, showToast, fetchCategories]
   );
 
   const handleToggleActive = useCallback(
@@ -76,5 +110,6 @@ export function useCategoryList({ showToast }: UseCategoryListOptions) {
     setSearch,
     fetchCategories,
     handleToggleActive,
+    handleReorder,
   };
 }
