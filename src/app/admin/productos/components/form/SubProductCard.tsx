@@ -233,6 +233,7 @@ export default function SubProductCard({
                               disabled={disabled}
                               onChange={(urls) => onSetColorImages(item.localId, color.name, [...color.images, ...urls])}
                               onRemove={(url) => onSetColorImages(item.localId, color.name, color.images.filter((i) => i !== url))}
+                              onSetCover={(url) => onSetColorImages(item.localId, color.name, [url, ...color.images.filter((i) => i !== url)])}
                               maxImages={8}
                               colorInfo={{ name: color.name, hexCode: color.hexCode }}
                             />

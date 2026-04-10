@@ -1,1 +1,1 @@
-export { default } from "@/components/shared/ProductCollection/CollectionClient";
+export { default } from "@/components/shared/ProductCollection/components/CollectionClient";

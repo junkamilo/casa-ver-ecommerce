@@ -2,7 +2,7 @@ import Footer from "@/components/Footer";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/layout/Header";
 import CollectionHero from "@/app/collections/[slug]/components/CollectionHero";
-import CollectionClient from "@/components/shared/ProductCollection/CollectionClient";
+import CollectionClient from "@/components/shared/ProductCollection/components/CollectionClient";
 import BackButton from "@/components/ui/BackButton";
 import { getAllProducts } from "./services";
 import type { TiendaFilters } from "./types";

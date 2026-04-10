@@ -59,6 +59,11 @@ export default function ColorsSection({
     onSetColorImages(colorName, existingImages.filter((u) => u !== urlToRemove));
   };
 
+  const handleSetCover = (colorName: string, existingImages: string[], coverUrl: string) => {
+    const rest = existingImages.filter((u) => u !== coverUrl);
+    onSetColorImages(colorName, [coverUrl, ...rest]);
+  };
+
   return (
     <section className="space-y-4">
       <SectionTitle>Colores y Tallas</SectionTitle>
@@ -192,6 +197,7 @@ export default function ColorsSection({
                       disabled={disabled || atLimit}
                       onChange={(urls) => handleAddImages(color.name, color.images, urls)}
                       onRemove={(url) => handleRemoveImage(color.name, color.images, url)}
+                      onSetCover={(url) => handleSetCover(color.name, color.images, url)}
                       maxImages={MAX_IMAGES_PER_COLOR}
                       colorInfo={{ name: color.name, hexCode: color.hexCode }}
                     />

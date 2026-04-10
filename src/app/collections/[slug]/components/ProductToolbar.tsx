@@ -1,1 +1,1 @@
-export { ProductToolbar } from "@/components/shared/ProductCollection/ProductToolbar";
+export { ProductToolbar } from "@/components/shared/ProductCollection/components/ProductToolbar";

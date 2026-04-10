@@ -1,1 +1,1 @@
-export { MobileFilterDrawer } from "@/components/shared/ProductCollection/MobileFilterDrawer";
+export { MobileFilterDrawer } from "@/components/shared/ProductCollection/components/MobileFilterDrawer";

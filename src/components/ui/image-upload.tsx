@@ -16,6 +16,7 @@ interface MediaUploadProps {
   disabled?: boolean;
   onChange: (urls: string[]) => void;
   onRemove: (url: string) => void;
+  onSetCover?: (url: string) => void;
   maxImages?: number;
   /** Cuando se pasa, activa el layout de card por color */
   colorInfo?: { name: string; hexCode: string };
@@ -26,6 +27,7 @@ export default function ImageUpload({
   disabled,
   onChange,
   onRemove,
+  onSetCover,
   maxImages = 5,
   colorInfo,
 }: MediaUploadProps) {
@@ -125,7 +127,7 @@ export default function ImageUpload({
               {colorInfo.name}
             </span>
             <span className="text-[11px] text-gray-400">
-              {total} foto{total !== 1 ? "s" : ""}
+              {total} archivo{total !== 1 ? "s" : ""}
             </span>
           </div>
 
@@ -138,10 +140,10 @@ export default function ImageUpload({
           >
             <Upload className="w-5 h-5 shrink-0" />
             <span className="text-[10px] font-medium text-center leading-tight">
-              Subir archivo
+              Subir foto o video
             </span>
             <span className="text-[9px] text-center text-gray-400 leading-tight">
-              JPEG, PNG, HEIC · máx 10 MB
+              JPEG, PNG, HEIC, MP4, MOV…
             </span>
           </button>
         </div>
@@ -161,7 +163,7 @@ export default function ImageUpload({
           </span>
           {value.length > 0 && (
             <span className="text-[#C19A6B] font-medium">
-              El primer archivo será la portada
+              {value.length > 1 ? "Haz clic en una foto o video para elegirlo como portada" : "Este archivo es la portada"}
             </span>
           )}
         </div>
@@ -173,7 +175,17 @@ export default function ImageUpload({
               {value.map((url, index) => (
                 <div
                   key={url}
-                  className="relative shrink-0 w-24 sm:w-28 rounded-xl overflow-hidden border-2 border-gray-200 group hover:border-[#C19A6B] transition-colors bg-gray-100 snap-start"
+                  role={index !== 0 && onSetCover ? "button" : undefined}
+                  tabIndex={index !== 0 && onSetCover && !disabled ? 0 : undefined}
+                  onClick={() => { if (index !== 0 && onSetCover && !disabled) onSetCover(url); }}
+                  onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && index !== 0 && onSetCover && !disabled) onSetCover(url); }}
+                  className={`relative shrink-0 w-24 sm:w-28 rounded-xl overflow-hidden border-2 transition-colors bg-gray-100 snap-start group
+                    ${index === 0
+                      ? "border-[#154734]"
+                      : onSetCover && !disabled
+                        ? "border-gray-200 hover:border-[#C19A6B] cursor-pointer"
+                        : "border-gray-200"
+                    }`}
                   style={{ aspectRatio: "2/3" }}
                 >
                   {isVideo(url) ? (
@@ -198,15 +210,19 @@ export default function ImageUpload({
                     />
                   )}
 
-                  {index === 0 && (
+                  {index === 0 ? (
                     <span className="absolute bottom-0 left-0 right-0 bg-[#154734]/85 text-white text-[9px] font-bold text-center py-1 tracking-wide">
                       PORTADA
+                    </span>
+                  ) : onSetCover && !disabled && (
+                    <span className="absolute bottom-0 left-0 right-0 bg-[#C19A6B]/90 text-white text-[9px] font-bold text-center py-1 tracking-wide opacity-0 group-hover:opacity-100 transition-opacity">
+                      ★ PONER PORTADA
                     </span>
                   )}
 
                   <button
                     type="button"
-                    onClick={() => onRemove(url)}
+                    onClick={(e) => { e.stopPropagation(); onRemove(url); }}
                     disabled={disabled}
                     className="absolute top-1.5 right-1.5 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 shadow-md"
                   >
@@ -291,7 +307,9 @@ export default function ImageUpload({
       <div className="flex items-center justify-between text-xs text-gray-500">
         <span>{value.length + uploading.length} de {maxImages} archivos</span>
         {value.length > 0 && (
-          <span className="text-[#C19A6B] font-medium">El primer archivo será la portada</span>
+          <span className="text-[#C19A6B] font-medium">
+            {value.length > 1 ? "Haz clic en una foto o video para elegirlo como portada" : "Este archivo es la portada"}
+          </span>
         )}
       </div>
 
@@ -300,7 +318,17 @@ export default function ImageUpload({
           {value.map((url, index) => (
             <div
               key={url}
-              className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-200 group hover:border-[#C19A6B] transition-colors bg-gray-100"
+              role={index !== 0 && onSetCover ? "button" : undefined}
+              tabIndex={index !== 0 && onSetCover && !disabled ? 0 : undefined}
+              onClick={() => { if (index !== 0 && onSetCover && !disabled) onSetCover(url); }}
+              onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && index !== 0 && onSetCover && !disabled) onSetCover(url); }}
+              className={`relative w-24 h-24 rounded-lg overflow-hidden border-2 transition-colors bg-gray-100 group
+                ${index === 0
+                  ? "border-[#154734]"
+                  : onSetCover && !disabled
+                    ? "border-gray-200 hover:border-[#C19A6B] cursor-pointer"
+                    : "border-gray-200"
+                }`}
             >
               {isVideo(url) ? (
                 <>
@@ -314,15 +342,19 @@ export default function ImageUpload({
                 <img src={url} alt={`Archivo ${index + 1}`} className="absolute inset-0 w-full h-full object-cover" />
               )}
 
-              {index === 0 && (
+              {index === 0 ? (
                 <span className="absolute bottom-0 left-0 right-0 bg-[#154734]/80 text-white text-[9px] font-bold text-center py-0.5">
                   PORTADA
+                </span>
+              ) : onSetCover && !disabled && (
+                <span className="absolute bottom-0 left-0 right-0 bg-[#C19A6B]/90 text-white text-[9px] font-bold text-center py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  ★ PORTADA
                 </span>
               )}
 
               <button
                 type="button"
-                onClick={() => onRemove(url)}
+                onClick={(e) => { e.stopPropagation(); onRemove(url); }}
                 disabled={disabled}
                 className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 shadow-md"
               >
