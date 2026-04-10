@@ -5,14 +5,8 @@ import SectionHeader from "@/components/ui/SectionHeader";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
 import ProductCard from "@/components/ui/ProductCard";
 import { useCarousel } from "@/components/shared/ProductCarousel/hooks/useCarousel";
-import type { CollectionProduct } from "@/components/shared/ProductCollection/types";
-
-const BRAND_GOLD = "#C19A6B";
-const BRAND_GREEN = "#154734";
-
-interface NewCollectionClientProps {
-  items: CollectionProduct[];
-}
+import type { NewCollectionClientProps } from "../types";
+import { BRAND_GOLD, BRAND_GREEN } from "../constants";
 
 const NewCollectionClient = ({ items }: NewCollectionClientProps) => {
   const { scrollRef, canScrollLeft, canScrollRight, scroll } = useCarousel();

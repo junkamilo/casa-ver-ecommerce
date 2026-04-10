@@ -1,1 +1,1 @@
-export { ProductGrid } from "@/components/shared/ProductCollection/ProductGrid";
+export { ProductGrid } from "@/components/shared/ProductCollection/components/ProductGrid";

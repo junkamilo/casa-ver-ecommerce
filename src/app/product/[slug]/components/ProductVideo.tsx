@@ -1,8 +1,6 @@
-// 2. Archivo ProductVideo.tsx completo
-
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Film } from "lucide-react";
 
 interface Props {
@@ -15,7 +13,25 @@ function normalizeCloudinaryVideoUrl(url: string): string {
 
 export default function ProductVideo({ url }: Props) {
   const [hasError, setHasError] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const normalizedUrl = normalizeCloudinaryVideoUrl(url);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   if (hasError) {
     return (
@@ -34,27 +50,29 @@ export default function ProductVideo({ url }: Props) {
   }
 
   return (
-    <div className="relative w-full h-full bg-gray-50 overflow-hidden isolate">
+    <div ref={containerRef} className="relative w-full h-full bg-gray-50 overflow-hidden isolate">
 
       {/* Skeleton de carga (Fondo animado) */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-gray-200 via-gray-100 to-gray-200 animate-pulse -z-10" />
+      <div className="absolute inset-0 bg-linear-to-tr from-gray-200 via-gray-100 to-gray-200 animate-pulse -z-10" />
 
       {/* Anillo interior sutil para un acabado de marco premium */}
-      <div className="absolute inset-0 ring-1 ring-inset ring-black/5 z-20 pointer-events-none rounded-[2rem]" />
+      <div className="absolute inset-0 ring-1 ring-inset ring-black/5 z-20 pointer-events-none rounded-4xl" />
 
-      <video
-        src={normalizedUrl}
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="auto"
-        onError={() => setHasError(true)}
-        className="w-full h-full object-cover object-center absolute inset-0 z-0 transition-transform duration-1000 ease-out group-hover:scale-[1.03]"
-      />
+      {isVisible && (
+        <video
+          src={normalizedUrl}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="none"
+          onError={() => setHasError(true)}
+          className="w-full h-full object-cover object-center absolute inset-0 z-0 transition-transform duration-1000 ease-out group-hover:scale-[1.03]"
+        />
+      )}
 
       {/* Overlay Cinemático */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#154734]/80 via-transparent to-transparent pointer-events-none z-10 opacity-70 group-hover:opacity-40 transition-opacity duration-700 ease-in-out" />
+      <div className="absolute inset-0 bg-linear-to-t from-[#154734]/80 via-transparent to-transparent pointer-events-none z-10 opacity-70 group-hover:opacity-40 transition-opacity duration-700 ease-in-out" />
 
     </div>
   );
