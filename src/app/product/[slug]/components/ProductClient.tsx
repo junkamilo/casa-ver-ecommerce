@@ -1,10 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { Star, Check, ShoppingBag, Sparkles, ChevronRight } from "lucide-react";
+import { Star, Sparkles, ChevronRight } from "lucide-react";
 
-import { useCart } from "@/context/CartContext";
 import ProductGallery from "./ProductGallery";
 import ColorSelector from "./ColorSelector";
 import SizeSelector from "./SizeSelector";
@@ -15,28 +12,12 @@ import RecommendedProducts from "./RecommendedProducts";
 import ProductVideo from "./ProductVideo";
 import PaymentCarousel, { PAYMENT_METHODS } from "./PaymentCarousel";
 import Testimonials from "@/components/layout/Testimonials";
-
 import BackButton from "@/components/ui/BackButton";
-import { UIProduct, UIColor, ExistingReview } from "../types";
-import type { CollectionProduct } from "@/components/shared/ProductCollection/types";
+import { Toast } from "./Toast";
+
+import type { ProductClientProps } from "../types";
 import { formatPrice } from "../constants";
-import type { TestimonialItem } from "@/components/layout/Testimonials/types/types";
-
-interface BuyerInfo {
-  name: string;
-  avatar: string | null;
-}
-
-interface Props {
-  product: UIProduct;
-  recommended: CollectionProduct[];
-  existingReview: ExistingReview | null;
-  isAuthenticated: boolean;
-  reviews: TestimonialItem[];
-  socialProof: { totalBuyers: number; recentBuyers: BuyerInfo[] };
-}
-
-const isVideoUrl = (url: string) => /\.(mp4|mov|avi|webm|mkv|ogg)$/i.test(url);
+import { useProductClient } from "../hooks/useProductClient";
 
 export default function ProductClient({
   product,
@@ -45,165 +26,45 @@ export default function ProductClient({
   isAuthenticated,
   reviews,
   socialProof,
-}: Props) {
-  // ─── Estado principal ────────────────────────────────────────────────────
-  const [selectedImage, setSelectedImage] = useState(0);
-  const initialItem = product.isSet && product.items.length > 0 ? product.items[0] : null;
-  const [selectedColor, setSelectedColor] = useState<UIColor | null>(
-    initialItem ? (initialItem.colors[0] ?? null) : (product.colors[0] ?? null)
-  );
-  const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  const [showAddedNotification, setShowAddedNotification] = useState(false);
-  const [openAccordion, setOpenAccordion] = useState<string | null>(null);
-  const [descOpen, setDescOpen] = useState(false);
-
-  // 'main' = producto principal, cualquier otro string = item.id de subcategoría
-  // Para conjuntos: arrancar directamente en la primera subcategoría
-  const [activeView, setActiveView] = useState<string>(
-    product.isSet && product.items.length > 0 ? product.items[0].id : "main"
-  );
-
-  const { addToCart, setBuyNow } = useCart();
-  const router = useRouter();
-
-  // ─── Datos activos según la vista seleccionada ──────────────────────────
-  const activeItem = activeView === "main"
-    ? null
-    : (product.items.find((i) => i.id === activeView) ?? null);
-
-  const activeColors = activeItem ? activeItem.colors : product.colors;
-  const activeVideoUrl = activeItem ? activeItem.videoUrl : product.videoUrl;
-  const activePrice = activeItem ? (activeItem.price ?? product.basePrice) : product.basePrice;
-  const activeStock = activeItem ? activeItem.stock : product.stock;
-  const activeDescription = activeItem
-    ? (activeItem.description ?? product.description)
-    : product.description;
-
-  // Galería: cuando se ve una subcategoría no se muestran las imágenes generales del padre
-  const activeGeneralImages = activeItem ? [] : product.generalImages;
-
-  // ─── Galería maestra (reconstruida cuando cambia la vista activa) ────────
-  const masterGallery = useMemo(() => {
-    const items: { url: string; color: UIColor | null }[] = [];
-    activeGeneralImages
-      .filter((url) => !isVideoUrl(url))
-      .forEach((url) => items.push({ url, color: null }));
-    activeColors.forEach((color) => {
-      color.images
-        .filter((url) => !isVideoUrl(url))
-        .forEach((url) => items.push({ url, color }));
-    });
-    return items;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeGeneralImages, activeColors]);
-
-  const galleryUrls = masterGallery.map((item) => item.url);
-
-  // ─── Handlers ────────────────────────────────────────────────────────────
-
-  const handleViewSelect = (view: string) => {
-    setActiveView(view);
-    const item = view === "main"
-      ? null
-      : (product.items.find((i) => i.id === view) ?? null);
-    setSelectedColor(item ? (item.colors[0] ?? null) : (product.colors[0] ?? null));
-    setSelectedSize(null);
-    setSelectedImage(0);
-  };
-
-  const handleColorSelect = (color: UIColor) => {
-    setSelectedColor(color);
-    setSelectedSize(null);
-    const firstIdx = masterGallery.findIndex((item) => item.color?.id === color.id);
-    if (firstIdx !== -1) setSelectedImage(firstIdx);
-  };
-
-  const handleImageSelect = (index: number) => {
-    setSelectedImage(index);
-    const associatedColor = masterGallery[index].color;
-    if (associatedColor && associatedColor.id !== selectedColor?.id) {
-      setSelectedColor(associatedColor);
-      setSelectedSize(null);
-    }
-  };
-
-  const buildCartProduct = () => {
-    if (!selectedSize || !selectedColor) return null;
-    const variant = selectedColor.variants.find((v) => v.size === selectedSize);
-    const cartName = product.isSet && activeItem
-      ? `${product.name} — ${activeItem.name}`
-      : product.name;
-    return {
-      id: product.id,
-      variantId: variant?.variantId ?? "",
-      sku: variant?.sku ?? "",
-      name: cartName,
-      price: activePrice,
-      gallery: galleryUrls,
-      image: galleryUrls[0] ?? "",
-    };
-  };
-
-  const handleAddToCart = () => {
-    const cartProduct = buildCartProduct();
-    if (!cartProduct || !selectedColor) return;
-    addToCart(
-      cartProduct,
-      quantity,
-      { name: selectedColor.name, hex: selectedColor.hex },
-      selectedSize!
-    );
-    setShowAddedNotification(true);
-    setTimeout(() => setShowAddedNotification(false), 2000);
-  };
-
-  const handleBuyNow = () => {
-    const cartProduct = buildCartProduct();
-    if (!cartProduct || !selectedColor) return;
-    setBuyNow(
-      cartProduct,
-      quantity,
-      { name: selectedColor.name, hex: selectedColor.hex },
-      selectedSize!
-    );
-    router.push("/checkout");
-  };
-
-  const scrollToReviews = () => {
-    document.getElementById("seccion-resenas")?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const toggleAccordion = (key: string) => {
-    setOpenAccordion(openAccordion === key ? null : key);
-  };
+}: ProductClientProps) {
+  const {
+    selectedImage,
+    selectedColor,
+    quantity,
+    setQuantity,
+    selectedSize,
+    setSelectedSize,
+    showAddedNotification,
+    openAccordion,
+    descOpen,
+    setDescOpen,
+    activeView,
+    activeItem,
+    activeColors,
+    activeVideoUrl,
+    activePrice,
+    activeStock,
+    activeDescription,
+    galleryUrls,
+    handleViewSelect,
+    handleColorSelect,
+    handleImageSelect,
+    handleAddToCart,
+    handleBuyNow,
+    scrollToReviews,
+    toggleAccordion,
+  } = useProductClient(product);
 
   return (
     <div className="bg-white selection:bg-[#C19A6B]/20 min-h-screen">
 
-      {/* Toast */}
-      <div
-        aria-live="polite"
-        className={`fixed top-4 right-4 sm:top-6 sm:right-6 z-100 flex items-center gap-3 sm:gap-4 bg-[#154734] text-white shadow-2xl rounded-xl px-4 sm:px-5 py-3 sm:py-4 transition-all duration-500 max-w-[calc(100vw-32px)] sm:max-w-none ${showAddedNotification ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-8 pointer-events-none"
-          }`}
-      >
-        <div className="bg-white/20 rounded-full p-2 backdrop-blur-sm">
-          <Check className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <p className="text-sm font-semibold tracking-wide">Añadido a tu bolsa</p>
-          <p className="text-xs text-white/70 flex items-center gap-1.5 mt-0.5">
-            <ShoppingBag className="w-3.5 h-3.5" />
-            {product.name}
-          </p>
-        </div>
-      </div>
+      <Toast show={showAddedNotification} productName={product.name} />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-4 sm:pt-6">
         <BackButton />
       </div>
 
-<main className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-4 pb-12 sm:pt-8 sm:pb-16 lg:pt-12 lg:pb-32">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 pt-4 pb-12 sm:pt-8 sm:pb-16 lg:pt-12 lg:pb-32">
         <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-5 sm:gap-8 lg:gap-16 xl:gap-20">
 
           {/* Galería — sticky mientras scrolleas los detalles */}
@@ -223,7 +84,6 @@ export default function ProductClient({
 
             {/* Nombre y Precio */}
             <div className="mb-4 sm:mb-5">
-              {/* Badge de etiqueta */}
               {product.badge && (
                 <span className={`inline-block mb-3 text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-sm text-white ${
                   product.badge === "Nuevo Producto"
@@ -243,9 +103,9 @@ export default function ProductClient({
               >
                 {product.name}
               </h1>
-              {/* ── Precio / Antes / Stock — móvil ── */}
+
+              {/* Precio / Antes / Stock — móvil */}
               <div className="flex sm:hidden items-stretch pt-1">
-                {/* Precio */}
                 <div className="flex flex-col flex-1 pr-4">
                   <span className="text-[10px] uppercase tracking-[0.18em] text-gray-400 font-bold mb-1.5">Precio</span>
                   <p className="text-3xl font-medium text-gray-900 leading-none">
@@ -253,10 +113,8 @@ export default function ProductClient({
                   </p>
                 </div>
 
-                {/* Separador */}
                 <div className="w-px bg-gray-200 shrink-0" />
 
-                {/* Antes */}
                 {product.comparePrice ? (
                   <>
                     <div className="flex flex-col flex-1 px-4">
@@ -274,7 +132,6 @@ export default function ProductClient({
                   </>
                 )}
 
-                {/* Stock */}
                 <div className="flex flex-col flex-1 pl-4">
                   <span className="text-[10px] uppercase tracking-[0.18em] text-gray-400 font-bold mb-1.5">Stock</span>
                   {activeStock === 0 ? (
@@ -285,7 +142,7 @@ export default function ProductClient({
                 </div>
               </div>
 
-              {/* ── Precio / Stock — desktop (como estaba) ── */}
+              {/* Precio / Stock — desktop */}
               <div className="hidden sm:block">
                 <div className="flex items-end gap-3">
                   <p className="text-3xl font-medium text-gray-900">{formatPrice(activePrice)}</p>
@@ -383,23 +240,23 @@ export default function ProductClient({
               </div>
             </a>
 
-            {/* ── TABS: Producto principal + Subcategorías ──────────────── */}
+            {/* TABS: Subcategorías */}
             {product.isSet && product.items.length > 0 && (
               <div className="mb-5 sm:mb-8">
                 <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-gray-400 mb-3">
                   Elige lo que quieres ver
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {/* Solo tabs de subcategorías — el padre no se muestra */}
                   {product.items.map((item) => (
                     <button
                       key={item.id}
                       type="button"
                       onClick={() => handleViewSelect(item.id)}
-                      className={`px-5 py-2.5 rounded-xl border text-sm font-bold transition-all duration-200 ${activeView === item.id
+                      className={`px-5 py-2.5 rounded-xl border text-sm font-bold transition-all duration-200 ${
+                        activeView === item.id
                           ? "bg-[#154734] text-white border-[#154734] shadow-md shadow-[#154734]/20"
                           : "bg-white text-gray-700 border-gray-300 hover:border-[#154734] hover:text-[#154734]"
-                        }`}
+                      }`}
                     >
                       {item.name}
                       {item.stock === 0 && (
@@ -464,18 +321,19 @@ export default function ProductClient({
                 <button
                   onClick={handleAddToCart}
                   disabled={!selectedSize || activeStock === 0}
-                  className={`flex-1 font-bold uppercase tracking-widest text-xs sm:text-sm rounded-lg transition-all h-14 duration-300 ${selectedSize && activeStock > 0
+                  className={`flex-1 font-bold uppercase tracking-widest text-xs sm:text-sm rounded-lg transition-all h-14 duration-300 ${
+                    selectedSize && activeStock > 0
                       ? "bg-[#154734] hover:bg-[#0f3424] text-white shadow-lg shadow-[#154734]/20 hover:shadow-[#154734]/40 active:scale-[0.98]"
                       : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    }`}
+                  }`}
                 >
                   {activeStock === 0
                     ? "Producto Agotado"
                     : !selectedSize
-                      ? "Selecciona una talla"
-                      : showAddedNotification
-                        ? "✓ Agregado"
-                        : "Agregar a la Bolsa"}
+                    ? "Selecciona una talla"
+                    : showAddedNotification
+                    ? "✓ Agregado"
+                    : "Agregar a la Bolsa"}
                 </button>
               </div>
 
@@ -493,7 +351,7 @@ export default function ProductClient({
               </button>
             </div>
 
-            {/* Métodos de pago — móvil: carrusel animado / desktop: grid estático */}
+            {/* Métodos de pago — móvil: carrusel / desktop: grid */}
             <div className="sm:hidden">
               <PaymentCarousel />
             </div>
@@ -517,30 +375,23 @@ export default function ProductClient({
           </div>
         </div>
 
-        {/* 1. Componente de Sección de Video en ProductClient.tsx */}
-
         {/* Video editorial — reactivo al tab activo */}
         {activeVideoUrl && (
           <div className="mt-12 sm:mt-24 md:mt-32 mb-10 sm:mb-16 mx-3 sm:mx-6 lg:mx-8 xl:mx-12 relative bg-[#154734] border border-[#C19A6B]/20 rounded-2xl sm:rounded-[2.5rem] md:rounded-[3rem] shadow-[0_20px_50px_-15px_rgba(21,71,52,0.4)] overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-5 sm:gap-10 lg:gap-16 p-6 sm:p-10 lg:p-16 group isolate transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(21,71,52,0.5)]">
 
-            {/* Decoración de fondo */}
             <div
               className="absolute inset-0 opacity-[0.05] pointer-events-none"
               style={{ backgroundImage: "radial-gradient(#C19A6B 1.5px, transparent 1.5px)", backgroundSize: "32px 32px" }}
             />
             <div className="absolute top-0 right-0 w-72 h-72 bg-linear-to-bl from-[#C19A6B]/20 to-transparent rounded-bl-full pointer-events-none -z-10 transition-transform duration-1000 group-hover:scale-110" />
 
-            {/* Video — arriba en móvil, derecha en desktop */}
             <div className="shrink-0 flex justify-center sm:order-last sm:justify-end z-10 w-full sm:w-auto">
               <div className="relative w-[55vw] max-w-55 sm:w-60 md:w-70 lg:w-[320px] aspect-3/4 sm:aspect-4/5 bg-white rounded-2xl sm:rounded-4xl overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.3)] border border-[#C19A6B]/30 transition-all duration-700 ease-in-out hover:-translate-y-2 hover:shadow-[0_25px_50px_rgba(193,154,107,0.25)] hover:border-[#C19A6B]/60">
                 <ProductVideo url={activeVideoUrl} />
               </div>
             </div>
 
-            {/* Texto — debajo del video en móvil, izquierda en desktop */}
             <div className="flex-1 min-w-0 text-center sm:text-left z-10 w-full sm:w-auto">
-
-              {/* Etiqueta con separadores */}
               <div className="flex items-center justify-center sm:justify-start gap-3 sm:gap-4 mb-4 sm:mb-6">
                 <span className="h-px w-8 sm:w-12 bg-linear-to-r from-transparent to-[#C19A6B]" />
                 <span className="text-[9px] sm:text-xs font-black tracking-[0.3em] sm:tracking-[0.4em] uppercase text-[#C19A6B] flex items-center gap-1.5 sm:gap-2 drop-shadow-sm">
@@ -558,14 +409,12 @@ export default function ProductClient({
                 <span className="italic text-[#C19A6B]">&amp; Fluidez</span>
               </h2>
 
-              {/* Descripción — oculta en móvil */}
               <p className="hidden sm:block text-gray-300 font-light leading-relaxed max-w-md text-sm sm:text-base border-l-2 border-[#C19A6B]/50 pl-4">
                 Descubre cómo esta prenda se adapta a tu cuerpo. Diseñada para brindarte
                 comodidad absoluta sin perder la elegancia en cada uno de tus pasos.
               </p>
             </div>
 
-            {/* Texto decorativo — oculto en móvil */}
             <div className="hidden sm:block absolute top-1/2 right-10 text-[250px] lg:text-[300px] text-white/5 font-serif leading-none -translate-y-1/2 pointer-events-none select-none transition-transform duration-1000 group-hover:scale-105">
               C.V.
             </div>

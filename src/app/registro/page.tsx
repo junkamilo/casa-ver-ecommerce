@@ -1,12 +1,7 @@
 import { CheckCircle2 } from "lucide-react";
 import RegisterForm from "@/components/register";
 import AuthLayout, { BenefitItem } from "@/components/ui/auth/AuthLayout";
-
-const BENEFITS = [
-  "Acceso a ofertas y descuentos exclusivos",
-  "Seguimiento en tiempo real de tus pedidos",
-  "Guarda tus direcciones y paga más rápido",
-] as const;
+import { BENEFITS } from "./constants";
 
 export default function RegisterPage() {
   return (

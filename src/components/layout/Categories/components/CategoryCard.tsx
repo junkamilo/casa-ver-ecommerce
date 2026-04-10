@@ -1,11 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-
-interface CategoryCardProps {
-  image: string | null;
-  label: string;
-  slug: string;
-}
+import type { CategoryCardProps } from "../types";
 
 const CategoryCard = ({ image, label, slug }: CategoryCardProps) => (
   <Link
@@ -51,7 +46,7 @@ const CategoryCard = ({ image, label, slug }: CategoryCardProps) => (
       </div>
     )}
 
-    {/* "Explorar" en fallback */}
+    {/* "Explorar" en fallback sin imagen */}
     {!image && (
       <div className="absolute bottom-6 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 z-20">
         <div className="flex items-center gap-2">

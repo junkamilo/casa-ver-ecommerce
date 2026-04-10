@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Play, Maximize2, X } from "lucide-react";
+
+import { useProductGallery } from "../hooks/useProductGallery";
+import { normalizeVideoUrl } from "../utils";
 
 interface Props {
   gallery: string[];
@@ -14,10 +16,6 @@ interface Props {
   activeColorHex?: string;
 }
 
-function normalizeVideoUrl(url: string) {
-  return url.replace(/\.(mov|avi|webm|mkv)(\?.*)?$/, ".mp4$2");
-}
-
 export default function ProductGallery({
   gallery,
   videoUrl,
@@ -26,61 +24,18 @@ export default function ProductGallery({
   onSelect,
   activeColorHex,
 }: Props) {
-  const media = [...gallery, ...(videoUrl ? [videoUrl] : [])];
-  const [currentIndex, setCurrentIndex] = useState(selectedImage);
-  const [isZoomOpen, setIsZoomOpen] = useState(false);
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
-
-  useEffect(() => {
-    setCurrentIndex(selectedImage);
-  }, [selectedImage]);
-
-  // Bloquear scroll del body cuando el modal está abierto
-  useEffect(() => {
-    if (isZoomOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => { document.body.style.overflow = ""; };
-  }, [isZoomOpen]);
+  const {
+    media,
+    currentIndex,
+    isZoomOpen,
+    setIsZoomOpen,
+    goTo,
+    handleThumbnail,
+    handleTouchStart,
+    handleTouchEnd,
+  } = useProductGallery(gallery, videoUrl, selectedImage, onSelect);
 
   if (!media.length) return null;
-
-  const goTo = (index: number) => {
-    const next = (index + media.length) % media.length;
-    setCurrentIndex(next);
-    if (next < gallery.length) onSelect(next);
-  };
-
-  const handleThumbnail = (i: number) => {
-    setCurrentIndex(i);
-    if (i < gallery.length) onSelect(i);
-  };
-
-  // Swipe táctil en móvil: distingue tap (zoom) de swipe (navegar)
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null || touchStartY.current === null) return;
-    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
-    const absX = Math.abs(deltaX);
-    const absY = Math.abs(deltaY);
-
-    // Swipe horizontal: navegar entre imágenes
-    if (absX > 50 && absX > absY) {
-      if (e.cancelable) e.preventDefault();
-      goTo(deltaX < 0 ? currentIndex + 1 : currentIndex - 1);
-    }
-
-    touchStartX.current = null;
-    touchStartY.current = null;
-  };
 
   const currentMedia = media[currentIndex];
   const isCurrentVideo = !!(videoUrl && currentMedia === videoUrl);
@@ -89,6 +44,7 @@ export default function ProductGallery({
     <>
       <div className="flex flex-col-reverse lg:flex-row gap-3 sm:gap-4 lg:gap-5">
 
+        {/* Miniaturas */}
         <div className="flex lg:flex-col gap-2 sm:gap-3 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden py-2 lg:py-0 scrollbar-hide lg:w-20 xl:w-24 shrink-0 lg:max-h-175 xl:max-h-200 snap-x snap-mandatory lg:snap-none">
           {media.map((url, i) => {
             const isSelected = currentIndex === i;
@@ -133,6 +89,7 @@ export default function ProductGallery({
           })}
         </div>
 
+        {/* Imagen principal */}
         <div
           className={`relative w-full aspect-4/5 sm:aspect-3/4 bg-[#FAFAFA] rounded-xl sm:rounded-2xl overflow-hidden shadow-sm border border-gray-100 group touch-target ${
             isCurrentVideo ? "cursor-default" : "cursor-zoom-in"
@@ -158,7 +115,7 @@ export default function ProductGallery({
             />
           )}
 
-          {/* Tira de medios — todas las imágenes/videos en fila, deslizamiento con CSS */}
+          {/* Tira de medios — deslizamiento con CSS */}
           <div
             className="absolute inset-0 flex"
             style={{

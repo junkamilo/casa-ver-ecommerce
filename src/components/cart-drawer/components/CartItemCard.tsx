@@ -1,16 +1,10 @@
 import Image from "next/image";
 import { Minus, Plus, Trash2 } from "lucide-react";
-import type { CartDrawerItem } from "../types/types";
-
-interface CartItemCardProps {
-  item: CartDrawerItem;
-  onRemove: (id: string) => void;
-  onUpdateQty: (id: string, delta: number) => void;
-}
+import type { CartItemCardProps } from "../types";
 
 const CartItemCard = ({ item, onRemove, onUpdateQty }: CartItemCardProps) => (
   <div className="flex gap-4">
-    <div className="relative w-24 h-32 flex-shrink-0 bg-muted rounded overflow-hidden border border-border/50">
+    <div className="relative w-24 h-32 shrink-0 bg-muted rounded overflow-hidden border border-border/50">
       <Image src={item.image} alt={item.name} fill className="object-cover" />
     </div>
 

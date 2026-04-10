@@ -1,12 +1,6 @@
-import { KeyRound, ShieldCheck, Lock } from "lucide-react";
 import ForgotPasswordForm from "@/components/forgot-password";
 import AuthLayout, { BenefitItem } from "@/components/ui/auth/AuthLayout";
-
-const STEPS = [
-  { icon: KeyRound,    text: "Ingresa tu correo de recuperación" },
-  { icon: ShieldCheck, text: "Verifica el código que recibirás" },
-  { icon: Lock,        text: "Crea tu nueva contraseña segura" },
-] as const;
+import { STEPS } from "./constants";
 
 export default function RecuperarPage() {
   return (

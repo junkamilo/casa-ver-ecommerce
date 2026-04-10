@@ -1,10 +1,8 @@
 "use client";
 
-import { useForgotPasswordForm } from "./hooks/useForgotPasswordForm";
-import RecoveryEmailStep from "./components/RecoveryEmailStep";
+import { useForgotPasswordForm } from "./hooks";
+import { RecoveryEmailStep, NewPasswordStep, SuccessStep } from "./components";
 import VerifyCodeStep from "@/components/register/components/VerifyCodeStep";
-import NewPasswordStep from "./components/NewPasswordStep";
-import SuccessStep from "./components/SuccessStep";
 
 const ForgotPasswordForm = () => {
   const {

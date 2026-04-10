@@ -1,21 +1,10 @@
 "use client";
 
 import { Mail } from "lucide-react";
-import type { UseFormRegister, UseFormHandleSubmit, FieldErrors } from "react-hook-form";
-import type { RecoveryEmailFormData } from "../types/types";
+import type { RecoveryEmailStepProps } from "../types";
 import AuthAlert from "@/components/ui/auth/AuthAlert";
 import AuthFormHeader from "@/components/ui/auth/AuthFormHeader";
 import SubmitButton from "@/components/ui/auth/SubmitButton";
-
-interface RecoveryEmailStepProps {
-  register:     UseFormRegister<RecoveryEmailFormData>;
-  handleSubmit: UseFormHandleSubmit<RecoveryEmailFormData>;
-  errors:       FieldErrors<RecoveryEmailFormData>;
-  error:        string | null;
-  success:      string | null;
-  isLoading:    boolean;
-  onSubmit:     (data: RecoveryEmailFormData) => Promise<void>;
-}
 
 export default function RecoveryEmailStep({
   register,
