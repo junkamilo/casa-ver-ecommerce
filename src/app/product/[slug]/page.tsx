@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import Footer from "@/components/Footer";
