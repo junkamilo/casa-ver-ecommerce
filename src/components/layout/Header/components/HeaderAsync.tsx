@@ -1,12 +1,14 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import HeaderClient from "./HeaderClient";
 import type { NavCategory } from "../types";
 
 async function getNavCategories(): Promise<NavCategory[]> {
+  noStore(); // Las categorías deben reflejar la BD en tiempo real — nunca cachear
   try {
     const categories = await prisma.category.findMany({
       where: { isActive: true, parentId: null },
-      orderBy: { name: "asc" },
+      orderBy: { order: "asc" },
       include: {
         subcategories: {
           where: { isActive: true },
