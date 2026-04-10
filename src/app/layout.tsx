@@ -4,7 +4,8 @@ import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import SocialProofWrapper from "@/components/SocialProofWrapper";
 import { Providers } from "@/components/Providers";
-import { SpeedInsights } from "@vercel/speed-insights/next"
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { BASE_METADATA } from "@/lib/seo";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,13 +17,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Casa Verde",
-  description: "Casa Verde eCommerce",
-  icons: {
-    icon: "/icon.png",
-  },
-};
+export const metadata: Metadata = BASE_METADATA;
 
 export default function RootLayout({
   children,
@@ -30,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

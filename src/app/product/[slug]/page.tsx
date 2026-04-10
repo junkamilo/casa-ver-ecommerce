@@ -1,8 +1,10 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
+import { SITE_NAME } from "@/lib/seo";
 import { auth } from "@/auth";
 import Footer from "@/components/Footer";
 import AnnouncementBar from "@/components/AnnouncementBar";
@@ -20,6 +22,53 @@ import {
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+// ── SEO dinámico ─────────────────────────────────────────────────────────────
+// Query ligera, independiente de la query principal de la página.
+// Next.js ejecuta ambas en paralelo antes de renderizar.
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+
+  const product = await prisma.product.findUnique({
+    where: { slug, status: "ACTIVE" },
+    select: {
+      name: true,
+      description: true,
+      metaTitle: true,
+      metaDescription: true,
+      images: {
+        where: { colorId: null },
+        orderBy: { order: "asc" },
+        take: 1,
+        select: { url: true },
+      },
+    },
+  });
+
+  if (!product) return { title: "Producto no encontrado" };
+
+  const title = product.metaTitle ?? product.name;
+  const description = (product.metaDescription ?? product.description).slice(0, 160);
+  const imageUrl = product.images[0]?.url;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `${title} | ${SITE_NAME}`,
+      description,
+      type: "website",
+      ...(imageUrl && { images: [{ url: imageUrl, width: 800, height: 1067, alt: title }] }),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      ...(imageUrl && { images: [imageUrl] }),
+    },
+  };
 }
 
 export default async function ProductPage({ params }: Props) {

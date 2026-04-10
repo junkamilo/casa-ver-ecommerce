@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
+import { NOINDEX_METADATA } from "@/lib/seo";
 import ForgotPasswordForm from "@/components/forgot-password";
+
+export const metadata: Metadata = {
+  title: "Recuperar contraseña",
+  ...NOINDEX_METADATA,
+};
 import AuthLayout, { BenefitItem } from "@/components/ui/auth/AuthLayout";
 import { STEPS } from "./constants";
 

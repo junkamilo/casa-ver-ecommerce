@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Footer from "@/components/Footer";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/layout/Header";
@@ -9,9 +10,16 @@ import type { TiendaFilters } from "./types";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Tienda | Casa Verde",
-  description: "Descubre toda la colección de Casa Verde.",
+export const metadata: Metadata = {
+  title: "Tienda",
+  description:
+    "Descubre toda la colección de Casa Verde. Ropa con esencia natural, calidad colombiana y envíos a todo el país.",
+  openGraph: {
+    title: "Tienda | Casa Verde",
+    description:
+      "Descubre toda la colección de Casa Verde. Ropa con esencia natural y calidad colombiana.",
+    type: "website",
+  },
 };
 
 export default async function TiendaPage({
