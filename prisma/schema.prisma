@@ -292,6 +292,7 @@ model ProductImage {
   url       String
   altText   String?
   order     Int           @default(0)
+  isCover   Boolean       @default(false) // true = portada del producto para este color
 
   // Relación opcional: Si es null, es imagen general. Si tiene colorId, es específica.
   colorId   String?
@@ -300,6 +301,7 @@ model ProductImage {
   createdAt DateTime      @default(now())
 
   @@index([productId])
+  @@index([colorId, isCover])
   @@map("product_images")
 }
 
@@ -378,8 +380,10 @@ model ProductItemImage {
   url     String
   altText String?
   order   Int              @default(0)
+  isCover Boolean          @default(false) // true = portada de esta subcategoría para este color
 
   @@index([colorId])
+  @@index([colorId, isCover])
   @@map("product_item_images")
 }
 

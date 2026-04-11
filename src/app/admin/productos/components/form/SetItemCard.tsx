@@ -158,11 +158,12 @@ export default function SetItemCard({
 
           {/* ── BLOQUE D: Colores + Imágenes ─────────────────── */}
           <div className="space-y-3">
-            <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-              Colores disponibles
+            <p className={`text-[11px] font-black uppercase tracking-widest flex items-center gap-1.5 ${errors.colors ? "text-red-500" : "text-gray-400"}`}>
+              Colores disponibles <span className="text-red-500">*</span>
             </p>
+            {errors.colors && <p className="text-red-500 text-xs -mt-2">{errors.colors}</p>}
 
-            <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+            <div className={`bg-white rounded-xl border p-4 space-y-3 ${errors.colorImages ? "border-red-400 bg-red-50/30" : "border-gray-200"}`}>
               <div className="relative" ref={colorsDropdownRef}>
                 <button
                   type="button"
@@ -216,11 +217,14 @@ export default function SetItemCard({
               {/* Imágenes por color */}
               {item.colors.length > 0 && (
                 <div className="space-y-2 pt-2 border-t border-gray-100">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Imágenes por color</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Imágenes por color <span className="text-red-500">*</span>
+                  </p>
+                  {errors.colorImages && <p className="text-red-500 text-xs">{errors.colorImages}</p>}
                   {item.colors.map((color) => {
                     const collapsed = collapsedColors.has(color.name);
                     return (
-                      <div key={color.name} className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+                      <div key={color.name} className={`bg-gray-50 rounded-lg border overflow-hidden ${errors.colorImages && color.images.length === 0 ? "border-red-400" : "border-gray-200"}`}>
                         <button
                           type="button"
                           onClick={() => toggleCollapse(color.name)}
@@ -263,15 +267,16 @@ export default function SetItemCard({
 
           {/* ── BLOQUE E: Tallas ─────────────────────────────── */}
           <div className="space-y-3">
-            <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">
-              Tallas disponibles
+            <p className={`text-[11px] font-black uppercase tracking-widest ${errors.sizes ? "text-red-500" : "text-gray-400"}`}>
+              Tallas disponibles <span className="text-red-500">*</span>
             </p>
+            {errors.sizes && <p className="text-red-500 text-xs -mt-2">{errors.sizes}</p>}
             <div className="relative" ref={sizesDropdownRef}>
               <button
                 type="button"
                 disabled={disabled}
                 onClick={() => setSizesOpen((v) => !v)}
-                className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 hover:border-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border bg-white text-sm text-gray-700 hover:border-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${errors.sizes ? "border-red-400" : "border-gray-200"}`}
               >
                 <span className="flex items-center gap-2 flex-wrap">
                   {item.sizes.length === 0 ? (

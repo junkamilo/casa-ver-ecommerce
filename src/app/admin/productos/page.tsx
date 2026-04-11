@@ -60,11 +60,12 @@ export default function AdminProductos() {
       showToast("error", form.isSet ? "Completa nombre y categoría" : "Completa nombre, precio y categoría");
       return;
     }
-    if (form.selectedColors.length === 0) {
+    // Para isSet=true los colores/tallas viven en las subcategorías, no en el padre
+    if (!form.isSet && form.selectedColors.length === 0) {
       showToast("error", "Debes seleccionar al menos 1 color para el producto");
       return;
     }
-    if (form.selectedSizes.length === 0) {
+    if (!form.isSet && form.selectedSizes.length === 0) {
       showToast("error", "Debes seleccionar al menos 1 talla para el producto");
       return;
     }

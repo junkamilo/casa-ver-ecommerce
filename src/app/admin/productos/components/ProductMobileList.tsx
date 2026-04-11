@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2, Video } from "lucide-react";
 import { ProductMobileListProps } from "../types";
 import { formatPrice, getStockStatus } from "../constants";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
@@ -17,7 +17,8 @@ export default function ProductMobileList({ products, onEdit, onDelete, onToggle
     <div className="md:hidden space-y-2 p-3">
       {products.map((product) => {
         const stockStatus = getStockStatus(product.stock);
-        const mainImage = product.images[0]?.url || "/placeholder.jpg";
+        const mainImage = product.images[0]?.url ?? null;
+        const hasVideo = !mainImage && !!product.videoUrl;
         const isSetWithItems = product.isSet && product.setItems && product.setItems.length > 0;
 
         return (
@@ -26,8 +27,14 @@ export default function ProductMobileList({ products, onEdit, onDelete, onToggle
             className="bg-white rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 p-4 active:scale-[0.99] transition-transform"
           >
             {/* Imagen */}
-            <div className="w-24 h-24 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden relative shrink-0">
-              <Image src={mainImage} alt={product.name} fill className="object-cover" />
+            <div className="w-24 h-24 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden relative shrink-0 flex items-center justify-center">
+              {mainImage ? (
+                <Image src={mainImage} alt={product.name} fill className="object-cover" />
+              ) : hasVideo ? (
+                <Video className="w-8 h-8 text-gray-400" />
+              ) : (
+                <div className="w-full h-full bg-gray-200" />
+              )}
             </div>
 
             {/* Info */}

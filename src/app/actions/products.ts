@@ -78,12 +78,15 @@ function validatePayload(payload: ProductPayload, isCreate: boolean): string | n
     const invalidSizes = sizes.filter((s) => !ALLOWED_SIZES.includes(s as AllowedSize));
     if (invalidSizes.length > 0) return `Tallas inválidas: ${invalidSizes.join(", ")}`;
   }
-  if (!colors || colors.length === 0)
-    return "Debes seleccionar al menos 1 color para el producto";
-  if (!sizes || sizes.length === 0)
-    return "Debes seleccionar al menos 1 talla para el producto";
+  // Para isSet=true los colores/tallas viven en las subcategorías, no en el padre
+  if (!isSet) {
+    if (!colors || colors.length === 0)
+      return "Debes seleccionar al menos 1 color para el producto";
+    if (!sizes || sizes.length === 0)
+      return "Debes seleccionar al menos 1 talla para el producto";
+  }
 
-  for (const c of colors) {
+  for (const c of (colors || [])) {
     if (!c.name || typeof c.name !== "string") return "Nombre de color inválido";
     if (!HEX_RE.test(c.hexCode || "")) {
       return `Código de color inválido: ${c.hexCode}`;
