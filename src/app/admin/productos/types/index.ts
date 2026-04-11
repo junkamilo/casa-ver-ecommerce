@@ -8,6 +8,7 @@ export interface ProductListItem {
   category: { name: string };
   active: boolean;
   images: { url: string }[];
+  videoUrl?: string | null;
   description?: string;
   categoryId: string;
   isSet?: boolean;
@@ -51,7 +52,7 @@ export type ProductFormErrors = Partial<
 >;
 
 export type SingleItemFormErrors = Partial<
-  Record<"name" | "price" | "comparePrice" | "videoUrl", string>
+  Record<"name" | "price" | "comparePrice" | "videoUrl" | "colors" | "sizes" | "colorImages", string>
 >;
 
 export type ItemFormErrors = Record<string, SingleItemFormErrors>;
@@ -169,6 +170,7 @@ export interface ColorsSectionProps {
   disabled: boolean;
   colorError?: string | null;
   sizeError?: string | null;
+  colorImagesError?: string | null;
   onToggleColor: (name: string, hexCode: string) => void;
   onToggleSize: (size: string) => void;
   onSetColorImages: (colorName: string, images: string[]) => void;

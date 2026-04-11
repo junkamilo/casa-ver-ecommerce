@@ -76,6 +76,7 @@ export async function createColorVariants(
           url: url.trim(),
           altText: colorData.name || null,
           order: i,
+          isCover: i === 0, // La primera imagen (order=0) es la portada
         })),
       });
     }
@@ -156,6 +157,7 @@ export async function createSetItems(
             url: url.trim(),
             altText: colorData.name || null,
             order: i,
+            isCover: i === 0, // La primera imagen (order=0) es la portada de la subcategoría
           })),
         });
       }

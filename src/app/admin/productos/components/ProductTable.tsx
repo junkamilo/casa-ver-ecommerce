@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Edit2, Trash2, Loader2 } from "lucide-react";
+import { Edit2, Trash2, Loader2, Video } from "lucide-react";
 import { ProductTableProps } from "../types";
 import { formatPrice, getStockStatus } from "../constants";
 import ProductMobileList from "./ProductMobileList";
@@ -43,7 +43,8 @@ export default function ProductTable({
         <tbody className="divide-y divide-gray-100">
           {products.map((product) => {
             const stockStatus = getStockStatus(product.stock);
-            const mainImage = product.images[0]?.url || "/placeholder.jpg";
+            const mainImage = product.images[0]?.url ?? null;
+            const hasVideo = !mainImage && !!product.videoUrl;
             const isSetWithItems = product.isSet && product.setItems && product.setItems.length > 0;
             return (
               <tr
@@ -52,8 +53,14 @@ export default function ProductTable({
               >
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden relative shrink-0">
-                      <Image src={mainImage} alt={product.name} fill className="object-cover" />
+                    <div className="w-12 h-12 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden relative shrink-0 flex items-center justify-center">
+                      {mainImage ? (
+                        <Image src={mainImage} alt={product.name} fill className="object-cover" />
+                      ) : hasVideo ? (
+                        <Video className="w-5 h-5 text-gray-400" />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200" />
+                      )}
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-gray-900">{product.name}</p>

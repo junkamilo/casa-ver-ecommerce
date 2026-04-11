@@ -63,9 +63,7 @@ export const setItemFormSchema = z.object({
   name: z.string().min(2, "Mínimo 2 caracteres"),
   price: z.coerce
     .number()
-    .positive("Debe ser mayor a 0")
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
+    .positive("El precio es requerido y debe ser mayor a 0"),
   comparePrice: z.coerce
     .number()
     .positive("Debe ser mayor a 0")

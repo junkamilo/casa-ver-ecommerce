@@ -99,11 +99,14 @@ function validateProductBody(body: any): string | null {
     if (invalid.length) return `Tallas inválidas: ${invalid.join(", ")}`;
   }
 
-  // ── Colores y tallas requeridos ───────────────────────────────────────────
-  if (!Array.isArray(colors) || colors.length === 0)
-    return "Debes seleccionar al menos 1 color para el producto";
-  if (!Array.isArray(sizes) || sizes.length === 0)
-    return "Debes seleccionar al menos 1 talla para el producto";
+  // ── Colores y tallas requeridos (solo para productos simples) ────────────
+  // isSet=true: los colores/tallas viven en las subcategorías, no en el padre
+  if (!isSet) {
+    if (!Array.isArray(colors) || colors.length === 0)
+      return "Debes seleccionar al menos 1 color para el producto";
+    if (!Array.isArray(sizes) || sizes.length === 0)
+      return "Debes seleccionar al menos 1 talla para el producto";
+  }
 
   // ── Colores ───────────────────────────────────────────────────────────────
   if (colors.length > 30) return "Demasiados colores (máximo 30)";

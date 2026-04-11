@@ -14,6 +14,7 @@ export default function ColorsSection({
   disabled,
   colorError,
   sizeError,
+  colorImagesError,
   onToggleColor,
   onToggleSize,
   onSetColorImages,
@@ -150,20 +151,23 @@ export default function ColorsSection({
 
       {/* ── Imágenes por color ─────────────────────────────────── */}
       {selectedColors.length > 0 && (
-        <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-4">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Imágenes por color{" "}
-            <span className="text-gray-400 font-normal normal-case tracking-normal">
-              — hasta {MAX_IMAGES_PER_COLOR} por color
-            </span>
-          </p>
+        <div className={`bg-gray-50 rounded-xl border p-4 space-y-4 transition-colors ${colorImagesError ? "border-red-400 bg-red-50/30" : "border-gray-200"}`}>
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Imágenes por color <span className="text-red-500">*</span>{" "}
+              <span className="text-gray-400 font-normal normal-case tracking-normal">
+                — hasta {MAX_IMAGES_PER_COLOR} por color
+              </span>
+            </p>
+          </div>
+          <FieldError msg={colorImagesError} withIcon />
           {selectedColors.map((color) => {
             const collapsed = collapsedColors.has(color.name);
             const atLimit = color.images.length >= MAX_IMAGES_PER_COLOR;
             return (
               <div
                 key={color.name}
-                className="bg-white rounded-lg border border-gray-200 overflow-hidden"
+                className={`bg-white rounded-lg border overflow-hidden ${colorImagesError && color.images.length === 0 ? "border-red-400" : "border-gray-200"}`}
               >
                 <button
                   type="button"

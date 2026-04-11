@@ -100,11 +100,14 @@ function validateProductBody(body: any, isCreate: boolean): string | null {
     if (invalid.length) return `Tallas inválidas: ${invalid.join(", ")}`;
   }
 
-  // ── Colores y tallas requeridos ───────────────────────────────────────────
-  if (!Array.isArray(colors) || colors.length === 0)
-    return "Debes seleccionar al menos 1 color para el producto";
-  if (!Array.isArray(sizes) || sizes.length === 0)
-    return "Debes seleccionar al menos 1 talla para el producto";
+  // ── Colores y tallas requeridos (solo para productos simples) ────────────
+  // isSet=true: los colores/tallas viven en las subcategorías, no en el padre
+  if (!isSet) {
+    if (!Array.isArray(colors) || colors.length === 0)
+      return "Debes seleccionar al menos 1 color para el producto";
+    if (!Array.isArray(sizes) || sizes.length === 0)
+      return "Debes seleccionar al menos 1 talla para el producto";
+  }
 
   // ── Colores ───────────────────────────────────────────────────────────────
   if (colors.length > 30) return "Demasiados colores (máximo 30)";
@@ -195,8 +198,8 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       include: {
         category: { select: { id: true, name: true } },
-        images: { where: { colorId: null }, orderBy: { order: "asc" }, take: 1, select: { url: true } },
-        colors: { take: 1, include: { images: { orderBy: { order: "asc" }, take: 1, select: { url: true } } } },
+        images: { where: { colorId: null, isCover: true }, take: 1, select: { url: true } },
+        colors: { take: 1, include: { images: { where: { isCover: true }, take: 1, select: { url: true } } } },
         variants: { select: { stock: true } },
         items: {
           orderBy: { order: "asc" as const },
@@ -205,7 +208,7 @@ export async function GET() {
             price: true,
             colors: {
               select: {
-                images: { take: 1, select: { url: true } },
+                images: { where: { isCover: true }, take: 1, select: { url: true } },
                 variants: { select: { stock: true } },
               },
             },
@@ -246,6 +249,7 @@ export async function GET() {
             : setItemImg
               ? [{ url: setItemImg }]
               : [],
+        videoUrl: p.videoUrl ?? null,
         price: Number(p.basePrice),
         stock: regularStock,
         active: p.status === "ACTIVE",

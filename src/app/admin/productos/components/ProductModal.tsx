@@ -58,12 +58,14 @@ export default function ProductModal({
   const [itemErrors, setItemErrors] = useState<ItemFormErrors>({});
   const [colorError, setColorError] = useState<string | null>(null);
   const [sizeError, setSizeError] = useState<string | null>(null);
+  const [colorImagesError, setColorImagesError] = useState<string | null>(null);
 
   const shouldShowStockTable = selectedColors.length > 0 && selectedSizes.length > 0;
 
   const handleValidatedSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // ── 1. Validar campos del producto padre ──────────────────────────────────
     const schema = isSet ? setProductFormSchema : productFormSchema;
     const productResult = schema.safeParse({
       name,
@@ -83,9 +85,25 @@ export default function ProductModal({
       }
     }
 
+    // ── 2. Validar colores, tallas e imágenes del padre (solo productos simples) ─
+    // Cuando isSet=true los colores viven en las subcategorías, no en el padre.
+    const newColorError = !isSet && selectedColors.length === 0
+      ? "Debes seleccionar al menos 1 color"
+      : null;
+    const newSizeError = !isSet && selectedSizes.length === 0
+      ? "Debes seleccionar al menos 1 talla"
+      : null;
+    const newColorImagesError = !isSet && selectedColors.some((c) => c.images.length === 0)
+      ? `Todos los colores deben tener al menos 1 foto (falta: ${selectedColors.filter((c) => c.images.length === 0).map((c) => c.name).join(", ")})`
+      : null;
+
+    // ── 3. Validar subcategorías (solo si isSet) ──────────────────────────────
     const newItemErrors: ItemFormErrors = {};
     if (isSet) {
       for (const item of setItems) {
+        const errs: ItemFormErrors[string] = {};
+
+        // Zod: name, price, comparePrice, videoUrl
         const itemResult = setItemFormSchema.safeParse({
           name: item.name,
           price: item.price || undefined,
@@ -93,33 +111,39 @@ export default function ProductModal({
           videoUrl: item.videoUrl || undefined,
         });
         if (!itemResult.success) {
-          const errs: ItemFormErrors[string] = {};
           for (const issue of itemResult.error.issues) {
             const field = issue.path[0] as keyof ItemFormErrors[string];
             if (field && !errs[field]) errs[field] = issue.message;
           }
-          newItemErrors[item.localId] = errs;
         }
+
+        // Colores y tallas requeridos en cada subcategoría
+        if (item.colors.length === 0)
+          errs.colors = "Debes seleccionar al menos 1 color";
+        if (item.sizes.length === 0)
+          errs.sizes = "Debes seleccionar al menos 1 talla";
+
+        // Imágenes requeridas en cada color de la subcategoría
+        const missingImgColors = item.colors.filter((c) => c.images.length === 0);
+        if (missingImgColors.length > 0)
+          errs.colorImages = `Foto requerida en: ${missingImgColors.map((c) => c.name).join(", ")}`;
+
+        if (Object.keys(errs).length > 0) newItemErrors[item.localId] = errs;
       }
     }
-
-    const newColorError = selectedColors.length === 0
-      ? "Debes seleccionar al menos 1 color"
-      : null;
-    const newSizeError = selectedSizes.length === 0
-      ? "Debes seleccionar al menos 1 talla"
-      : null;
 
     setErrors(newErrors);
     setItemErrors(newItemErrors);
     setColorError(newColorError);
     setSizeError(newSizeError);
+    setColorImagesError(newColorImagesError);
 
     const isValid =
       Object.keys(newErrors).length === 0 &&
       Object.keys(newItemErrors).length === 0 &&
       !newColorError &&
-      !newSizeError;
+      !newSizeError &&
+      !newColorImagesError;
 
     if (isValid) {
       onSubmit(e);
@@ -131,6 +155,7 @@ export default function ProductModal({
     setItemErrors({});
     setColorError(null);
     setSizeError(null);
+    setColorImagesError(null);
     onClose();
   };
 
@@ -306,9 +331,10 @@ export default function ProductModal({
                       disabled={submitting}
                       onToggleColor={(name, hex) => { setColorError(null); toggleColor(name, hex); }}
                       onToggleSize={(size) => { setSizeError(null); toggleSize(size); }}
-                      onSetColorImages={setColorImages}
+                      onSetColorImages={(colorName, images) => { setColorImagesError(null); setColorImages(colorName, images); }}
                       colorError={colorError}
                       sizeError={sizeError}
+                      colorImagesError={colorImagesError}
                     />
 
                     {shouldShowStockTable && (
