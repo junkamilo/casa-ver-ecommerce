@@ -313,7 +313,6 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
         tx.productVariant.deleteMany({ where: { productId: id } }),
         tx.productImage.deleteMany({ where: { productId: id } }),
         tx.productItem.deleteMany({ where: { productId: id } }),
-        tx.subProduct.deleteMany({ where: { productId: id } }),
       ]);
       await tx.productColor.deleteMany({ where: { productId: id } });
 

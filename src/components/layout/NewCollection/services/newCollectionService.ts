@@ -3,7 +3,8 @@ import { ProductStatus } from "@prisma/client";
 import type { CollectionProduct } from "@/components/shared/ProductCollection/types";
 import { mapRawToCollectionProduct, type RawNewProduct } from "../mappers/productMapper";
 
-export async function fetchNewProducts(): Promise<CollectionProduct[]> {
+export async function fetchNewProducts(): Promise<{ items: CollectionProduct[]; hasMore: boolean }> {
+  // Fetch 9 to detect if there are more than 8 without an extra COUNT query
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const raw = await (prisma as any).product.findMany({
     where: { isNew: true, status: ProductStatus.ACTIVE },
@@ -48,8 +49,10 @@ export async function fetchNewProducts(): Promise<CollectionProduct[]> {
       },
     },
     orderBy: { createdAt: "desc" },
-    take: 10,
+    take: 9,
   });
 
-  return (raw as RawNewProduct[]).map(mapRawToCollectionProduct);
+  const hasMore = raw.length > 8;
+  const items = (raw as RawNewProduct[]).slice(0, 8).map(mapRawToCollectionProduct);
+  return { items, hasMore };
 }

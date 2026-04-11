@@ -17,8 +17,12 @@ export default function ProductMobileList({ products, onEdit, onDelete, onToggle
     <div className="md:hidden space-y-2 p-3">
       {products.map((product) => {
         const stockStatus = getStockStatus(product.stock);
-        const mainImage = product.images[0]?.url ?? null;
-        const hasVideo = !mainImage && !!product.videoUrl;
+        const rawImage = product.images[0]?.url ?? null;
+        const rawImageIsVideo = rawImage
+          ? rawImage.includes('/video/upload/') || /\.(mp4|webm|mov|avi)(\?|$)/i.test(rawImage)
+          : false;
+        const mainImage = rawImage && !rawImageIsVideo ? rawImage : null;
+        const hasVideo = !mainImage && (!!product.videoUrl || rawImageIsVideo);
         const isSetWithItems = product.isSet && product.setItems && product.setItems.length > 0;
 
         return (

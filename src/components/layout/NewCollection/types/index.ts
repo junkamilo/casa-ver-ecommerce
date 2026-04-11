@@ -2,4 +2,5 @@ import type { CollectionProduct } from "@/components/shared/ProductCollection/ty
 
 export interface NewCollectionClientProps {
   items: CollectionProduct[];
+  hasMore: boolean;
 }

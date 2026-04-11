@@ -6,6 +6,7 @@ export default function SetItemsSection({
   items,
   disabled,
   itemErrors = {},
+  noItemsError,
   onAdd,
   onRemove,
   onUpdate,
@@ -17,8 +18,10 @@ export default function SetItemsSection({
   return (
     <div className="space-y-4">
       {items.length === 0 ? (
-        <div className="text-center py-10 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-          <p className="text-sm font-semibold text-gray-500">Aún no hay subcategorías.</p>
+        <div className={`text-center py-10 bg-gray-50 rounded-2xl border-2 border-dashed transition-colors ${noItemsError ? "border-red-400 bg-red-50/30" : "border-gray-200"}`}>
+          <p className={`text-sm font-semibold ${noItemsError ? "text-red-500" : "text-gray-500"}`}>
+            {noItemsError ?? "Aún no hay subcategorías."}
+          </p>
           <p className="text-xs text-gray-400 mt-1">Añade subcategorías comprables de forma independiente.</p>
         </div>
       ) : (

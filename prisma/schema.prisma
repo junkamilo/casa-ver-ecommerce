@@ -252,7 +252,6 @@ model Product {
   colors          ProductColor[] // Definición de colores disponibles
   variants        ProductVariant[] // Inventario real (SKUs)
   items           ProductItem[]  // Solo cuando isSet=true
-  subProducts     SubProduct[]   // Subproductos independientes (Ej. Short de un conjunto)
   reviews         Review[]
 
   createdAt       DateTime       @default(now())
@@ -399,72 +398,6 @@ model ProductItemVariant {
 
   @@unique([colorId, size])
   @@map("product_item_variants")
-}
-
-// ============================================================
-// SUBPRODUCTOS — Piezas vendibles de forma independiente
-// ============================================================
-
-model SubProduct {
-  id          String            @id @default(cuid())
-  productId   String
-  product     Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  name        String
-  description String?           @db.Text
-  price       Decimal?          @db.Decimal(10, 2)
-  stock       Int               @default(0)
-  videoUrl    String?
-  order       Int               @default(0)
-
-  colors      SubProductColor[]
-
-  createdAt   DateTime          @default(now())
-
-  @@index([productId])
-  @@map("sub_products")
-}
-
-model SubProductColor {
-  id           String              @id @default(cuid())
-  subProductId String
-  subProduct   SubProduct          @relation(fields: [subProductId], references: [id], onDelete: Cascade)
-
-  name         String
-  hexCode      String
-
-  images       SubProductImage[]
-  variants     SubProductVariant[]
-
-  @@unique([subProductId, name])
-  @@map("sub_product_colors")
-}
-
-model SubProductImage {
-  id      String          @id @default(cuid())
-  colorId String
-  color   SubProductColor @relation(fields: [colorId], references: [id], onDelete: Cascade)
-
-  url     String
-  altText String?
-  order   Int             @default(0)
-
-  @@index([colorId])
-  @@map("sub_product_images")
-}
-
-model SubProductVariant {
-  id       String          @id @default(cuid())
-  colorId  String
-  color    SubProductColor @relation(fields: [colorId], references: [id], onDelete: Cascade)
-
-  size     Size
-  sku      String          @unique
-  stock    Int             @default(0)
-  isActive Boolean         @default(true)
-
-  @@unique([colorId, size])
-  @@map("sub_product_variants")
 }
 
 // ============================================================
