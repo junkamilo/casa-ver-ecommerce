@@ -57,13 +57,13 @@ const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
         <span className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">
           Color{activeColor ? <span className="text-[#154734] ml-1">{activeColor.name}</span> : null}
         </span>
-        <div className="flex gap-1.5 items-center flex-wrap">
+        <div className="flex gap-1.5 items-center overflow-x-auto scrollbar-hide flex-nowrap pb-0.5">
           {item.colors.map((color) => (
             <button
               key={color.name}
               title={color.name}
               onClick={(e) => handleColorClick(e, color)}
-              className={`w-5 h-5 sm:w-4 sm:h-4 rounded-full border shadow-sm transition-all duration-200 shrink-0 active:scale-90 ${
+              className={`w-7 h-7 sm:w-4 sm:h-4 rounded-full border shadow-sm transition-all duration-200 shrink-0 active:scale-90 ${
                 activeColor?.name === color.name
                   ? "ring-2 ring-offset-1 ring-[#154734] scale-110 border-[#154734]"
                   : "border-gray-200 hover:scale-110 hover:border-gray-400"
@@ -319,10 +319,10 @@ const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
       </div>
 
       <div className="px-1 text-center sm:text-left flex flex-col flex-1 items-center sm:items-start gap-1.5 sm:gap-2">
-        <h3 className={`text-xs sm:text-sm font-bold uppercase tracking-widest transition-colors w-full truncate ${isHovered ? "text-[#C19A6B]" : "text-[#154734]"}`}>
+        <h3 className={`text-xs sm:text-sm font-bold uppercase tracking-widest transition-colors w-full sm:truncate leading-tight ${isHovered ? "text-[#C19A6B]" : "text-[#154734]"}`}>
           {item.name}
         </h3>
-        <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-sm mb-1">
+        <div className="flex flex-row items-center gap-2 sm:gap-3 text-sm mb-1 flex-wrap">
           <span className="font-medium text-[#154734] text-sm sm:text-sm">
             {item.isSet && item.minPrice != null
               ? `Desde $${item.minPrice.toLocaleString("es-CO")}`

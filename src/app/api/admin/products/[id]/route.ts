@@ -475,7 +475,6 @@ export async function DELETE(
       await txDb.productImage.deleteMany({ where: { productId: id } });
       await txDb.productColor.deleteMany({ where: { productId: id } });
       await txDb.productItem.deleteMany({ where: { productId: id } });
-      await txDb.subProduct.deleteMany({ where: { productId: id } });
       await txDb.product.delete({ where: { id } });
     });
 

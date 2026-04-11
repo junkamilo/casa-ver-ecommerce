@@ -193,6 +193,7 @@ export interface SetItemsSectionProps {
   items: SetItemForm[];
   disabled: boolean;
   itemErrors?: ItemFormErrors;
+  noItemsError?: string | null;
   onAdd: () => void;
   onRemove: (localId: string) => void;
   onUpdate: (localId: string, updates: Partial<SetItemForm>) => void;

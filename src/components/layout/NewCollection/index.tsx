@@ -3,8 +3,8 @@ import { fetchNewProducts } from "./services/newCollectionService";
 
 
 const NewCollection = async () => {
-  const items = await fetchNewProducts();
-  return <NewCollectionClient items={items} />;
+  const { items, hasMore } = await fetchNewProducts();
+  return <NewCollectionClient items={items} hasMore={hasMore} />;
 };
 
 export default NewCollection;

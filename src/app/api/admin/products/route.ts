@@ -198,8 +198,8 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       include: {
         category: { select: { id: true, name: true } },
-        images: { where: { colorId: null, isCover: true }, take: 1, select: { url: true } },
-        colors: { take: 1, include: { images: { where: { isCover: true }, take: 1, select: { url: true } } } },
+        images: { where: { colorId: null }, orderBy: [{ isCover: "desc" }, { order: "asc" }], take: 1, select: { url: true } },
+        colors: { take: 1, include: { images: { orderBy: [{ isCover: "desc" }, { order: "asc" }], take: 1, select: { url: true } } } },
         variants: { select: { stock: true } },
         items: {
           orderBy: { order: "asc" as const },
@@ -208,7 +208,7 @@ export async function GET() {
             price: true,
             colors: {
               select: {
-                images: { where: { isCover: true }, take: 1, select: { url: true } },
+                images: { orderBy: [{ isCover: "desc" }, { order: "asc" }], take: 1, select: { url: true } },
                 variants: { select: { stock: true } },
               },
             },

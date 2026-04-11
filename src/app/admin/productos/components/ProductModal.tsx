@@ -59,6 +59,7 @@ export default function ProductModal({
   const [colorError, setColorError] = useState<string | null>(null);
   const [sizeError, setSizeError] = useState<string | null>(null);
   const [colorImagesError, setColorImagesError] = useState<string | null>(null);
+  const [noItemsError, setNoItemsError] = useState<string | null>(null);
 
   const shouldShowStockTable = selectedColors.length > 0 && selectedSizes.length > 0;
 
@@ -99,7 +100,11 @@ export default function ProductModal({
 
     // ── 3. Validar subcategorías (solo si isSet) ──────────────────────────────
     const newItemErrors: ItemFormErrors = {};
-    if (isSet) {
+    const newNoItemsError = isSet && setItems.length === 0
+      ? "Debes agregar al menos 1 subcategoría"
+      : null;
+
+    if (isSet && setItems.length > 0) {
       for (const item of setItems) {
         const errs: ItemFormErrors[string] = {};
 
@@ -137,13 +142,15 @@ export default function ProductModal({
     setColorError(newColorError);
     setSizeError(newSizeError);
     setColorImagesError(newColorImagesError);
+    setNoItemsError(newNoItemsError);
 
     const isValid =
       Object.keys(newErrors).length === 0 &&
       Object.keys(newItemErrors).length === 0 &&
       !newColorError &&
       !newSizeError &&
-      !newColorImagesError;
+      !newColorImagesError &&
+      !newNoItemsError;
 
     if (isValid) {
       onSubmit(e);
@@ -156,6 +163,7 @@ export default function ProductModal({
     setColorError(null);
     setSizeError(null);
     setColorImagesError(null);
+    setNoItemsError(null);
     onClose();
   };
 
@@ -384,7 +392,8 @@ export default function ProductModal({
                     items={setItems}
                     disabled={submitting}
                     itemErrors={itemErrors}
-                    onAdd={addSetItem}
+                    noItemsError={noItemsError}
+                    onAdd={() => { setNoItemsError(null); addSetItem(); }}
                     onRemove={removeSetItem}
                     onUpdate={updateSetItem}
                     onToggleColor={toggleSetItemColor}

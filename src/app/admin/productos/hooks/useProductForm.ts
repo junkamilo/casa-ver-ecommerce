@@ -156,7 +156,6 @@ export function useProductForm() {
           sizes: item.sizes,
         }))
       : [],
-    subProducts: [],
   });
 
   // ── Helpers colores producto principal ────────────────────────────────────
