@@ -1,13 +1,12 @@
 import { useState } from "react";
 import {
-  X, Save, Loader2, Info, LayoutGrid, Tag, Package, Video, Boxes,
+  X, Save, Loader2, Info, LayoutGrid, Tag, Package, Video,
 } from "lucide-react";
-import { ProductModalProps, ProductFormErrors, ItemFormErrors, SubProductFormErrors } from "../types";
+import { ProductModalProps, ProductFormErrors, ItemFormErrors } from "../types";
 import {
   productFormSchema,
   setProductFormSchema,
   setItemFormSchema,
-  subProductFormSchema,
 } from "../schemas";
 import { inputCls } from "../constants";
 import BlockHeader from "./shared/BlockHeader";
@@ -17,7 +16,6 @@ import ColorsSection from "./form/ColorsSection";
 import MaterialSection from "./form/MaterialSection";
 import VideoSection from "./form/VideoSection";
 import SetItemsSection from "./form/SetItemsSection";
-import SubProductsSection from "./form/SubProductsSection";
 import VariantStockSection from "./form/VariantStockSection";
 
 export default function ProductModal({
@@ -58,18 +56,9 @@ export default function ProductModal({
   toggleSetItemSize,
   setSetItemColorImages,
   updateSetItemVariantStock,
-  subProducts,
-  addSubProduct,
-  removeSubProduct,
-  updateSubProduct,
-  toggleSubProductColor,
-  toggleSubProductSize,
-  setSubProductColorImages,
-  updateSubProductVariantStock,
 }: ProductModalProps) {
   const [errors, setErrors] = useState<ProductFormErrors>({});
   const [itemErrors, setItemErrors] = useState<ItemFormErrors>({});
-  const [subProductErrors, setSubProductErrors] = useState<SubProductFormErrors>({});
   const [colorError, setColorError] = useState<string | null>(null);
   const [sizeError, setSizeError] = useState<string | null>(null);
 
@@ -117,23 +106,6 @@ export default function ProductModal({
       }
     }
 
-    const newSubProductErrors: SubProductFormErrors = {};
-    for (const sub of subProducts) {
-      const subResult = subProductFormSchema.safeParse({
-        name: sub.name,
-        price: sub.price || undefined,
-        videoUrl: sub.videoUrl || undefined,
-      });
-      if (!subResult.success) {
-        const errs: SubProductFormErrors[string] = {};
-        for (const issue of subResult.error.issues) {
-          const field = issue.path[0] as keyof SubProductFormErrors[string];
-          if (field && !errs[field]) errs[field] = issue.message;
-        }
-        newSubProductErrors[sub.localId] = errs;
-      }
-    }
-
     const newColorError = selectedColors.length === 0
       ? "Debes seleccionar al menos 1 color"
       : null;
@@ -143,14 +115,12 @@ export default function ProductModal({
 
     setErrors(newErrors);
     setItemErrors(newItemErrors);
-    setSubProductErrors(newSubProductErrors);
     setColorError(newColorError);
     setSizeError(newSizeError);
 
     const isValid =
       Object.keys(newErrors).length === 0 &&
       Object.keys(newItemErrors).length === 0 &&
-      Object.keys(newSubProductErrors).length === 0 &&
       !newColorError &&
       !newSizeError;
 
@@ -162,7 +132,6 @@ export default function ProductModal({
   const handleClose = () => {
     setErrors({});
     setItemErrors({});
-    setSubProductErrors({});
     setColorError(null);
     setSizeError(null);
     onClose();
@@ -402,29 +371,6 @@ export default function ProductModal({
                   />
                 </div>
               )}
-
-              {/* ╔══════════════════════════════════════╗
-                  ║  BLOQUE 5 — Sub-productos            ║
-                  ╚══════════════════════════════════════╝ */}
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-                <BlockHeader
-                  icon={Boxes}
-                  title="Sub-productos vendibles por separado"
-                  subtitle="Piezas opcionales que el cliente puede comprar de forma independiente (ej: cinturón, bolso a juego)"
-                />
-                <SubProductsSection
-                  items={subProducts}
-                  disabled={submitting}
-                  itemErrors={subProductErrors}
-                  onAdd={addSubProduct}
-                  onRemove={removeSubProduct}
-                  onUpdate={updateSubProduct}
-                  onToggleColor={toggleSubProductColor}
-                  onToggleSize={toggleSubProductSize}
-                  onSetColorImages={setSubProductColorImages}
-                  onUpdateVariantStock={updateSubProductVariantStock}
-                />
-              </div>
 
               {/* ╔══════════════════════════════════════╗
                   ║  BLOQUE 6 — Material y Cuidado       ║

@@ -38,16 +38,6 @@ export interface SetItemForm {
   sizes: string[];
 }
 
-export interface SubProductForm {
-  localId: string;
-  name: string;
-  description: string;
-  price: string;
-  videoUrl: string;
-  stock: string;
-  colors: SelectedColor[];
-  sizes: string[];
-}
 
 export type ToastState = { type: "success" | "error"; message: string } | null;
 
@@ -66,11 +56,6 @@ export type SingleItemFormErrors = Partial<
 
 export type ItemFormErrors = Record<string, SingleItemFormErrors>;
 
-export type SingleSubProductFormErrors = Partial<
-  Record<"name" | "price" | "videoUrl", string>
->;
-
-export type SubProductFormErrors = Record<string, SingleSubProductFormErrors>;
 
 // ── Component Props ───────────────────────────────────────────────────────────
 
@@ -123,14 +108,6 @@ export interface ProductModalProps {
   toggleSetItemSize: (localId: string, size: string) => void;
   setSetItemColorImages: (localId: string, colorName: string, images: string[]) => void;
   updateSetItemVariantStock: (localId: string, colorName: string, size: string, stock: number) => void;
-  subProducts: SubProductForm[];
-  addSubProduct: () => void;
-  removeSubProduct: (localId: string) => void;
-  updateSubProduct: (localId: string, updates: Partial<SubProductForm>) => void;
-  toggleSubProductColor: (localId: string, name: string, hexCode: string) => void;
-  toggleSubProductSize: (localId: string, size: string) => void;
-  setSubProductColorImages: (localId: string, colorName: string, images: string[]) => void;
-  updateSubProductVariantStock: (localId: string, colorName: string, size: string, stock: number) => void;
 }
 
 export interface ProductTableProps {
@@ -225,31 +202,6 @@ export interface SetItemsSectionProps {
   onUpdateVariantStock: (localId: string, colorName: string, size: string, stock: number) => void;
 }
 
-export interface SubProductCardProps {
-  item: SubProductForm;
-  index: number;
-  disabled: boolean;
-  errors?: SingleSubProductFormErrors;
-  onRemove: (id: string) => void;
-  onUpdate: (id: string, u: Partial<SubProductForm>) => void;
-  onToggleColor: (id: string, name: string, hex: string) => void;
-  onToggleSize: (id: string, size: string) => void;
-  onSetColorImages: (id: string, colorName: string, images: string[]) => void;
-  onUpdateVariantStock: (id: string, colorName: string, size: string, stock: number) => void;
-}
-
-export interface SubProductsSectionProps {
-  items: SubProductForm[];
-  disabled: boolean;
-  itemErrors?: SubProductFormErrors;
-  onAdd: () => void;
-  onRemove: (localId: string) => void;
-  onUpdate: (localId: string, updates: Partial<SubProductForm>) => void;
-  onToggleColor: (localId: string, name: string, hexCode: string) => void;
-  onToggleSize: (localId: string, size: string) => void;
-  onSetColorImages: (localId: string, colorName: string, images: string[]) => void;
-  onUpdateVariantStock: (localId: string, colorName: string, size: string, stock: number) => void;
-}
 
 export interface VariantStockSectionProps {
   selectedColors: SelectedColor[];

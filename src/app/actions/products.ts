@@ -22,15 +22,6 @@ type SetItemInput = {
   colors: ColorInput[];
   sizes: string[];
 };
-type SubProductInput = {
-  name: string;
-  description?: string | null;
-  price?: number | null;
-  videoUrl?: string | null;
-  stock?: number;
-  colors: ColorInput[];
-  sizes: string[];
-};
 
 export type ProductPayload = {
   name: string;
@@ -52,7 +43,6 @@ export type ProductPayload = {
   colors?: ColorInput[];
   sizes?: string[];
   items?: SetItemInput[];
-  subProducts?: SubProductInput[];
 };
 
 // ── Constantes de validación ──────────────────────────────────────────────────
@@ -62,7 +52,7 @@ const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
 // ── Shared validation ────────────────────────────────────────────────────────
 
 function validatePayload(payload: ProductPayload, isCreate: boolean): string | null {
-  const { name, categoryId, basePrice, isSet, status, sizes, colors, subProducts } = payload;
+  const { name, categoryId, basePrice, isSet, status, sizes, colors } = payload;
 
   if (!name || typeof name !== "string" || name.trim().length < 3) {
     return "El nombre debe tener al menos 3 caracteres";
@@ -98,56 +88,6 @@ function validatePayload(payload: ProductPayload, isCreate: boolean): string | n
     if (!c.name || typeof c.name !== "string") return "Nombre de color inválido";
     if (!HEX_RE.test(c.hexCode || "")) {
       return `Código de color inválido: ${c.hexCode}`;
-    }
-  }
-
-  // ── Sub-productos ─────────────────────────────────────────────────────────
-  if (Array.isArray(subProducts) && subProducts.length > 0) {
-    const subError = validateSubProducts(subProducts);
-    if (subError) return subError;
-  }
-
-  return null;
-}
-
-function validateSubProducts(subProducts: SubProductInput[]): string | null {
-  if (subProducts.length > 20) return "Demasiados sub-productos (máximo 20)";
-
-  for (const sub of subProducts) {
-    if (!sub.name || typeof sub.name !== "string" || sub.name.trim().length < 2)
-      return "Nombre de sub-producto inválido (mínimo 2 caracteres)";
-    if (sub.name.trim().length > 200)
-      return "Nombre de sub-producto demasiado largo (máximo 200 caracteres)";
-
-    if (sub.price !== undefined && sub.price !== null) {
-      const p = Number(sub.price);
-      if (isNaN(p) || p < 0) return "Precio de sub-producto inválido";
-      if (p > 100_000_000) return "Precio de sub-producto parece inusualmente alto";
-    }
-    if (sub.videoUrl && typeof sub.videoUrl === "string") {
-      try {
-        const u = new URL(sub.videoUrl);
-        if (u.protocol !== "https:" && u.protocol !== "http:")
-          return "URL de video de sub-producto inválida";
-      } catch {
-        return "URL de video de sub-producto inválida";
-      }
-    }
-    if (Array.isArray(sub.colors)) {
-      if (sub.colors.length > 30) return "Demasiados colores en sub-producto";
-      for (const c of sub.colors) {
-        if (!c.name || typeof c.name !== "string") return "Nombre de color de sub-producto inválido";
-        if (!HEX_RE.test(c.hexCode ?? "")) return `Código de color inválido en sub-producto: ${c.hexCode}`;
-        if (c.variantStocks && typeof c.variantStocks === "object") {
-          for (const [size, stockVal] of Object.entries(c.variantStocks)) {
-            if (!ALLOWED_SIZES.includes(size as AllowedSize))
-              return `Talla inválida en sub-producto: ${size}`;
-            const s = Number(stockVal);
-            if (isNaN(s) || s < 0) return `Stock inválido en sub-producto ${c.name} - ${size}`;
-            if (s > 999_999) return `Stock excesivo en sub-producto ${c.name} - ${size}`;
-          }
-        }
-      }
     }
   }
 
@@ -188,73 +128,6 @@ async function createColorVariants(tx: any, productId: string, slug: string, col
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function createSubProductsLocal(tx: any, productId: string, slug: string, subProducts: SubProductInput[]) {
-  for (let order = 0; order < subProducts.length; order++) {
-    const sub = subProducts[order];
-    if (!sub.name) continue;
-
-    const hasVariantStocks = (sub.colors || []).some(
-      (c) => c.variantStocks && Object.keys(c.variantStocks).length > 0
-    );
-    const subStock = sub.stock ?? 0;
-    const totalVariants = (sub.colors?.length ?? 0) * (sub.sizes?.length ?? 0);
-    const base = !hasVariantStocks && totalVariants > 0 ? Math.floor(subStock / totalVariants) : 0;
-    const rem  = !hasVariantStocks && totalVariants > 0 ? subStock % totalVariants : 0;
-
-    const computedStock = hasVariantStocks
-      ? (sub.colors || []).reduce((total, c) =>
-          total + Object.values(c.variantStocks ?? {}).reduce((s, v) => s + Number(v), 0), 0)
-      : subStock;
-
-    const subProduct = await tx.subProduct.create({
-      data: {
-        productId,
-        name: sub.name.trim(),
-        description: sub.description?.trim() || null,
-        price: sub.price || null,
-        stock: computedStock,
-        videoUrl: sub.videoUrl || null,
-        order,
-      },
-    });
-
-    let idx = 0;
-    for (const colorData of sub.colors || []) {
-      if (!colorData.name) continue;
-      const subColor = await tx.subProductColor.create({
-        data: {
-          subProductId: subProduct.id,
-          name: colorData.name.trim(),
-          hexCode: colorData.hexCode || "#000000",
-        },
-      });
-      if (colorData.images?.length) {
-        await tx.subProductImage.createMany({
-          data: colorData.images.map((url: string, i: number) => ({
-            colorId: subColor.id,
-            url: url.trim(),
-            altText: colorData.name || null,
-            order: i,
-          })),
-        });
-      }
-      for (const size of sub.sizes || []) {
-        const slugPart = (s: string) =>
-          s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-        const sku = `${slug}-sub-${slugPart(sub.name)}-${slugPart(colorData.name)}-${size.toLowerCase()}`;
-        const variantStock =
-          colorData.variantStocks?.[size] !== undefined
-            ? Number(colorData.variantStocks[size])
-            : base + (idx < rem ? 1 : 0);
-        await tx.subProductVariant.create({
-          data: { colorId: subColor.id, size: size as never, sku, stock: variantStock, isActive: true },
-        });
-        idx++;
-      }
-    }
-  }
-}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function createSetItems(tx: any, productId: string, slug: string, items: SetItemInput[]) {
@@ -348,7 +221,7 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
     const {
       name, description, categoryId, status, isFeatured, isNew,
       isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
-      material, videoUrl, isSet, colors, sizes, items, subProducts,
+      material, videoUrl, isSet, colors, sizes, items,
     } = payload;
 
     const basePrice    = parseFloat(String(payload.basePrice));
@@ -394,10 +267,6 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
       if (isSet) {
         await createSetItems(tx, product.id, slug, items || []);
       }
-      if (Array.isArray(subProducts) && subProducts.length > 0) {
-        await createSubProductsLocal(tx, product.id, slug, subProducts);
-      }
-
       return product;
     });
 
@@ -423,7 +292,7 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
     const {
       name, description, categoryId, status, isFeatured, isNew,
       isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
-      material, videoUrl, isSet, colors, sizes, items, subProducts,
+      material, videoUrl, isSet, colors, sizes, items,
     } = payload;
 
     const basePrice    = payload.basePrice  != null ? parseFloat(String(payload.basePrice))  : undefined;
@@ -476,9 +345,6 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
       await createColorVariants(tx, id, slugForSku, colors || [], sizes || [], stock);
       if (isSet) {
         await createSetItems(tx, id, slugForSku, items || []);
-      }
-      if (Array.isArray(subProducts) && subProducts.length > 0) {
-        await createSubProductsLocal(tx, id, slugForSku, subProducts);
       }
 
       return product;
