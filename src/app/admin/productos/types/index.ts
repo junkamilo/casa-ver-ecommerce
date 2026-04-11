@@ -90,10 +90,8 @@ export interface ProductModalProps {
   isProductNewAt: string | null; setIsProductNewAt: (v: string | null) => void;
   isOnSale: boolean; setIsOnSale: (v: boolean) => void;
   isOnSaleAt: string | null; setIsOnSaleAt: (v: string | null) => void;
-  material: string; setMaterial: (v: string) => void;
   selectedColors: SelectedColor[];
   selectedSizes: string[];
-  showMaterial: boolean; setShowMaterial: (v: boolean) => void;
   videoUrl: string; setVideoUrl: (v: string) => void;
   toggleColor: (name: string, hexCode: string) => void;
   toggleSize: (size: string) => void;
@@ -208,13 +206,6 @@ export interface VariantStockSectionProps {
   selectedSizes: string[];
   disabled: boolean;
   onUpdate: (colorName: string, size: string, stock: number) => void;
-}
-
-export interface MaterialSectionProps {
-  show: boolean;
-  onToggle: () => void;
-  material: string;
-  onMaterial: (v: string) => void;
 }
 
 export interface VideoSectionProps {

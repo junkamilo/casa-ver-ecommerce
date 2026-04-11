@@ -49,7 +49,7 @@ function parseSafeDate(v: unknown): Date | null {
 function validateProductBody(body: any): string | null {
   const {
     name, categoryId, description, basePrice, comparePrice,
-    stock, status, sizes, colors, items, videoUrl, material, isSet,
+    stock, status, sizes, colors, items, videoUrl, isSet,
   } = body;
 
   // ── Nombre ────────────────────────────────────────────────────────────────
@@ -91,12 +91,6 @@ function validateProductBody(body: any): string | null {
   // ── Estado ────────────────────────────────────────────────────────────────
   if (status && !ALLOWED_STATUSES.includes(status as never))
     return `Estado inválido: ${status}`;
-
-  // ── Material ──────────────────────────────────────────────────────────────
-  if (material !== undefined && material !== null && material !== "") {
-    if (typeof material !== "string") return "Material inválido";
-    if (material.trim().length > 500) return "El material no puede superar 500 caracteres";
-  }
 
   // ── Tallas ────────────────────────────────────────────────────────────────
   if (Array.isArray(sizes)) {
@@ -251,7 +245,6 @@ export async function GET(
       isOnSaleAt: product.isOnSaleAt ?? null,
       metaTitle: product.metaTitle,
       metaDescription: product.metaDescription,
-      material: product.material,
       videoUrl: product.videoUrl,
       generalImages: product.images
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -355,7 +348,7 @@ export async function PATCH(
       name, description, basePrice, comparePrice, stock,
       categoryId, status, isFeatured, isNew,
       isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
-      material, videoUrl, isSet, colors, sizes, items,
+      videoUrl, isSet, colors, sizes, items,
     } = body;
 
     // ── Verificar que la categoría existe y está activa en DB ─────────────────
@@ -418,7 +411,6 @@ export async function PATCH(
           isProductNewAt: resolvedProductNewAt,
           isOnSale: isOnSale ?? false,
           isOnSaleAt: resolvedOnSaleAt,
-          material: material ? (material as string).trim() || null : null,
           videoUrl: videoUrl !== undefined ? (videoUrl || null) : undefined,
           isSet: isSet ?? false,
           metaTitle: (name as string).trim().slice(0, 60),

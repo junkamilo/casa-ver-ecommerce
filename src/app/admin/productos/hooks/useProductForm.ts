@@ -18,12 +18,10 @@ export function useProductForm() {
   const [isProductNewAt, setIsProductNewAt] = useState<string | null>(null);
   const [isOnSale, setIsOnSale] = useState(false);
   const [isOnSaleAt, setIsOnSaleAt] = useState<string | null>(null);
-  const [material, setMaterial] = useState("");
   const [selectedColors, setSelectedColors] = useState<SelectedColor[]>([]);
   // Cache de imágenes por nombre de color — se conservan aunque se deseleccione el color
   const colorImageCache = useRef<Record<string, string[]>>({});
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-  const [showMaterial, setShowMaterial] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
 
   // Subcategorías (conjunto)
@@ -45,10 +43,8 @@ export function useProductForm() {
     setIsProductNewAt(null);
     setIsOnSale(false);
     setIsOnSaleAt(null);
-    setMaterial("");
     setSelectedColors([]);
     setSelectedSizes([]);
-    setShowMaterial(false);
     setVideoUrl("");
     setIsSet(false);
     setSetItems([]);
@@ -70,8 +66,6 @@ export function useProductForm() {
     setIsProductNewAt(data.isProductNewAt ? new Date(data.isProductNewAt).toISOString() : null);
     setIsOnSale(data.isOnSale || false);
     setIsOnSaleAt(data.isOnSaleAt ? new Date(data.isOnSaleAt).toISOString() : null);
-    setMaterial(data.material || "");
-    if (data.material) setShowMaterial(true);
     setVideoUrl(data.videoUrl || "");
     setIsSet(data.isSet || false);
 
@@ -146,7 +140,6 @@ export function useProductForm() {
     isProductNewAt: isProductNewAt ?? null,
     isOnSale,
     isOnSaleAt: isOnSaleAt ?? null,
-    material,
     videoUrl: videoUrl || null,
     isSet,
     colors: selectedColors,
@@ -305,10 +298,8 @@ export function useProductForm() {
     isProductNewAt, setIsProductNewAt,
     isOnSale, setIsOnSale,
     isOnSaleAt, setIsOnSaleAt,
-    material, setMaterial,
     selectedColors,
     selectedSizes,
-    showMaterial, setShowMaterial,
     videoUrl, setVideoUrl,
     isSet, setIsSet,
     setItems,

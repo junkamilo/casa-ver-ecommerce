@@ -37,7 +37,6 @@ export type ProductPayload = {
   isProductNewAt?: string | null;
   isOnSale?: boolean;
   isOnSaleAt?: string | null;
-  material?: string | null;
   videoUrl?: string | null;
   isSet?: boolean;
   colors?: ColorInput[];
@@ -221,7 +220,7 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
     const {
       name, description, categoryId, status, isFeatured, isNew,
       isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
-      material, videoUrl, isSet, colors, sizes, items,
+      videoUrl, isSet, colors, sizes, items,
     } = payload;
 
     const basePrice    = parseFloat(String(payload.basePrice));
@@ -255,7 +254,6 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
           isProductNewAt: resolvedProductNewAt,
           isOnSale: isOnSale || false,
           isOnSaleAt: resolvedOnSaleAt,
-          material: material || null,
           videoUrl: videoUrl || null,
           isSet: isSet || false,
           metaTitle: name.trim().slice(0, 60),
@@ -292,7 +290,7 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
     const {
       name, description, categoryId, status, isFeatured, isNew,
       isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
-      material, videoUrl, isSet, colors, sizes, items,
+      videoUrl, isSet, colors, sizes, items,
     } = payload;
 
     const basePrice    = payload.basePrice  != null ? parseFloat(String(payload.basePrice))  : undefined;
@@ -331,7 +329,6 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
           isProductNewAt: resolvedProductNewAt,
           isOnSale: isOnSale ?? false,
           isOnSaleAt: resolvedOnSaleAt,
-          material: material || null,
           videoUrl: videoUrl !== undefined ? (videoUrl || null) : undefined,
           isSet: isSet ?? false,
           metaTitle: name ? name.trim().slice(0, 60) : undefined,
