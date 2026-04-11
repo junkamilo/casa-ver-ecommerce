@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { SelectedColor, SetItemForm, SubProductForm } from "../types";
-import { calcEffectiveStock, newSetItem, newSubProduct } from "../utils";
+import { SelectedColor, SetItemForm } from "../types";
+import { calcEffectiveStock, newSetItem } from "../utils";
 
 export function useProductForm() {
   const [name, setName] = useState("");
@@ -30,8 +30,6 @@ export function useProductForm() {
   const [isSet, setIsSet] = useState(false);
   const [setItems, setSetItems] = useState<SetItemForm[]>([]);
 
-  // Sub-productos vendibles de forma independiente
-  const [subProducts, setSubProducts] = useState<SubProductForm[]>([]);
 
   const reset = () => {
     setName("");
@@ -54,7 +52,6 @@ export function useProductForm() {
     setVideoUrl("");
     setIsSet(false);
     setSetItems([]);
-    setSubProducts([]);
     colorImageCache.current = {};
   };
 
@@ -117,27 +114,6 @@ export function useProductForm() {
       setSetItems([]);
     }
 
-    if (data.subProducts?.length > 0) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setSubProducts(data.subProducts.map((sub: any) => ({
-        localId: crypto.randomUUID(),
-        name: sub.name || "",
-        description: sub.description || "",
-        price: sub.price?.toString() || "",
-        videoUrl: sub.videoUrl || "",
-        stock: sub.stock?.toString() || "",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        colors: (sub.colors || []).map((c: any) => ({
-          name: c.name,
-          hexCode: c.hexCode,
-          images: c.images || [],
-          variantStocks: c.variantStocks || {},
-        })),
-        sizes: sub.sizes || [],
-      })));
-    } else {
-      setSubProducts([]);
-    }
   };
 
   const updateVariantStock = (colorName: string, size: string, newStock: number) =>
@@ -187,17 +163,7 @@ export function useProductForm() {
           sizes: item.sizes,
         }))
       : [],
-    subProducts: subProducts.length > 0
-      ? subProducts.map((sub) => ({
-          name: sub.name,
-          description: sub.description || null,
-          price: sub.price ? parseFloat(sub.price) : null,
-          videoUrl: sub.videoUrl || null,
-          stock: calcEffectiveStock(sub.colors, sub.stock),
-          colors: sub.colors,
-          sizes: sub.sizes,
-        }))
-      : [],
+    subProducts: [],
   });
 
   // ── Helpers colores producto principal ────────────────────────────────────
@@ -325,83 +291,6 @@ export function useProductForm() {
       })
     );
 
-  // ── Helpers sub-productos ─────────────────────────────────────────────────
-
-  const addSubProduct = () => setSubProducts((prev) => [...prev, newSubProduct()]);
-
-  const removeSubProduct = (localId: string) =>
-    setSubProducts((prev) => prev.filter((s) => s.localId !== localId));
-
-  const updateSubProduct = (localId: string, updates: Partial<SubProductForm>) =>
-    setSubProducts((prev) =>
-      prev.map((s) => (s.localId === localId ? { ...s, ...updates } : s))
-    );
-
-  const toggleSubProductColor = (localId: string, colorName: string, hexCode: string) =>
-    setSubProducts((prev) =>
-      prev.map((s) => {
-        if (s.localId !== localId) return s;
-        const has = s.colors.some((c) => c.name === colorName);
-        const newColors = has
-          ? s.colors.filter((c) => c.name !== colorName)
-          : [...s.colors, { name: colorName, hexCode, images: [], variantStocks: {} }];
-        return { ...s, colors: newColors };
-      })
-    );
-
-  const toggleSubProductSize = (localId: string, size: string) =>
-    setSubProducts((prev) =>
-      prev.map((s) => {
-        if (s.localId !== localId) return s;
-        const adding = !s.sizes.includes(size);
-        const newSizes = adding ? [...s.sizes, size] : s.sizes.filter((sz) => sz !== size);
-        const newColors = s.colors.map((c) => ({
-          ...c,
-          variantStocks: adding
-            ? { ...(c.variantStocks || {}) }
-            : Object.fromEntries(
-                Object.entries(c.variantStocks || {}).filter(([sz]) => sz !== size)
-              ),
-        }));
-        return { ...s, sizes: newSizes, colors: newColors };
-      })
-    );
-
-  const setSubProductColorImages = (localId: string, colorName: string, images: string[]) =>
-    setSubProducts((prev) =>
-      prev.map((s) => {
-        if (s.localId !== localId) return s;
-        return { ...s, colors: s.colors.map((c) => (c.name === colorName ? { ...c, images } : c)) };
-      })
-    );
-
-  const updateSubProductVariantStock = (
-    localId: string,
-    colorName: string,
-    size: string,
-    stock: number
-  ) =>
-    setSubProducts((prev) =>
-      prev.map((s) => {
-        if (s.localId !== localId) return s;
-        return {
-          ...s,
-          colors: s.colors.map((c) =>
-            c.name === colorName
-              ? {
-                  ...c,
-                  variantStocks: isNaN(stock)
-                    ? Object.fromEntries(
-                        Object.entries(c.variantStocks || {}).filter(([sz]) => sz !== size)
-                      )
-                    : { ...(c.variantStocks || {}), [size]: stock },
-                }
-              : c
-          ),
-        };
-      })
-    );
-
   return {
     name, setName,
     description, setDescription,
@@ -437,14 +326,5 @@ export function useProductForm() {
     toggleSetItemSize,
     setSetItemColorImages,
     updateSetItemVariantStock,
-    // Sub-productos
-    subProducts,
-    addSubProduct,
-    removeSubProduct,
-    updateSubProduct,
-    toggleSubProductColor,
-    toggleSubProductSize,
-    setSubProductColorImages,
-    updateSubProductVariantStock,
   };
 }

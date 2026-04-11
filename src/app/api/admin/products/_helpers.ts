@@ -18,15 +18,6 @@ export type SetItemInput = {
   sizes: string[];
 };
 
-export type SubProductInput = {
-  name: string;
-  description?: string | null;
-  price?: number | null;
-  stock?: number;
-  videoUrl?: string | null;
-  colors: ColorInput[];
-  sizes: string[];
-};
 
 // ── SKU sanitization ──────────────────────────────────────────────────────────
 
@@ -185,84 +176,3 @@ export async function createSetItems(
   }
 }
 
-/**
- * Crea los subproductos vendibles de forma independiente (SubProduct).
- * Respeta los stocks por variante cuando se proporcionan (variantStocks),
- * o distribuye el stock global equitativamente entre todas las variantes.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function createSubProducts(
-  tx: any,
-  productId: string,
-  slug: string,
-  subProducts: SubProductInput[]
-) {
-  for (let order = 0; order < subProducts.length; order++) {
-    const sub = subProducts[order];
-    if (!sub.name) continue;
-
-    // Calcular stock total: suma de variantStocks si existen, si no usar sub.stock
-    const hasVariantStocks = (sub.colors || []).some(
-      (c) => c.variantStocks && Object.keys(c.variantStocks).length > 0
-    );
-    const subStock = sub.stock ?? 0;
-    const totalVariants = (sub.colors?.length ?? 0) * (sub.sizes?.length ?? 0);
-    const base = !hasVariantStocks && totalVariants > 0 ? Math.floor(subStock / totalVariants) : 0;
-    const rem  = !hasVariantStocks && totalVariants > 0 ? subStock % totalVariants : 0;
-
-    // Stock real = suma de todos los variantStocks si están definidos
-    const computedStock = hasVariantStocks
-      ? (sub.colors || []).reduce((total, c) =>
-          total + Object.values(c.variantStocks ?? {}).reduce((s, v) => s + Number(v), 0), 0)
-      : subStock;
-
-    const subProduct = await tx.subProduct.create({
-      data: {
-        productId,
-        name: sub.name,
-        description: sub.description || null,
-        price: sub.price || null,
-        stock: computedStock,
-        videoUrl: sub.videoUrl || null,
-        order,
-      },
-    });
-
-    let idx = 0;
-
-    for (const colorData of sub.colors || []) {
-      if (!colorData.name) continue;
-
-      const subColor = await tx.subProductColor.create({
-        data: { subProductId: subProduct.id, name: colorData.name, hexCode: colorData.hexCode || "#000000" },
-      });
-
-      const cleanSubImages = (colorData.images ?? []).filter(
-        (url: string) => typeof url === "string" && url.trim()
-      );
-      if (cleanSubImages.length) {
-        await tx.subProductImage.createMany({
-          data: cleanSubImages.map((url: string, i: number) => ({
-            colorId: subColor.id,
-            url: url.trim(),
-            altText: colorData.name || null,
-            order: i,
-          })),
-        });
-      }
-
-      for (const size of sub.sizes || []) {
-        const sku = `${slug}-sub-${toSlugPart(sub.name)}-${toSlugPart(colorData.name)}-${size.toLowerCase()}`;
-        const variantStock =
-          colorData.variantStocks?.[size] !== undefined
-            ? Number(colorData.variantStocks[size])
-            : base + (idx < rem ? 1 : 0);
-
-        await tx.subProductVariant.create({
-          data: { colorId: subColor.id, size: size as never, sku, stock: variantStock, isActive: true },
-        });
-        idx++;
-      }
-    }
-  }
-}

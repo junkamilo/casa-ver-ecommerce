@@ -76,17 +76,3 @@ export const setItemFormSchema = z.object({
     .optional()
     .refine((v) => !v || isValidUrl(v), "URL de video inválida"),
 });
-
-// Sub-producto (sin comparePrice — no está en el modelo SubProduct)
-export const subProductFormSchema = z.object({
-  name: z.string().min(2, "Mínimo 2 caracteres"),
-  price: z.coerce
-    .number()
-    .positive("Debe ser mayor a 0")
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  videoUrl: z
-    .string()
-    .optional()
-    .refine((v) => !v || isValidUrl(v), "URL de video inválida"),
-});

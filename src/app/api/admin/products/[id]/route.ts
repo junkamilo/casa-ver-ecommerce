@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import type { NextRequest } from "next/server";
-import { createColorVariants, createSetItems, createSubProducts } from "../_helpers";
+import { createColorVariants, createSetItems } from "../_helpers";
 
 // ── Constantes permitidas ─────────────────────────────────────────────────────
 
@@ -182,47 +182,6 @@ function validateProductBody(body: any): string | null {
     }
   }
 
-  // ── Sub-productos vendibles independientemente ────────────────────────────
-  if (Array.isArray(body.subProducts)) {
-    const subs = body.subProducts;
-    if (subs.length > 20) return "Demasiados sub-productos (máximo 20)";
-    for (const sub of subs) {
-      if (!sub.name || typeof sub.name !== "string" || sub.name.trim().length < 2)
-        return "Nombre de sub-producto inválido (mínimo 2 caracteres)";
-      if (sub.name.trim().length > 200)
-        return "Nombre de sub-producto demasiado largo (máximo 200 caracteres)";
-      if (sub.price !== undefined && sub.price !== null && sub.price !== "") {
-        const p = Number(sub.price);
-        if (isNaN(p) || p < 0) return "Precio de sub-producto inválido";
-        if (p > 100_000_000) return "Precio de sub-producto parece inusualmente alto";
-      }
-      if (sub.videoUrl && !isHttpUrl(sub.videoUrl))
-        return "URL de video de sub-producto inválida";
-      if (Array.isArray(sub.colors)) {
-        if (sub.colors.length > 30) return "Demasiados colores en sub-producto";
-        for (const c of sub.colors) {
-          if (!c.name || typeof c.name !== "string") return "Nombre de color de sub-producto inválido";
-          if (c.name.trim().length > 100) return "Nombre de color de sub-producto demasiado largo";
-          if (!HEX_RE.test(c.hexCode ?? "")) return `Código de color inválido en sub-producto: ${c.hexCode}`;
-          if (c.variantStocks && typeof c.variantStocks === "object") {
-            for (const [size, stockVal] of Object.entries(c.variantStocks)) {
-              if (!ALLOWED_SIZES.includes(size as never)) return `Talla inválida en sub-producto: ${size}`;
-              const s = Number(stockVal);
-              if (isNaN(s) || s < 0) return `Stock inválido en sub-producto ${c.name} - ${size}`;
-              if (s > 999_999) return `Stock excesivo en sub-producto ${c.name} - ${size} (máximo 999999)`;
-            }
-          }
-          if (Array.isArray(c.images)) {
-            if (c.images.length > 10) return "Máximo 10 imágenes por color de sub-producto";
-            for (const url of c.images) {
-              if (!isValidImageUrl(url)) return "URL de imagen de sub-producto inválida (debe provenir de Cloudinary)";
-            }
-          }
-        }
-      }
-    }
-  }
-
   return null;
 }
 
@@ -248,17 +207,6 @@ export async function GET(
         images: { orderBy: { order: "asc" } },
         colors: { include: { images: { orderBy: { order: "asc" } }, variants: true } },
         items: {
-          orderBy: { order: "asc" },
-          include: {
-            colors: {
-              include: {
-                images: { orderBy: { order: "asc" } },
-                variants: true,
-              },
-            },
-          },
-        },
-        subProducts: {
           orderBy: { order: "asc" },
           include: {
             colors: {
@@ -358,31 +306,6 @@ export async function GET(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         sizes: [...new Set(item.colors.flatMap((c: any) => c.variants.map((v: any) => v.size)))],
       })),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      subProducts: (product.subProducts || []).map((sub: any) => ({
-        id: sub.id,
-        name: sub.name,
-        description: sub.description ?? null,
-        price: sub.price ? Number(sub.price) : null,
-        videoUrl: sub.videoUrl ?? null,
-        order: sub.order,
-        stock: sub.colors.reduce(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (acc: number, c: any) => acc + c.variants.reduce((s: number, v: any) => s + v.stock, 0), 0
-        ),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        colors: sub.colors.map((c: any) => ({
-          id: c.id,
-          name: c.name,
-          hexCode: c.hexCode,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          images: c.images.map((img: any) => img.url),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          variantStocks: Object.fromEntries(c.variants.map((v: any) => [v.size, v.stock])),
-        })),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        sizes: [...new Set(sub.colors.flatMap((c: any) => c.variants.map((v: any) => v.size)))],
-      })),
     };
 
     return NextResponse.json(mapped);
@@ -432,7 +355,7 @@ export async function PATCH(
       name, description, basePrice, comparePrice, stock,
       categoryId, status, isFeatured, isNew,
       isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
-      material, videoUrl, isSet, colors, sizes, items, subProducts,
+      material, videoUrl, isSet, colors, sizes, items,
     } = body;
 
     // ── Verificar que la categoría existe y está activa en DB ─────────────────
@@ -479,9 +402,6 @@ export async function PATCH(
       // 4. Eliminar items del conjunto (cascade a colors/images/variants)
       await txDb.productItem.deleteMany({ where: { productId: id } });
 
-      // 5. Eliminar sub-productos anteriores (cascade a colors/images/variants)
-      await txDb.subProduct.deleteMany({ where: { productId: id } });
-
       // 5. Actualizar producto — el slug NO se regenera para preservar URLs existentes
       const product = await txDb.product.update({
         where: { id },
@@ -519,10 +439,6 @@ export async function PATCH(
       if (isSet) {
         await createSetItems(txDb, id, slugForSku, (items as any) || []);
       }
-      if (Array.isArray(subProducts) && (subProducts as any[]).length > 0) {
-        await createSubProducts(txDb, id, slugForSku, (subProducts as any));
-      }
-
       return product;
     });
 

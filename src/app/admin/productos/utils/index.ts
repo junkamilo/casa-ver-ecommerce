@@ -1,4 +1,4 @@
-import { SelectedColor, SetItemForm, SubProductForm } from "../types";
+import { SelectedColor, SetItemForm } from "../types";
 
 /**
  * Calcula el stock efectivo de un conjunto de colores.
@@ -32,16 +32,3 @@ export function newSetItem(): SetItemForm {
   };
 }
 
-/** Factory: crea un SubProductForm vacío con localId único */
-export function newSubProduct(): SubProductForm {
-  return {
-    localId: crypto.randomUUID(),
-    name: "",
-    description: "",
-    price: "",
-    videoUrl: "",
-    stock: "",
-    colors: [],
-    sizes: [],
-  };
-}
