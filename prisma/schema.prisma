@@ -238,7 +238,6 @@ model Product {
   metaDescription String?
 
   // Datos Adicionales
-  material        String?
   videoUrl        String?
   
   // Calificaciones

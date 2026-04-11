@@ -49,7 +49,7 @@ function parseSafeDate(v: unknown): Date | null {
 function validateProductBody(body: any, isCreate: boolean): string | null {
   const {
     name, categoryId, description, basePrice, comparePrice,
-    stock, status, sizes, colors, items, videoUrl, material, isSet,
+    stock, status, sizes, colors, items, videoUrl, isSet,
   } = body;
 
   // ── Nombre ────────────────────────────────────────────────────────────────
@@ -92,12 +92,6 @@ function validateProductBody(body: any, isCreate: boolean): string | null {
   // ── Estado ────────────────────────────────────────────────────────────────
   if (status && !ALLOWED_STATUSES.includes(status as never))
     return `Estado inválido: ${status}`;
-
-  // ── Material ──────────────────────────────────────────────────────────────
-  if (material !== undefined && material !== null && material !== "") {
-    if (typeof material !== "string") return "Material inválido";
-    if (material.trim().length > 500) return "El material no puede superar 500 caracteres";
-  }
 
   // ── Tallas ────────────────────────────────────────────────────────────────
   if (Array.isArray(sizes)) {
@@ -290,7 +284,7 @@ export async function POST(req: NextRequest) {
       name, description, basePrice, comparePrice, stock,
       categoryId, status, isFeatured, isNew,
       isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
-      material, videoUrl, isSet, colors, sizes, items,
+      videoUrl, isSet, colors, sizes, items,
     } = body;
 
     // ── Verificar que la categoría existe y está activa en DB ─────────────────
@@ -336,7 +330,6 @@ export async function POST(req: NextRequest) {
           isProductNewAt: resolvedProductNewAt,
           isOnSale: isOnSale || false,
           isOnSaleAt: resolvedOnSaleAt,
-          material: material ? (material as string).trim() || null : null,
           videoUrl: videoUrl || null,
           isSet: isSet || false,
           metaTitle: (name as string).trim().slice(0, 60),

@@ -13,7 +13,6 @@ import BlockHeader from "./shared/BlockHeader";
 import FieldError from "./shared/FieldError";
 import GeneralInfoSection from "./form/GeneralInfoSection";
 import ColorsSection from "./form/ColorsSection";
-import MaterialSection from "./form/MaterialSection";
 import VideoSection from "./form/VideoSection";
 import SetItemsSection from "./form/SetItemsSection";
 import VariantStockSection from "./form/VariantStockSection";
@@ -38,10 +37,8 @@ export default function ProductModal({
   isProductNewAt, setIsProductNewAt,
   isOnSale, setIsOnSale,
   isOnSaleAt, setIsOnSaleAt,
-  material, setMaterial,
   selectedColors,
   selectedSizes,
-  showMaterial, setShowMaterial,
   videoUrl, setVideoUrl,
   toggleColor,
   toggleSize,
@@ -372,16 +369,6 @@ export default function ProductModal({
                 </div>
               )}
 
-              {/* ╔══════════════════════════════════════╗
-                  ║  BLOQUE 6 — Material y Cuidado       ║
-                  ╚══════════════════════════════════════╝ */}
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-                <MaterialSection
-                  show={showMaterial}
-                  onToggle={() => setShowMaterial(!showMaterial)}
-                  material={material} onMaterial={setMaterial}
-                />
-              </div>
             </div>
 
             {/* ── Footer ───────────────────────────────────────── */}
