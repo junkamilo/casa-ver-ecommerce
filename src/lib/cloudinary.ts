@@ -1,36 +1,91 @@
-// ─── Límites de tamaño por tipo de archivo ───────────────────────────────────
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MB
-const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100 MB
+/**
+ * Sin límite de tamaño desde el cliente — Cloudinary decide en el servidor.
+ */
+export function validateFileSize(_file: File): string | null {
+  return null;
+}
 
 /**
- * Valida el tamaño del archivo antes de subirlo.
- * Retorna un mensaje de error o null si es válido.
+ * Comprime una imagen usando Canvas antes de subirla a Cloudinary.
+ *
+ * - Solo aplica a imágenes (no videos).
+ * - Redimensiona si el lado mayor supera maxDimension (por defecto 2400px).
+ * - Reencoda como JPEG con calidad 0.85 — imperceptible visualmente.
+ * - Convierte HEIC/HEIF a JPEG (los browsers modernos los soportan en Canvas).
+ *
+ * Resultado típico: foto iPhone 28 MB → ~2-3 MB, dentro del límite de Cloudinary.
  */
-export function validateFileSize(file: File): string | null {
-  const isVideo = file.type.startsWith("video");
-  const maxBytes = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
-  if (file.size > maxBytes) {
-    const maxMB = Math.round(maxBytes / (1024 * 1024));
-    return `"${file.name}" supera el límite de ${maxMB} MB`;
-  }
-  return null;
+async function compressImage(file: File, maxDimension = 2400, quality = 0.85): Promise<File> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
+      let { width, height } = img;
+
+      // Redimensionar solo si supera el máximo
+      if (width > maxDimension || height > maxDimension) {
+        if (width >= height) {
+          height = Math.round((height * maxDimension) / width);
+          width = maxDimension;
+        } else {
+          width = Math.round((width * maxDimension) / height);
+          height = maxDimension;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) { resolve(file); return; }
+          const compressed = new File(
+            [blob],
+            file.name.replace(/\.[^.]+$/, ".jpg"),
+            { type: "image/jpeg" }
+          );
+          // Solo usar la versión comprimida si realmente es más pequeña
+          resolve(compressed.size < file.size ? compressed : file);
+        },
+        "image/jpeg",
+        quality
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(file); // Si falla, subir original
+    };
+
+    img.src = objectUrl;
+  });
 }
 
 /**
  * Sube un archivo a Cloudinary usando un upload FIRMADO.
  *
+ * Para imágenes: comprime automáticamente antes de subir para mantenerse
+ * dentro del límite del plan (10 MB). Las fotos de iPhone de 20-30 MB
+ * se comprimen a ~2-3 MB sin pérdida visual perceptible.
+ *
  * Flujo seguro:
  * 1. Solicita al servidor (/api/admin/upload/signature) una firma válida.
  *    El servidor verifica la sesión ADMIN antes de firmar — nunca expone el API secret.
  * 2. Sube el archivo directamente a Cloudinary con los parámetros firmados.
- *
- * Esto reemplaza el upload sin firmar (unsigned preset) que era inseguro
- * porque cualquiera que conociera el preset podía subir archivos a la cuenta.
  */
 export async function uploadToCloudinary(
   file: File,
   resourceType: "image" | "video"
 ): Promise<string> {
+  // Comprimir imágenes antes de subir para evitar el límite de 10 MB de Cloudinary
+  const fileToUpload = resourceType === "image" ? await compressImage(file) : file;
+
   // 1. Obtener firma desde el servidor (verifica sesión admin internamente)
   const sigRes = await fetch("/api/admin/upload/signature", {
     cache: "no-store",
@@ -50,7 +105,7 @@ export async function uploadToCloudinary(
 
   // 2. Subir a Cloudinary con parámetros firmados (sin preset público)
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("file", fileToUpload);
   formData.append("api_key", String(apiKey));
   formData.append("timestamp", String(timestamp));
   formData.append("signature", String(signature));

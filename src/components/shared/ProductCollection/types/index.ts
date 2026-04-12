@@ -26,8 +26,6 @@ export interface CollectionClientProps {
 
 export interface ProductToolbarProps {
   count: number;
-  viewMode: "grid" | "list";
-  onViewModeChange: (mode: "grid" | "list") => void;
   sortBy: string;
   onSortChange: (sort: string) => void;
   onFilterOpen?: () => void;
@@ -36,7 +34,6 @@ export interface ProductToolbarProps {
 
 export interface ProductGridProps {
   products: CollectionProduct[];
-  viewMode: "grid" | "list";
 }
 
 export interface MobileFilterDrawerProps {
@@ -44,4 +41,12 @@ export interface MobileFilterDrawerProps {
   onClose: () => void;
   availableColors: { name: string; hexCode: string }[];
   maxPriceDb: number;
+  // Estado de filtros (manejado por useCollectionClient)
+  selectedColor: string | null;
+  minPrice: string;
+  maxPrice: string;
+  hasActiveFilters: boolean;
+  onColorToggle: (hexCode: string) => void;
+  onPriceChange: (key: "minPrice" | "maxPrice", value: string) => void;
+  onClearFilters: () => void;
 }

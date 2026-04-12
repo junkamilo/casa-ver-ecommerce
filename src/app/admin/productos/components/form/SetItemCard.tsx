@@ -6,6 +6,7 @@ import ImageUpload from "@/components/ui/image-upload";
 import VideoUpload from "@/components/ui/video-upload";
 import VariantStockSection from "./VariantStockSection";
 import FieldError from "../shared/FieldError";
+import PriceInput from "../shared/PriceInput";
 import { SetItemCardProps } from "../../types";
 import { PRESET_COLORS, SIZES, fieldCls } from "../../constants";
 
@@ -20,7 +21,8 @@ export default function SetItemCard({
   onToggleSize,
   onSetColorImages,
   onUpdateVariantStock,
-}: SetItemCardProps) {
+  scrollContainer,
+}: SetItemCardProps & { scrollContainer?: Element | null }) {
   const [open, setOpen] = useState(true);
   const [colorsOpen, setColorsOpen] = useState(false);
   const [sizesOpen, setSizesOpen] = useState(false);
@@ -48,7 +50,10 @@ export default function SetItemCard({
   }, []);
 
   return (
-    <div className={`rounded-2xl border-2 ${hasErrors ? "border-red-300" : "border-gray-200"} bg-gray-50 shadow-sm`}>
+    <div
+      className={`rounded-2xl border-2 ${hasErrors ? "border-red-300" : "border-gray-200"} bg-gray-50 shadow-sm`}
+      style={{ contentVisibility: "auto", containIntrinsicSize: "0 400px" }}
+    >
       {/* Header de pieza */}
       <div className="flex items-center gap-3 px-5 py-3.5 bg-linear-to-r from-[#154734]/5 to-transparent border-b border-gray-200 rounded-t-2xl">
         <span className={`w-7 h-7 rounded-full ${hasErrors ? "bg-red-500" : "bg-[#154734]"} text-white text-xs font-bold flex items-center justify-center shrink-0 shadow`}>
@@ -113,13 +118,12 @@ export default function SetItemCard({
                 <label className="block text-xs font-semibold text-gray-600 mb-1">
                   Precio (COP)
                 </label>
-                <input
-                  type="number"
+                <PriceInput
                   value={item.price}
-                  onChange={(e) => onUpdate(item.localId, { price: e.target.value })}
-                  placeholder="89900"
-                  min="0"
+                  onChange={(raw) => onUpdate(item.localId, { price: raw })}
+                  placeholder="89.900"
                   disabled={disabled}
+                  hasError={!!errors.price}
                   className={fieldCls(!!errors.price)}
                 />
                 <FieldError msg={errors.price} />
@@ -128,13 +132,12 @@ export default function SetItemCard({
                 <label className="block text-xs font-semibold text-gray-600 mb-1">
                   Precio Antes <span className="font-normal text-gray-400">(tachado)</span>
                 </label>
-                <input
-                  type="number"
+                <PriceInput
                   value={item.comparePrice}
-                  onChange={(e) => onUpdate(item.localId, { comparePrice: e.target.value })}
-                  placeholder="120000"
-                  min="0"
+                  onChange={(raw) => onUpdate(item.localId, { comparePrice: raw })}
+                  placeholder="120.000"
                   disabled={disabled}
+                  hasError={!!errors.comparePrice}
                   className={fieldCls(!!errors.comparePrice)}
                 />
                 <FieldError msg={errors.comparePrice} />
@@ -254,6 +257,7 @@ export default function SetItemCard({
                               onSetCover={(url) => onSetColorImages(item.localId, color.name, [url, ...color.images.filter((i) => i !== url)])}
                               maxImages={8}
                               colorInfo={{ name: color.name, hexCode: color.hexCode }}
+                              scrollContainer={scrollContainer}
                             />
                           </div>
                         )}

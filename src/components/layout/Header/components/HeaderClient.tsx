@@ -9,13 +9,15 @@ import logoIcon from "@/assets/logo-icon.png";
 
 import { BRAND_GREEN } from "../constants/constants";
 import { useHeaderClient } from "../hooks/useHeaderClient";
+import { useNavCategories } from "../hooks/useNavCategories";
 import MegaMenu from "./MegaMenu";
 import MobileMenu from "./MobileMenu";
 import NavActions from "./NavActions";
 import NavLinks from "./NavLinks";
 import type { HeaderClientProps } from "../types";
 
-const HeaderClient = ({ categories }: HeaderClientProps) => {
+const HeaderClient = ({ categories: initialCategories }: HeaderClientProps) => {
+  const categories = useNavCategories(initialCategories);
   const {
     menuOpen,
     isCategoriesHovered,

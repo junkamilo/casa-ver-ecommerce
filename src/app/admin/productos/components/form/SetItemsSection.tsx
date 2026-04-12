@@ -14,7 +14,8 @@ export default function SetItemsSection({
   onToggleSize,
   onSetColorImages,
   onUpdateVariantStock,
-}: SetItemsSectionProps) {
+  scrollContainer,
+}: SetItemsSectionProps & { scrollContainer?: Element | null }) {
   return (
     <div className="space-y-4">
       {items.length === 0 ? (
@@ -39,6 +40,7 @@ export default function SetItemsSection({
               onToggleSize={onToggleSize}
               onSetColorImages={onSetColorImages}
               onUpdateVariantStock={onUpdateVariantStock}
+              scrollContainer={scrollContainer}
             />
           ))}
         </div>

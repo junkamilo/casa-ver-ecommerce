@@ -10,14 +10,18 @@ import { CollectionClientProps } from '../types/index';
 
 export default function CollectionClient({ products, filterOptions }: CollectionClientProps) {
   const {
-    viewMode,
-    setViewMode,
     sortBy,
     setSortBy,
     isFilterOpen,
     setIsFilterOpen,
     sortedProducts,
     hasActiveFilters,
+    selectedColor,
+    minPrice,
+    maxPrice,
+    handleColorToggle,
+    handlePriceChange,
+    clearAllFilters,
   } = useCollectionClient(products);
 
   return (
@@ -27,6 +31,13 @@ export default function CollectionClient({ products, filterOptions }: Collection
         onClose={() => setIsFilterOpen(false)}
         availableColors={filterOptions.availableColors}
         maxPriceDb={filterOptions.maxPriceDb}
+        selectedColor={selectedColor}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        hasActiveFilters={hasActiveFilters}
+        onColorToggle={handleColorToggle}
+        onPriceChange={handlePriceChange}
+        onClearFilters={clearAllFilters}
       />
 
       <div className="flex flex-col w-full animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500 fill-mode-both">
@@ -36,8 +47,6 @@ export default function CollectionClient({ products, filterOptions }: Collection
 
           <ProductToolbar
             count={sortedProducts.length}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
             sortBy={sortBy}
             onSortChange={setSortBy}
             onFilterOpen={() => setIsFilterOpen(true)}
@@ -45,7 +54,7 @@ export default function CollectionClient({ products, filterOptions }: Collection
           />
 
           <div className="mt-8 sm:mt-10">
-            <ProductGrid products={sortedProducts} viewMode={viewMode} />
+            <ProductGrid products={sortedProducts} />
           </div>
 
         </div>

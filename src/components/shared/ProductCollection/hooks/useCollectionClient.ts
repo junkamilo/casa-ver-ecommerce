@@ -1,23 +1,51 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
 import type { CollectionProduct } from "../types";
 
 export function useCollectionClient(products: CollectionProduct[]) {
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState("relevance");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  const searchParams = useSearchParams();
-  const hasActiveFilters = !!(
-    searchParams.get("color") ||
-    searchParams.get("minPrice") ||
-    searchParams.get("maxPrice")
-  );
+  // Filter state
+  const [selectedColor, setSelectedColor] = useState<string | null>(null); // hexCode con "#"
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+
+  const hasActiveFilters = !!(selectedColor || minPrice || maxPrice);
+
+  function handleColorToggle(hexCode: string) {
+    setSelectedColor((prev) => (prev === hexCode ? null : hexCode));
+  }
+
+  function handlePriceChange(key: "minPrice" | "maxPrice", value: string) {
+    if (key === "minPrice") setMinPrice(value);
+    else setMaxPrice(value);
+  }
+
+  function clearAllFilters() {
+    setSelectedColor(null);
+    setMinPrice("");
+    setMaxPrice("");
+  }
 
   const sortedProducts = useMemo(() => {
-    const arr = [...products];
+    let arr = [...products];
+
+    // Filtro por color
+    if (selectedColor) {
+      arr = arr.filter((p) =>
+        p.colors?.some((c) => c.hexCode === selectedColor)
+      );
+    }
+
+    // Filtro por precio
+    const min = minPrice ? parseFloat(minPrice) : undefined;
+    const max = maxPrice ? parseFloat(maxPrice) : undefined;
+    if (min !== undefined && !isNaN(min)) arr = arr.filter((p) => p.price >= min);
+    if (max !== undefined && !isNaN(max)) arr = arr.filter((p) => p.price <= max);
+
+    // Ordenamiento
     switch (sortBy) {
       case "price-desc":
         return arr.sort((a, b) => b.price - a.price);
@@ -28,16 +56,21 @@ export function useCollectionClient(products: CollectionProduct[]) {
       default:
         return arr;
     }
-  }, [products, sortBy]);
+  }, [products, sortBy, selectedColor, minPrice, maxPrice]);
 
   return {
-    viewMode,
-    setViewMode,
     sortBy,
     setSortBy,
     isFilterOpen,
     setIsFilterOpen,
     sortedProducts,
     hasActiveFilters,
+    // Estado de filtros + callbacks para MobileFilterDrawer
+    selectedColor,
+    minPrice,
+    maxPrice,
+    handleColorToggle,
+    handlePriceChange,
+    clearAllFilters,
   };
 }

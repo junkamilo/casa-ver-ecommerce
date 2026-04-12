@@ -10,19 +10,19 @@ export function MobileFilterDrawer({
   onClose,
   availableColors,
   maxPriceDb,
+  selectedColor,
+  minPrice,
+  maxPrice,
+  hasActiveFilters,
+  onColorToggle,
+  onPriceChange,
+  onClearFilters,
 }: MobileFilterDrawerProps) {
   const {
     isPriceOpen,
     setIsPriceOpen,
     isColorOpen,
     setIsColorOpen,
-    minPriceInput,
-    maxPriceInput,
-    activeColor,
-    hasActiveFilters,
-    handlePriceChange,
-    handleColorToggle,
-    clearAllFilters,
   } = useMobileFilterDrawer();
 
   if (!isOpen) return null;
@@ -47,7 +47,7 @@ export function MobileFilterDrawer({
           <div className="flex items-center gap-3">
             {hasActiveFilters && (
               <button
-                onClick={clearAllFilters}
+                onClick={onClearFilters}
                 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-red-400 transition-colors"
               >
                 Limpiar
@@ -83,8 +83,8 @@ export function MobileFilterDrawer({
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-[#C19A6B]">$</span>
                     <input
                       type="number"
-                      value={minPriceInput}
-                      onChange={(e) => handlePriceChange("minPrice", e.target.value)}
+                      value={minPrice}
+                      onChange={(e) => onPriceChange("minPrice", e.target.value)}
                       placeholder="0"
                       min={0}
                       className="w-full pl-7 pr-3 py-3 text-sm text-[#154734] font-medium bg-white border border-gray-200 rounded-xl focus:border-[#C19A6B] focus:ring-2 focus:ring-[#C19A6B]/20 outline-none transition-all"
@@ -95,8 +95,8 @@ export function MobileFilterDrawer({
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-[#C19A6B]">$</span>
                     <input
                       type="number"
-                      value={maxPriceInput}
-                      onChange={(e) => handlePriceChange("maxPrice", e.target.value)}
+                      value={maxPrice}
+                      onChange={(e) => onPriceChange("maxPrice", e.target.value)}
                       placeholder={maxPriceDb > 0 ? String(maxPriceDb) : "0"}
                       min={0}
                       className="w-full pl-7 pr-3 py-3 text-sm text-[#154734] font-medium bg-white border border-gray-200 rounded-xl focus:border-[#C19A6B] focus:ring-2 focus:ring-[#C19A6B]/20 outline-none transition-all"
@@ -127,12 +127,11 @@ export function MobileFilterDrawer({
                 <div className="p-4 bg-[#FAFAFA]">
                   <div className="flex flex-wrap gap-3">
                     {availableColors.map((color) => {
-                      const hex = color.hexCode.replace("#", "");
-                      const isActive = activeColor === hex;
+                      const isActive = selectedColor === color.hexCode;
                       return (
                         <button
                           key={color.hexCode}
-                          onClick={() => handleColorToggle(color.hexCode)}
+                          onClick={() => onColorToggle(color.hexCode)}
                           title={color.name}
                           className={`w-9 h-9 rounded-full border-2 transition-all duration-200 shadow-sm hover:scale-110 active:scale-95 ${
                             isActive
@@ -144,11 +143,11 @@ export function MobileFilterDrawer({
                       );
                     })}
                   </div>
-                  {activeColor && (
+                  {selectedColor && (
                     <p className="text-[10px] text-gray-500 mt-3 italic">
                       Color:{" "}
                       <strong className="text-[#154734]">
-                        {availableColors.find((c) => c.hexCode.replace("#", "") === activeColor)?.name ?? activeColor}
+                        {availableColors.find((c) => c.hexCode === selectedColor)?.name ?? selectedColor}
                       </strong>
                     </p>
                   )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Trash2, Upload, Loader2, PlayCircle, AlertCircle } from "lucide-react";
 import { uploadToCloudinary, validateFileSize } from "@/lib/cloudinary";
 
@@ -9,6 +9,67 @@ const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".ogg", ".mkv"];
 function isVideo(url: string): boolean {
   const clean = url.split("?")[0].toLowerCase();
   return VIDEO_EXTENSIONS.some((ext) => clean.endsWith(ext)) || clean.includes("/video/");
+}
+
+/**
+ * Convierte una URL de Cloudinary a miniatura de 200px.
+ * Evita descargar y decodificar imágenes en resolución completa
+ * cuando solo se necesita un thumbnail de ~96px.
+ *
+ * Input:  /upload/f_auto,q_auto/folder/img.jpg
+ * Output: /upload/w_200,c_fill,f_auto,q_auto/folder/img.jpg
+ */
+function thumbUrl(url: string): string {
+  if (!url.includes("res.cloudinary.com")) return url;
+  return url.replace(
+    /\/upload\/(f_auto,q_auto\/)?/,
+    "/upload/w_200,c_fill,f_auto,q_auto/"
+  );
+}
+
+/**
+ * Thumbnail de video con lazy loading via IntersectionObserver.
+ * Solo asigna `src` cuando el elemento entra al área visible del
+ * scroll container más cercano, evitando descargas prematuras.
+ */
+function LazyVideoThumb({
+  src,
+  className,
+  scrollRoot,
+}: {
+  src: string;
+  className: string;
+  scrollRoot?: Element | null;
+}) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [active, setActive] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setActive(true);
+          observer.disconnect();
+        }
+      },
+      { root: scrollRoot ?? null, threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [scrollRoot]);
+
+  return (
+    <video
+      ref={ref}
+      src={active ? src : undefined}
+      muted
+      loop
+      playsInline
+      className={className}
+    />
+  );
 }
 
 interface MediaUploadProps {
@@ -20,6 +81,8 @@ interface MediaUploadProps {
   maxImages?: number;
   /** Cuando se pasa, activa el layout de card por color */
   colorInfo?: { name: string; hexCode: string };
+  /** Scroll container del modal — mejora el IntersectionObserver para videos */
+  scrollContainer?: Element | null;
 }
 
 export default function ImageUpload({
@@ -30,6 +93,7 @@ export default function ImageUpload({
   onSetCover,
   maxImages = 5,
   colorInfo,
+  scrollContainer,
 }: MediaUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState<{ id: string; previewUrl: string; isVideo: boolean }[]>([]);
@@ -190,12 +254,10 @@ export default function ImageUpload({
                 >
                   {isVideo(url) ? (
                     <>
-                      <video
+                      <LazyVideoThumb
                         src={url}
-                        muted
-                        loop
-                        playsInline
                         className="absolute inset-0 w-full h-full object-cover"
+                        scrollRoot={scrollContainer}
                       />
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
                         <PlayCircle className="w-7 h-7 text-white drop-shadow" />
@@ -204,8 +266,10 @@ export default function ImageUpload({
                   ) : (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={url}
+                      src={thumbUrl(url)}
                       alt={`Foto ${index + 1}`}
+                      loading="lazy"
+                      decoding="async"
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                   )}
@@ -332,14 +396,24 @@ export default function ImageUpload({
             >
               {isVideo(url) ? (
                 <>
-                  <video src={url} muted loop playsInline className="absolute inset-0 w-full h-full object-cover" />
+                  <LazyVideoThumb
+                    src={url}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    scrollRoot={scrollContainer}
+                  />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
                     <PlayCircle className="w-7 h-7 text-white drop-shadow" />
                   </div>
                 </>
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={url} alt={`Archivo ${index + 1}`} className="absolute inset-0 w-full h-full object-cover" />
+                <img
+                  src={thumbUrl(url)}
+                  alt={`Archivo ${index + 1}`}
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               )}
 
               {index === 0 ? (
