@@ -19,7 +19,7 @@ export async function GET() {
           where: { status: "ACTIVE" },
           orderBy: { name: "asc" },
           select: { id: true, name: true, slug: true },
-          take: 8,
+          take: 20,
         },
       },
     });
