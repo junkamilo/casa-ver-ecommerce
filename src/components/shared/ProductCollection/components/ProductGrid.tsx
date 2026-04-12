@@ -5,25 +5,9 @@ import ProductCard from "@/components/ui/ProductCard";
 import { ProductGridProps } from '../types/index';
 
 
-export function ProductGrid({ products, viewMode }: ProductGridProps) {
+export function ProductGrid({ products }: ProductGridProps) {
   if (products.length === 0) {
     return <SectionEmptyState message="Pronto añadiremos nuevas prendas exclusivas a esta colección." />;
-  }
-
-  if (viewMode === "list") {
-    return (
-      <div className="flex flex-col gap-4 sm:gap-5">
-        {products.map((item, index) => (
-          <div
-            key={item.slug}
-            className="animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
-            style={{ animationDelay: `${index * 80}ms` }}
-          >
-            <ProductCard item={item} viewMode="list" />
-          </div>
-        ))}
-      </div>
-    );
   }
 
   return (

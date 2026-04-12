@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   X, Save, Loader2, Info, LayoutGrid, Tag, Package, Video,
 } from "lucide-react";
@@ -11,6 +11,7 @@ import {
 import { inputCls } from "../constants";
 import BlockHeader from "./shared/BlockHeader";
 import FieldError from "./shared/FieldError";
+import PriceInput from "./shared/PriceInput";
 import GeneralInfoSection from "./form/GeneralInfoSection";
 import ColorsSection from "./form/ColorsSection";
 import VideoSection from "./form/VideoSection";
@@ -60,6 +61,10 @@ export default function ProductModal({
   const [sizeError, setSizeError] = useState<string | null>(null);
   const [colorImagesError, setColorImagesError] = useState<string | null>(null);
   const [noItemsError, setNoItemsError] = useState<string | null>(null);
+
+  // Ref al área scrolleable del modal — se pasa a ImageUpload para que el
+  // IntersectionObserver de videos use este contenedor como root en lugar del viewport.
+  const scrollRef = useRef<HTMLFormElement>(null);
 
   const shouldShowStockTable = selectedColors.length > 0 && selectedSizes.length > 0;
 
@@ -202,7 +207,7 @@ export default function ProductModal({
             <Loader2 className="w-8 h-8 animate-spin text-[#154734]" />
           </div>
         ) : (
-          <form onSubmit={handleValidatedSubmit} className="flex-1 overflow-y-auto">
+          <form ref={scrollRef} onSubmit={handleValidatedSubmit} className="flex-1 overflow-y-auto">
             <div className="p-6 space-y-5">
 
               {/* ╔══════════════════════════════════════╗
@@ -307,12 +312,11 @@ export default function ProductModal({
                         <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
                           Precio (COP) *
                         </label>
-                        <input
-                          type="number"
+                        <PriceInput
                           value={basePrice}
-                          onChange={(e) => setBasePrice(e.target.value)}
-                          placeholder="89900"
-                          min="0"
+                          onChange={setBasePrice}
+                          placeholder="89.900"
+                          hasError={!!errors.basePrice}
                           className={inputCls(!!errors.basePrice)}
                         />
                         <FieldError msg={errors.basePrice} />
@@ -321,12 +325,11 @@ export default function ProductModal({
                         <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
                           Precio Antes <span className="font-normal text-gray-400 normal-case tracking-normal">(tachado)</span>
                         </label>
-                        <input
-                          type="number"
+                        <PriceInput
                           value={comparePrice}
-                          onChange={(e) => setComparePrice(e.target.value)}
-                          placeholder="120000"
-                          min="0"
+                          onChange={setComparePrice}
+                          placeholder="120.000"
+                          hasError={!!errors.comparePrice}
                           className={inputCls(!!errors.comparePrice)}
                         />
                         <FieldError msg={errors.comparePrice} />
@@ -343,6 +346,7 @@ export default function ProductModal({
                       colorError={colorError}
                       sizeError={sizeError}
                       colorImagesError={colorImagesError}
+                      scrollContainer={scrollRef.current}
                     />
 
                     {shouldShowStockTable && (
@@ -400,6 +404,7 @@ export default function ProductModal({
                     onToggleSize={toggleSetItemSize}
                     onSetColorImages={setSetItemColorImages}
                     onUpdateVariantStock={updateSetItemVariantStock}
+                    scrollContainer={scrollRef.current}
                   />
                 </div>
               )}

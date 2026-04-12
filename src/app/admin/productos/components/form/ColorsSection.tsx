@@ -18,7 +18,8 @@ export default function ColorsSection({
   onToggleColor,
   onToggleSize,
   onSetColorImages,
-}: ColorsSectionProps) {
+  scrollContainer,
+}: ColorsSectionProps & { scrollContainer?: Element | null }) {
   const [open, setOpen] = useState(false);
   const [sizesOpen, setSizesOpen] = useState(false);
   const [collapsedColors, setCollapsedColors] = useState<Set<string>>(new Set());
@@ -168,6 +169,7 @@ export default function ColorsSection({
               <div
                 key={color.name}
                 className={`bg-white rounded-lg border overflow-hidden ${colorImagesError && color.images.length === 0 ? "border-red-400" : "border-gray-200"}`}
+                style={{ contentVisibility: "auto", containIntrinsicSize: "0 120px" }}
               >
                 <button
                   type="button"
@@ -204,6 +206,7 @@ export default function ColorsSection({
                       onSetCover={(url) => handleSetCover(color.name, color.images, url)}
                       maxImages={MAX_IMAGES_PER_COLOR}
                       colorInfo={{ name: color.name, hexCode: color.hexCode }}
+                      scrollContainer={scrollContainer}
                     />
                   </div>
                 )}

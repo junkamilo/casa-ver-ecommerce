@@ -269,7 +269,7 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
         await createSetItems(tx, product.id, slug, items || []);
       }
       return product;
-    });
+    }, { timeout: 30000 });
 
     revalidatePath("/admin/productos");
     revalidatePath("/");

@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutGrid, List, ChevronDown, Check, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, Check, SlidersHorizontal } from "lucide-react";
 import { useSortDropdown } from "../hooks/useSortDropdown";
 import { SORT_OPTIONS } from "../constants";
 import { ProductToolbarProps } from '../types/index';
@@ -8,8 +8,6 @@ import { ProductToolbarProps } from '../types/index';
 
 export function ProductToolbar({
   count,
-  viewMode,
-  onViewModeChange,
   sortBy,
   onSortChange,
   onFilterOpen,
@@ -88,31 +86,6 @@ export function ProductToolbar({
           )}
         </div>
 
-        {/* Botones de Vista */}
-        <div className="flex items-center gap-2 border-l pl-4 sm:pl-6 border-gray-200">
-          <button
-            onClick={() => onViewModeChange("grid")}
-            className={`p-2 rounded-lg border transition-all duration-300 active:scale-90 ${
-              viewMode === "grid"
-                ? "bg-[#FAFAFA] text-[#154734] border-gray-200 shadow-inner"
-                : "bg-white text-gray-300 hover:text-[#C19A6B] hover:bg-[#FAFAFA] hover:border-[#C19A6B]/30 border-transparent"
-            }`}
-            aria-label="Vista de cuadrícula"
-          >
-            <LayoutGrid className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => onViewModeChange("list")}
-            className={`p-2 rounded-lg border transition-all duration-300 active:scale-90 ${
-              viewMode === "list"
-                ? "bg-[#FAFAFA] text-[#154734] border-gray-200 shadow-inner"
-                : "bg-white text-gray-300 hover:text-[#C19A6B] hover:bg-[#FAFAFA] hover:border-[#C19A6B]/30 border-transparent"
-            }`}
-            aria-label="Vista de lista"
-          >
-            <List className="w-4 h-4" />
-          </button>
-        </div>
       </div>
 
     </div>

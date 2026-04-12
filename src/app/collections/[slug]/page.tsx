@@ -11,7 +11,7 @@ import Header from "@/components/layout/Header";
 import CollectionHero from "./components/CollectionHero";
 import CollectionClient from "./components/CollectionClient";
 import BackButton from "@/components/ui/BackButton";
-import type { CollectionProduct, FilterOptions, CollectionFilters } from "./types";
+import type { CollectionProduct, FilterOptions } from "./types";
 
 // ── Product query select shape ────────────────────────────────────────────────
 const PRODUCT_SELECT = {
@@ -62,7 +62,6 @@ const PRODUCT_SELECT = {
 // ── Data fetcher ──────────────────────────────────────────────────────────────
 async function getCollectionData(
   slug: string,
-  filters: CollectionFilters
 ): Promise<{
   category: { name: string } | null;
   products: CollectionProduct[];
@@ -78,39 +77,24 @@ async function getCollectionData(
 
     if (!category) return empty;
 
-    // Build dynamic where clause
     const where: Prisma.ProductWhereInput = {
       category: { slug },
       status: "ACTIVE",
     };
 
-    const minPrice = filters.minPrice ? parseFloat(filters.minPrice) : undefined;
-    const maxPrice = filters.maxPrice ? parseFloat(filters.maxPrice) : undefined;
-
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      where.basePrice = {
-        ...(minPrice !== undefined && { gte: minPrice }),
-        ...(maxPrice !== undefined && { lte: maxPrice }),
-      };
-    }
-
-    // color param is stored without "#" in URL
-    if (filters.color) {
-      where.colors = { some: { hexCode: `#${filters.color}` } };
-    }
-
-    // Fetch sidebar option data (unfiltered, same category)
-    const allForFilters = await prisma.product.findMany({
-      where: { category: { slug }, status: "ACTIVE" },
-      select: {
-        basePrice: true,
-        colors: { select: { name: true, hexCode: true } },
-      },
+    // Fetch all active products (filtering happens client-side)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw = await (prisma as any).product.findMany({
+      where,
+      select: PRODUCT_SELECT,
+      orderBy: { createdAt: "desc" },
     });
 
+    // Build filterOptions from the full product set
     const colorMap = new Map<string, string>();
     let maxPriceDb = 0;
-    for (const p of allForFilters) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const p of raw as any[]) {
       const price = Number(p.basePrice);
       if (price > maxPriceDb) maxPriceDb = price;
       for (const c of p.colors) {
@@ -119,14 +103,6 @@ async function getCollectionData(
     }
 
     const availableColors = Array.from(colorMap.entries()).map(([hexCode, name]) => ({ hexCode, name }));
-
-    // Fetch filtered products
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const raw = await (prisma as any).product.findMany({
-      where,
-      select: PRODUCT_SELECT,
-      orderBy: { createdAt: "desc" },
-    });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const products: CollectionProduct[] = (raw as any[]).map((p) => {
@@ -225,14 +201,11 @@ export async function generateMetadata({
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default async function CollectionPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<CollectionFilters>;
 }) {
   const { slug } = await params;
-  const filters = await searchParams;
-  const { category, products, filterOptions } = await getCollectionData(slug, filters);
+  const { category, products, filterOptions } = await getCollectionData(slug);
   const title = category?.name?.toUpperCase() ?? slug.replace(/-/g, " ").toUpperCase();
 
   return (
