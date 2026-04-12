@@ -50,6 +50,11 @@ const nextConfig = {
           ? ["casaverdeoficial.com", "www.casaverdeoficial.com"]
           : ["localhost:3000"],
     },
+    // Evita que el router cache del cliente sirva layouts/páginas dinámicas con datos obsoletos.
+    // staleTimes.dynamic=0 → Next.js siempre pide datos frescos al servidor en soft-navigation.
+    staleTimes: {
+      dynamic: 0,
+    },
   },
 };
 
