@@ -14,7 +14,7 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
   return (
     <div
       className={`hidden lg:block absolute top-full left-0 w-full bg-background/97 backdrop-blur-xl border-b border-border/30 shadow-premium-lg transition-all duration-350 ease-out z-40 overflow-hidden ${
-        visible ? "opacity-100 visible max-h-[600px]" : "opacity-0 invisible max-h-0"
+        visible ? "opacity-100 visible max-h-170" : "opacity-0 invisible max-h-0"
       }`}
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
@@ -102,7 +102,14 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
                 )}
 
                 {/* ── Productos de esta categoría ── */}
-                <div className="flex flex-col gap-2">
+                {/* Con >5 productos usa 2 columnas para que quepan todos sin cortar */}
+                <div
+                  className={
+                    category.products.length > 5
+                      ? "grid grid-cols-2 gap-x-3 gap-y-2"
+                      : "flex flex-col gap-2"
+                  }
+                >
                   {category.products.map((product) => {
                     const isProductActive = pathname === `/product/${product.slug}`;
 
@@ -110,7 +117,7 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
                       <Link
                         key={product.id}
                         href={`/product/${product.slug}`}
-                        className={`relative group flex items-center text-sm font-normal transition-colors duration-300 pl-3 ${
+                        className={`relative group flex items-center text-sm font-normal transition-colors duration-300 pl-3 min-w-0 ${
                           isProductActive
                             ? "text-[#154734] font-medium"
                             : "text-gray-400 hover:text-[#C19A6B]"
@@ -126,7 +133,7 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
                           }`}
                           aria-hidden="true"
                         />
-                        <span className="group-hover:translate-x-0.5 transition-transform duration-200 leading-snug">
+                        <span className="group-hover:translate-x-0.5 transition-transform duration-200 leading-snug truncate">
                           {product.name}
                         </span>
                         {/* Punto verde si producto activo */}
