@@ -5,15 +5,7 @@ export const ANNOUNCEMENTS: Announcement[] = [
   {
     text: "Envíos gratis por compras superiores a $300.000 mil pesos",
     icon: Truck,
-  },
-  {
-    text: "Actitud y Comodidad en Cada Movimiento",
-    icon: Sparkles,
-  },
-  {
-    text: "Compra 100% Segura y Garantizada",
-    icon: ShieldCheck,
-  },
+  }
 ];
 
 // Cuántas copias del marquee para garantizar loop sin saltos en pantallas ultra-anchas

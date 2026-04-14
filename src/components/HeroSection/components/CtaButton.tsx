@@ -16,9 +16,9 @@ export function CtaButton({ label, href, variant }: HeroButton) {
         "focus-visible:outline",
         isPrimary
           ? "text-white hover:shadow-[0_0_28px_rgba(193,154,107,0.28)] focus-visible:outline-[#C19A6B]"
-          : "text-black hover:shadow-[0_0_28px_rgba(193,154,107,0.28)] focus-visible:outline-[#154734]",
+          : "text-[#154734] hover:shadow-[0_0_28px_rgba(255,255,255,0.28)] focus-visible:outline-[#154734]",
       ].join(" ")}
-      style={isPrimary ? { background: BRAND_GREEN } : { background: BRAND_GOLD }}
+      style={isPrimary ? { background: BRAND_GREEN } : { background: "#ffffff" }}
     >
       <span
         className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out"
