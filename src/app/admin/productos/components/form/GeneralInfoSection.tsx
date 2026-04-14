@@ -23,6 +23,7 @@ export default function GeneralInfoSection({
 }: GeneralInfoSectionProps) {
   const cat = useDropdown();
   const est = useDropdown();
+  const gt = useDropdown();
 
   const selectedCat = categories.find((c) => c.id === categoryId);
   const selectedStatus = STATUS_OPTIONS.find((s) => s.value === status) ?? STATUS_OPTIONS[0];
@@ -190,6 +191,7 @@ export default function GeneralInfoSection({
       {/* ── Tipo de Prenda ── */}
       {(() => {
         const catGarmentTypes = categories.find((c) => c.id === categoryId)?.garmentTypes ?? [];
+        const selectedGT = catGarmentTypes.find((g) => g.id === garmentType);
         return (
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-700 uppercase tracking-wide flex items-center gap-1.5">
@@ -210,16 +212,62 @@ export default function GeneralInfoSection({
                 </p>
               </div>
             ) : (
-              <select
-                value={garmentType ?? ""}
-                onChange={(e) => onGarmentType(e.target.value || null)}
-                className={inputCls()}
-              >
-                <option value="">Sin clasificar…</option>
-                {catGarmentTypes.map((gt) => (
-                  <option key={gt.id} value={gt.id}>{gt.name}</option>
-                ))}
-              </select>
+              <div className="relative" ref={gt.ref}>
+                <button
+                  type="button"
+                  onClick={() => gt.setOpen((v) => !v)}
+                  className="w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg border border-gray-200 hover:border-[#C19A6B] text-sm transition-colors bg-white"
+                >
+                  <span className={selectedGT ? "text-gray-800 font-medium" : "text-gray-400"}>
+                    {selectedGT ? selectedGT.name : "Sin clasificar…"}
+                  </span>
+                  {gt.open
+                    ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" />
+                    : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
+                </button>
+
+                {gt.open && (
+                  <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-gray-100 bg-[#154734]/5">
+                      <p className="text-[11px] font-bold text-[#154734] uppercase tracking-widest">
+                        Tipo de Prenda
+                      </p>
+                    </div>
+                    <div className="overflow-y-auto max-h-52 p-1.5 space-y-0.5">
+                      <button
+                        type="button"
+                        onClick={() => { onGarmentType(null); gt.setOpen(false); }}
+                        className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                          !garmentType
+                            ? "bg-[#154734] text-white"
+                            : "text-gray-500 hover:bg-gray-50"
+                        }`}
+                      >
+                        <span className="font-medium">Sin clasificar…</span>
+                        {!garmentType && <Check className="w-4 h-4 shrink-0" />}
+                      </button>
+                      {catGarmentTypes.map((g) => {
+                        const active = g.id === garmentType;
+                        return (
+                          <button
+                            key={g.id}
+                            type="button"
+                            onClick={() => { onGarmentType(g.id); gt.setOpen(false); }}
+                            className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                              active
+                                ? "bg-[#154734] text-white"
+                                : "text-gray-700 hover:bg-gray-50"
+                            }`}
+                          >
+                            <span className="font-medium">{g.name}</span>
+                            {active && <Check className="w-4 h-4 shrink-0" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         );

@@ -47,6 +47,11 @@ export function useProductList() {
     fetchCategories();
   }, [fetchProducts, fetchCategories]);
 
+  // Resetea a página 1 solo cuando el usuario cambia filtros, no cuando se recargan datos
+  useEffect(() => {
+    setPage(1);
+  }, [search, filterCategory]);
+
   useEffect(() => {
     let result = products;
     if (search)
@@ -56,7 +61,6 @@ export function useProductList() {
     if (filterCategory !== "Todos")
       result = result.filter((p) => p.category?.name === filterCategory);
     setFilteredProducts(result);
-    setPage(1);
   }, [search, filterCategory, products]);
 
   const deleteProduct = async (id: string): Promise<boolean> => {
