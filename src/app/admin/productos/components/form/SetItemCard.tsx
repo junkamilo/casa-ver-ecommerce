@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Trash2, ChevronDown, ChevronUp, Check, DollarSign, Video, FileText } from "lucide-react";
+import { Trash2, ChevronDown, ChevronUp, Check, DollarSign, Video, FileText, Tag } from "lucide-react";
+import { useDropdown } from "../../hooks/useDropdown";
 import ImageUpload from "@/components/ui/image-upload";
 import VideoUpload from "@/components/ui/video-upload";
 import VariantStockSection from "./VariantStockSection";
@@ -30,6 +31,7 @@ export default function SetItemCard({
   const [collapsedColors, setCollapsedColors] = useState<Set<string>>(new Set());
   const colorsDropdownRef = useRef<HTMLDivElement>(null);
   const hasErrors = Object.keys(errors).length > 0;
+  const gtDropdown = useDropdown();
 
   const toggleCollapse = (name: string) =>
     setCollapsedColors((prev) => {
@@ -109,21 +111,77 @@ export default function SetItemCard({
           {/* ── BLOQUE A2: Tipo de Prenda ────────────────────── */}
           {garmentTypes.length > 0 && (
             <div>
-              <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2">
+              <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                <Tag className="w-3 h-3" />
                 Tipo de Prenda
                 <span className="font-normal normal-case tracking-normal text-gray-300 ml-1">— para filtros del menú</span>
               </p>
-              <select
-                value={item.garmentType ?? ""}
-                onChange={(e) => onUpdate(item.localId, { garmentType: e.target.value || null })}
-                disabled={disabled}
-                className={fieldCls()}
-              >
-                <option value="">Sin clasificar…</option>
-                {garmentTypes.map((gt) => (
-                  <option key={gt.id} value={gt.id}>{gt.name}</option>
-                ))}
-              </select>
+              {(() => {
+                const selectedGT = garmentTypes.find((g) => g.id === item.garmentType);
+                return (
+                  <div className="relative" ref={gtDropdown.ref}>
+                    <button
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => !disabled && gtDropdown.setOpen((v) => !v)}
+                      className={`w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg border text-sm transition-colors bg-white ${
+                        disabled
+                          ? "border-gray-100 text-gray-400 cursor-not-allowed opacity-60"
+                          : "border-gray-200 hover:border-[#C19A6B] cursor-pointer"
+                      }`}
+                    >
+                      <span className={selectedGT ? "text-gray-800 font-medium" : "text-gray-400"}>
+                        {selectedGT ? selectedGT.name : "Sin clasificar…"}
+                      </span>
+                      {gtDropdown.open
+                        ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" />
+                        : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
+                    </button>
+
+                    {gtDropdown.open && !disabled && (
+                      <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                        <div className="px-4 py-2.5 border-b border-gray-100 bg-[#154734]/5">
+                          <p className="text-[11px] font-bold text-[#154734] uppercase tracking-widest">
+                            Tipo de Prenda
+                          </p>
+                        </div>
+                        <div className="overflow-y-auto max-h-48 p-1.5 space-y-0.5">
+                          <button
+                            type="button"
+                            onClick={() => { onUpdate(item.localId, { garmentType: null }); gtDropdown.setOpen(false); }}
+                            className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                              !item.garmentType
+                                ? "bg-[#154734] text-white"
+                                : "text-gray-500 hover:bg-gray-50"
+                            }`}
+                          >
+                            <span className="font-medium">Sin clasificar…</span>
+                            {!item.garmentType && <Check className="w-4 h-4 shrink-0" />}
+                          </button>
+                          {garmentTypes.map((g) => {
+                            const active = g.id === item.garmentType;
+                            return (
+                              <button
+                                key={g.id}
+                                type="button"
+                                onClick={() => { onUpdate(item.localId, { garmentType: g.id }); gtDropdown.setOpen(false); }}
+                                className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                                  active
+                                    ? "bg-[#154734] text-white"
+                                    : "text-gray-700 hover:bg-gray-50"
+                                }`}
+                              >
+                                <span className="font-medium">{g.name}</span>
+                                {active && <Check className="w-4 h-4 shrink-0" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           )}
 

@@ -37,6 +37,11 @@ export function useAdminList({ showToast }: UseAdminListOptions) {
     fetchAdmins();
   }, [fetchAdmins]);
 
+  // Resetea a página 1 solo cuando el usuario cambia la búsqueda, no cuando se recargan datos
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
+
   useEffect(() => {
     const lower = searchTerm.toLowerCase();
     const results = admins.filter(
@@ -45,7 +50,6 @@ export function useAdminList({ showToast }: UseAdminListOptions) {
         admin.email.toLowerCase().includes(lower)
     );
     setFilteredAdmins(results);
-    setPage(1);
   }, [searchTerm, admins]);
 
   const totalPages = Math.ceil(filteredAdmins.length / PAGE_SIZE);
