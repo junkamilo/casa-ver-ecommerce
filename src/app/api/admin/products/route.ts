@@ -288,7 +288,7 @@ export async function POST(req: NextRequest) {
       name, description, basePrice, comparePrice, stock,
       categoryId, status, isFeatured, isNew,
       isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
-      videoUrl, isSet, colors, sizes, items,
+      videoUrl, garmentType: garmentTypeId, isSet, colors, sizes, items,
     } = body;
 
     // ── Verificar que la categoría existe y está activa en DB ─────────────────
@@ -335,6 +335,7 @@ export async function POST(req: NextRequest) {
           isOnSale: isOnSale || false,
           isOnSaleAt: resolvedOnSaleAt,
           videoUrl: videoUrl || null,
+          garmentTypeId: (garmentTypeId as string) || null,
           isSet: isSet || false,
           metaTitle: (name as string).trim().slice(0, 60),
           metaDescription: description

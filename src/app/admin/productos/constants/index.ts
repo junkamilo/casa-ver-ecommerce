@@ -23,6 +23,7 @@ export const PRESET_COLORS = [
   { name: "Gris",             hex: "#9E9E9E" },
 ] as const;
 
+
 export const STATUS_OPTIONS = [
   { value: "ACTIVE",   label: "Activo",   dot: "bg-emerald-500" },
   { value: "INACTIVE", label: "Inactivo", dot: "bg-gray-400"    },

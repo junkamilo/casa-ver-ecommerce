@@ -15,6 +15,7 @@ export default function SetItemCard({
   index,
   disabled,
   errors = {},
+  garmentTypes = [],
   onRemove,
   onUpdate,
   onToggleColor,
@@ -22,13 +23,12 @@ export default function SetItemCard({
   onSetColorImages,
   onUpdateVariantStock,
   scrollContainer,
-}: SetItemCardProps & { scrollContainer?: Element | null }) {
+  onUploadingChange,
+}: SetItemCardProps & { scrollContainer?: Element | null; garmentTypes?: { id: string; name: string }[] }) {
   const [open, setOpen] = useState(true);
   const [colorsOpen, setColorsOpen] = useState(false);
-  const [sizesOpen, setSizesOpen] = useState(false);
   const [collapsedColors, setCollapsedColors] = useState<Set<string>>(new Set());
   const colorsDropdownRef = useRef<HTMLDivElement>(null);
-  const sizesDropdownRef = useRef<HTMLDivElement>(null);
   const hasErrors = Object.keys(errors).length > 0;
 
   const toggleCollapse = (name: string) =>
@@ -42,8 +42,6 @@ export default function SetItemCard({
     const handler = (e: MouseEvent) => {
       if (colorsDropdownRef.current && !colorsDropdownRef.current.contains(e.target as Node))
         setColorsOpen(false);
-      if (sizesDropdownRef.current && !sizesDropdownRef.current.contains(e.target as Node))
-        setSizesOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -108,6 +106,27 @@ export default function SetItemCard({
             />
           </div>
 
+          {/* ── BLOQUE A2: Tipo de Prenda ────────────────────── */}
+          {garmentTypes.length > 0 && (
+            <div>
+              <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                Tipo de Prenda
+                <span className="font-normal normal-case tracking-normal text-gray-300 ml-1">— para filtros del menú</span>
+              </p>
+              <select
+                value={item.garmentType ?? ""}
+                onChange={(e) => onUpdate(item.localId, { garmentType: e.target.value || null })}
+                disabled={disabled}
+                className={fieldCls()}
+              >
+                <option value="">Sin clasificar…</option>
+                {garmentTypes.map((gt) => (
+                  <option key={gt.id} value={gt.id}>{gt.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* ── BLOQUE B: Precio, Precio Anterior y Stock ────── */}
           <div>
             <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
@@ -155,6 +174,7 @@ export default function SetItemCard({
               value={item.videoUrl}
               onChange={(url) => onUpdate(item.localId, { videoUrl: url })}
               disabled={disabled}
+              onUploadingChange={onUploadingChange}
             />
             <FieldError msg={errors.videoUrl} />
           </div>
@@ -258,6 +278,7 @@ export default function SetItemCard({
                               maxImages={8}
                               colorInfo={{ name: color.name, hexCode: color.hexCode }}
                               scrollContainer={scrollContainer}
+                              onUploadingChange={onUploadingChange}
                             />
                           </div>
                         )}
@@ -275,52 +296,25 @@ export default function SetItemCard({
               Tallas disponibles <span className="text-red-500">*</span>
             </p>
             {errors.sizes && <p className="text-red-500 text-xs -mt-2">{errors.sizes}</p>}
-            <div className="relative" ref={sizesDropdownRef}>
-              <button
-                type="button"
-                disabled={disabled}
-                onClick={() => setSizesOpen((v) => !v)}
-                className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border bg-white text-sm text-gray-700 hover:border-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${errors.sizes ? "border-red-400" : "border-gray-200"}`}
-              >
-                <span className="flex items-center gap-2 flex-wrap">
-                  {item.sizes.length === 0 ? (
-                    <span className="text-gray-400">Seleccionar tallas…</span>
-                  ) : (
-                    item.sizes.map((s) => (
-                      <span key={s} className="px-2 py-0.5 rounded-full bg-[#154734] text-white text-xs font-bold">
-                        {s}
-                      </span>
-                    ))
-                  )}
-                </span>
-                {sizesOpen
-                  ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" />
-                  : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
-              </button>
-
-              {sizesOpen && (
-                <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-                  <div className="overflow-y-auto max-h-52 p-2 space-y-0.5">
-                    {SIZES.map((size) => {
-                      const active = item.sizes.includes(size);
-                      return (
-                        <button
-                          key={size}
-                          type="button"
-                          onClick={() => onToggleSize(item.localId, size)}
-                          disabled={disabled}
-                          className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors ${
-                            active ? "bg-[#154734]/8 text-[#154734]" : "text-gray-700 hover:bg-gray-50"
-                          } disabled:opacity-50 disabled:cursor-not-allowed`}
-                        >
-                          <span>{size}</span>
-                          {active && <Check className="w-4 h-4 text-[#154734] shrink-0" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+            <div className="flex flex-wrap gap-2">
+              {SIZES.map((size) => {
+                const active = item.sizes.includes(size);
+                return (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => onToggleSize(item.localId, size)}
+                    disabled={disabled}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-bold border-2 transition-all ${
+                      active
+                        ? "bg-[#154734] border-[#154734] text-white shadow-sm"
+                        : "border-gray-200 text-gray-500 hover:border-gray-400 bg-white"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {size}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

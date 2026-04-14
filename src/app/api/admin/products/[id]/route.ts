@@ -249,6 +249,7 @@ export async function GET(
       metaTitle: product.metaTitle,
       metaDescription: product.metaDescription,
       videoUrl: product.videoUrl,
+      garmentType: product.garmentTypeId ?? null,
       generalImages: product.images
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .filter((img: any) => !img.colorId)
@@ -284,6 +285,7 @@ export async function GET(
         price: item.price ? Number(item.price) : null,
         comparePrice: item.comparePrice ? Number(item.comparePrice) : null,
         videoUrl: item.videoUrl,
+        garmentType: item.garmentTypeId ?? null,
         order: item.order,
         stock: item.colors.reduce(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -351,7 +353,7 @@ export async function PATCH(
       name, description, basePrice, comparePrice, stock,
       categoryId, status, isFeatured, isNew,
       isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
-      videoUrl, isSet, colors, sizes, items,
+      videoUrl, garmentType: garmentTypeId, isSet, colors, sizes, items,
     } = body;
 
     // ── Verificar que la categoría existe y está activa en DB ─────────────────
@@ -415,6 +417,7 @@ export async function PATCH(
           isOnSale: isOnSale ?? false,
           isOnSaleAt: resolvedOnSaleAt,
           videoUrl: videoUrl !== undefined ? (videoUrl || null) : undefined,
+          garmentTypeId: (garmentTypeId as string) || null,
           isSet: isSet ?? false,
           metaTitle: (name as string).trim().slice(0, 60),
           metaDescription: description

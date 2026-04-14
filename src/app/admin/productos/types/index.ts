@@ -15,9 +15,15 @@ export interface ProductListItem {
   setItems?: { name: string; price: number | null; stock: number }[];
 }
 
+export interface GarmentTypeOption {
+  id: string;
+  name: string;
+}
+
 export interface Category {
   id: string;
   name: string;
+  garmentTypes: GarmentTypeOption[];
 }
 
 export interface SelectedColor {
@@ -37,6 +43,7 @@ export interface SetItemForm {
   stock: string;
   colors: SelectedColor[];
   sizes: string[];
+  garmentType: string | null;
 }
 
 
@@ -98,6 +105,7 @@ export interface ProductModalProps {
   toggleSize: (size: string) => void;
   setColorImages: (colorName: string, images: string[]) => void;
   updateVariantStock: (colorName: string, size: string, stock: number) => void;
+  garmentType: string | null; setGarmentType: (v: string | null) => void;
   isSet: boolean; setIsSet: (v: boolean) => void;
   setItems: SetItemForm[];
   addSetItem: () => void;
@@ -159,6 +167,7 @@ export interface GeneralInfoSectionProps {
   isProductNewAt: string | null; onProductNewAt: (v: string | null) => void;
   isOnSale: boolean; onOnSale: (v: boolean) => void;
   isOnSaleAt: string | null; onOnSaleAt: (v: string | null) => void;
+  garmentType: string | null; onGarmentType: (v: string | null) => void;
   categories: Category[];
   errors?: ProductFormErrors;
   isSet?: boolean;
@@ -174,6 +183,7 @@ export interface ColorsSectionProps {
   onToggleColor: (name: string, hexCode: string) => void;
   onToggleSize: (size: string) => void;
   onSetColorImages: (colorName: string, images: string[]) => void;
+  onUploadingChange?: (isUploading: boolean) => void;
 }
 
 export interface SetItemCardProps {
@@ -187,6 +197,7 @@ export interface SetItemCardProps {
   onToggleSize: (id: string, size: string) => void;
   onSetColorImages: (id: string, colorName: string, images: string[]) => void;
   onUpdateVariantStock: (id: string, colorName: string, size: string, stock: number) => void;
+  onUploadingChange?: (isUploading: boolean) => void;
 }
 
 export interface SetItemsSectionProps {
@@ -201,6 +212,7 @@ export interface SetItemsSectionProps {
   onToggleSize: (localId: string, size: string) => void;
   onSetColorImages: (localId: string, colorName: string, images: string[]) => void;
   onUpdateVariantStock: (localId: string, colorName: string, size: string, stock: number) => void;
+  onUploadingChange?: (isUploading: boolean) => void;
 }
 
 
@@ -215,4 +227,5 @@ export interface VideoSectionProps {
   videoUrl: string;
   onVideoUrl: (v: string) => void;
   disabled: boolean;
+  onUploadingChange?: (isUploading: boolean) => void;
 }

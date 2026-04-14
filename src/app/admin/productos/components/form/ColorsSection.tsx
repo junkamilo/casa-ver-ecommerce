@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
+
 import { ColorsSectionProps } from "../../types";
 import { PRESET_COLORS, SIZES, MAX_IMAGES_PER_COLOR } from "../../constants";
 import ImageUpload from "@/components/ui/image-upload";
@@ -18,13 +19,12 @@ export default function ColorsSection({
   onToggleColor,
   onToggleSize,
   onSetColorImages,
+  onUploadingChange,
   scrollContainer,
 }: ColorsSectionProps & { scrollContainer?: Element | null }) {
   const [open, setOpen] = useState(false);
-  const [sizesOpen, setSizesOpen] = useState(false);
   const [collapsedColors, setCollapsedColors] = useState<Set<string>>(new Set());
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const sizesDropdownRef = useRef<HTMLDivElement>(null);
 
   const toggleCollapse = (name: string) =>
     setCollapsedColors((prev) => {
@@ -40,8 +40,6 @@ export default function ColorsSection({
     const handler = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
         setOpen(false);
-      if (sizesDropdownRef.current && !sizesDropdownRef.current.contains(e.target as Node))
-        setSizesOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -207,6 +205,7 @@ export default function ColorsSection({
                       maxImages={MAX_IMAGES_PER_COLOR}
                       colorInfo={{ name: color.name, hexCode: color.hexCode }}
                       scrollContainer={scrollContainer}
+                      onUploadingChange={onUploadingChange}
                     />
                   </div>
                 )}
@@ -226,63 +225,27 @@ export default function ColorsSection({
           Tallas disponibles <span className="text-red-500">*</span>
         </p>
 
-        <div className="relative" ref={sizesDropdownRef}>
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => setSizesOpen((v) => !v)}
-            className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border bg-white text-sm text-gray-700 hover:border-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-              sizeError ? "border-red-400" : "border-gray-200"
-            }`}
-          >
-            <span className="flex items-center gap-2 flex-wrap">
-              {selectedSizes.length === 0 ? (
-                <span className={sizeError ? "text-red-400" : "text-gray-400"}>
-                  Seleccionar tallas…
-                </span>
-              ) : (
-                selectedSizes.map((s) => (
-                  <span
-                    key={s}
-                    className="px-2 py-0.5 rounded-full bg-[#154734] text-white text-xs font-bold"
-                  >
-                    {s}
-                  </span>
-                ))
-              )}
-            </span>
-            {sizesOpen ? (
-              <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" />
-            ) : (
-              <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
-            )}
-          </button>
-
-          {sizesOpen && (
-            <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-              <div className="overflow-y-auto max-h-52 p-2 space-y-0.5">
-                {SIZES.map((size) => {
-                  const active = selectedSizes.includes(size);
-                  return (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => onToggleSize(size)}
-                      disabled={disabled}
-                      className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors ${
-                        active
-                          ? "bg-[#154734]/8 text-[#154734]"
-                          : "text-gray-700 hover:bg-gray-50"
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      <span>{size}</span>
-                      {active && <Check className="w-4 h-4 text-[#154734] shrink-0" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+        <div className="flex flex-wrap gap-2">
+          {SIZES.map((size) => {
+            const active = selectedSizes.includes(size);
+            return (
+              <button
+                key={size}
+                type="button"
+                onClick={() => onToggleSize(size)}
+                disabled={disabled}
+                className={`px-3 py-1.5 rounded-lg text-sm font-bold border-2 transition-all ${
+                  active
+                    ? "bg-[#154734] border-[#154734] text-white shadow-sm"
+                    : sizeError
+                    ? "border-red-300 text-gray-500 hover:border-red-400 bg-white"
+                    : "border-gray-200 text-gray-500 hover:border-gray-400 bg-white"
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {size}
+              </button>
+            );
+          })}
         </div>
 
         <FieldError msg={sizeError} withIcon />

@@ -21,6 +21,8 @@ export default function AdminCategorias() {
     setName,
     image,
     setImage,
+    garmentTypeIds,
+    setGarmentTypeIds,
     toast,
     handleSubmit,
     editingCategory,
@@ -28,11 +30,14 @@ export default function AdminCategorias() {
     setEditName,
     editImage,
     setEditImage,
+    editGarmentTypeIds,
+    setEditGarmentTypeIds,
     editSubmitting,
     openEditModal,
     closeEditModal,
     handleEditSubmit,
     handleToggleActive,
+    allGarmentTypes,
   } = useCategoryManager();
 
   return (
@@ -66,6 +71,9 @@ export default function AdminCategorias() {
         setName={setName}
         image={image}
         setImage={setImage}
+        garmentTypeIds={garmentTypeIds}
+        setGarmentTypeIds={setGarmentTypeIds}
+        allGarmentTypes={allGarmentTypes}
         mode="create"
       />
 
@@ -78,6 +86,9 @@ export default function AdminCategorias() {
         setName={setEditName}
         image={editImage}
         setImage={setEditImage}
+        garmentTypeIds={editGarmentTypeIds}
+        setGarmentTypeIds={setEditGarmentTypeIds}
+        allGarmentTypes={allGarmentTypes}
         mode="edit"
       />
     </div>

@@ -36,7 +36,7 @@ const SectionHeader = ({
       >
         {title}
         {titleItalic && (
-          <span className="italic ml-1.5 sm:ml-2 md:ml-3" style={{ color: "#C19A6B" }}>
+          <span className="ml-1.5 sm:ml-2 md:ml-3">
             {titleItalic}
           </span>
         )}

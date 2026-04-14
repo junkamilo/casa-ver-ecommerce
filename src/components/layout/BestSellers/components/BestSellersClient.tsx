@@ -26,8 +26,8 @@ const BestSellersClient = ({ items }: BestSellersClientProps) => {
           titleItalic="vendidos"
           href="/collections/mas-vendidos"
           linkText="VER TODO"
-          textColor={`text-${BRAND_GREEN}`}
-          hoverColor={`hover:text-${BRAND_GOLD}`}
+          textColor="text-[#154734]"
+          hoverColor="hover:text-[#C19A6B]"
           fontClass="font-light"
         />
 

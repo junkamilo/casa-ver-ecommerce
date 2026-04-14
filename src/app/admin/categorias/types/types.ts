@@ -1,5 +1,10 @@
 // ── Entidades ────────────────────────────────────────────────────────────────
 
+export interface GarmentTypeOption {
+  id: string;
+  name: string;
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -7,6 +12,7 @@ export interface Category {
   image?: string;
   isActive: boolean;
   order: number;
+  garmentTypes: GarmentTypeOption[];
   _count?: {
     products: number;
   };
@@ -47,5 +53,8 @@ export interface CategoryModalProps {
   setName: (v: string) => void;
   image: string;
   setImage: (v: string) => void;
+  garmentTypeIds: string[];
+  setGarmentTypeIds: (ids: string[]) => void;
+  allGarmentTypes: GarmentTypeOption[];
   mode?: "create" | "edit";
 }
