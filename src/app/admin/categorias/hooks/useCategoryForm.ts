@@ -15,11 +15,13 @@ export function useCategoryForm({ showToast, onSuccess }: UseCategoryFormOptions
   const [submitting, setSubmitting] = useState(false);
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
+  const [garmentTypeIds, setGarmentTypeIds] = useState<string[]>([]);
 
   // ── Estado: modal editar ──────────────────────────────────────────────────
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editName, setEditName] = useState("");
   const [editImage, setEditImage] = useState("");
+  const [editGarmentTypeIds, setEditGarmentTypeIds] = useState<string[]>([]);
   const [editSubmitting, setEditSubmitting] = useState(false);
 
   // ── Crear ─────────────────────────────────────────────────────────────────
@@ -32,7 +34,7 @@ export function useCategoryForm({ showToast, onSuccess }: UseCategoryFormOptions
         const res = await fetch("/api/admin/categories", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, image }),
+          body: JSON.stringify({ name, image, garmentTypeIds }),
         });
 
         if (!res.ok) {
@@ -44,6 +46,7 @@ export function useCategoryForm({ showToast, onSuccess }: UseCategoryFormOptions
         setShowModal(false);
         setName("");
         setImage("");
+        setGarmentTypeIds([]);
         onSuccess();
       } catch (err: unknown) {
         showToast("error", err instanceof Error ? err.message : ERROR_MESSAGES.unknown);
@@ -51,7 +54,7 @@ export function useCategoryForm({ showToast, onSuccess }: UseCategoryFormOptions
         setSubmitting(false);
       }
     },
-    [name, image, showToast, onSuccess]
+    [name, image, garmentTypeIds, showToast, onSuccess]
   );
 
   // ── Editar ────────────────────────────────────────────────────────────────
@@ -60,12 +63,14 @@ export function useCategoryForm({ showToast, onSuccess }: UseCategoryFormOptions
     setEditingCategory(category);
     setEditName(category.name);
     setEditImage(category.image ?? "");
+    setEditGarmentTypeIds((category.garmentTypes ?? []).map((gt) => gt.id));
   }, []);
 
   const closeEditModal = useCallback(() => {
     setEditingCategory(null);
     setEditName("");
     setEditImage("");
+    setEditGarmentTypeIds([]);
   }, []);
 
   const handleEditSubmit = useCallback(
@@ -77,7 +82,11 @@ export function useCategoryForm({ showToast, onSuccess }: UseCategoryFormOptions
         const res = await fetch(`/api/admin/categories?id=${editingCategory.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: editName, image: editImage }),
+          body: JSON.stringify({
+            name: editName,
+            image: editImage,
+            garmentTypeIds: editGarmentTypeIds,
+          }),
         });
 
         if (!res.ok) {
@@ -94,7 +103,7 @@ export function useCategoryForm({ showToast, onSuccess }: UseCategoryFormOptions
         setEditSubmitting(false);
       }
     },
-    [editingCategory, editName, editImage, showToast, closeEditModal, onSuccess]
+    [editingCategory, editName, editImage, editGarmentTypeIds, showToast, closeEditModal, onSuccess]
   );
 
   return {
@@ -105,12 +114,16 @@ export function useCategoryForm({ showToast, onSuccess }: UseCategoryFormOptions
     setName,
     image,
     setImage,
+    garmentTypeIds,
+    setGarmentTypeIds,
     handleSubmit,
     editingCategory,
     editName,
     setEditName,
     editImage,
     setEditImage,
+    editGarmentTypeIds,
+    setEditGarmentTypeIds,
     editSubmitting,
     openEditModal,
     closeEditModal,

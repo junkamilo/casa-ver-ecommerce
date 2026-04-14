@@ -52,6 +52,41 @@ enum PaymentMethod {
   DAVIPLATA
 }
 
+
+// ============================================================
+// TIPOS DE PRENDA (Tabla dinámica — reemplaza enum estático)
+// ============================================================
+
+model GarmentType {
+  id         String   @id @default(cuid())
+  name       String                          // Ej: "Pantalón", "Short", "Blusa"
+  slug       String   @unique                // Ej: "pantalon", "short"
+  order      Int      @default(0)
+  isActive   Boolean  @default(true)
+
+  categories CategoryGarmentType[]
+  products   Product[]
+  items      ProductItem[]
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([order])
+  @@map("garment_types")
+}
+
+model CategoryGarmentType {
+  categoryId    String
+  garmentTypeId String
+
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  garmentType GarmentType @relation(fields: [garmentTypeId], references: [id], onDelete: Cascade)
+
+  @@id([categoryId, garmentTypeId])
+  @@map("category_garment_types")
+}
+
 // ============================================================
 // AUTENTICACIÓN & USUARIOS (NextAuth + Perfil Cliente)
 // ============================================================
@@ -202,6 +237,7 @@ model Category {
   subcategories   Category[] @relation("CategoryToSubcategory")
 
   products        Product[]
+  garmentTypes    CategoryGarmentType[]
 
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
@@ -243,6 +279,10 @@ model Product {
   // Calificaciones
   rating          Float          @default(0)
   numReviews      Int            @default(0)
+
+  // Tipo de prenda (para filtros del menú — referencia a tabla dinámica)
+  garmentTypeId   String?
+  garmentType     GarmentType?   @relation(fields: [garmentTypeId], references: [id], onDelete: SetNull)
 
   // Conjunto (Set) de piezas
   isSet           Boolean        @default(false)
@@ -347,6 +387,10 @@ model ProductItem {
   comparePrice Decimal?           @db.Decimal(10, 2) // Precio tachado (oferta)
   videoUrl     String?
   order        Int                @default(0)
+
+  // Tipo de prenda de esta subcategoría — referencia a tabla dinámica
+  garmentTypeId String?
+  garmentType   GarmentType? @relation(fields: [garmentTypeId], references: [id], onDelete: SetNull)
 
   colors    ProductItemColor[]
 

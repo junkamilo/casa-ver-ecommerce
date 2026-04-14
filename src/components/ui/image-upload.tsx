@@ -83,6 +83,8 @@ interface MediaUploadProps {
   colorInfo?: { name: string; hexCode: string };
   /** Scroll container del modal — mejora el IntersectionObserver para videos */
   scrollContainer?: Element | null;
+  /** Notifica al padre cuando comienza o termina una subida */
+  onUploadingChange?: (isUploading: boolean) => void;
 }
 
 export default function ImageUpload({
@@ -94,6 +96,7 @@ export default function ImageUpload({
   maxImages = 5,
   colorInfo,
   scrollContainer,
+  onUploadingChange,
 }: MediaUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState<{ id: string; previewUrl: string; isVideo: boolean }[]>([]);
@@ -129,6 +132,8 @@ export default function ImageUpload({
       ...pending.map(({ id, previewUrl, isVideo: isVid }) => ({ id, previewUrl, isVideo: isVid })),
     ]);
 
+    onUploadingChange?.(true);
+
     const results = await Promise.allSettled(
       pending.map(async ({ id, file, previewUrl }) => {
         const resourceType = file.type.startsWith("video") ? "video" : "image";
@@ -138,6 +143,8 @@ export default function ImageUpload({
         return url;
       })
     );
+
+    onUploadingChange?.(false);
 
     const uploadedUrls = results
       .filter((r): r is PromiseFulfilledResult<string> => r.status === "fulfilled")

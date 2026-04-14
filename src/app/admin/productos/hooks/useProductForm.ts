@@ -24,6 +24,8 @@ export function useProductForm() {
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [videoUrl, setVideoUrl] = useState("");
 
+  const [garmentType, setGarmentType] = useState<string | null>(null);
+
   // Subcategorías (conjunto)
   const [isSet, setIsSet] = useState(false);
   const [setItems, setSetItems] = useState<SetItemForm[]>([]);
@@ -46,6 +48,7 @@ export function useProductForm() {
     setSelectedColors([]);
     setSelectedSizes([]);
     setVideoUrl("");
+    setGarmentType(null);
     setIsSet(false);
     setSetItems([]);
     colorImageCache.current = {};
@@ -67,6 +70,7 @@ export function useProductForm() {
     setIsOnSale(data.isOnSale || false);
     setIsOnSaleAt(data.isOnSaleAt ? new Date(data.isOnSaleAt).toISOString() : null);
     setVideoUrl(data.videoUrl || "");
+    setGarmentType(data.garmentType ?? null);
     setIsSet(data.isSet || false);
 
     // Parent product colors/sizes always loaded regardless of isSet
@@ -95,6 +99,7 @@ export function useProductForm() {
         comparePrice: item.comparePrice != null ? String(item.comparePrice) : "",
         videoUrl: item.videoUrl || "",
         stock: item.stock?.toString() || "",
+        garmentType: item.garmentType ?? null,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         colors: (item.colors || []).map((c: any) => ({
           name: c.name,
@@ -141,6 +146,7 @@ export function useProductForm() {
     isOnSale,
     isOnSaleAt: isOnSaleAt ?? null,
     videoUrl: videoUrl || null,
+    garmentType: garmentType || null,
     isSet,
     colors: selectedColors,
     sizes: selectedSizes,
@@ -151,6 +157,7 @@ export function useProductForm() {
           price: item.price ? parseFloat(item.price) : null,
           comparePrice: item.comparePrice ? parseFloat(item.comparePrice) : null,
           videoUrl: item.videoUrl || null,
+          garmentType: item.garmentType || null,
           stock: calcEffectiveStock(item.colors, item.stock),
           colors: item.colors,
           sizes: item.sizes,
@@ -300,6 +307,7 @@ export function useProductForm() {
     selectedColors,
     selectedSizes,
     videoUrl, setVideoUrl,
+    garmentType, setGarmentType,
     isSet, setIsSet,
     setItems,
     reset,

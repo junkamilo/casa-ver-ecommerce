@@ -38,6 +38,7 @@ export default function ProductModal({
   isProductNewAt, setIsProductNewAt,
   isOnSale, setIsOnSale,
   isOnSaleAt, setIsOnSaleAt,
+  garmentType, setGarmentType,
   selectedColors,
   selectedSizes,
   videoUrl, setVideoUrl,
@@ -65,6 +66,14 @@ export default function ProductModal({
   // Ref al área scrolleable del modal — se pasa a ImageUpload para que el
   // IntersectionObserver de videos use este contenedor como root en lugar del viewport.
   const scrollRef = useRef<HTMLFormElement>(null);
+
+  // Contador de uploads activos — bloquea el submit mientras haya archivos en curso
+  const uploadingCountRef = useRef(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const handleUploadingChange = (active: boolean) => {
+    uploadingCountRef.current = Math.max(0, uploadingCountRef.current + (active ? 1 : -1));
+    setIsUploading(uploadingCountRef.current > 0);
+  };
 
   const shouldShowStockTable = selectedColors.length > 0 && selectedSizes.length > 0;
 
@@ -230,6 +239,7 @@ export default function ProductModal({
                   isProductNewAt={isProductNewAt} onProductNewAt={setIsProductNewAt}
                   isOnSale={isOnSale} onOnSale={setIsOnSale}
                   isOnSaleAt={isOnSaleAt} onOnSaleAt={setIsOnSaleAt}
+                  garmentType={garmentType} onGarmentType={setGarmentType}
                   categories={categories}
                   errors={errors}
                   isSet={isSet}
@@ -347,6 +357,7 @@ export default function ProductModal({
                       sizeError={sizeError}
                       colorImagesError={colorImagesError}
                       scrollContainer={scrollRef.current}
+                      onUploadingChange={handleUploadingChange}
                     />
 
                     {shouldShowStockTable && (
@@ -375,6 +386,7 @@ export default function ProductModal({
                         videoUrl={videoUrl}
                         onVideoUrl={setVideoUrl}
                         disabled={submitting}
+                        onUploadingChange={handleUploadingChange}
                       />
                       <FieldError msg={errors.videoUrl} />
                     </div>
@@ -397,6 +409,7 @@ export default function ProductModal({
                     disabled={submitting}
                     itemErrors={itemErrors}
                     noItemsError={noItemsError}
+                    garmentTypes={categories.find((c) => c.id === categoryId)?.garmentTypes ?? []}
                     onAdd={() => { setNoItemsError(null); addSetItem(); }}
                     onRemove={removeSetItem}
                     onUpdate={updateSetItem}
@@ -404,6 +417,7 @@ export default function ProductModal({
                     onToggleSize={toggleSetItemSize}
                     onSetColorImages={setSetItemColorImages}
                     onUpdateVariantStock={updateSetItemVariantStock}
+                    onUploadingChange={handleUploadingChange}
                     scrollContainer={scrollRef.current}
                   />
                 </div>
@@ -414,9 +428,11 @@ export default function ProductModal({
             {/* ── Footer ───────────────────────────────────────── */}
             <div className="px-6 py-4 bg-white border-t border-gray-200 flex items-center justify-between gap-3 sticky bottom-0 z-10">
               <p className="text-xs text-gray-400">
-                {isSet
-                  ? `Con subcategorías · ${setItems.length} subcategoría${setItems.length !== 1 ? "s" : ""}`
-                  : "Producto simple"}
+                {isUploading
+                  ? "Subiendo archivos, espera…"
+                  : isSet
+                    ? `Con subcategorías · ${setItems.length} subcategoría${setItems.length !== 1 ? "s" : ""}`
+                    : "Producto simple"}
               </p>
               <div className="flex gap-3">
                 <button
@@ -428,15 +444,20 @@ export default function ProductModal({
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting}
-                  className="px-6 py-2.5 text-sm font-bold text-white bg-[#154734] hover:bg-[#103a2a] rounded-lg shadow-md flex items-center gap-2 disabled:opacity-50 transition-colors"
+                  disabled={submitting || isUploading}
+                  title={isUploading ? "Espera a que terminen de subir los archivos" : undefined}
+                  className="px-6 py-2.5 text-sm font-bold text-white bg-[#154734] hover:bg-[#103a2a] rounded-lg shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {submitting ? (
+                  {submitting || isUploading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <Save className="w-4 h-4" />
                   )}
-                  {editingId ? "Guardar Cambios" : "Crear Producto"}
+                  {submitting
+                    ? (editingId ? "Guardando…" : "Creando…")
+                    : isUploading
+                      ? "Subiendo archivos…"
+                      : editingId ? "Guardar Cambios" : "Crear Producto"}
                 </button>
               </div>
             </div>

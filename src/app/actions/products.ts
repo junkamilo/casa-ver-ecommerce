@@ -18,6 +18,7 @@ type SetItemInput = {
   price?: number | null;
   comparePrice?: number | null;
   videoUrl?: string | null;
+  garmentType?: string | null;
   stock?: number;
   colors: ColorInput[];
   sizes: string[];
@@ -38,6 +39,7 @@ export type ProductPayload = {
   isOnSale?: boolean;
   isOnSaleAt?: string | null;
   videoUrl?: string | null;
+  garmentType?: string | null;
   isSet?: boolean;
   colors?: ColorInput[];
   sizes?: string[];
@@ -145,6 +147,7 @@ async function createSetItems(tx: any, productId: string, slug: string, items: S
         price: itemData.price || null,
         comparePrice: itemData.comparePrice || null,
         videoUrl: itemData.videoUrl || null,
+        garmentTypeId: itemData.garmentType || null,
         order,
       },
     });
@@ -223,7 +226,7 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
     const {
       name, description, categoryId, status, isFeatured, isNew,
       isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
-      videoUrl, isSet, colors, sizes, items,
+      videoUrl, garmentType, isSet, colors, sizes, items,
     } = payload;
 
     const basePrice    = parseFloat(String(payload.basePrice));
@@ -258,6 +261,7 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
           isOnSale: isOnSale || false,
           isOnSaleAt: resolvedOnSaleAt,
           videoUrl: videoUrl || null,
+          garmentTypeId: garmentType || null,
           isSet: isSet || false,
           metaTitle: name.trim().slice(0, 60),
           metaDescription: (description || "").replace(/\s+/g, " ").trim().slice(0, 160),
@@ -293,7 +297,7 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
     const {
       name, description, categoryId, status, isFeatured, isNew,
       isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
-      videoUrl, isSet, colors, sizes, items,
+      videoUrl, garmentType, isSet, colors, sizes, items,
     } = payload;
 
     const basePrice    = payload.basePrice  != null ? parseFloat(String(payload.basePrice))  : undefined;
@@ -332,6 +336,7 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
           isOnSale: isOnSale ?? false,
           isOnSaleAt: resolvedOnSaleAt,
           videoUrl: videoUrl !== undefined ? (videoUrl || null) : undefined,
+          garmentTypeId: garmentType !== undefined ? (garmentType || null) : undefined,
           isSet: isSet ?? false,
           metaTitle: name ? name.trim().slice(0, 60) : undefined,
           metaDescription: description != null

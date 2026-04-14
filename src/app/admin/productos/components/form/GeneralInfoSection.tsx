@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronUp, Check, Star, Sparkles, Percent, BadgeCheck } from "lucide-react";
+import { ChevronDown, ChevronUp, Check, Star, Sparkles, Percent, BadgeCheck, Tag } from "lucide-react";
 import { GeneralInfoSectionProps } from "../../types";
 import { STATUS_OPTIONS, inputCls } from "../../constants";
 import { useDropdown } from "../../hooks/useDropdown";
@@ -16,6 +16,7 @@ export default function GeneralInfoSection({
   isNew, onNew,
   isProductNew, onProductNew, onProductNewAt,
   isOnSale, onOnSale, onOnSaleAt,
+  garmentType, onGarmentType,
   categories,
   errors = {},
   isSet = false,
@@ -185,6 +186,44 @@ export default function GeneralInfoSection({
           </div>
         </div>
       </div>
+
+      {/* ── Tipo de Prenda ── */}
+      {(() => {
+        const catGarmentTypes = categories.find((c) => c.id === categoryId)?.garmentTypes ?? [];
+        return (
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-700 uppercase tracking-wide flex items-center gap-1.5">
+              <Tag className="w-3.5 h-3.5 text-gray-400" />
+              Tipo de Prenda
+              <span className="font-normal text-gray-400 normal-case tracking-normal">(para filtros del menú)</span>
+            </label>
+            {!categoryId ? (
+              <p className="text-[11px] text-gray-400 px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-100">
+                Selecciona una categoría para ver los tipos disponibles.
+              </p>
+            ) : catGarmentTypes.length === 0 ? (
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-100 rounded-lg">
+                <Tag className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <p className="text-[11px] text-amber-700">
+                  Esta categoría no tiene tipos de prenda asignados.
+                  <a href="/admin/categorias" className="font-bold underline ml-1" target="_blank">Asignar →</a>
+                </p>
+              </div>
+            ) : (
+              <select
+                value={garmentType ?? ""}
+                onChange={(e) => onGarmentType(e.target.value || null)}
+                className={inputCls()}
+              >
+                <option value="">Sin clasificar…</option>
+                {catGarmentTypes.map((gt) => (
+                  <option key={gt.id} value={gt.id}>{gt.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
+        );
+      })()}
 
       {/* ── Etiquetas / Colecciones ── */}
       <div className="space-y-2.5 pt-1">

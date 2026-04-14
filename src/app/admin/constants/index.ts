@@ -6,6 +6,7 @@ import {
   Shield,
   UserCog,
   Tag,
+  Layers,
 } from "lucide-react";
 import type { NavItem, AdminNavItem } from "../types";
 
@@ -13,7 +14,8 @@ import type { NavItem, AdminNavItem } from "../types";
 export const ADMIN_NAV: AdminNavItem[] = [
   { label: "Dashboard",  href: "/admin",                  icon: LayoutDashboard },
   { label: "Inventario", href: "/admin/productos",         icon: Package },
-  { label: "Categorías", href: "/admin/categorias",        icon: Tag },
+  { label: "Categorías",      href: "/admin/categorias",        icon: Tag },
+  { label: "Tipos de Prenda", href: "/admin/tipos-de-prenda",  icon: Layers },
   { label: "Pedidos",    href: "/admin/pedidos",           icon: ClipboardList },
   { label: "Reportes",   href: "/admin/estadisticas",      icon: BarChart3 },
   { label: "Admins",     href: "/admin/administradores",   icon: Shield },

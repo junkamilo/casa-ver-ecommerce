@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Loader2, ImageIcon } from "lucide-react";
+import { X, Loader2, ImageIcon, Tag, Check } from "lucide-react";
 import ImageUpload from "@/components/ui/image-upload";
 import type { CategoryModalProps } from "../types/types";
 
@@ -13,9 +13,20 @@ const CategoryModal = ({
   setName,
   image,
   setImage,
+  garmentTypeIds,
+  setGarmentTypeIds,
+  allGarmentTypes,
   mode = "create",
 }: CategoryModalProps) => {
   if (!isOpen) return null;
+
+  const toggleGarmentType = (id: string) => {
+    setGarmentTypeIds(
+      garmentTypeIds.includes(id)
+        ? garmentTypeIds.filter((i) => i !== id)
+        : [...garmentTypeIds, id]
+    );
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
@@ -60,8 +71,62 @@ const CategoryModal = ({
             />
           </div>
 
+          {/* Tipos de Prenda */}
+          <div className="border-t border-gray-100 pt-6 space-y-3">
+            <label className="text-xs font-black uppercase tracking-widest text-[#154734] flex items-center gap-2">
+              <Tag className="w-4 h-4 text-[#C19A6B]" />
+              Tipos de Prenda
+              <span className="font-light normal-case tracking-normal text-gray-400">
+                (opcional — define qué tipos aparecen al crear productos)
+              </span>
+            </label>
+            <p className="text-[11px] text-gray-400 font-light leading-relaxed">
+              Selecciona los tipos de prenda que pertenecen a esta categoría.
+              Al crear un producto en esta categoría, solo verás estos tipos.
+            </p>
+
+            {allGarmentTypes.length === 0 ? (
+              <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                <Tag className="w-4 h-4 text-amber-500 shrink-0" />
+                <p className="text-xs text-amber-700">
+                  No hay tipos de prenda creados.
+                  <a href="/admin/tipos-de-prenda" className="font-bold underline ml-1" target="_blank">
+                    Crear tipos de prenda →
+                  </a>
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {allGarmentTypes.map((gt) => {
+                  const selected = garmentTypeIds.includes(gt.id);
+                  return (
+                    <button
+                      key={gt.id}
+                      type="button"
+                      onClick={() => toggleGarmentType(gt.id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                        selected
+                          ? "bg-[#154734] text-white border-[#154734] shadow-sm"
+                          : "bg-white text-gray-600 border-gray-200 hover:border-[#154734] hover:text-[#154734]"
+                      }`}
+                    >
+                      {selected && <Check className="w-3 h-3" />}
+                      {gt.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {garmentTypeIds.length > 0 && (
+              <p className="text-[11px] text-[#154734] font-medium">
+                {garmentTypeIds.length} tipo{garmentTypeIds.length !== 1 ? "s" : ""} seleccionado{garmentTypeIds.length !== 1 ? "s" : ""}
+              </p>
+            )}
+          </div>
+
           {/* Imagen */}
-          <div className="pt-4 border-t border-gray-100 space-y-3">
+          <div className="border-t border-gray-100 pt-6 space-y-3">
             <label className="text-xs font-black uppercase tracking-widest text-[#154734] flex items-center gap-2">
               <ImageIcon className="w-4 h-4 text-[#C19A6B]" />
               Foto de la Tarjeta{" "}
@@ -82,7 +147,7 @@ const CategoryModal = ({
           </div>
 
           {/* Acciones */}
-          <div className="pt-8 flex flex-col-reverse sm:flex-row justify-end gap-3">
+          <div className="pt-4 flex flex-col-reverse sm:flex-row justify-end gap-3">
             <button
               type="button"
               onClick={onClose}

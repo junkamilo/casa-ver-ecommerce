@@ -8,9 +8,11 @@ interface Props {
   value: string;
   onChange: (url: string) => void;
   disabled?: boolean;
+  /** Notifica al padre cuando comienza o termina una subida */
+  onUploadingChange?: (isUploading: boolean) => void;
 }
 
-export default function VideoUpload({ value, onChange, disabled }: Props) {
+export default function VideoUpload({ value, onChange, disabled, onUploadingChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -19,6 +21,7 @@ export default function VideoUpload({ value, onChange, disabled }: Props) {
     const local = URL.createObjectURL(file);
     setPreviewUrl(local);
     setUploading(true);
+    onUploadingChange?.(true);
     try {
       const url = await uploadToCloudinary(file, "video");
       onChange(url);
@@ -28,6 +31,7 @@ export default function VideoUpload({ value, onChange, disabled }: Props) {
       URL.revokeObjectURL(local);
       setPreviewUrl(null);
       setUploading(false);
+      onUploadingChange?.(false);
     }
   };
 
