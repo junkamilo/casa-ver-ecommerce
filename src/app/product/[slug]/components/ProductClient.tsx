@@ -150,42 +150,36 @@ export default function ProductClient({
                     <p className="text-base text-gray-400 line-through mb-1">{formatPrice(product.comparePrice)}</p>
                   )}
                 </div>
-                {activeStock === 0 ? (
+                {activeStock === 0 && (
                   <p className="text-xs font-semibold uppercase tracking-widest text-red-500 mt-2">Agotado</p>
-                ) : (
-                  <p className="text-xs text-gray-400 mt-2">
-                    Stock disponible: <span className="font-semibold text-gray-600">{activeStock}</span>
-                  </p>
                 )}
               </div>
             </div>
 
             {/* Rating */}
-            <button
-              type="button"
-              onClick={scrollToReviews}
-              className="flex flex-col items-center sm:items-start sm:flex-row sm:gap-3 mb-5 sm:mb-8 cursor-pointer group w-full sm:w-fit focus:outline-none"
-            >
-              <div className="flex gap-1 text-[#C19A6B]">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`w-8 h-8 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 ${
-                      star <= Math.round(product.rating) ? "fill-current" : "fill-none text-gray-300"
-                    }`}
-                  />
-                ))}
-              </div>
-              <span className="mt-1.5 sm:mt-0 text-sm sm:text-[11px] uppercase tracking-widest text-gray-500 group-hover:text-[#154734] transition-colors text-center sm:text-left">
-                {product.numReviews > 0 ? (
+            {product.numReviews > 0 && (
+              <button
+                type="button"
+                onClick={scrollToReviews}
+                className="flex flex-col items-center sm:items-start sm:flex-row sm:gap-3 mb-5 sm:mb-8 cursor-pointer group w-full sm:w-fit focus:outline-none"
+              >
+                <div className="flex gap-1 text-[#C19A6B]">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={`w-8 h-8 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 ${
+                        star <= Math.round(product.rating) ? "fill-current" : "fill-none text-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="mt-1.5 sm:mt-0 text-sm sm:text-[11px] uppercase tracking-widest text-gray-500 group-hover:text-[#154734] transition-colors text-center sm:text-left">
                   <span className="underline decoration-gray-300 group-hover:decoration-[#154734] underline-offset-4">
                     {product.rating.toFixed(1)} · {product.numReviews} reseña{product.numReviews !== 1 ? "s" : ""}
                   </span>
-                ) : (
-                  "Sin calificaciones aún"
-                )}
-              </span>
-            </button>
+                </span>
+              </button>
+            )}
 
             {/* Social proof */}
             {socialProof.totalBuyers > 0 && (
