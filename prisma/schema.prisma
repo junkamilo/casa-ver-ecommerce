@@ -66,7 +66,6 @@ model GarmentType {
 
   categories CategoryGarmentType[]
   products   Product[]
-  items      ProductItem[]
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -387,10 +386,6 @@ model ProductItem {
   comparePrice Decimal?           @db.Decimal(10, 2) // Precio tachado (oferta)
   videoUrl     String?
   order        Int                @default(0)
-
-  // Tipo de prenda de esta subcategoría — referencia a tabla dinámica
-  garmentTypeId String?
-  garmentType   GarmentType? @relation(fields: [garmentTypeId], references: [id], onDelete: SetNull)
 
   colors    ProductItemColor[]
 

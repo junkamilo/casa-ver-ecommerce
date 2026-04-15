@@ -285,7 +285,6 @@ export async function GET(
         price: item.price ? Number(item.price) : null,
         comparePrice: item.comparePrice ? Number(item.comparePrice) : null,
         videoUrl: item.videoUrl,
-        garmentType: item.garmentTypeId ?? null,
         order: item.order,
         stock: item.colors.reduce(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any

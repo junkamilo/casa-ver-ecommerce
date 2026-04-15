@@ -99,7 +99,6 @@ export function useProductForm() {
         comparePrice: item.comparePrice != null ? String(item.comparePrice) : "",
         videoUrl: item.videoUrl || "",
         stock: item.stock?.toString() || "",
-        garmentType: item.garmentType ?? null,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         colors: (item.colors || []).map((c: any) => ({
           name: c.name,
@@ -157,7 +156,6 @@ export function useProductForm() {
           price: item.price ? parseFloat(item.price) : null,
           comparePrice: item.comparePrice ? parseFloat(item.comparePrice) : null,
           videoUrl: item.videoUrl || null,
-          garmentType: item.garmentType || null,
           stock: calcEffectiveStock(item.colors, item.stock),
           colors: item.colors,
           sizes: item.sizes,

@@ -29,7 +29,6 @@ export function newSetItem(): SetItemForm {
     stock: "",
     colors: [],
     sizes: [],
-    garmentType: null,
   };
 }
 
