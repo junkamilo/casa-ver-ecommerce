@@ -9,7 +9,19 @@ import RegisterForm from "@/components/register";
 import AuthLayout, { BenefitItem } from "@/components/ui/auth/AuthLayout";
 import { BENEFITS } from "./constants";
 
-export default function RegisterPage() {
+interface Props {
+  searchParams: Promise<{ returnTo?: string }>;
+}
+
+export default async function RegisterPage({ searchParams }: Props) {
+  const { returnTo } = await searchParams;
+
+  // Permitir solo rutas internas para prevenir open-redirect
+  const safeReturnTo =
+    returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")
+      ? returnTo
+      : "/";
+
   return (
     <AuthLayout
       eyebrow="Bienvenido a"
@@ -19,7 +31,7 @@ export default function RegisterPage() {
         <BenefitItem key={text} icon={CheckCircle2} text={text} />
       ))}
     >
-      <RegisterForm />
+      <RegisterForm returnTo={safeReturnTo} />
     </AuthLayout>
   );
 }

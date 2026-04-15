@@ -4,6 +4,9 @@ import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { EARLY_BIRD_DISCOUNT_PCT } from "@/lib/earlybird.constants";
 
+// ID fijo de la promoción Early Bird (creada en la migración)
+const EARLY_BIRD_PROMOTION_ID = "early-bird-2026";
+
 export interface CreateOrderInput {
   // Datos del comprador
   email: string;
@@ -203,6 +206,10 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
           discount: finalDiscount,
           total,
           earlyBirdDiscountApplied: earlyBirdApplied,
+          // Vincular a la promoción cuando el descuento Early Bird aplica
+          ...(earlyBirdApplied
+            ? { appliedPromotionId: EARLY_BIRD_PROMOTION_ID }
+            : {}),
           status: "PENDING",
           paymentMethod: input.paymentMethod,
           items: {

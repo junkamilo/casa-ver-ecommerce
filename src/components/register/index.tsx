@@ -15,7 +15,12 @@ import DividerOr from "@/components/ui/auth/DividerOr";
 import GoogleButton from "@/components/ui/auth/GoogleButton";
 import SubmitButton from "@/components/ui/auth/SubmitButton";
 
-const RegisterForm = () => {
+interface RegisterFormProps {
+  /** Si se provee, el usuario será redirigido aquí tras registro exitoso */
+  returnTo?: string;
+}
+
+const RegisterForm = ({ returnTo }: RegisterFormProps) => {
   const {
     register,
     handleSubmit,
@@ -32,7 +37,7 @@ const RegisterForm = () => {
     onVerifyCode,
     onResendCode,
     onCodeReset,
-  } = useRegisterForm();
+  } = useRegisterForm({ returnTo });
 
   const emailValue = watch("email") ?? "";
 

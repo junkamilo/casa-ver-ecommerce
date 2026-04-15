@@ -71,14 +71,29 @@ export async function POST(request: Request) {
       }
 
       // ── Código correcto → crear usuario y eliminar registro pendiente ────────
-      const EARLY_BIRD_LIMIT = 10;
+      // Estrategia anti-race-condition para Early Bird:
+      //   1. Intentamos reclamar el cupo con UPDATE atómico (currentUses < maxUses).
+      //   2. Si rowsAffected > 0, el cupo quedó reservado para este usuario.
+      //   3. El usuario se crea dentro de la misma transacción DB.
+      // No usamos SELECT + UPDATE porque entre ambas consultas otro proceso
+      // podría haber reclamado el último cupo.
       const EARLY_BIRD_DISCOUNT_PCT = 10;
+      const EARLY_BIRD_PROMOTION_ID = "early-bird-2026";
 
       await prisma.$transaction(async (tx) => {
-        const earlyBirdCount = await tx.user.count({
-          where: { earlyBirdDiscount: true },
-        });
-        const isEarlyBird = earlyBirdCount < EARLY_BIRD_LIMIT;
+        // Intentar reclamar cupo atómicamente en la tabla promotions
+        const claimed: number = await tx.$executeRaw`
+          UPDATE "promotions"
+          SET "currentUses" = "currentUses" + 1,
+              "updatedAt"   = NOW()
+          WHERE "id"        = ${EARLY_BIRD_PROMOTION_ID}
+            AND "isActive"  = true
+            AND "currentUses" < "maxUses"
+            AND ("startDate" IS NULL OR "startDate" <= NOW())
+            AND ("endDate"   IS NULL OR "endDate"   >= NOW())
+        `;
+
+        const isEarlyBird = claimed > 0;
 
         await tx.user.create({
           data: {

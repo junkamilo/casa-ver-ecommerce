@@ -10,7 +10,19 @@ export const metadata: Metadata = {
 import AuthLayout, { BenefitItem } from "@/components/ui/auth/AuthLayout";
 import { LOGIN_BENEFITS, LOGIN_EYEBROW } from "./constants";
 
-export default function LoginPage() {
+interface Props {
+  searchParams: Promise<{ returnTo?: string }>;
+}
+
+export default async function LoginPage({ searchParams }: Props) {
+  const { returnTo } = await searchParams;
+
+  // Prevenir open-redirect: solo rutas internas
+  const safeReturnTo =
+    returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")
+      ? returnTo
+      : "/";
+
   return (
     <AuthLayout
       eyebrow={LOGIN_EYEBROW}
@@ -19,7 +31,7 @@ export default function LoginPage() {
         <BenefitItem key={text} icon={icon} text={text} />
       ))}
     >
-      <LoginForm />
+      <LoginForm returnTo={safeReturnTo} />
     </AuthLayout>
   );
 }

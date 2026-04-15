@@ -79,7 +79,8 @@ const Footer = () => {
               </h4>
               <ul className="space-y-2 sm:space-y-3">
                 {[
-                  { name: "Envíos y Devoluciones", href: "#" },
+                  { name: "Términos y Condiciones", href: "/terminos-y-condiciones" },
+                  { name: "Envíos y Devoluciones", href: "/terminos-y-condiciones" },
                   { name: "Guía de Tallas", href: "#" },
                   { name: "Preguntas Frecuentes", href: "#" },
                   { name: "Contacto", href: "#" }
@@ -154,7 +155,7 @@ const Footer = () => {
             </p>
             <div className="flex flex-wrap gap-4 sm:gap-6 text-xs text-white/50 font-light tracking-wide justify-center sm:justify-end">
               <Link href="#" className="hover:text-[#C19A6B] transition-colors p-1 touch-target active:scale-95">Políticas de Privacidad</Link>
-              <Link href="#" className="hover:text-[#C19A6B] transition-colors p-1 touch-target active:scale-95">Términos del Servicio</Link>
+              <Link href="/terminos-y-condiciones" className="hover:text-[#C19A6B] transition-colors p-1 touch-target active:scale-95">Términos del Servicio</Link>
             </div>
           </div>
         </div>

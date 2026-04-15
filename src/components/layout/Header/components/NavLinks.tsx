@@ -43,6 +43,22 @@ export default function NavLinks({ isCategoriesActive, onCategoriesEnter }: NavL
       </div>
 
       {/* ────────────────────────────────────────────────
+          TÉRMINOS Y CONDICIONES
+      ──────────────────────────────────────────────── */}
+      <div className="relative group flex flex-col items-center gap-0.5 py-1">
+        <Link
+          href="/terminos-y-condiciones"
+          className="relative text-xs font-bold tracking-[0.18em] text-foreground/70 group-hover:text-[#154734] transition-all duration-300 group-hover:-translate-y-px"
+        >
+          TÉRMINOS
+        </Link>
+        <span className="relative h-px w-full overflow-hidden flex">
+          <span className="absolute right-1/2 top-0 bottom-0 w-0 group-hover:w-1/2 bg-linear-to-l from-[#C19A6B] to-[#C19A6B]/20 transition-all duration-350 ease-out" />
+          <span className="absolute left-1/2 top-0 bottom-0 w-0 group-hover:w-1/2 bg-linear-to-r from-[#C19A6B] to-[#C19A6B]/20 transition-all duration-350 ease-out" />
+        </span>
+      </div>
+
+      {/* ────────────────────────────────────────────────
           CATEGORÍAS — Estado activo permanente + diamante
           que "sujeta" al megamenú abierto
       ──────────────────────────────────────────────── */}
