@@ -62,6 +62,7 @@ const PRODUCT_SELECT = {
 // ── Data fetcher ──────────────────────────────────────────────────────────────
 async function getCollectionData(
   slug: string,
+  tipoSlug?: string,
 ): Promise<{
   category: { name: string } | null;
   products: CollectionProduct[];
@@ -77,9 +78,20 @@ async function getCollectionData(
 
     if (!category) return empty;
 
+    // Si viene ?tipo=slug, buscamos el id del garmentType para filtrar
+    let garmentTypeId: string | undefined;
+    if (tipoSlug) {
+      const gt = await prisma.garmentType.findUnique({
+        where: { slug: tipoSlug },
+        select: { id: true },
+      });
+      garmentTypeId = gt?.id;
+    }
+
     const where: Prisma.ProductWhereInput = {
       category: { slug },
       status: "ACTIVE",
+      ...(garmentTypeId ? { garmentTypeId } : {}),
     };
 
     // Fetch all active products (filtering happens client-side)
@@ -201,11 +213,14 @@ export async function generateMetadata({
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default async function CollectionPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ tipo?: string }>;
 }) {
   const { slug } = await params;
-  const { category, products, filterOptions } = await getCollectionData(slug);
+  const { tipo } = await searchParams;
+  const { category, products, filterOptions } = await getCollectionData(slug, tipo);
   const title = category?.name?.toUpperCase() ?? slug.replace(/-/g, " ").toUpperCase();
 
   return (

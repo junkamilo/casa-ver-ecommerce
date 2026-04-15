@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { TEXT_BRAND } from "../constants/constants";
 import type { MegaMenuProps } from "../types";
 
@@ -10,6 +10,8 @@ const COLUMN_DELAYS = ["0ms", "60ms", "120ms", "180ms", "240ms", "300ms"];
 
 export default function MegaMenu({ visible, categories, onEnter, onLeave, onClose }: MegaMenuProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeTipo = searchParams.get("tipo");
 
   return (
     <div
@@ -67,6 +69,7 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
         >
           {categories.map((category, colIdx) => {
             const isCategoryActive = pathname === `/collections/${category.slug}`;
+            const hasGarmentTypes = category.garmentTypes.length > 0;
 
             return (
               <div
@@ -89,93 +92,68 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
                     onClick={onClose}
                   >
                     {category.name.toUpperCase()}
-                    {/* Subrayado activo bajo la categoría */}
                     {isCategoryActive && (
                       <span className="absolute -bottom-1 left-0 right-0 h-[1.5px] bg-[#C19A6B] rounded-full" />
                     )}
                   </Link>
                 </div>
 
-                {/* ── Separador sutil ── */}
-                {category.products.length > 0 && (
-                  <div className="h-px bg-border/40 w-full" />
-                )}
+                {/* ── Separador ── */}
+                <div className="h-px bg-border/40 w-full" />
 
-                {/* ── Productos de esta categoría ── */}
-                {/* Con >5 productos usa 2 columnas para que quepan todos sin cortar */}
-                <div
-                  className={
-                    category.products.length > 5
-                      ? "grid grid-cols-2 gap-x-3 gap-y-2"
-                      : "flex flex-col gap-2"
-                  }
-                >
-                  {category.products.map((product) => {
-                    const isProductActive = pathname === `/product/${product.slug}`;
+                {/* ── Tipos de prenda ── */}
+                {hasGarmentTypes && (
+                  <div className="flex flex-col gap-2">
+                    {category.garmentTypes.map((gt) => {
+                      const href = `/collections/${category.slug}?tipo=${gt.slug}`;
+                      const isGarmentActive =
+                        pathname === `/collections/${category.slug}` &&
+                        activeTipo === gt.slug;
 
-                    return (
-                      <Link
-                        key={product.id}
-                        href={`/product/${product.slug}`}
-                        className={`relative group flex items-center text-sm font-normal transition-colors duration-300 pl-3 min-w-0 ${
-                          isProductActive
-                            ? "text-[#154734] font-medium"
-                            : "text-gray-400 hover:text-[#C19A6B]"
-                        }`}
-                        onClick={onClose}
-                      >
-                        {/* Barra izquierda: dorada en hover, verde si activo */}
-                        <span
-                          className={`absolute left-0 top-0 bottom-0 w-[1.5px] rounded-full transition-all duration-200 ${
-                            isProductActive
-                              ? "bg-[#154734] scale-y-100"
-                              : "bg-[#C19A6B] scale-y-0 group-hover:scale-y-100 origin-top"
-                          }`}
-                          aria-hidden="true"
-                        />
-                        <span className="group-hover:translate-x-0.5 transition-transform duration-200 leading-snug truncate">
-                          {product.name}
-                        </span>
-                        {/* Punto verde si producto activo */}
-                        {isProductActive && (
-                          <span className="ml-1.5 w-1.5 h-1.5 rounded-full bg-[#154734] flex-shrink-0" aria-hidden="true" />
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
-
-                {/* ── Subcategorías (si existen) ── */}
-                {category.subcategories.length > 0 && (
-                  <div className="flex flex-col gap-2 mt-1 pt-2 border-t border-border/30">
-                    {category.subcategories.map((sub) => {
-                      const isSubActive = pathname === `/collections/${sub.slug}`;
                       return (
                         <Link
-                          key={sub.id}
-                          href={`/collections/${sub.slug}`}
-                          className={`relative group flex items-center text-xs transition-colors duration-300 pl-3 ${
-                            isSubActive
-                              ? "text-[#154734] font-semibold"
+                          key={gt.id}
+                          href={href}
+                          className={`relative group flex items-center text-sm font-normal transition-colors duration-300 pl-3 min-w-0 ${
+                            isGarmentActive
+                              ? "text-[#C19A6B]"
                               : "text-gray-400 hover:text-[#C19A6B]"
                           }`}
                           onClick={onClose}
                         >
+                          {/* Barra izquierda dorada: permanente si activo, aparece en hover */}
                           <span
-                            className={`absolute left-0 top-0 bottom-0 w-[1.5px] rounded-full transition-all duration-200 ${
-                              isSubActive
-                                ? "bg-[#154734] scale-y-100"
-                                : "bg-[#C19A6B] scale-y-0 group-hover:scale-y-100 origin-top"
+                            className={`absolute left-0 top-0 bottom-0 w-[1.5px] rounded-full bg-[#C19A6B] origin-top transition-all duration-200 ${
+                              isGarmentActive
+                                ? "scale-y-100"
+                                : "scale-y-0 group-hover:scale-y-100"
                             }`}
                             aria-hidden="true"
                           />
-                          <span className="group-hover:translate-x-0.5 transition-transform duration-200 tracking-wide uppercase text-[10px]">
-                            {sub.name}
+                          <span
+                            className={`transition-transform duration-200 leading-snug truncate ${
+                              isGarmentActive
+                                ? "translate-x-0.5 font-medium underline underline-offset-2 decoration-[#C19A6B]/60 decoration-1"
+                                : "group-hover:translate-x-0.5"
+                            }`}
+                          >
+                            {gt.name}
                           </span>
                         </Link>
                       );
                     })}
                   </div>
+                )}
+
+                {/* ── Fallback: enlace "Ver todo" si no hay tipos de prenda ── */}
+                {!hasGarmentTypes && (
+                  <Link
+                    href={`/collections/${category.slug}`}
+                    className="text-sm text-gray-400 hover:text-[#C19A6B] pl-3 transition-colors duration-200"
+                    onClick={onClose}
+                  >
+                    Ver todo
+                  </Link>
                 )}
               </div>
             );

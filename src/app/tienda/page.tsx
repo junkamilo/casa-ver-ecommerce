@@ -8,7 +8,9 @@ import BackButton from "@/components/ui/BackButton";
 import { getAllProducts } from "./services";
 import type { TiendaFilters } from "./types";
 
-export const dynamic = "force-dynamic";
+// ISR: la página se cachea y se regenera como máximo cada 60 s.
+// Cada combinación de filtros (URL única) tiene su propia entrada de caché.
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Tienda",

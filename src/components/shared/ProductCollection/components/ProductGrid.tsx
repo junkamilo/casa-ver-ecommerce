@@ -15,10 +15,11 @@ export function ProductGrid({ products }: ProductGridProps) {
       {products.map((item, index) => (
         <div
           key={item.slug}
-          className="animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both h-full"
-          style={{ animationDelay: `${index * 100}ms` }}
+          className="animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both h-full"
+          // Máximo 300 ms de delay — con 44 productos antes llegaba a 4.4 s
+          style={{ animationDelay: `${Math.min(index * 40, 300)}ms` }}
         >
-          <ProductCard item={item} viewMode="grid" />
+          <ProductCard item={item} viewMode="grid" index={index} />
         </div>
       ))}
     </div>

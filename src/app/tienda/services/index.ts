@@ -24,15 +24,68 @@ export async function getAllProducts(filters: TiendaFilters): Promise<{
       where.colors = { some: { hexCode: `#${filters.color}` } };
     }
 
-    // Datos para los filtros (sin filtros aplicados, para mostrar opciones completas)
-    const allForFilters = await prisma.product.findMany({
-      where: { status: "ACTIVE" },
-      select: {
-        basePrice: true,
-        colors: { select: { name: true, hexCode: true } },
-      },
-    });
+    // ── Ambas queries en paralelo — ahorra el tiempo de la más lenta ──────────
+    const [allForFilters, raw] = await Promise.all([
+      // Query 1: solo datos para construir los filtros (sin joins de imágenes)
+      prisma.product.findMany({
+        where: { status: "ACTIVE" },
+        select: {
+          basePrice: true,
+          colors: { select: { name: true, hexCode: true } },
+        },
+      }),
 
+      // Query 2: productos filtrados — solo 2 imágenes por producto (card usa máximo 2)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (prisma as any).product.findMany({
+        where,
+        select: {
+          name: true,
+          slug: true,
+          basePrice: true,
+          comparePrice: true,
+          isSet: true,
+          isProductNew: true,
+          isProductNewAt: true,
+          isOnSale: true,
+          images: {
+            orderBy: { order: "asc" },
+            take: 2, // card solo necesita 1 principal + 1 hover
+            select: { url: true },
+          },
+          items: {
+            orderBy: { order: "asc" },
+            select: {
+              price: true,
+              colors: {
+                take: 1,
+                select: {
+                  images: {
+                    orderBy: { order: "asc" },
+                    take: 1,
+                    select: { url: true },
+                  },
+                },
+              },
+            },
+          },
+          colors: {
+            select: {
+              name: true,
+              hexCode: true,
+              images: {
+                orderBy: { order: "asc" },
+                take: 1,
+                select: { url: true },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
+
+    // Construir filterOptions desde allForFilters
     const colorMap = new Map<string, string>();
     let maxPriceDb = 0;
     for (const p of allForFilters) {
@@ -40,49 +93,9 @@ export async function getAllProducts(filters: TiendaFilters): Promise<{
       if (price > maxPriceDb) maxPriceDb = price;
       for (const c of p.colors) colorMap.set(c.hexCode, c.name);
     }
-
     const availableColors = Array.from(colorMap.entries()).map(([hexCode, name]) => ({ hexCode, name }));
 
-    // Productos filtrados
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const raw = await (prisma as any).product.findMany({
-      where,
-      select: {
-        name: true,
-        slug: true,
-        basePrice: true,
-        comparePrice: true,
-        isSet: true,
-        isProductNew: true,
-        isProductNewAt: true,
-        isOnSale: true,
-        images: {
-          orderBy: { order: "asc" },
-          take: 8,
-          select: { url: true },
-        },
-        items: {
-          orderBy: { order: "asc" },
-          select: {
-            price: true,
-            colors: { take: 1, select: { images: { orderBy: { order: "asc" }, take: 1, select: { url: true } } } },
-          },
-        },
-        colors: {
-          select: {
-            name: true,
-            hexCode: true,
-            images: {
-              orderBy: { order: "asc" },
-              take: 1,
-              select: { url: true },
-            },
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-
+    // Mapear productos al tipo CollectionProduct
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const products: CollectionProduct[] = (raw as any[]).map((p) => {
       const parentImages: string[] = p.images.map((i: { url: string }) => i.url);
@@ -91,6 +104,7 @@ export async function getAllProducts(filters: TiendaFilters): Promise<{
           ? (p.items?.[0]?.colors?.[0]?.images?.[0]?.url ?? null)
           : null;
       const cardImages = fallbackUrl ? [fallbackUrl] : parentImages;
+
       const itemPrices: number[] =
         p.isSet && p.items?.length > 0
           ? p.items
