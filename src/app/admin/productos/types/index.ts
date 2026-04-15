@@ -43,7 +43,6 @@ export interface SetItemForm {
   stock: string;
   colors: SelectedColor[];
   sizes: string[];
-  garmentType: string | null;
 }
 
 

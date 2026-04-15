@@ -7,7 +7,6 @@ export default function SetItemsSection({
   disabled,
   itemErrors = {},
   noItemsError,
-  garmentTypes = [],
   onAdd,
   onRemove,
   onUpdate,
@@ -17,7 +16,7 @@ export default function SetItemsSection({
   onUpdateVariantStock,
   onUploadingChange,
   scrollContainer,
-}: SetItemsSectionProps & { scrollContainer?: Element | null; garmentTypes?: { id: string; name: string }[] }) {
+}: SetItemsSectionProps & { scrollContainer?: Element | null }) {
   return (
     <div className="space-y-4">
       {items.length === 0 ? (
@@ -36,7 +35,6 @@ export default function SetItemsSection({
               index={i}
               disabled={disabled}
               errors={itemErrors[item.localId]}
-              garmentTypes={garmentTypes}
               onRemove={onRemove}
               onUpdate={onUpdate}
               onToggleColor={onToggleColor}

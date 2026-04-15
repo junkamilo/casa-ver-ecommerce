@@ -409,7 +409,6 @@ export default function ProductModal({
                     disabled={submitting}
                     itemErrors={itemErrors}
                     noItemsError={noItemsError}
-                    garmentTypes={categories.find((c) => c.id === categoryId)?.garmentTypes ?? []}
                     onAdd={() => { setNoItemsError(null); addSetItem(); }}
                     onRemove={removeSetItem}
                     onUpdate={updateSetItem}

@@ -18,7 +18,6 @@ type SetItemInput = {
   price?: number | null;
   comparePrice?: number | null;
   videoUrl?: string | null;
-  garmentType?: string | null;
   stock?: number;
   colors: ColorInput[];
   sizes: string[];
@@ -147,7 +146,6 @@ async function createSetItems(tx: any, productId: string, slug: string, items: S
         price: itemData.price || null,
         comparePrice: itemData.comparePrice || null,
         videoUrl: itemData.videoUrl || null,
-        garmentTypeId: itemData.garmentType || null,
         order,
       },
     });
