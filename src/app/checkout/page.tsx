@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { FormProvider } from "react-hook-form";
 import { useCheckout } from "./hooks/useCheckout";
 import { useAutoSaveAddress } from "./hooks/useAutoSaveAddress";
@@ -14,8 +15,18 @@ import BillingSection from "./components/BillingSection";
 import CheckoutSubmitButton from "./components/CheckoutSubmitButton";
 import CheckoutFooterLinks from "./components/CheckoutFooterLinks";
 import OrderSummaryPanel from "./components/OrderSummaryPanel";
+import GuestCheckoutModal from "./components/GuestCheckoutModal";
 
 export default function CheckoutPage() {
+  const { status: authStatus } = useSession();
+
+  // guestMode: null = esperando decisión (muestra modal si no autenticado)
+  //            true  = eligió "Continuar como invitado"
+  const [guestMode, setGuestMode] = useState<boolean | null>(null);
+
+  // Mostrar modal solo si el usuario NO está autenticado y aún no eligió
+  const showModal = authStatus === "unauthenticated" && guestMode === null;
+
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
   const { saveAddress, isAuthenticated } = useAutoSaveAddress({ enabled: autoSaveEnabled });
 
@@ -38,6 +49,11 @@ export default function CheckoutPage() {
 
   return (
     <FormProvider {...form}>
+      {/* Modal interceptor para usuarios no autenticados */}
+      {showModal && (
+        <GuestCheckoutModal onContinueAsGuest={() => setGuestMode(true)} />
+      )}
+
       <form
         onSubmit={onSubmit}
         className="min-h-screen bg-[#FAFAFA] flex flex-col lg:flex-row font-sans selection:bg-[#C19A6B]/20 relative overflow-hidden"

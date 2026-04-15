@@ -77,6 +77,16 @@ export default function MobileMenu({ isAdmin, categories, onClose, onSearchOpen 
           TIENDA
         </Link>
 
+        {/* ── TÉRMINOS Y CONDICIONES ── */}
+        <Link
+          href="/terminos-y-condiciones"
+          className="group flex items-center gap-3 text-sm font-bold tracking-[0.15em] text-foreground hover:text-[#154734] py-3 transition-colors duration-200"
+          onClick={onClose}
+        >
+          <span className="w-1.5 h-1.5 rotate-45 bg-[#C19A6B]/0 group-hover:bg-[#C19A6B] transition-all duration-300 shrink-0" aria-hidden="true" />
+          TÉRMINOS Y CONDICIONES
+        </Link>
+
         {/* ── CATEGORÍAS (acordeón nivel 1) ── */}
         <div className="flex flex-col">
 

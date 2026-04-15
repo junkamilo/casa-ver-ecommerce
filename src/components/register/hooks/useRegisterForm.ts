@@ -8,8 +8,14 @@ import { useRouter } from "next/navigation";
 import { registerSchema, ERROR_MESSAGES, SUCCESS_MESSAGES } from "../constants/constants";
 import type { RegisterFormData, UseRegisterFormReturn } from "../types/types";
 
-export function useRegisterForm(): UseRegisterFormReturn {
+interface UseRegisterFormOptions {
+  /** URL a la que redirigir tras registro y login exitoso (ej: "/checkout") */
+  returnTo?: string;
+}
+
+export function useRegisterForm(options?: UseRegisterFormOptions): UseRegisterFormReturn {
   const router = useRouter();
+  const returnTo = options?.returnTo ?? "/";
 
   const [step, setStep]       = useState<"form" | "verify">("form");
   const [error, setError]     = useState<string | null>(null);
@@ -98,7 +104,7 @@ export function useRegisterForm(): UseRegisterFormReturn {
         router.push("/login?verified=true");
       } else {
         router.refresh();
-        router.push("/");
+        router.push(returnTo);
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : ERROR_MESSAGES.unexpected);

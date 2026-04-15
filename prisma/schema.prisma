@@ -483,6 +483,10 @@ model Order {
   // Descuento Early Bird
   earlyBirdDiscountApplied  Boolean       @default(false)
 
+  // Promoción aplicada (FK genérica — null si no aplica ninguna campaña)
+  appliedPromotionId        String?
+  appliedPromotion          Promotion?    @relation(fields: [appliedPromotionId], references: [id], onDelete: SetNull)
+
   // Estado y Pago
   status             OrderStatus   @default(PENDING)
   paymentMethod      PaymentMethod
@@ -560,6 +564,29 @@ model Review {
   @@unique([userId, productId])
   @@index([productId])
   @@map("reviews")
+}
+
+// ============================================================
+// PROMOCIONES / CAMPAÑAS (Genérico y reutilizable)
+// ============================================================
+
+model Promotion {
+  id                 String    @id @default(cuid())
+  name               String                          // Ej: "Early Bird — Primeros 10 clientes"
+  discountPercentage Int       @default(10)          // Porcentaje (10 = 10%)
+  maxUses            Int       @default(10)          // Tope máximo de usos
+  currentUses        Int       @default(0)           // Contador actual (incremento atómico)
+  isActive           Boolean   @default(true)
+  startDate          DateTime?                       // null = sin límite de inicio
+  endDate            DateTime?                       // null = sin límite de fin
+
+  orders             Order[]
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([isActive])
+  @@map("promotions")
 }
 
 // ============================================================

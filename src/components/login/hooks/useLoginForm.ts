@@ -8,8 +8,13 @@ import { useRouter } from "next/navigation";
 import { loginSchema, ERROR_MESSAGES, CREDENTIAL_ERROR_MAP } from "../constants";
 import type { LoginFormData, UseLoginFormReturn } from "../types";
 
-export function useLoginForm(): UseLoginFormReturn {
+interface UseLoginFormOptions {
+  returnTo?: string;
+}
+
+export function useLoginForm(options?: UseLoginFormOptions): UseLoginFormReturn {
   const router = useRouter();
+  const returnTo = options?.returnTo ?? "/";
   const [error, setError]         = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -37,7 +42,7 @@ export function useLoginForm(): UseLoginFormReturn {
         setIsLoading(false);
       } else {
         router.refresh();
-        router.push("/");
+        router.push(returnTo);
       }
     } catch {
       setError(ERROR_MESSAGES.unexpected);
@@ -47,7 +52,7 @@ export function useLoginForm(): UseLoginFormReturn {
 
   const handleGoogleLogin = (): void => {
     setIsLoading(true);
-    signIn("google", { callbackUrl: "/" });
+    signIn("google", { callbackUrl: returnTo });
   };
 
   return { register, handleSubmit, errors, error, isLoading, onSubmit, handleGoogleLogin };

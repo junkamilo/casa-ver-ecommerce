@@ -11,9 +11,13 @@ import GoogleButton from "@/components/ui/auth/GoogleButton";
 import SubmitButton from "@/components/ui/auth/SubmitButton";
 import LoginRegisterLink from "./components/LoginRegisterLink";
 
-const LoginForm = () => {
+interface LoginFormProps {
+  returnTo?: string;
+}
+
+const LoginForm = ({ returnTo }: LoginFormProps) => {
   const { register, handleSubmit, errors, error, isLoading, onSubmit, handleGoogleLogin } =
-    useLoginForm();
+    useLoginForm({ returnTo });
 
   return (
     <div className="w-full max-w-md mx-auto">
