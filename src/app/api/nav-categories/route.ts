@@ -21,15 +21,25 @@ export async function GET() {
           select: { id: true, name: true, slug: true },
           take: 20,
         },
+        garmentTypes: {
+          orderBy: { garmentType: { order: "asc" } },
+          include: { garmentType: { select: { id: true, name: true, slug: true, isActive: true } } },
+        },
       },
     });
 
-    const payload = categories.map((cat) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const payload = (categories as any[]).map((cat) => ({
       id: cat.id,
       name: cat.name,
       slug: cat.slug,
       subcategories: cat.subcategories,
       products: cat.products,
+      garmentTypes: (cat.garmentTypes ?? [])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .filter((cgt: any) => cgt.garmentType?.isActive)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map((cgt: any) => ({ id: cgt.garmentType.id, name: cgt.garmentType.name, slug: cgt.garmentType.slug })),
     }));
 
     return NextResponse.json(payload, {

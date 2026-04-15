@@ -21,14 +21,24 @@ async function getNavCategories(): Promise<NavCategory[]> {
           select: { id: true, name: true, slug: true },
           take: 20,
         },
+        garmentTypes: {
+          orderBy: { garmentType: { order: "asc" as const } },
+          include: { garmentType: { select: { id: true, name: true, slug: true, isActive: true } } },
+        },
       },
     });
-    return categories.map((cat) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (categories as any[]).map((cat) => ({
       id: cat.id,
       name: cat.name,
       slug: cat.slug,
       subcategories: cat.subcategories,
       products: cat.products,
+      garmentTypes: (cat.garmentTypes ?? [])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .filter((cgt: any) => cgt.garmentType?.isActive)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map((cgt: any) => ({ id: cgt.garmentType.id, name: cgt.garmentType.name, slug: cgt.garmentType.slug })),
     }));
   } catch {
     return [];

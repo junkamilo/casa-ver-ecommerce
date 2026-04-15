@@ -18,13 +18,18 @@ type ActiveColor = { name: string; hexCode: string; imageUrl?: string | null } |
 interface ProductCardProps {
   item: CollectionProduct;
   viewMode?: "grid" | "list";
+  /** Posición en la grilla — las primeras 4 reciben priority=true para LCP */
+  index?: number;
 }
 
 // Tamaños responsivos para la vista cuadrícula
-// grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5
-const GRID_SIZES = "(max-width: 640px) 47vw, (max-width: 1280px) 30vw, 23vw";
+// grid-cols-2 → ~47vw | sm:grid-cols-3 → ~30vw | xl:grid-cols-4 → ~23vw | 2xl:grid-cols-5 → ~19vw
+const GRID_SIZES = "(max-width: 640px) 47vw, (max-width: 1280px) 30vw, (max-width: 1536px) 23vw, 19vw";
 
-const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
+// Índices < PRIORITY_THRESHOLD reciben priority=true (preload) para mejorar el LCP
+const PRIORITY_THRESHOLD = 4;
+
+const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) => {
   const [activeColor, setActiveColor] = useState<ActiveColor>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -51,19 +56,21 @@ const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
     setCurrentIndex(0);
   }
 
-  const colorSwatches = (center = false) =>
+  // Siempre alineado a la izquierda y con w-full para que overflow-x-auto funcione
+  const colorSwatches = () =>
     item.colors && item.colors.length > 0 ? (
-      <div className={`flex flex-col gap-1.5 ${center ? "items-center sm:items-start" : "items-start"}`}>
+      <div className="flex flex-col gap-1 w-full">
         <span className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">
           Color{activeColor ? <span className="text-[#154734] ml-1">{activeColor.name}</span> : null}
         </span>
-        <div className="flex gap-1.5 items-center overflow-x-auto scrollbar-hide flex-nowrap pb-0.5">
+        {/* overflow-x-auto + w-full: los swatches hacen scroll sin salirse de la card */}
+        <div className="flex gap-1.5 items-center overflow-x-auto scrollbar-hide flex-nowrap w-full pb-1">
           {item.colors.map((color) => (
             <button
               key={color.name}
               title={color.name}
               onClick={(e) => handleColorClick(e, color)}
-              className={`w-7 h-7 sm:w-4 sm:h-4 rounded-full border shadow-sm transition-all duration-200 shrink-0 active:scale-90 ${
+              className={`w-6 h-6 sm:w-5 sm:h-5 md:w-4 md:h-4 rounded-full border shadow-sm transition-all duration-200 shrink-0 active:scale-90 ${
                 activeColor?.name === color.name
                   ? "ring-2 ring-offset-1 ring-[#154734] scale-110 border-[#154734]"
                   : "border-gray-200 hover:scale-110 hover:border-gray-400"
@@ -80,11 +87,11 @@ const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
     return (
       <Link
         href={`/product/${item.slug}`}
-        className="cursor-pointer flex gap-4 sm:gap-6 bg-white p-3 sm:p-4 rounded-[1.5rem] border border-[#C19A6B]/20 hover:border-[#C19A6B]/60 shadow-[0_4px_15px_-5px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_30px_-5px_rgba(193,154,107,0.15)] transition-all duration-500 group"
+        className="cursor-pointer flex gap-4 sm:gap-6 bg-white p-3 sm:p-4 rounded-3xl border border-[#C19A6B]/20 hover:border-[#C19A6B]/60 shadow-[0_4px_15px_-5px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_30px_-5px_rgba(193,154,107,0.15)] transition-all duration-500 group"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <div className="relative w-28 sm:w-48 shrink-0 aspect-[3/4] overflow-hidden rounded-xl bg-[#FAFAFA] border border-gray-50">
+        <div className="relative w-28 sm:w-48 shrink-0 aspect-3/4 overflow-hidden rounded-xl bg-[#FAFAFA] border border-gray-50">
           {currentImage ? (
             isVideo(currentImage) ? (
               <>
@@ -104,6 +111,8 @@ const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
                 alt={item.name}
                 fill
                 sizes="(max-width: 640px) 112px, 192px"
+                priority={index < PRIORITY_THRESHOLD}
+                loading={index < PRIORITY_THRESHOLD ? "eager" : "lazy"}
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
               />
             )
@@ -163,21 +172,23 @@ const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
               <span className="text-gray-400 line-through text-xs font-light">${item.oldPrice.toLocaleString("es-CO")}</span>
             )}
           </div>
-          {colorSwatches(false)}
+          {colorSwatches()}
         </div>
       </Link>
     );
   }
 
   // ── VISTA CUADRÍCULA ─────────────────────────────────────────────────────
+  const isPriority = index < PRIORITY_THRESHOLD;
+
   return (
     <Link
       href={`/product/${item.slug}`}
-      className="cursor-pointer flex flex-col h-full bg-white p-2 sm:p-3 md:p-4 rounded-[1.5rem] border border-[#C19A6B]/20 hover:border-[#C19A6B]/60 shadow-[0_4px_15px_-5px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_30px_-5px_rgba(193,154,107,0.15)] transition-all duration-500 group"
+      className="cursor-pointer flex flex-col h-full bg-white p-2 sm:p-3 md:p-4 rounded-3xl border border-[#C19A6B]/20 hover:border-[#C19A6B]/60 shadow-[0_4px_15px_-5px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_30px_-5px_rgba(193,154,107,0.15)] transition-all duration-500 group overflow-hidden"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative aspect-[3/4] mb-3 sm:mb-4 overflow-hidden rounded-xl bg-[#FAFAFA] border border-gray-50">
+      <div className="relative aspect-3/4 mb-3 sm:mb-4 overflow-hidden rounded-xl bg-[#FAFAFA] border border-gray-50">
 
         {/* ── MÓVIL: carrusel táctil con scroll-snap ── */}
         <div className="md:hidden absolute inset-0 flex overflow-x-auto snap-x snap-mandatory scrollbar-hide">
@@ -195,7 +206,9 @@ const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
                   src={activeColor.imageUrl}
                   alt={item.name}
                   fill
-                  sizes="100vw"
+                  sizes={GRID_SIZES}
+                  priority={isPriority}
+                  loading={isPriority ? "eager" : "lazy"}
                   className="object-cover"
                 />
               </div>
@@ -216,7 +229,10 @@ const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
                     src={img}
                     alt={item.name}
                     fill
-                    sizes="100vw"
+                    sizes={GRID_SIZES}
+                    // Solo la primera slide es eager; la segunda es lazy
+                    priority={isPriority && i === 0}
+                    loading={isPriority && i === 0 ? "eager" : "lazy"}
                     className="object-cover"
                   />
                 </div>
@@ -251,6 +267,8 @@ const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
                   alt={item.name}
                   fill
                   sizes={GRID_SIZES}
+                  priority={isPriority}
+                  loading={isPriority ? "eager" : "lazy"}
                   className={`object-cover transition-opacity duration-700 ${showHover ? "opacity-0 scale-105" : "opacity-100 scale-100"}`}
                 />
                 {canHoverSwap && (
@@ -259,6 +277,7 @@ const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
                     alt={item.name}
                     fill
                     sizes={GRID_SIZES}
+                    loading="lazy"
                     className={`object-cover transition-all duration-700 ${showHover ? "opacity-100 scale-100" : "opacity-0 scale-105"}`}
                   />
                 )}
@@ -318,12 +337,12 @@ const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
         )}
       </div>
 
-      <div className="px-1 text-center sm:text-left flex flex-col flex-1 items-center sm:items-start gap-1.5 sm:gap-2">
-        <h3 className={`text-xs sm:text-sm font-bold uppercase tracking-widest transition-colors w-full sm:truncate leading-tight ${isHovered ? "text-[#C19A6B]" : "text-[#154734]"}`}>
+      <div className="px-1 flex flex-col flex-1 items-start gap-1 sm:gap-2 min-w-0">
+        <h3 className={`text-xs sm:text-sm font-bold uppercase tracking-widest transition-colors w-full truncate leading-tight ${isHovered ? "text-[#C19A6B]" : "text-[#154734]"}`}>
           {item.name}
         </h3>
-        <div className="flex flex-row items-center gap-2 sm:gap-3 text-sm mb-1 flex-wrap">
-          <span className="font-medium text-[#154734] text-sm sm:text-sm">
+        <div className="flex flex-row items-center gap-2 sm:gap-3 text-sm mb-0.5 flex-wrap">
+          <span className="font-medium text-[#154734] text-sm">
             {item.isSet && item.minPrice != null
               ? `Desde $${item.minPrice.toLocaleString("es-CO")}`
               : `$${item.price.toLocaleString("es-CO")}`}
@@ -332,8 +351,8 @@ const ProductCard = ({ item, viewMode = "grid" }: ProductCardProps) => {
             <span className="text-gray-400 line-through text-xs font-light">${item.oldPrice.toLocaleString("es-CO")}</span>
           )}
         </div>
-        <div className="mt-auto pt-1 w-full flex justify-center sm:justify-start">
-          {colorSwatches(true)}
+        <div className="mt-auto pt-0.5 w-full min-w-0">
+          {colorSwatches()}
         </div>
       </div>
     </Link>

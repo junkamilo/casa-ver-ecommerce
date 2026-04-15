@@ -11,12 +11,19 @@ export interface NavProduct {
   slug: string;
 }
 
+export interface NavGarmentType {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export interface NavCategory {
   id: string;
   name: string;
   slug: string;
   subcategories: NavSubcategory[];
   products: NavProduct[];
+  garmentTypes: NavGarmentType[];
 }
 
 // ── Component Props ──────────────────────────────────────────────────────────

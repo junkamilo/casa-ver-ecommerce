@@ -2,6 +2,11 @@
 const nextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
+    // Cachear imágenes optimizadas por 24 h en el servidor (default Next.js = 60s, muy poco)
+    minimumCacheTTL: 86400,
+    // Tamaños de dispositivo que Next.js usa para generar el srcset
+    deviceSizes: [375, 640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [96, 128, 192, 256, 384],
     remotePatterns: [
       {
         protocol: 'https',

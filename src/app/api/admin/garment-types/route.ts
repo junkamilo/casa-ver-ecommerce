@@ -31,7 +31,7 @@ export async function GET() {
         slug: true,
         order: true,
         isActive: true,
-        _count: { select: { products: true, items: true } },
+        _count: { select: { products: true, categories: true } },
       },
     });
 
@@ -147,12 +147,12 @@ export async function DELETE(req: NextRequest) {
     const db = prisma as any;
     const gt = await db.garmentType.findUnique({
       where: { id },
-      include: { _count: { select: { products: true, items: true } } },
+      include: { _count: { select: { products: true } } },
     });
 
     if (!gt) return new NextResponse("No encontrado", { status: 404 });
 
-    const total = gt._count.products + gt._count.items;
+    const total = gt._count.products;
     if (total > 0) {
       return NextResponse.json(
         { error: "has_products", count: total, name: gt.name },

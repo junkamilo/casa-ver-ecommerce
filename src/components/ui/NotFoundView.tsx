@@ -64,17 +64,17 @@ export default function NotFoundView({
         </div>
 
         {/* Acciones */}
-        <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
+        <div className="flex flex-col gap-3 w-full sm:flex-row sm:max-w-xs">
           <Link
             href={backHref}
-            className="flex items-center justify-center gap-2 flex-1 h-11 px-6 rounded-full bg-[#154734] text-white text-xs font-black uppercase tracking-[0.15em] transition-all duration-300 hover:bg-[#154734]/90 hover:shadow-[0_8px_25px_-8px_rgba(21,71,52,0.5)] active:scale-95"
+            className="flex items-center justify-center gap-2 w-full sm:flex-1 h-12 sm:h-11 px-5 rounded-full bg-[#154734] text-white text-xs font-black uppercase tracking-widest sm:tracking-[0.15em] transition-all duration-300 hover:bg-[#154734]/90 hover:shadow-[0_8px_25px_-8px_rgba(21,71,52,0.5)] active:scale-95"
           >
             <Search className="w-3.5 h-3.5 shrink-0" />
             {backLabel}
           </Link>
           <Link
             href="/"
-            className="flex items-center justify-center gap-2 flex-1 h-11 px-6 rounded-full border border-[#C19A6B]/40 text-[#154734] text-xs font-black uppercase tracking-[0.15em] transition-all duration-300 hover:border-[#C19A6B] hover:bg-[#C19A6B]/5 active:scale-95"
+            className="flex items-center justify-center gap-2 w-full sm:flex-1 h-12 sm:h-11 px-5 rounded-full border border-[#C19A6B]/40 text-[#154734] text-xs font-black uppercase tracking-widest sm:tracking-[0.15em] transition-all duration-300 hover:border-[#C19A6B] hover:bg-[#C19A6B]/5 active:scale-95"
           >
             <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
             Inicio
