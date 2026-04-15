@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
-import { markOrderPaid } from "@/app/actions/checkout";
+import { markOrderPaid, releaseOrderStock } from "@/app/actions/checkout";
 import { sendOrderConfirmationEmail } from "@/services/email/client";
 
 // ---------------------------------------------------------------------------
@@ -12,14 +12,25 @@ import { sendOrderConfirmationEmail } from "@/services/email/client";
 function verifyAddiSignature(rawBody: string, signatureHeader: string): boolean {
   const secret = process.env.ADDI_WEBHOOK_SECRET;
 
-  // Si el secret no está configurado, loguear advertencia y permitir el webhook.
-  // Esto evita bloquear todos los eventos mientras el secret está pendiente de Addi.
+  const isProd = process.env.NODE_ENV === "production";
+
   if (!secret) {
+    if (isProd) {
+      // En producción sin secreto: rechazar — no podemos verificar integridad
+      console.error("[Addi Webhook] ✗ PROD: ADDI_WEBHOOK_SECRET no configurado — rechazando webhook");
+      return false;
+    }
     console.warn("[Addi Webhook] ADDI_WEBHOOK_SECRET no configurado — omitiendo validación de firma");
     return true;
   }
 
-  if (!signatureHeader) return false;
+  if (!signatureHeader) {
+    if (isProd) {
+      console.error("[Addi Webhook] ✗ PROD: Header de firma ausente — rechazando webhook");
+      return false;
+    }
+    return true;
+  }
 
   const expected = createHmac("sha256", secret).update(rawBody).digest("base64");
 
@@ -78,12 +89,28 @@ export async function POST(req: NextRequest) {
     console.error("[Addi Webhook] Error registrando log:", logErr);
   }
 
-  // 4. Procesar pago aprobado
+  // 4. Clasificar evento
   const isApproved =
     addiStatus === "APPROVED" ||
     addiStatus === "approved" ||
     eventType === "application.approved";
 
+  const isRejected =
+    addiStatus === "REJECTED" ||
+    addiStatus === "rejected" ||
+    addiStatus === "DECLINED" ||
+    addiStatus === "declined" ||
+    eventType === "application.rejected" ||
+    eventType === "application.declined";
+
+  // 5. Pago rechazado por Addi → liberar stock y cupón
+  if (isRejected && orderId) {
+    console.log(`[Addi Webhook] Pago rechazado — liberando stock. orderId: ${orderId}`);
+    await releaseOrderStock(orderId, "FAILED");
+    return NextResponse.json({ received: true }, { status: 200 });
+  }
+
+  // 6. Procesar pago aprobado
   if (isApproved && orderId && addiPaymentId) {
     try {
       const order = await markOrderPaid(orderId, addiPaymentId);

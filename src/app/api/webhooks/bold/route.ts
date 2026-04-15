@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { after } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
-import { markOrderPaid } from "@/app/actions/checkout";
+import { markOrderPaid, releaseOrderStock } from "@/app/actions/checkout";
 import { sendOrderConfirmationEmail } from "@/services/email/client";
 
 // ---------------------------------------------------------------------------
@@ -38,14 +38,27 @@ function verifyBoldSignature(
 ): { skip: boolean; valid?: boolean } {
   const secret = process.env.BOLD_WEBHOOK_SECRET ?? "";
 
-  // Sin firma → Bold Link de Pagos no siempre incluye x-bold-signature → dejar pasar
+  const isProd = process.env.NODE_ENV === "production";
+
+  // Sin firma → Bold Link de Pagos no siempre incluye x-bold-signature
   if (!signatureHeader) {
+    if (isProd && isValidSecret(secret)) {
+      // En producción con secreto configurado: exigir firma siempre
+      console.error("[Bold] ✗ PROD: Header 'x-bold-signature' ausente — rechazando webhook");
+      return { skip: false, valid: false };
+    }
     console.warn("[Bold] ⚠ Header 'x-bold-signature' ausente — aceptando sin verificar firma");
     return { skip: true };
   }
 
-  // Hay firma pero el secreto no está bien configurado → warning + dejar pasar
+  // Hay firma pero el secreto no está bien configurado
   if (!isValidSecret(secret)) {
+    if (isProd) {
+      // En producción sin secreto: rechazar — no podemos verificar integridad
+      console.error("[Bold] ✗ PROD: BOLD_WEBHOOK_SECRET no configurado — rechazando webhook por seguridad");
+      console.error("[Bold]   Configura BOLD_WEBHOOK_SECRET en las variables de entorno de producción");
+      return { skip: false, valid: false };
+    }
     console.warn("[Bold] ⚠ BOLD_WEBHOOK_SECRET no configurado correctamente (¿es una URL?)");
     console.warn("[Bold]   Ve a Dashboard Bold → Integraciones → copia la 'Llave secreta'");
     console.warn("[Bold]   Aceptando webhook sin verificar firma hasta que el secreto esté correcto");
@@ -330,28 +343,12 @@ async function processWebhookAsync(fields: WebhookFields): Promise<void> {
 
   if (isRejected || isRefunded) {
     const newStatus = isRefunded ? "REFUNDED" : "FAILED";
-    console.log(`[BOLD WEBHOOK] ℹ Evento ${eventType ?? boldStatus} → actualizando orden a ${newStatus}`);
+    console.log(`[BOLD WEBHOOK] ℹ Evento ${eventType ?? boldStatus} → liberando stock y cupón, orden → ${newStatus}`);
 
     if (reference) {
-      // updateMany con filtro de estado para evitar sobrescribir órdenes ya PAID
-      // (puede ocurrir si llega un webhook REJECTED después de que ya fue aprobada)
-      const updated = await prisma.order
-        .updateMany({
-          where: {
-            transactionId: reference,
-            status: { in: ["PENDING", "PROCESSING"] },
-          },
-          data: { status: newStatus as any },
-        })
-        .catch((err) => {
-          const msg = err instanceof Error ? err.message : "Error desconocido";
-          console.error(`[BOLD WEBHOOK] ✗ Error al actualizar orden a ${newStatus}:`, msg);
-          updateLog(500, msg);
-          return null;
-        });
-
-      if (updated === null) return;
-      console.log(`[BOLD WEBHOOK] ✓ Orden actualizada a ${newStatus}. Filas afectadas: ${updated.count}`);
+      // releaseOrderStock actualiza el estado Y libera stock + cupón atómicamente.
+      // Es idempotente: si la orden ya está en estado terminal no hace nada.
+      await releaseOrderStock(reference, newStatus as "FAILED" | "REFUNDED");
     }
 
     updateLog(200);

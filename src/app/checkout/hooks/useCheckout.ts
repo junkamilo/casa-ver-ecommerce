@@ -9,6 +9,7 @@ import { validateCoupon } from "@/app/actions/coupons";
 import { createOrder } from "@/app/actions/checkout";
 import { checkEarlyBirdStatus } from "@/app/actions/earlybird";
 import { EARLY_BIRD_DISCOUNT_PCT } from "@/lib/earlybird.constants";
+import { getShippingCost } from "@/lib/shipping";
 import { checkoutSchema } from "../types/schema";
 import type { CheckoutFormData } from "../types/schema";
 import type { CouponState } from "../types";
@@ -54,6 +55,20 @@ export function useCheckout(options?: UseCheckoutOptions) {
     discountPercentage: 0,
   });
 
+  // Formulario
+  const form = useForm<CheckoutFormData>({
+    resolver: zodResolver(checkoutSchema) as Resolver<CheckoutFormData>,
+    defaultValues: {
+      paymentMethod: "BOLD",
+    },
+  });
+
+  // Costo de envío reactivo — se recalcula cuando el usuario elige ciudad/departamento
+  const cityValue = form.watch("city");
+  const departmentValue = form.watch("department");
+  const shippingCost =
+    cityValue && departmentValue ? getShippingCost(cityValue, departmentValue) : 0;
+
   // Cálculos derivados
   const earlyBirdDiscount = earlyBird.hasDiscount
     ? Math.round((subtotal * EARLY_BIRD_DISCOUNT_PCT) / 100)
@@ -63,15 +78,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
       ? Math.round((subtotal * coupon.discountPercentage) / 100)
       : 0;
   const discount = couponDiscount + earlyBirdDiscount;
-  const total = subtotal - discount;
-
-  // Formulario
-  const form = useForm<CheckoutFormData>({
-    resolver: zodResolver(checkoutSchema) as Resolver<CheckoutFormData>,
-    defaultValues: {
-      paymentMethod: "BOLD",
-    },
-  });
+  const total = subtotal + shippingCost - discount;
 
   // ---------------------------------------------------------------------------
   // Verificar estado Early Bird cuando el email cambia (debounce 800ms)
@@ -176,7 +183,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
             imageUrl: typeof item.image === "string" ? item.image : undefined,
           })),
           subtotal,
-          shippingCost: 0,
+          shippingCost,
           discount: couponDiscount, // El servidor re-calcula el early bird; aquí solo va el cupón
           couponId: coupon.couponId,
           couponCode: coupon.status === "valid" ? coupon.code : undefined,
@@ -252,13 +259,14 @@ export function useCheckout(options?: UseCheckoutOptions) {
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [checkoutItems, subtotal, couponDiscount, coupon, options, closeCart, clearBuyNow]
+    [checkoutItems, subtotal, shippingCost, couponDiscount, coupon, options, closeCart, clearBuyNow]
   );
 
   return {
     form,
     items: checkoutItems,
     subtotal,
+    shippingCost,
     discount,
     couponDiscount,
     earlyBirdDiscount,

@@ -34,6 +34,7 @@ export default function CheckoutPage() {
     form,
     items,
     subtotal,
+    shippingCost,
     discount,
     couponDiscount,
     earlyBirdDiscount,
@@ -61,6 +62,7 @@ export default function CheckoutPage() {
         <CheckoutMobileSummary
           items={items}
           subtotal={subtotal}
+          shippingCost={shippingCost}
           discount={discount}
           couponDiscount={couponDiscount}
           earlyBirdDiscount={earlyBirdDiscount}
@@ -109,6 +111,7 @@ export default function CheckoutPage() {
         <OrderSummaryPanel
           items={items}
           subtotal={subtotal}
+          shippingCost={shippingCost}
           discount={discount}
           couponDiscount={couponDiscount}
           earlyBirdDiscount={earlyBirdDiscount}

@@ -12,6 +12,7 @@ import OrderTotals from "./shared/OrderTotals";
 interface CheckoutMobileSummaryProps {
   items: CheckoutItem[];
   subtotal: number;
+  shippingCost: number;
   discount: number;
   couponDiscount: number;
   earlyBirdDiscount: number;
@@ -25,6 +26,7 @@ interface CheckoutMobileSummaryProps {
 export default function CheckoutMobileSummary({
   items,
   subtotal,
+  shippingCost,
   couponDiscount,
   earlyBirdDiscount,
   earlyBirdActive,
@@ -111,6 +113,7 @@ export default function CheckoutMobileSummary({
 
             <OrderTotals
               subtotal={subtotal}
+              shippingCost={shippingCost}
               earlyBirdDiscount={earlyBirdDiscount}
               couponDiscount={couponDiscount}
               compact

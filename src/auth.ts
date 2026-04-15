@@ -80,14 +80,53 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const emailVerifiedByGoogle = (profile as any)?.email_verified === true;
       if (!emailVerifiedByGoogle) return false;
 
-      // Marcar emailVerified en la cuenta propia (Credentials no lo hace).
-      // Con allowDangerousEmailAccountLinking, PrismaAdapter ya vinculó el
-      // Account de Google al User existente antes de llegar aquí.
       if (user.email) {
+        // Leer el usuario antes de marcarlo como verificado
+        const dbUser = await prisma.user.findUnique({
+          where: { email: user.email },
+          select: { id: true, createdAt: true, earlyBirdDiscount: true },
+        });
+
+        // Marcar emailVerified en la cuenta propia (Credentials no lo hace).
+        // Con allowDangerousEmailAccountLinking, PrismaAdapter ya vinculó el
+        // Account de Google al User existente antes de llegar aquí.
         await prisma.user.updateMany({
           where: { email: user.email },
           data: { emailVerified: new Date() },
         });
+
+        // Early Bird para nuevos usuarios de Google OAuth:
+        // Si el usuario se acaba de crear (createdAt < 30 segundos) y aún no
+        // tiene el descuento, intentamos reclamar el cupo de forma atómica —
+        // la misma estrategia que usa verify-email para evitar race conditions.
+        if (dbUser && !dbUser.earlyBirdDiscount) {
+          const isNewUser = Date.now() - dbUser.createdAt.getTime() < 30_000;
+
+          if (isNewUser) {
+            const EARLY_BIRD_PROMOTION_ID = "early-bird-2026";
+
+            const claimed: number = await prisma.$executeRaw`
+              UPDATE "promotions"
+              SET "currentUses" = "currentUses" + 1,
+                  "updatedAt"   = NOW()
+              WHERE "id"        = ${EARLY_BIRD_PROMOTION_ID}
+                AND "isActive"  = true
+                AND "currentUses" < "maxUses"
+                AND ("startDate" IS NULL OR "startDate" <= NOW())
+                AND ("endDate"   IS NULL OR "endDate"   >= NOW())
+            `;
+
+            if (claimed > 0) {
+              await prisma.user.update({
+                where: { id: dbUser.id },
+                data: {
+                  earlyBirdDiscount: true,
+                  earlyBirdDiscountAt: new Date(),
+                },
+              });
+            }
+          }
+        }
       }
 
       return true;

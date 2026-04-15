@@ -11,6 +11,7 @@ import OrderTotals from "./shared/OrderTotals";
 interface OrderSummaryPanelProps {
   items: CheckoutItem[];
   subtotal: number;
+  shippingCost: number;
   discount: number;
   couponDiscount: number;
   earlyBirdDiscount: number;
@@ -24,6 +25,7 @@ interface OrderSummaryPanelProps {
 const OrderSummaryPanel = ({
   items,
   subtotal,
+  shippingCost,
   couponDiscount,
   earlyBirdDiscount,
   earlyBirdActive,
@@ -91,6 +93,7 @@ const OrderSummaryPanel = ({
 
         <OrderTotals
           subtotal={subtotal}
+          shippingCost={shippingCost}
           earlyBirdDiscount={earlyBirdDiscount}
           couponDiscount={couponDiscount}
         />
