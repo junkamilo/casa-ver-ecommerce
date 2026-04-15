@@ -16,7 +16,8 @@ export default auth((req) => {
   }
 
   // ── Rutas protegidas → requiere sesión activa (cualquier rol) ────────────
-  const protectedPaths = ["/perfil", "/checkout"];
+  // /checkout NO está aquí: la propia página muestra el modal para invitados
+  const protectedPaths = ["/perfil"];
   if (protectedPaths.some((p) => pathname.startsWith(p))) {
     if (!session) {
       const url = new URL("/login", req.url);
@@ -40,7 +41,7 @@ export const config = {
   matcher: [
     "/admin/:path*",
     "/perfil/:path*",
-    "/checkout/:path*",
+    "/checkout/:path*", // necesario para leer la sesión (earlyBird, etc.)
     "/login",
     "/registro",
   ],
