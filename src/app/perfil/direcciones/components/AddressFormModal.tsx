@@ -1,7 +1,8 @@
 "use client";
 
-import { X, Loader2, ChevronDown } from "lucide-react";
+import { X, Loader2, ChevronDown, Truck } from "lucide-react";
 import { DEPARTAMENTOS } from "@/lib/constants/colombia";
+import { SHIPPING_SANTANDER, SHIPPING_NATIONAL } from "@/lib/shipping";
 import { AddressFormModalProps } from "../types";
 import { FORM_STYLES } from "../constants";
 import { useAddressForm } from "../hooks/useAddressForm";
@@ -16,6 +17,7 @@ export function AddressFormModal({ open, editing, submitting, onSave, onClose }:
     cityField,
     selectedDepartment,
     municipios,
+    shippingCost,
   } = useAddressForm({ open, editing });
 
   if (!open) return null;
@@ -137,6 +139,33 @@ export function AddressFormModal({ open, editing, submitting, onSave, onClose }:
               <FieldError message={errors.city?.message} />
             </div>
           </div>
+
+          {/* Banner costo de envío */}
+          {shippingCost > 0 && (
+            <div
+              className={`flex items-start gap-3 px-4 py-3 rounded-xl border text-sm font-medium ${
+                shippingCost === SHIPPING_SANTANDER
+                  ? "bg-[#154734]/5 border-[#154734]/20 text-[#154734]"
+                  : "bg-amber-50 border-amber-200 text-amber-800"
+              }`}
+            >
+              <Truck className={`w-4 h-4 mt-0.5 shrink-0 ${shippingCost === SHIPPING_SANTANDER ? "text-[#154734]" : "text-amber-600"}`} />
+              <div>
+                {shippingCost === SHIPPING_SANTANDER ? (
+                  <>
+                    <span className="font-semibold">¡Envío especial disponible!</span> Tus pedidos
+                    a esta ciudad tendrán un costo de{" "}
+                    <span className="font-bold">${SHIPPING_SANTANDER.toLocaleString("es-CO")}</span>.
+                  </>
+                ) : (
+                  <>
+                    Los envíos a esta ciudad tienen un costo de{" "}
+                    <span className="font-bold">${SHIPPING_NATIONAL.toLocaleString("es-CO")}</span>.
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Código postal */}
           <div className="relative">

@@ -475,10 +475,10 @@ model Order {
   shippingPhone      String
 
   // Montos
-  subtotal                  Decimal       @db.Decimal(10, 2)
-  shippingCost              Decimal       @db.Decimal(10, 2) @default(0)
-  discount                  Decimal       @db.Decimal(10, 2) @default(0)
-  total                     Decimal       @db.Decimal(10, 2)
+  subtotal                  Decimal       @db.Decimal(10, 2)                          // Suma de ítems a precios reales de BD
+  shippingCost              Decimal       @db.Decimal(10, 2) @default(0)              // Calculado server-side: $11.000 Santander / $18.000 resto
+  discount                  Decimal       @db.Decimal(10, 2) @default(0)              // earlyBirdDiscount + couponDiscount (ambos sumados)
+  total                     Decimal       @db.Decimal(10, 2)                          // subtotal + shippingCost - discount
 
   // Descuento Early Bird
   earlyBirdDiscountApplied  Boolean       @default(false)

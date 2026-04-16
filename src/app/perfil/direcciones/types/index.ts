@@ -60,6 +60,8 @@ export interface UseAddressFormResult {
   cityField: ReturnType<typeof useController<AddressFormValues, "city">>["field"];
   selectedDepartment: string;
   municipios: string[];
+  /** Costo de envío calculado para la ciudad seleccionada (0 si no hay ciudad elegida) */
+  shippingCost: number;
 }
 
 // ── Hook useAddressCard ───────────────────────────────────────────────────────

@@ -3,6 +3,7 @@
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { EARLY_BIRD_DISCOUNT_PCT } from "@/lib/earlybird.constants";
+import { getShippingCost } from "@/lib/shipping";
 
 // ID fijo de la promoción Early Bird (creada en la migración)
 const EARLY_BIRD_PROMOTION_ID = "early-bird-2026";
@@ -129,22 +130,23 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         });
       }
 
-      // Early Bird: si el usuario tiene el descuento, calcularlo server-side (no confiar en el cliente)
-      const earlyBirdApplied = user.earlyBirdDiscount === true;
-      const earlyBirdDiscountAmount = earlyBirdApplied
-        ? Math.round((subtotal * EARLY_BIRD_DISCOUNT_PCT) / 100)
-        : 0;
-      // El descuento final es: cupón (validado en frontend + aquí) + early bird
-      const finalDiscount = discount + earlyBirdDiscountAmount;
-      const total = subtotal + shippingCost - finalDiscount;
-
-      // 2. Validar stock
+      // 2. Validar stock y obtener precios reales de la BD
+      // Los precios del cliente (input.items[].price) NO son de confianza — un usuario
+      // técnico podría manipularlos. Aquí los reemplazamos con los valores reales de la BD.
       const variantTypeMap = new Map<string, "product" | "item">();
+      const realPriceMap   = new Map<string, number>(); // variantId → precio real en COP
 
       for (const item of items) {
+        // ── Intentar como ProductVariant (producto normal) ─────────────────────
         const productVariant = await tx.productVariant.findUnique({
           where: { id: item.variantId },
-          select: { stock: true, reserved: true, isActive: true },
+          select: {
+            stock: true,
+            reserved: true,
+            isActive: true,
+            priceOverride: true,
+            product: { select: { basePrice: true } },
+          },
         });
 
         if (productVariant) {
@@ -156,10 +158,27 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
           if (available < item.quantity) {
             throw new Error(`Stock insuficiente para "${item.name}" (${item.colorName} / ${item.size})`);
           }
+          // priceOverride prevalece sobre basePrice cuando está definido
+          const realPrice = Number(productVariant.priceOverride ?? productVariant.product.basePrice);
+          realPriceMap.set(item.variantId, realPrice);
         } else {
+          // ── Intentar como ProductItemVariant (subcategoría de un conjunto) ───
           const itemVariant = await (tx as any).productItemVariant.findUnique({
             where: { id: item.variantId },
-            select: { stock: true, isActive: true },
+            select: {
+              stock: true,
+              isActive: true,
+              color: {
+                select: {
+                  item: {
+                    select: {
+                      price: true,
+                      product: { select: { basePrice: true } },
+                    },
+                  },
+                },
+              },
+            },
           });
           if (!itemVariant) {
             throw new Error(`Variante ${item.variantId} no encontrada`);
@@ -171,14 +190,55 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
           if (itemVariant.stock < item.quantity) {
             throw new Error(`Stock insuficiente para "${item.name}" (${item.colorName} / ${item.size})`);
           }
+          // Precio de la subcategoría → precio del producto padre como fallback
+          const realPrice = Number(
+            itemVariant.color?.item?.price ??
+            itemVariant.color?.item?.product?.basePrice ??
+            item.price, // último recurso: precio enviado por el cliente
+          );
+          realPriceMap.set(item.variantId, realPrice);
         }
       }
 
-      // 3. Generar número de orden y referencia única
-      const orderNumber = generateOrderNumber();
+      // Re-calcular subtotal desde los precios reales de la BD (ignora el subtotal del cliente)
+      const realSubtotal = items.reduce(
+        (sum, item) => sum + (realPriceMap.get(item.variantId) ?? item.price) * item.quantity,
+        0,
+      );
+
+      // Re-calcular el costo de envío server-side (nunca confiar en el valor del cliente)
+      const realShippingCost = getShippingCost(city, department);
+
+      // 3. Re-validar el cupón contra la BD (no confiar en el monto enviado por el cliente)
+      let couponDiscountAmount = 0;
+      if (couponId) {
+        const coupon = await (tx as any).coupon.findUnique({
+          where: { id: couponId },
+          select: { discountPercentage: true, isUsed: true, assignedEmail: true },
+        });
+        const couponValid =
+          coupon &&
+          !coupon.isUsed &&
+          coupon.assignedEmail.toLowerCase() === email.toLowerCase();
+        if (couponValid) {
+          couponDiscountAmount = Math.round((realSubtotal * coupon.discountPercentage) / 100);
+        }
+      }
+
+      // 4. Early Bird: calculado sobre el subtotal real (server-side, nunca confiar en el cliente)
+      const earlyBirdApplied = user.earlyBirdDiscount === true;
+      const earlyBirdDiscountAmount = earlyBirdApplied
+        ? Math.round((realSubtotal * EARLY_BIRD_DISCOUNT_PCT) / 100)
+        : 0;
+
+      const finalDiscount = couponDiscountAmount + earlyBirdDiscountAmount;
+      const realTotal     = realSubtotal + realShippingCost - finalDiscount;
+
+      // 5. Generar número de orden y referencia única
+      const orderNumber   = generateOrderNumber();
       const transactionId = randomUUID();
 
-      // 4. Crear la orden en PENDING
+      // 6. Crear la orden en PENDING
       // Validar que el savedAddressId pertenezca al usuario (si se proveyó)
       if (savedAddressId) {
         const addrOwner = await tx.address.findUnique({
@@ -196,40 +256,40 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
           userId: user.id,
           transactionId,
           ...(savedAddressId ? { addressId: savedAddressId } : {}),
-          shippingName: `${firstName} ${lastName}`,
-          shippingAddress: `${address}${addressDetail ? `, ${addressDetail}` : ""}`,
-          shippingCity: city,
+          shippingName:       `${firstName} ${lastName}`,
+          shippingAddress:    `${address}${addressDetail ? `, ${addressDetail}` : ""}`,
+          shippingCity:       city,
           shippingDepartment: department,
-          shippingPhone: phone,
-          subtotal,
-          shippingCost,
-          discount: finalDiscount,
-          total,
+          shippingPhone:      phone,
+          subtotal:   realSubtotal,   // ← precio real de la BD
+          shippingCost: realShippingCost,  // ← calculado server-side
+          discount:   finalDiscount,
+          total:      realTotal,       // ← total real calculado server-side
           earlyBirdDiscountApplied: earlyBirdApplied,
-          // Vincular a la promoción cuando el descuento Early Bird aplica
-          ...(earlyBirdApplied
-            ? { appliedPromotionId: EARLY_BIRD_PROMOTION_ID }
-            : {}),
-          status: "PENDING",
+          ...(earlyBirdApplied ? { appliedPromotionId: EARLY_BIRD_PROMOTION_ID } : {}),
+          status:        "PENDING",
           paymentMethod: input.paymentMethod,
           items: {
-            create: items.map((item) => ({
-              productId: item.productId,
-              variantId: item.variantId,
-              name: item.name,
-              sku: item.sku,
-              colorName: item.colorName,
-              size: item.size as any,
-              price: item.price,
-              quantity: item.quantity,
-              total: item.price * item.quantity,
-              imageUrl: item.imageUrl ?? null,
-            })),
+            create: items.map((item) => {
+              const realPrice = realPriceMap.get(item.variantId) ?? item.price;
+              return {
+                productId: item.productId,
+                variantId: item.variantId,
+                name:      item.name,
+                sku:       item.sku,
+                colorName: item.colorName,
+                size:      item.size as any,
+                price:     realPrice,                   // ← precio real de la BD
+                quantity:  item.quantity,
+                total:     realPrice * item.quantity,   // ← total real por ítem
+                imageUrl:  item.imageUrl ?? null,
+              };
+            }),
           },
         },
       });
 
-      // 5. Reservar stock
+      // 7. Reservar stock
       for (const item of items) {
         if (variantTypeMap.get(item.variantId) === "product") {
           await tx.productVariant.update({
@@ -244,13 +304,13 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         }
       }
 
-      // 6. Marcar cupón como usado (si aplica)
-      if (couponId) {
+      // 8. Marcar cupón como usado (si aplica y fue validado arriba)
+      if (couponId && couponDiscountAmount > 0) {
         await (tx as any).coupon.update({
           where: { id: couponId },
           data: {
-            isUsed: true,
-            usedAt: new Date(),
+            isUsed:       true,
+            usedAt:       new Date(),
             usedByOrderId: order.id,
           },
         });
@@ -277,6 +337,99 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     const message = err instanceof Error ? err.message : "Error interno al crear la orden";
     console.error("[createOrder] Error:", err);
     return { success: false, error: message };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// releaseOrderStock — Libera reservas de stock y cupón cuando el pago falla/se cancela.
+//
+// Se llama desde los webhooks de Bold/Addi cuando la transacción es rechazada,
+// cancelada o reembolsada. Es idempotente: si la orden ya está en estado terminal
+// o no existe, no hace nada.
+//
+// Stock:
+//   - ProductVariant (normal):       decrement reserved (stock físico ya no se tocó)
+//   - ProductItemVariant (conjunto):  increment stock  (fue decrementado en createOrder)
+//
+// Cupón:
+//   - Si la orden tenía un cupón reservado (usedByOrderId = order.id), lo libera.
+//   - Así el usuario puede intentar la compra de nuevo con el mismo cupón.
+// ---------------------------------------------------------------------------
+export async function releaseOrderStock(
+  transactionId: string,
+  newStatus: "FAILED" | "REFUNDED" | "CANCELLED",
+): Promise<void> {
+  try {
+    await prisma.$transaction(async (tx) => {
+      const order = await tx.order.findUnique({
+        where: { transactionId },
+        include: { items: true },
+      });
+
+      if (!order) {
+        console.warn(`[releaseOrderStock] Orden no encontrada: ${transactionId}`);
+        return;
+      }
+
+      // Idempotencia: solo actuar sobre órdenes aún en estado transitorio
+      if (!["PENDING", "PROCESSING"].includes(order.status)) {
+        console.log(`[releaseOrderStock] Orden ${order.orderNumber} ya en estado ${order.status} — sin acción`);
+        return;
+      }
+
+      // 1. Actualizar estado de la orden
+      await tx.order.update({
+        where: { id: order.id },
+        data: {
+          status: newStatus as any,
+          ...(newStatus === "CANCELLED" ? { cancelledAt: new Date() } : {}),
+        },
+      });
+
+      // 2. Liberar stock de cada ítem
+      for (const item of order.items) {
+        const productVariant = await tx.productVariant.findUnique({
+          where: { id: item.variantId },
+          select: { id: true, reserved: true },
+        });
+
+        if (productVariant) {
+          // Producto normal: solo tenía reserva (reserved), nunca se descontó stock físico
+          const safeDecrement = Math.min(item.quantity, productVariant.reserved);
+          if (safeDecrement > 0) {
+            await tx.productVariant.update({
+              where: { id: item.variantId },
+              data: { reserved: { decrement: safeDecrement } },
+            });
+          }
+        } else {
+          // ProductItemVariant (conjunto): el stock fue descontado directamente en createOrder
+          await (tx as any).productItemVariant.update({
+            where: { id: item.variantId },
+            data: { stock: { increment: item.quantity } },
+          });
+        }
+      }
+
+      // 3. Liberar cupón si aplica (para que el usuario pueda reintentarlo)
+      await (tx as any).coupon.updateMany({
+        where: {
+          usedByOrderId: order.id,
+          isUsed: true,
+        },
+        data: {
+          isUsed:        false,
+          usedAt:        null,
+          usedByOrderId: null,
+        },
+      });
+
+      console.log(`[releaseOrderStock] ✓ Stock y cupón liberados — orden ${order.orderNumber} → ${newStatus}`);
+    });
+  } catch (err) {
+    // No relanzar — el estado de la orden ya fue actualizado antes de este punto en los webhooks.
+    // Loguear para investigación manual si el stock no se liberó correctamente.
+    console.error("[releaseOrderStock] Error liberando stock:", err instanceof Error ? err.message : err);
   }
 }
 
