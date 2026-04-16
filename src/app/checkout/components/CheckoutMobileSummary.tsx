@@ -4,36 +4,26 @@ import { useState } from "react";
 import Image from "next/image";
 import { ShoppingBag, ChevronUp, X, Sparkles } from "lucide-react";
 import { LOCALE } from "../constants";
-import type { CheckoutItem, CouponState } from "../types";
-import CouponInput from "./shared/CouponInput";
-import EarlyBirdBadge from "./shared/EarlyBirdBadge";
+import { EARLY_BIRD_DISCOUNT_PCT } from "@/lib/earlybird.constants";
+import type { CheckoutItem } from "../types";
 import OrderTotals from "./shared/OrderTotals";
 
 interface CheckoutMobileSummaryProps {
   items: CheckoutItem[];
   subtotal: number;
   shippingCost: number;
-  discount: number;
-  couponDiscount: number;
   earlyBirdDiscount: number;
   earlyBirdActive: boolean;
   total: number;
-  coupon: CouponState;
-  onApplyCoupon: (code: string) => Promise<void>;
-  onRemoveCoupon: () => void;
 }
 
 export default function CheckoutMobileSummary({
   items,
   subtotal,
   shippingCost,
-  couponDiscount,
   earlyBirdDiscount,
   earlyBirdActive,
   total,
-  coupon,
-  onApplyCoupon,
-  onRemoveCoupon,
 }: CheckoutMobileSummaryProps) {
   const [open, setOpen] = useState(false);
   const totalItems = items.reduce((acc, i) => acc + i.quantity, 0);
@@ -76,46 +66,55 @@ export default function CheckoutMobileSummary({
           <div className="overflow-y-auto flex-1 px-5 py-4 space-y-5">
             {/* Items */}
             <div className="space-y-3">
-              {items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex gap-3 items-center bg-[#FAFAFA] p-3 rounded-2xl border border-gray-100"
-                >
-                  <div className="relative w-14 h-16 rounded-xl overflow-hidden shrink-0 shadow-sm">
-                    <Image src={item.image} alt={item.name} fill className="object-cover" />
-                    <span className="absolute top-0 right-0 bg-[#154734] text-white text-[9px] font-bold w-5 h-5 flex items-center justify-center rounded-bl-xl z-10">
-                      {item.quantity}
-                    </span>
+              {items.map((item) => {
+                const originalTotal = item.price * item.quantity;
+                const discountedTotal = earlyBirdActive
+                  ? Math.round(originalTotal * (1 - EARLY_BIRD_DISCOUNT_PCT / 100))
+                  : originalTotal;
+                return (
+                  <div
+                    key={item.id}
+                    className="flex gap-3 items-center bg-[#FAFAFA] p-3 rounded-2xl border border-gray-100"
+                  >
+                    <div className="relative w-14 h-16 rounded-xl overflow-hidden shrink-0 shadow-sm">
+                      <Image src={item.image} alt={item.name} fill className="object-cover" />
+                      <span className="absolute top-0 right-0 bg-[#154734] text-white text-[9px] font-bold w-5 h-5 flex items-center justify-center rounded-bl-xl z-10">
+                        {item.quantity}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-[#154734] uppercase tracking-wide truncate">
+                        {item.name}
+                      </p>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">
+                        {item.color} · {item.size}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      {earlyBirdActive ? (
+                        <>
+                          <p className="text-[10px] text-gray-400 line-through leading-none">
+                            ${originalTotal.toLocaleString(LOCALE)}
+                          </p>
+                          <p className="text-xs font-bold text-amber-600 leading-snug">
+                            ${discountedTotal.toLocaleString(LOCALE)}
+                          </p>
+                        </>
+                      ) : (
+                        <span className="text-xs font-bold text-[#154734]">
+                          ${originalTotal.toLocaleString(LOCALE)}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-[#154734] uppercase tracking-wide truncate">
-                      {item.name}
-                    </p>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">
-                      {item.color} · {item.size}
-                    </p>
-                  </div>
-                  <span className="text-xs font-bold text-[#154734] shrink-0">
-                    ${(item.price * item.quantity).toLocaleString(LOCALE)}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
-
-            {earlyBirdActive && <EarlyBirdBadge compact />}
-
-            <CouponInput
-              coupon={coupon}
-              onApply={onApplyCoupon}
-              onRemove={onRemoveCoupon}
-              compact
-            />
 
             <OrderTotals
               subtotal={subtotal}
               shippingCost={shippingCost}
               earlyBirdDiscount={earlyBirdDiscount}
-              couponDiscount={couponDiscount}
               compact
             />
 

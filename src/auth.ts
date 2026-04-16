@@ -26,12 +26,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // existente de email/contraseña cuando ambas comparten el mismo correo.
       // Es seguro para Google porque siempre verifica la titularidad del email.
       allowDangerousEmailAccountLinking: true,
-      // Fuerza el selector de cuentas de Google en cada intento de login.
-      // Sin esto, Google reutiliza la sesión activa del navegador silenciosamente.
+      // Muestra el selector de cuentas de Google para que el usuario pueda elegir.
+      // Eliminamos "consent" y access_type:"offline" — causaban que Google
+      // invalidara el authorization code en ciertos flujos (invalid_grant).
       authorization: {
         params: {
-          prompt: "select_account consent", // "consent" fuerza a Google a re-emitir refresh_token
-          access_type: "offline",            // solicita refresh_token
+          prompt: "select_account",
         },
       },
     }),
@@ -68,49 +68,52 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     maxAge: 30 * 24 * 60 * 60, // 30 días — expira sesión aunque no haya logout
   },
 
-  pages: { signIn: "/login" },
+  pages: { signIn: "/login", error: "/login" },
 
   callbacks: {
-    async signIn({ user, account, profile }) {
-      // Solo se aplica lógica especial para el proveedor Google
+    async signIn({ account, profile }) {
+      // Para Google: rechazar si el correo no está verificado por Google.
+      // Toda la lógica de earlyBird/emailVerified se maneja en el callback jwt
+      // porque ahí el adapter ya garantiza user.id y user.email correctos.
       if (account?.provider !== "google") return true;
+      const emailVerified = (profile as any)?.email_verified;
+      if (!emailVerified) return false;
+      return true;
+    },
 
-      // Rechazar si Google no confirmó la titularidad del correo.
-      // Esto también cubre el caso en que la cuenta Google está en disputa.
-      const emailVerifiedByGoogle = (profile as any)?.email_verified === true;
-      if (!emailVerifiedByGoogle) return false;
+    async jwt({ token, user, account }) {
+      if (!user) return token; // solo corre en el login inicial
 
-      if (user.email) {
-        // Leer el usuario antes de marcarlo como verificado
-        const dbUser = await prisma.user.findUnique({
-          where: { email: user.email },
-          select: { id: true, createdAt: true, earlyBirdDiscount: true },
-        });
+      token.id   = user.id;
+      token.role = (user as any).role;
 
-        // Marcar emailVerified en la cuenta propia (Credentials no lo hace).
-        // Con allowDangerousEmailAccountLinking, PrismaAdapter ya vinculó el
-        // Account de Google al User existente antes de llegar aquí.
+      // El email del usuario viene del adapter (fuente confiable para todos los proveedores)
+      const email = user.email;
+
+      if (account?.provider === "google" && email) {
+        // 1. Marcar emailVerified (el PrismaAdapter no siempre lo hace en v5 beta)
         await prisma.user.updateMany({
-          where: { email: user.email },
+          where: { email },
           data: { emailVerified: new Date() },
         });
 
-        // Early Bird para nuevos usuarios de Google OAuth:
-        // Si el usuario se acaba de crear (createdAt < 30 segundos) y aún no
-        // tiene el descuento, intentamos reclamar el cupo de forma atómica —
-        // la misma estrategia que usa verify-email para evitar race conditions.
+        // 2. Early Bird: nuevos usuarios de Google (ventana 5 min)
+        const dbUser = await prisma.user.findUnique({
+          where: { email },
+          select: { id: true, createdAt: true, earlyBirdDiscount: true },
+        });
+
         if (dbUser && !dbUser.earlyBirdDiscount) {
-          const isNewUser = Date.now() - dbUser.createdAt.getTime() < 30_000;
+          const isNewUser = Date.now() - dbUser.createdAt.getTime() < 5 * 60_000;
 
           if (isNewUser) {
-            const EARLY_BIRD_PROMOTION_ID = "early-bird-2026";
-
+            const PROMO_ID = "early-bird-2026";
             const claimed: number = await prisma.$executeRaw`
               UPDATE "promotions"
-              SET "currentUses" = "currentUses" + 1,
-                  "updatedAt"   = NOW()
-              WHERE "id"        = ${EARLY_BIRD_PROMOTION_ID}
-                AND "isActive"  = true
+              SET   "currentUses" = "currentUses" + 1,
+                    "updatedAt"   = NOW()
+              WHERE "id"          = ${PROMO_ID}
+                AND "isActive"    = true
                 AND "currentUses" < "maxUses"
                 AND ("startDate" IS NULL OR "startDate" <= NOW())
                 AND ("endDate"   IS NULL OR "endDate"   >= NOW())
@@ -119,24 +122,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             if (claimed > 0) {
               await prisma.user.update({
                 where: { id: dbUser.id },
-                data: {
-                  earlyBirdDiscount: true,
-                  earlyBirdDiscountAt: new Date(),
-                },
+                data: { earlyBirdDiscount: true, earlyBirdDiscountAt: new Date() },
               });
+              token.earlyBirdDiscount = true;
             }
           }
         }
+
+        // 3. Leer el valor final (puede haber sido true ya antes)
+        if (!token.earlyBirdDiscount) {
+          const updated = await prisma.user.findUnique({
+            where: { id: user.id as string },
+            select: { earlyBirdDiscount: true },
+          });
+          token.earlyBirdDiscount = updated?.earlyBirdDiscount ?? false;
+        }
+      } else {
+        // Credentials y otros proveedores
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id as string },
+          select: { earlyBirdDiscount: true },
+        });
+        token.earlyBirdDiscount = dbUser?.earlyBirdDiscount ?? false;
       }
 
-      return true;
-    },
-
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = (user as any).role;
-      }
       return token;
     },
 
@@ -144,6 +153,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
+        (session.user as any).earlyBirdDiscount = token.earlyBirdDiscount ?? false;
       }
       return session;
     },

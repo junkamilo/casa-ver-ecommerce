@@ -35,14 +35,9 @@ export default function CheckoutPage() {
     items,
     subtotal,
     shippingCost,
-    discount,
-    couponDiscount,
     earlyBirdDiscount,
     earlyBird,
     total,
-    coupon,
-    handleApplyCoupon,
-    handleRemoveCoupon,
     isPending,
     submitError,
     onSubmit,
@@ -57,23 +52,19 @@ export default function CheckoutPage() {
 
       <form
         onSubmit={onSubmit}
-        className="min-h-screen bg-[#FAFAFA] flex flex-col lg:flex-row font-sans selection:bg-[#C19A6B]/20 relative overflow-hidden"
+        className="min-h-screen lg:h-dvh bg-[#FAFAFA] flex flex-col lg:flex-row font-sans selection:bg-[#C19A6B]/20"
       >
         <CheckoutMobileSummary
           items={items}
           subtotal={subtotal}
           shippingCost={shippingCost}
-          discount={discount}
-          couponDiscount={couponDiscount}
           earlyBirdDiscount={earlyBirdDiscount}
           earlyBirdActive={earlyBird.hasDiscount}
           total={total}
-          coupon={coupon}
-          onApplyCoupon={handleApplyCoupon}
-          onRemoveCoupon={handleRemoveCoupon}
         />
 
-        <div className="flex-1 lg:w-[55%] flex flex-col px-4 sm:px-8 lg:px-12 xl:px-20 pt-8 lg:pt-16 pb-28 lg:pb-20 bg-[#FAFAFA] relative z-10">
+        {/* ── PANEL IZQUIERDO: formulario con scroll propio ── */}
+        <div className="flex-1 lg:w-[55%] lg:h-dvh lg:overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent flex flex-col px-4 sm:px-8 lg:px-12 xl:px-20 pt-8 lg:pt-16 pb-28 lg:pb-20 bg-[#FAFAFA] relative z-10">
           {/* Fondo punteado decorativo */}
           <div
             className="absolute inset-0 opacity-[0.02] pointer-events-none"
@@ -112,14 +103,9 @@ export default function CheckoutPage() {
           items={items}
           subtotal={subtotal}
           shippingCost={shippingCost}
-          discount={discount}
-          couponDiscount={couponDiscount}
           earlyBirdDiscount={earlyBirdDiscount}
           earlyBirdActive={earlyBird.hasDiscount}
           total={total}
-          coupon={coupon}
-          onApplyCoupon={handleApplyCoupon}
-          onRemoveCoupon={handleRemoveCoupon}
         />
       </form>
     </FormProvider>

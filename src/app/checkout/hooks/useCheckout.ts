@@ -4,6 +4,7 @@ import { useState, useTransition, useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import type { Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useSession } from "next-auth/react";
 import { useCart } from "@/context/CartContext";
 import { validateCoupon } from "@/app/actions/coupons";
 import { createOrder } from "@/app/actions/checkout";
@@ -32,7 +33,8 @@ interface UseCheckoutOptions {
 // Hook principal del checkout
 // ---------------------------------------------------------------------------
 export function useCheckout(options?: UseCheckoutOptions) {
-  const { items, closeCart, buyNowItem, clearBuyNow } = useCart();
+  const { items, closeCart, clearCart, buyNowItem, clearBuyNow } = useCart();
+  const { data: session, status: authStatus } = useSession();
 
   // Si hay un buyNowItem el checkout opera solo con ese ítem (no toca el carrito)
   const checkoutItems = buyNowItem ? [buyNowItem] : items;
@@ -47,6 +49,25 @@ export function useCheckout(options?: UseCheckoutOptions) {
     checked: false,
   });
   const lastCheckedEmail = useRef<string>("");
+
+  // Para usuarios autenticados: verificar early bird directamente por email.
+  // No dependemos del JWT (que puede estar desactualizado en la misma sesión).
+  useEffect(() => {
+    if (authStatus !== "authenticated") return;
+    const email = session?.user?.email;
+    if (!email) return;
+
+    // Si la sesión ya lo tiene confirmado, aplicarlo inmediatamente
+    if ((session?.user as any)?.earlyBirdDiscount === true) {
+      setEarlyBird({ hasDiscount: true, checked: true });
+      return;
+    }
+
+    // Verificar desde la BD (cubre el caso donde el JWT aún no fue renovado)
+    checkEarlyBirdStatus(email).then((status) => {
+      setEarlyBird({ hasDiscount: status.hasDiscount, checked: true });
+    });
+  }, [authStatus, session]);
 
   // Cupón
   const [coupon, setCoupon] = useState<CouponState>({
@@ -86,6 +107,9 @@ export function useCheckout(options?: UseCheckoutOptions) {
   const emailValue = form.watch("email");
 
   useEffect(() => {
+    // Para usuarios autenticados la sesión ya resuelve el early bird arriba
+    if (authStatus === "authenticated") return;
+
     if (!emailValue || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
       setEarlyBird({ hasDiscount: false, checked: false });
       lastCheckedEmail.current = "";
@@ -100,7 +124,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
     }, 800);
 
     return () => clearTimeout(timer);
-  }, [emailValue]);
+  }, [emailValue, authStatus]);
 
   // ---------------------------------------------------------------------------
   // Validar cupón
@@ -222,7 +246,9 @@ export function useCheckout(options?: UseCheckoutOptions) {
             return;
           }
 
+          // Limpiar carrito completo antes de salir (evita que se vea en sessionStorage al volver)
           closeCart();
+          clearCart();
           clearBuyNow();
 
           if (addiData.redirectUrl) {
@@ -246,7 +272,9 @@ export function useCheckout(options?: UseCheckoutOptions) {
             return;
           }
 
+          // Limpiar carrito completo antes de salir
           closeCart();
+          clearCart();
           clearBuyNow();
 
           if (boldData.redirectUrl) {
@@ -259,7 +287,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [checkoutItems, subtotal, shippingCost, couponDiscount, coupon, options, closeCart, clearBuyNow]
+    [checkoutItems, subtotal, shippingCost, couponDiscount, coupon, options, closeCart, clearCart, clearBuyNow]
   );
 
   return {

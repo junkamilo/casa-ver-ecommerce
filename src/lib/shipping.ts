@@ -34,6 +34,9 @@ export function getShippingCost(city: string, department: string): number {
   const cityNorm = city.trim().toLowerCase();
   const deptNorm = department.trim().toLowerCase();
 
+  // ⚠️ TEMPORAL — tarifa de prueba $1.000. Eliminar cuando ya no se necesite.
+  if (deptNorm === "prueba") return 1_000;
+
   if (deptNorm !== "santander") return SHIPPING_NATIONAL;
 
   for (const cheapCity of SANTANDER_CHEAP_CITIES) {

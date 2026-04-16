@@ -32,6 +32,8 @@ export const DEPARTAMENTOS = [
   "Valle del Cauca",
   "Vaupés",
   "Vichada",
+  // ⚠️ TEMPORAL — solo para pruebas de pago. Eliminar cuando ya no se necesite.
+  "Prueba",
 ] as const;
 
 export const MUNICIPIOS: Record<string, string[]> = {
@@ -323,4 +325,6 @@ export const MUNICIPIOS: Record<string, string[]> = {
   "Vichada": [
     "Puerto Carreño", "Cumaribo", "La Primavera", "Santa Rosalía",
   ],
+  // ⚠️ TEMPORAL — solo para pruebas de pago. Eliminar cuando ya no se necesite.
+  "Prueba": ["Prueba"],
 };

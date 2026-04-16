@@ -21,6 +21,7 @@ interface CartContextType {
   addToCart: (product: any, quantity: number, color: any, size?: string) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, delta: number) => void;
+  clearCart: () => void;
   cartCount: number;
   subtotal: number;
   isCartOpen: boolean;
@@ -38,13 +39,27 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [buyNowItem, setBuyNowItem] = useState<CartItem | null>(null);
 
-  // Leer sessionStorage solo después de la hidratación para evitar mismatch SSR/cliente
+  // Cargar desde sessionStorage tras hidratación (evita mismatch SSR/cliente)
   useEffect(() => {
     try {
-      const stored = sessionStorage.getItem("buyNowItem");
-      if (stored) setBuyNowItem(JSON.parse(stored) as CartItem);
+      const storedCart = sessionStorage.getItem("cartItems");
+      if (storedCart) setItems(JSON.parse(storedCart) as CartItem[]);
+
+      const storedBuyNow = sessionStorage.getItem("buyNowItem");
+      if (storedBuyNow) setBuyNowItem(JSON.parse(storedBuyNow) as CartItem);
     } catch {}
   }, []);
+
+  // Sincronizar items → sessionStorage en cada cambio
+  useEffect(() => {
+    try {
+      if (items.length > 0) {
+        sessionStorage.setItem("cartItems", JSON.stringify(items));
+      } else {
+        sessionStorage.removeItem("cartItems");
+      }
+    } catch {}
+  }, [items]);
 
   // Calcular total de items (para la bolita roja)
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -106,6 +121,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     try { sessionStorage.removeItem("buyNowItem"); } catch {}
   };
 
+  const clearCart = () => {
+    setItems([]);
+    try { sessionStorage.removeItem("cartItems"); } catch {}
+  };
+
   const removeFromCart = (id: string) => {
     setItems(items.filter(item => item.id !== id));
   };
@@ -122,7 +142,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <CartContext.Provider value={{
-      items, addToCart, removeFromCart, updateQuantity,
+      items, addToCart, removeFromCart, updateQuantity, clearCart,
       cartCount, subtotal, isCartOpen, openCart: () => setIsCartOpen(true), closeCart: () => setIsCartOpen(false),
       buyNowItem, setBuyNow, clearBuyNow,
     }}>

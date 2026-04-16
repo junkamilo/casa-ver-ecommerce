@@ -1,10 +1,9 @@
-import { Star, Truck } from "lucide-react";
+import { Truck } from "lucide-react";
 import { LOCALE } from "../../constants";
 
 interface OrderTotalsProps {
   subtotal: number;
   earlyBirdDiscount: number;
-  couponDiscount: number;
   shippingCost: number;
   /** compact=true → estilos reducidos para el panel mobile */
   compact?: boolean;
@@ -16,7 +15,6 @@ interface OrderTotalsProps {
 export default function OrderTotals({
   subtotal,
   earlyBirdDiscount,
-  couponDiscount,
   shippingCost,
   compact = false,
 }: OrderTotalsProps) {
@@ -34,19 +32,9 @@ export default function OrderTotals({
       </div>
 
       {earlyBirdDiscount > 0 && (
-        <div className="flex justify-between items-center text-amber-600">
-          <span className="flex items-center gap-1.5">
-            <Star className="w-3 h-3 fill-amber-400" />
-            Early Bird (10%)
-          </span>
-          <span className="font-bold">-${earlyBirdDiscount.toLocaleString(LOCALE)}</span>
-        </div>
-      )}
-
-      {couponDiscount > 0 && (
-        <div className="flex justify-between items-center text-green-600">
-          <span>Descuento cupón</span>
-          <span className="font-bold">-${couponDiscount.toLocaleString(LOCALE)}</span>
+        <div className="flex justify-between items-center text-[#154734]">
+          <span>Descuento (10%)</span>
+          <span className="font-bold text-[#C19A6B]">-${earlyBirdDiscount.toLocaleString(LOCALE)}</span>
         </div>
       )}
 

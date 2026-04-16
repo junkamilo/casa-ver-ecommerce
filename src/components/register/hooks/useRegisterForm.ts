@@ -150,7 +150,7 @@ export function useRegisterForm(options?: UseRegisterFormOptions): UseRegisterFo
 
   const handleGoogleLogin = (): void => {
     setIsLoading(true);
-    signIn("google", { callbackUrl: returnTo });
+    signIn("google", { redirectTo: returnTo });
   };
 
   return {
