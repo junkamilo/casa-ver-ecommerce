@@ -5,14 +5,15 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Loader2, CheckCircle, AlertCircle, X } from "lucide-react";
 import AppTopHeader from "@/components/layout/AppTopHeader";
+import AppSidebar from "@/components/layout/AppSidebar";
 
 import { useProfile } from "./hooks/useProfile";
 import { useProfileNav } from "./sidebar/hooks/useProfileNav";
-import { ProfileSidebar } from "./sidebar/components/ProfileSidebar";
 import { ProfileInfoSection } from "./sections/components/ProfileInfoSection";
 import { OrdersSection } from "./pedidos/components/OrdersSection";
 import { AddressesSection } from "./direcciones/components/AddressesSection";
-import { BREADCRUMB_LABELS } from "./constants";
+import { BREADCRUMB_LABELS, PERFIL_NAV } from "./constants";
+import type { ProfileSection } from "./sidebar/types";
 
 function PerfilContent() {
   const { status } = useSession();
@@ -88,25 +89,28 @@ function PerfilContent() {
       )}
 
       {/* Sidebar */}
-      <div
-        className={`shrink-0 transition-all duration-300 overflow-hidden ${
-          isSidebarOpen ? "w-64" : "w-0"
-        }`}
-      >
-        {profile && (
-          <ProfileSidebar
-            user={{
-              name: profile.name,
-              email: profile.email,
-              image: profile.image,
-              role: profile.role,
-            }}
-            activeSection={activeSection}
-            onSectionChange={setActiveSection}
-            isAdmin={profile.role === "ADMIN"}
-          />
-        )}
-      </div>
+      <AppSidebar
+        isOpen={isSidebarOpen}
+        onToggle={toggleSidebar}
+        navItems={PERFIL_NAV.map((item) => ({
+          id: item.id,
+          label: item.label,
+          description: item.description,
+          icon: item.icon,
+          isActive: activeSection === item.id,
+          onClick: () => setActiveSection(item.id as ProfileSection),
+        }))}
+        brandSubtitle="Mi Cuenta"
+        userName={profile?.name}
+        userInitial={profile?.name?.charAt(0).toUpperCase() ?? "U"}
+        userRole={profile?.role === "ADMIN" ? "Administrador" : "Cliente"}
+        backLink={{ href: "/", label: "Volver a la tienda" }}
+        extraLink={
+          profile?.role === "ADMIN"
+            ? { href: "/admin", label: "Panel Admin" }
+            : undefined
+        }
+      />
 
       {/* Right side */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">

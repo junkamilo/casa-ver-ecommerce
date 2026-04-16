@@ -1,6 +1,10 @@
+import type { StaticImageData } from "next/image";
+
 export interface Slide {
   id: string;
-  image: string;
+  image: string | StaticImageData;
+  headline?: string;
+  subheadline?: string;
 }
 
 export type HeroButtonVariant = "primary" | "secondary";

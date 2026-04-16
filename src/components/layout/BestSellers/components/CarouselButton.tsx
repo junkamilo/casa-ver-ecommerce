@@ -10,19 +10,18 @@ export function CarouselButton({ direction, onClick, visible }: CarouselButtonPr
     <button
       onClick={onClick}
       className={[
-        "hidden md:flex absolute top-1/2 -translate-y-1/2 z-50",
-        "w-12 h-12 rounded-full bg-white/90 backdrop-blur-md",
-        "border border-[#154734]/10 items-center justify-center",
-        "text-[#154734] hover:bg-[#154734] hover:text-white",
-        "transition-all duration-400 shadow-xl cursor-pointer active:scale-90",
-        "opacity-0 group-hover/carousel:opacity-100 group-hover/carousel:translate-x-0",
-        isLeft ? "left-0 -translate-x-4" : "right-0 translate-x-4",
+        "hidden md:flex absolute top-1/2 -translate-y-1/2 z-20",
+        "w-11 h-11 rounded-full bg-white border border-[#154734]/15 shadow-md",
+        "items-center justify-center text-[#154734]",
+        "hover:bg-[#154734] hover:text-white hover:border-[#154734]",
+        "transition-all duration-200 active:scale-90",
+        isLeft ? "left-0 opacity-100 -translate-x-5" : "right-0 opacity-100 translate-x-5",
       ].join(" ")}
       aria-label={isLeft ? "Anterior" : "Siguiente"}
     >
       {isLeft
-        ? <ChevronLeft className="w-6 h-6 stroke-[1.5]" />
-        : <ChevronRight className="w-6 h-6 stroke-[1.5]" />
+        ? <ChevronLeft className="w-5 h-5 stroke-[1.5]" />
+        : <ChevronRight className="w-5 h-5 stroke-[1.5]" />
       }
     </button>
   );

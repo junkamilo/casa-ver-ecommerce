@@ -1,5 +1,6 @@
 "use client";
 
+import useSWR from "swr";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import SectionHeader from "@/components/ui/SectionHeader";
@@ -7,8 +8,22 @@ import SectionEmptyState from "@/components/ui/SectionEmptyState";
 import ProductCard from "@/components/ui/ProductCard";
 import { useCarousel } from "@/components/shared/ProductCarousel/hooks/useCarousel";
 import type { NewCollectionClientProps } from "../types";
+import type { CollectionProduct } from "@/components/shared/ProductCollection/types";
 
-const NewCollectionClient = ({ items, hasMore }: NewCollectionClientProps) => {
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+const NewCollectionClient = ({ items: initialItems, hasMore: initialHasMore }: NewCollectionClientProps) => {
+  const { data } = useSWR<{ items: CollectionProduct[]; hasMore: boolean }>(
+    "/api/products/new-collection",
+    fetcher,
+    {
+      fallbackData: { items: initialItems, hasMore: initialHasMore },
+      refreshInterval: 60_000,
+      revalidateOnFocus: false,
+    }
+  );
+  const items = data?.items ?? initialItems;
+  const hasMore = data?.hasMore ?? initialHasMore;
   const { scrollRef, canScrollLeft, canScrollRight, scroll } = useCarousel();
 
   // On desktop: 4 cards visible at once. With gap-6 (24px):
@@ -16,7 +31,7 @@ const NewCollectionClient = ({ items, hasMore }: NewCollectionClientProps) => {
   const showVerMasCard = hasMore;
 
   return (
-    <section className="relative w-full bg-white border-t border-[#C19A6B]/10 overflow-hidden py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-8 lg:px-12">
+    <section className="relative w-full bg-white overflow-hidden py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-8 lg:px-12">
       <div className="relative max-w-7xl 2xl:max-w-6xl mx-auto">
         <SectionHeader
           title="Nuevos"

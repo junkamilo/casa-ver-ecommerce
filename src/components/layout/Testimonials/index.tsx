@@ -56,11 +56,9 @@ const Testimonials = ({ comments }: Props) => {
   };
 
   return (
-    <section className="mx-3 sm:mx-4 md:mx-6 lg:mx-8 xl:mx-12 2xl:mx-auto 2xl:max-w-7xl relative rounded-2xl sm:rounded-[2rem] lg:rounded-[2.5rem] p-[2px] overflow-hidden group shadow-[0_15px_40px_-15px_rgba(21,71,52,0.15)] hover:shadow-[0_20px_50px_-15px_rgba(193,154,107,0.25)] transition-shadow duration-700 mb-12 sm:mb-16">
+    <section className="mx-3 sm:mx-4 md:mx-6 lg:mx-8 xl:mx-12 2xl:mx-auto 2xl:max-w-7xl relative rounded-2xl sm:rounded-[2rem] lg:rounded-[2.5rem] overflow-hidden mb-12 sm:mb-16">
 
-      <div className="absolute top-1/2 left-1/2 w-[250%] h-[250%] -translate-x-1/2 -translate-y-1/2 bg-[conic-gradient(from_0deg,transparent_0%,#154734_20%,#C19A6B_40%,transparent_50%,transparent_50%,#154734_70%,#C19A6B_90%,transparent_100%)] animate-[spin_6s_linear_infinite] opacity-60 group-hover:opacity-100 transition-opacity duration-700" />
-
-      <div className="relative z-10 w-full h-full bg-[#F2EAE0] rounded-2xl sm:rounded-[calc(2rem-2px)] lg:rounded-[calc(2.5rem-2px)] py-8 sm:py-12 lg:py-16 overflow-hidden isolate">
+      <div className="relative w-full h-full bg-[#F2EAE0] rounded-2xl sm:rounded-4xl lg:rounded-[2.5rem] py-8 sm:py-12 lg:py-16 overflow-hidden isolate">
 
         <div
           className="absolute inset-0 opacity-[0.05] pointer-events-none"
@@ -80,7 +78,7 @@ const Testimonials = ({ comments }: Props) => {
             className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl text-[#154734] text-center tracking-tight leading-[1.1]"
             style={{ fontFamily: "Georgia, serif" }}
           >
-            Lo que dicen <span className="italic text-[#C19A6B]">nuestras clientas</span>
+            Lo que dicen nuestras clientas
           </h2>
         </div>
 

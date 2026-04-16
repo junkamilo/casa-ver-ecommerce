@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { revalidatePath } from "next/cache";
 import type { NextRequest } from "next/server";
 import { createColorVariants, createSetItems } from "../_helpers";
 
@@ -439,6 +440,7 @@ export async function PATCH(
       return product;
     });
 
+    revalidatePath("/");
     return NextResponse.json(result);
   } catch (error) {
     console.error("[PRODUCT_PATCH]", error);
