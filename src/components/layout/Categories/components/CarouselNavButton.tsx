@@ -2,8 +2,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { CarouselNavButtonProps } from "../types";
 
 const DIRECTION_STYLES = {
-  left: "left-0 -translate-x-4 group-hover/carousel:translate-x-0",
-  right: "right-0 translate-x-4 group-hover/carousel:translate-x-0",
+  left: "left-0 -translate-x-5",
+  right: "right-0 translate-x-5",
 } as const;
 
 const DIRECTION_LABELS = {
@@ -18,13 +18,13 @@ const CarouselNavButton = ({ direction, onClick }: CarouselNavButtonProps) => (
       e.stopPropagation();
       onClick();
     }}
-    className={`hidden md:flex absolute top-1/2 -translate-y-1/2 z-100 w-12 h-12 rounded-full bg-white/90 backdrop-blur-md border border-[#154734]/10 items-center justify-center text-[#154734] hover:bg-[#154734] hover:text-white transition-all duration-400 shadow-xl opacity-0 group-hover/carousel:opacity-100 cursor-pointer touch-target active:scale-90 ${DIRECTION_STYLES[direction]}`}
+    className={`hidden md:flex absolute top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white border border-[#154734]/15 shadow-md items-center justify-center text-[#154734] hover:bg-[#154734] hover:text-white hover:border-[#154734] transition-all duration-200 active:scale-90 ${DIRECTION_STYLES[direction]}`}
     aria-label={DIRECTION_LABELS[direction]}
   >
     {direction === "left" ? (
-      <ChevronLeft className="w-6 h-6 stroke-[1.5]" />
+      <ChevronLeft className="w-5 h-5 stroke-[1.5]" />
     ) : (
-      <ChevronRight className="w-6 h-6 stroke-[1.5]" />
+      <ChevronRight className="w-5 h-5 stroke-[1.5]" />
     )}
   </button>
 );

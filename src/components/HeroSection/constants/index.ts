@@ -1,4 +1,5 @@
 import type { Slide, HeroButton } from "../types";
+import ImagenHeader2 from "@/assets/ImagenHeader2.jpeg";
 
 export const BRAND_GREEN = "#154734";
 export const BRAND_GOLD  = "#C19A6B";
@@ -6,8 +7,16 @@ export const BRAND_GOLD  = "#C19A6B";
 export const AUTOPLAY_TIME = 6000;
 
 export const SLIDES: Slide[] = [
-  { id: "01", image: "/heroImage1.jpg" },
-  { id: "02", image: "/heroImage2.jpg" },
+  {
+    id: "01",
+    image: "/heroImage1.jpg",
+    headline: "¡Bienvenida!",
+    subheadline: "A tu nueva tienda web favorita",
+  },
+  {
+    id: "02",
+    image: ImagenHeader2,
+  },
 ];
 
 export const HERO_BUTTONS: HeroButton[] = [

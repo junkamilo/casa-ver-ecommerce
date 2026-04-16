@@ -12,9 +12,9 @@ const Categories = () => {
   const { categories, loading } = useCategories();
 
   return (
-    <section className="relative w-full py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6 md:px-8 lg:px-12 bg-[#FAFAFA] border-t border-[#C19A6B]/10 overflow-hidden">
+    <section className="relative w-full py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-8 lg:px-12 bg-white overflow-hidden">
 
-      <div className="relative max-w-7xl 2xl:max-w-6xl mx-auto z-10">
+      <div className="relative max-w-7xl 2xl:max-w-6xl mx-auto">
 
         <SectionHeader
           title={SECTION_CONFIG.title}
@@ -26,7 +26,7 @@ const Categories = () => {
           fontClass={SECTION_CONFIG.fontClass}
         />
 
-        <div className="relative group/carousel mt-8 sm:mt-10 md:mt-12">
+        <div className="relative mt-8 sm:mt-10 md:mt-12">
 
           {loading && <CategoryCarouselSkeleton count={4} />}
 
@@ -46,11 +46,11 @@ const Categories = () => {
 
               <div
                 ref={scrollRef}
-                className="grid grid-flow-col auto-cols-[80vw] sm:auto-cols-[50vw] gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-4 sm:pb-6 snap-x snap-mandatory md:grid-flow-row md:auto-cols-auto md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 md:gap-6 md:overflow-visible md:pb-0 md:snap-none"
+                className="grid grid-flow-col auto-cols-[80vw] sm:auto-cols-[50vw] md:auto-cols-[calc(25%-18px)] gap-3 sm:gap-4 md:gap-6 overflow-x-auto scrollbar-hide pb-4 md:pb-2 snap-x snap-mandatory"
                 style={{ scrollBehavior: "smooth" }}
               >
                 {categories.map((cat) => (
-                  <div key={cat.id} className="snap-center md:snap-none">
+                  <div key={cat.id} className="snap-start">
                     <CategoryCard
                       image={cat.image ?? ""}
                       label={cat.name}

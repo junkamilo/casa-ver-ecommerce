@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 
 
@@ -8,7 +8,7 @@ const BRAND_GOLD  = "#C19A6B";
 
 const PaymentMethodsBanner = () => {
   return (
-    <section className="w-full py-12 sm:py-16 md:py-20 lg:py-28 px-4 sm:px-6 md:px-8 lg:px-12 bg-white border-t border-[#C19A6B]/10">
+    <section className="w-full py-12 sm:py-16 md:py-20 lg:py-28 px-4 sm:px-6 md:px-8 lg:px-12 bg-white">
       <div className="max-w-7xl 2xl:max-w-6xl mx-auto">
 
         <div className="flex flex-col items-center justify-center mb-12 sm:mb-14 md:mb-16 text-center">
@@ -20,7 +20,7 @@ const PaymentMethodsBanner = () => {
             <span className="h-px w-6 sm:w-8" style={{ background: BRAND_GOLD }} />
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-[#154734] leading-none" style={{ fontFamily: "Georgia, serif" }}>
-            Facilidades de <span className="italic" style={{ color: BRAND_GOLD }}>Pago</span>
+            Facilidades de Pago
           </h2>
         </div>
 
@@ -32,14 +32,14 @@ const PaymentMethodsBanner = () => {
 
               <div className="mb-6 sm:mb-8">
                 <div className="inline-flex items-center gap-2 bg-white border border-blue-600/20 shadow-sm px-3 sm:px-4 py-1.5 touch-target">
-                  <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                  <span className="font-black text-blue-600 text-sm sm:text-base leading-none">A</span>
                   <span className="font-black text-blue-600 tracking-wider lowercase text-xs sm:text-sm">addi</span>
                 </div>
               </div>
 
-              <h3 className="text-2xl sm:text-3xl lg:text-4xl text-[#154734] leading-[1.1] mb-4 sm:mb-5">
-                <span className="block font-bold tracking-[0.05em] uppercase mb-1">Compra Ahora,</span>
-                <span className="block italic" style={{ fontFamily: "Georgia, serif", color: BRAND_GOLD }}>Paga Después.</span>
+              <h3 className="text-2xl sm:text-3xl lg:text-4xl text-[#154734] leading-[1.1] mb-4 sm:mb-5" style={{ fontFamily: "Georgia, serif" }}>
+                <span className="block font-bold mb-1">Compra Ahora,</span>
+                <span className="block italic">Paga Después.</span>
               </h3>
 
               <p className="text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8 leading-relaxed">
