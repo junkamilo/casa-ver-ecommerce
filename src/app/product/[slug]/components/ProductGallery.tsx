@@ -95,25 +95,12 @@ export default function ProductGallery({
             isCurrentVideo ? "cursor-default" : "cursor-zoom-in"
           }`}
           style={{
-            transition: "box-shadow 700ms ease-in-out",
-            boxShadow: activeColorHex
-              ? `0 0 0 1px ${activeColorHex}30, 0 8px 40px ${activeColorHex}35, 0 2px 12px ${activeColorHex}25`
-              : "0 1px 3px 0 rgb(0 0 0 / 0.1)",
+            boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
           }}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           onClick={() => { if (!isCurrentVideo) setIsZoomOpen(true); }}
         >
-          {/* Tinte de color del producto */}
-          {!isCurrentVideo && (
-            <div
-              className="absolute inset-0 z-0 pointer-events-none"
-              style={{
-                backgroundColor: activeColorHex ? `${activeColorHex}22` : "transparent",
-                transition: "background-color 700ms ease-in-out",
-              }}
-            />
-          )}
 
           {/* Tira de medios — deslizamiento con CSS */}
           <div

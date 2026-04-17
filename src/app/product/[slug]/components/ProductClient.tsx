@@ -107,7 +107,7 @@ export default function ProductClient({
                 {product.name}
               </h1>
 
-              {/* Precio / Antes / Stock — móvil */}
+              {/* Precio / Antes — móvil */}
               <div className="flex sm:hidden items-stretch pt-1">
                 <div className="flex flex-col flex-1 pr-4">
                   <span className="text-[10px] uppercase tracking-[0.18em] text-gray-400 font-bold mb-1.5">Precio</span>
@@ -116,36 +116,20 @@ export default function ProductClient({
                   </p>
                 </div>
 
-                <div className="w-px bg-gray-200 shrink-0" />
-
-                {activeComparePrice ? (
+                {activeComparePrice && (
                   <>
+                    <div className="w-px bg-gray-200 shrink-0" />
                     <div className="flex flex-col flex-1 px-4">
                       <span className="text-[10px] uppercase tracking-[0.18em] text-gray-400 font-bold mb-1.5">Antes</span>
                       <p className="text-3xl text-gray-300 line-through leading-none">
                         {formatPrice(activeComparePrice)}
                       </p>
                     </div>
-                    <div className="w-px bg-gray-200 shrink-0" />
-                  </>
-                ) : (
-                  <>
-                    <div className="flex-1" />
-                    <div className="w-px bg-gray-200 shrink-0" />
                   </>
                 )}
-
-                <div className="flex flex-col flex-1 pl-4">
-                  <span className="text-[10px] uppercase tracking-[0.18em] text-gray-400 font-bold mb-1.5">Stock</span>
-                  {activeStock === 0 ? (
-                    <p className="text-2xl font-semibold text-red-500 leading-none">Agotado</p>
-                  ) : (
-                    <p className="text-3xl font-medium text-gray-900 leading-none">{activeStock}</p>
-                  )}
-                </div>
               </div>
 
-              {/* Precio / Stock — desktop */}
+              {/* Precio — desktop */}
               <div className="hidden sm:block">
                 <div className="flex items-end gap-3">
                   <p className="text-3xl font-medium text-gray-900">{formatPrice(activePrice)}</p>

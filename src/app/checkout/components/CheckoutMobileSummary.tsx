@@ -15,6 +15,7 @@ interface CheckoutMobileSummaryProps {
   earlyBirdDiscount: number;
   earlyBirdActive: boolean;
   total: number;
+  hidden?: boolean;
 }
 
 export default function CheckoutMobileSummary({
@@ -24,6 +25,7 @@ export default function CheckoutMobileSummary({
   earlyBirdDiscount,
   earlyBirdActive,
   total,
+  hidden = false,
 }: CheckoutMobileSummaryProps) {
   const [open, setOpen] = useState(false);
   const totalItems = items.reduce((acc, i) => acc + i.quantity, 0);
@@ -137,8 +139,8 @@ export default function CheckoutMobileSummary({
         </div>
       </div>
 
-      {/* Bottom bar — siempre visible en mobile */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#154734] shadow-[0_-4px_24px_rgba(0,0,0,0.18)]">
+      {/* Bottom bar — visible en mobile, oculto mientras el modal interceptor esté abierto */}
+      <div className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#154734] shadow-[0_-4px_24px_rgba(0,0,0,0.18)] transition-transform duration-300 ${hidden ? "translate-y-full" : "translate-y-0"}`}>
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}

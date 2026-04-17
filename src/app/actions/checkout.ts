@@ -316,6 +316,15 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         });
       }
 
+      // 9. Consumir el descuento Early Bird para que no se aplique en futuras compras.
+      // Se restaura en releaseOrderStock si el pago falla, igual que el cupón.
+      if (earlyBirdApplied) {
+        await tx.user.update({
+          where: { id: user.id },
+          data: { earlyBirdDiscount: false },
+        });
+      }
+
       return { order, earlyBirdApplied };
     }, {
       // Neon usa PgBouncer (connection pooler) que agrega latencia por query.
@@ -424,7 +433,15 @@ export async function releaseOrderStock(
         },
       });
 
-      console.log(`[releaseOrderStock] ✓ Stock y cupón liberados — orden ${order.orderNumber} → ${newStatus}`);
+      // 4. Restaurar descuento Early Bird si aplica (para que el usuario pueda reintentar)
+      if (order.earlyBirdDiscountApplied) {
+        await tx.user.update({
+          where: { id: order.userId },
+          data: { earlyBirdDiscount: true },
+        });
+      }
+
+      console.log(`[releaseOrderStock] ✓ Stock, cupón y early bird liberados — orden ${order.orderNumber} → ${newStatus}`);
     });
   } catch (err) {
     // No relanzar — el estado de la orden ya fue actualizado antes de este punto en los webhooks.
