@@ -45,7 +45,7 @@ export function useAddresses(): UseAddressesResult {
     setEditingAddress(null);
   }
 
-  async function saveAddress(values: AddressFormValues): Promise<boolean> {
+  async function saveAddress(values: AddressFormValues): Promise<{ ok: boolean; error?: string }> {
     setSubmitting(true);
     try {
       const url = editingAddress
@@ -66,15 +66,14 @@ export function useAddresses(): UseAddressesResult {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.message ?? "Error al guardar la dirección");
+        return { ok: false, error: data.message ?? "Error al guardar la dirección" };
       }
 
       await fetchAddresses();
       closeModal();
-      return true;
+      return { ok: true };
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al guardar");
-      return false;
+      return { ok: false, error: err instanceof Error ? err.message : "Error al guardar" };
     } finally {
       setSubmitting(false);
     }

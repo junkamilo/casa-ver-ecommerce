@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
 import { Package, User, X, LogOut, Loader2, Shield } from "lucide-react";
@@ -12,17 +13,17 @@ interface UserMenuProps {
 const UserMenu = ({ onClose }: UserMenuProps) => {
   const { data: session, status } = useSession();
 
-  const content = (
+  const menuContent = (
     <>
+      {/* Handle — solo visible en móvil */}
+      <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5 sm:hidden" />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg sm:text-xl font-semibold text-foreground">
           {status === "authenticated" ? `Hola, ${session.user?.name?.split(" ")[0]}` : "Mi Cuenta"}
         </h2>
-        <button
-          onClick={onClose}
-          className="text-muted-foreground hover:text-foreground transition-colors active:scale-90"
-        >
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors active:scale-90">
           <X className="w-5 h-5" />
         </button>
       </div>
@@ -52,17 +53,13 @@ const UserMenu = ({ onClose }: UserMenuProps) => {
             </svg>
             Iniciar sesión con Google
           </button>
-          <Link
-            href="/registro"
-            onClick={onClose}
+          <Link href="/registro" onClick={onClose}
             className="w-full flex items-center justify-center gap-2 bg-[#154734] hover:bg-[#1a5c43] text-white font-medium py-3 px-4 rounded-lg transition-all active:scale-95 text-sm sm:text-base"
           >
             <User className="w-4 h-4 shrink-0" />
             Registrarse
           </Link>
-          <Link
-            href="/login"
-            onClick={onClose}
+          <Link href="/login" onClick={onClose}
             className="w-full flex items-center justify-center gap-2 border-2 border-[#154734] text-[#154734] hover:bg-[#154734]/5 font-medium py-3 px-4 rounded-lg transition-all active:scale-95 text-sm sm:text-base"
           >
             <LogOut className="w-4 h-4 shrink-0 rotate-180" />
@@ -76,13 +73,7 @@ const UserMenu = ({ onClose }: UserMenuProps) => {
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
             {session.user?.image ? (
-              <Image
-                src={session.user.image}
-                alt="Avatar"
-                width={40}
-                height={40}
-                className="rounded-full border border-gray-200"
-              />
+              <Image src={session.user.image} alt="Avatar" width={40} height={40} className="rounded-full border border-gray-200" />
             ) : (
               <div className="w-10 h-10 rounded-full bg-[#154734] text-white flex items-center justify-center font-bold text-lg">
                 {session.user?.name?.charAt(0).toUpperCase() || "U"}
@@ -95,10 +86,8 @@ const UserMenu = ({ onClose }: UserMenuProps) => {
           </div>
 
           {(session.user as any)?.role === "ADMIN" && (
-            <Link
-              href="/admin"
+            <Link href="/admin" onClick={onClose}
               className="flex items-center gap-3 p-3 bg-[#154734]/5 border border-[#154734]/20 rounded-lg hover:bg-[#154734]/10 transition-colors"
-              onClick={onClose}
             >
               <div className="w-9 h-9 rounded-lg bg-[#154734] flex items-center justify-center">
                 <Shield className="w-4 h-4 text-white" />
@@ -111,18 +100,14 @@ const UserMenu = ({ onClose }: UserMenuProps) => {
           )}
 
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            <Link
-              href="/perfil?section=pedidos"
+            <Link href="/perfil?section=pedidos" onClick={onClose}
               className="flex flex-col items-center justify-center gap-2 border border-border rounded-lg py-3 hover:bg-muted/50 hover:border-[#C19A6B] transition-all text-foreground font-medium group text-sm"
-              onClick={onClose}
             >
               <Package className="w-5 h-5 text-muted-foreground group-hover:text-[#C19A6B]" />
               Mis Pedidos
             </Link>
-            <Link
-              href="/perfil"
+            <Link href="/perfil" onClick={onClose}
               className="flex flex-col items-center justify-center gap-2 border border-border rounded-lg py-3 hover:bg-muted/50 hover:border-[#C19A6B] transition-all text-foreground font-medium group text-sm"
-              onClick={onClose}
             >
               <User className="w-5 h-5 text-muted-foreground group-hover:text-[#C19A6B]" />
               Mi Perfil
@@ -141,37 +126,28 @@ const UserMenu = ({ onClose }: UserMenuProps) => {
     </>
   );
 
-  return (
-    <>
-      {/* ── MÓVIL: bottom sheet desde abajo ── */}
-      <div className="sm:hidden">
-        {/* Backdrop */}
-        <div
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
-          onClick={onClose}
-        />
-        {/* Sheet */}
-        <div className="fixed inset-x-0 bottom-0 z-50 bg-background rounded-t-3xl shadow-2xl border-t border-border p-6 max-h-[85dvh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
-          {/* Handle */}
-          <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5" />
-          {content}
-        </div>
-      </div>
+  if (typeof document === "undefined") return null;
 
-      {/* ── DESKTOP: dropdown flotante ── */}
-      <div className="hidden sm:block">
+  return createPortal(
+    <>
+      {/* Overlay — cubre toda la pantalla */}
+      <div
+        className="fixed inset-0 z-9998 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 flex items-end sm:items-center justify-center sm:p-4"
+        onClick={onClose}
+      >
+        {/* Contenedor — bottom sheet en móvil, modal centrado en desktop */}
         <div
-          className="fixed inset-0 z-40"
-          onClick={onClose}
-        />
-        <div
-          className="absolute top-full right-0 mt-2 w-85 bg-background rounded-2xl shadow-2xl border border-border p-6 z-50 max-h-[70vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200"
-          onMouseLeave={onClose}
+          className="bg-background w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl shadow-2xl border-t sm:border border-border p-6 max-h-[85dvh] overflow-y-auto animate-in slide-in-from-bottom sm:zoom-in-95 duration-300"
+          onClick={(e) => e.stopPropagation()}
+          onMouseLeave={() => {
+            if (window.innerWidth >= 640) onClose();
+          }}
         >
-          {content}
+          {menuContent}
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 };
 

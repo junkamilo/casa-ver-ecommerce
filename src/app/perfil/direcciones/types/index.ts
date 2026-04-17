@@ -39,7 +39,7 @@ export interface UseAddressesResult {
   openCreate: () => void;
   openEdit: (address: SavedAddress) => void;
   closeModal: () => void;
-  saveAddress: (values: AddressFormValues) => Promise<boolean>;
+  saveAddress: (values: AddressFormValues) => Promise<{ ok: boolean; error?: string }>;
   deleteAddress: (id: string) => Promise<boolean>;
   setDefault: (id: string) => Promise<boolean>;
   submitting: boolean;
@@ -95,7 +95,7 @@ export interface AddressFormModalProps {
   open: boolean;
   editing: SavedAddress | null;
   submitting: boolean;
-  onSave: (values: AddressFormValues) => Promise<boolean>;
+  onSave: (values: AddressFormValues) => Promise<{ ok: boolean; error?: string }>;
   onClose: () => void;
 }
 
