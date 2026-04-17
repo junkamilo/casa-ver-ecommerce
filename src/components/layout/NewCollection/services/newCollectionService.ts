@@ -26,9 +26,12 @@ export async function fetchNewProducts(): Promise<{ items: CollectionProduct[]; 
         orderBy: { order: "asc" },
         select: {
           price: true,
+          comparePrice: true,
           colors: {
             select: {
-              images: { orderBy: { order: "asc" }, take: 1, select: { url: true } },
+              name: true,
+              hexCode: true,
+              images: { orderBy: { order: "asc" }, take: 8, select: { url: true } },
               variants: { select: { stock: true } },
             },
           },

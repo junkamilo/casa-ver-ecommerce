@@ -1,4 +1,5 @@
 import { CheckCircle } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BRAND_GREEN, BG_COLOR, FONT_SERIF, ROUTES } from "../constants";
 
@@ -16,17 +17,26 @@ export function TimeoutView() {
           ¡Tu pedido fue recibido!
         </h1>
         <p className="text-gray-600 max-w-sm">
-          Tu compra está siendo procesada. Recibirás un correo de confirmación con los detalles
-          de tu pedido.
+          Tu compra está siendo procesada. Recibirás un correo de confirmación
+          con los detalles de tu pedido en breve.
         </p>
       </div>
-      <button
-        onClick={() => router.push(ROUTES.home)}
-        className="px-8 py-3 text-white rounded-full text-sm font-semibold transition-colors"
-        style={{ backgroundColor: BRAND_GREEN }}
-      >
-        Volver al inicio
-      </button>
+      <div className="flex flex-col gap-3 w-full max-w-xs">
+        <Link
+          href="/perfil?section=pedidos"
+          className="w-full px-8 py-3 text-white rounded-full text-sm font-semibold text-center"
+          style={{ backgroundColor: BRAND_GREEN }}
+        >
+          Ver mis pedidos
+        </Link>
+        <button
+          onClick={() => router.push(ROUTES.home)}
+          className="w-full px-8 py-3 border rounded-full text-sm font-semibold transition-colors"
+          style={{ borderColor: BRAND_GREEN, color: BRAND_GREEN }}
+        >
+          Volver al inicio
+        </button>
+      </div>
     </div>
   );
 }

@@ -11,8 +11,8 @@ import { BEST_SELLERS_WHERE, EMPTY_STATE_MESSAGE } from "./constants";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Los Más Deseados | Casa Verde",
-  description: "Descubre los productos más deseados de nuestra colección.",
+  title: "Los Más Vendidos | Casa Verde",
+  description: "Descubre los productos más vendidos de nuestra colección.",
 };
 
 export default async function MasVendidosPage() {
@@ -32,11 +32,11 @@ export default async function MasVendidosPage() {
 
       <main className="flex-1 w-full flex flex-col pt-6 pb-24 sm:pt-10 sm:pb-32 relative z-10">
         <div className="w-full max-w-400 mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
-          <h1 className="sr-only">Los Más Deseados</h1>
+          <h1 className="sr-only">Los Más Vendidos</h1>
 
           <BackButton className="mb-4 sm:mb-6" />
 
-          <CollectionHero title="Los Más Deseados" />
+          <CollectionHero title="Los Más Vendidos" />
 
           <div className="mt-4 sm:mt-6 lg:mt-8 w-full">
             {products.length === 0 ? (

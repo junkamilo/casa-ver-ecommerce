@@ -64,15 +64,15 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
           Color{activeColor ? <span className="text-[#154734] ml-1">{activeColor.name}</span> : null}
         </span>
         {/* overflow-x-auto + w-full: los swatches hacen scroll sin salirse de la card */}
-        <div className="flex gap-1.5 items-center overflow-x-auto scrollbar-hide flex-nowrap w-full pb-1">
+        <div className="flex gap-1.5 md:gap-2 items-center overflow-x-auto scrollbar-hide flex-nowrap w-full p-1.5">
           {item.colors.map((color) => (
             <button
               key={color.name}
               title={color.name}
               onClick={(e) => handleColorClick(e, color)}
-              className={`w-6 h-6 sm:w-5 sm:h-5 md:w-4 md:h-4 rounded-full border shadow-sm transition-all duration-200 shrink-0 active:scale-90 ${
+              className={`w-6 h-6 md:w-7 md:h-7 rounded-full border shadow-sm transition-all duration-200 shrink-0 active:scale-90 ${
                 activeColor?.name === color.name
-                  ? "ring-2 ring-offset-1 ring-[#154734] scale-110 border-[#154734]"
+                  ? "ring-2 ring-offset-2 ring-[#154734] border-[#154734]"
                   : "border-gray-200 hover:scale-110 hover:border-gray-400"
               }`}
               style={{ backgroundColor: color.hexCode }}
@@ -168,7 +168,7 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
                 ? `Desde $${item.minPrice.toLocaleString("es-CO")}`
                 : `$${item.price.toLocaleString("es-CO")}`}
             </span>
-            {!item.isSet && item.oldPrice && (
+            {item.oldPrice && (
               <span className="text-gray-400 line-through text-xs font-light">${item.oldPrice.toLocaleString("es-CO")}</span>
             )}
           </div>
@@ -347,7 +347,7 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
               ? `Desde $${item.minPrice.toLocaleString("es-CO")}`
               : `$${item.price.toLocaleString("es-CO")}`}
           </span>
-          {!item.isSet && item.oldPrice && (
+          {item.oldPrice && (
             <span className="text-gray-400 line-through text-xs font-light">${item.oldPrice.toLocaleString("es-CO")}</span>
           )}
         </div>

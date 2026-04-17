@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
+import LogoAddi from "@/assets/LogoAddi.png";
 
 
 
@@ -31,10 +32,14 @@ const PaymentMethodsBanner = () => {
             <div className="w-full md:w-1/2 p-6 sm:p-8 md:p-10 lg:p-12 flex flex-col justify-center relative z-10 bg-[#FAFAFA]">
 
               <div className="mb-6 sm:mb-8">
-                <div className="inline-flex items-center gap-2 bg-white border border-blue-600/20 shadow-sm px-3 sm:px-4 py-1.5 touch-target">
-                  <span className="font-black text-blue-600 text-sm sm:text-base leading-none">A</span>
-                  <span className="font-black text-blue-600 tracking-wider lowercase text-xs sm:text-sm">addi</span>
-                </div>
+                <Image
+                  src={LogoAddi}
+                  alt="Addi"
+                  width={120}
+                  height={48}
+                  className="h-8 sm:h-10 w-auto object-contain"
+                  style={{ width: "auto" }}
+                />
               </div>
 
               <h3 className="text-2xl sm:text-3xl lg:text-4xl text-[#154734] leading-[1.1] mb-4 sm:mb-5" style={{ fontFamily: "Georgia, serif" }}>

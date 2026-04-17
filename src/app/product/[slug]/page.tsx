@@ -138,7 +138,14 @@ export default async function ProductPage({ params }: Props) {
                 orderBy: { order: "asc" },
                 select: {
                   price: true,
-                  colors: { take: 1, select: { images: { orderBy: { order: "asc" }, take: 1, select: { url: true } } } },
+                  comparePrice: true,
+                  colors: {
+                    select: {
+                      name: true,
+                      hexCode: true,
+                      images: { orderBy: { order: "asc" }, take: 8, select: { url: true } },
+                    },
+                  },
                 },
               },
               colors: {

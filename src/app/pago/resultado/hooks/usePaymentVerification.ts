@@ -65,6 +65,8 @@ export function usePaymentVerification(): UsePaymentVerificationReturn {
       setStatus(result.status);
       if (result.orderId) setOrderId(result.orderId);
       if (result.status === "APPROVED" && result.orderId) {
+        // Limpiar el flag de "pago iniciado" — ya está confirmado
+        if (referenceId) sessionStorage.removeItem(`bold_initiated_${referenceId}`);
         router.replace(ROUTES.success(result.orderId));
       }
     });
@@ -81,6 +83,7 @@ export function usePaymentVerification(): UsePaymentVerificationReturn {
       if (result.orderId) setOrderId(result.orderId);
       setPollCount((c) => c + 1);
       if (result.status === "APPROVED" && result.orderId) {
+        if (referenceId) sessionStorage.removeItem(`bold_initiated_${referenceId}`);
         router.replace(ROUTES.success(result.orderId));
       }
     }, POLL_INTERVAL_MS);

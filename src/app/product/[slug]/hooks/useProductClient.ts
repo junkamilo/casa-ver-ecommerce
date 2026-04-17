@@ -35,6 +35,7 @@ export function useProductClient(product: UIProduct) {
   const activeColors = activeItem ? activeItem.colors : product.colors;
   const activeVideoUrl = activeItem ? activeItem.videoUrl : product.videoUrl;
   const activePrice = activeItem ? (activeItem.price ?? product.basePrice) : product.basePrice;
+  const activeComparePrice = activeItem ? activeItem.comparePrice : product.comparePrice;
   const activeStock = activeItem ? activeItem.stock : product.stock;
   const activeDescription = activeItem
     ? (activeItem.description ?? product.description)
@@ -154,6 +155,7 @@ export function useProductClient(product: UIProduct) {
     activeColors,
     activeVideoUrl,
     activePrice,
+    activeComparePrice,
     activeStock,
     activeDescription,
     masterGallery,

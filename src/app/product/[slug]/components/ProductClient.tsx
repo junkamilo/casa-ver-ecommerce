@@ -1,6 +1,8 @@
 "use client";
 
-import { Star, Sparkles, ChevronRight } from "lucide-react";
+import Image from "next/image";
+import { Star, ChevronRight } from "lucide-react";
+import LogoAddi from "@/assets/LogoAddi2.png";
 
 import ProductGallery from "./ProductGallery";
 import ColorSelector from "./ColorSelector";
@@ -43,6 +45,7 @@ export default function ProductClient({
     activeColors,
     activeVideoUrl,
     activePrice,
+    activeComparePrice,
     activeStock,
     activeDescription,
     galleryUrls,
@@ -115,12 +118,12 @@ export default function ProductClient({
 
                 <div className="w-px bg-gray-200 shrink-0" />
 
-                {product.comparePrice ? (
+                {activeComparePrice ? (
                   <>
                     <div className="flex flex-col flex-1 px-4">
                       <span className="text-[10px] uppercase tracking-[0.18em] text-gray-400 font-bold mb-1.5">Antes</span>
                       <p className="text-3xl text-gray-300 line-through leading-none">
-                        {formatPrice(product.comparePrice)}
+                        {formatPrice(activeComparePrice)}
                       </p>
                     </div>
                     <div className="w-px bg-gray-200 shrink-0" />
@@ -146,8 +149,8 @@ export default function ProductClient({
               <div className="hidden sm:block">
                 <div className="flex items-end gap-3">
                   <p className="text-3xl font-medium text-gray-900">{formatPrice(activePrice)}</p>
-                  {product.comparePrice && (
-                    <p className="text-base text-gray-400 line-through mb-1">{formatPrice(product.comparePrice)}</p>
+                  {activeComparePrice && (
+                    <p className="text-base text-gray-400 line-through mb-1">{formatPrice(activeComparePrice)}</p>
                   )}
                 </div>
                 {activeStock === 0 && (
@@ -221,8 +224,8 @@ export default function ProductClient({
               rel="noopener noreferrer"
               className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-8 p-3 sm:p-4 rounded-xl border border-gray-100 bg-white hover:border-[#2F6BFF]/30 transition-all duration-300 group"
             >
-              <div className="w-10 h-10 rounded-full bg-[#2F6BFF] flex items-center justify-center shrink-0 shadow-sm group-hover:shadow-md transition-shadow">
-                <span className="text-white font-bold text-xl leading-none" style={{ fontFamily: "Arial, sans-serif" }}>a</span>
+              <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 shadow-sm group-hover:shadow-md transition-shadow">
+                <Image src={LogoAddi} alt="Addi" className="w-full h-full object-cover" />
               </div>
               <div className="flex-1">
                 <p className="text-xs sm:text-sm text-gray-600 leading-snug">
@@ -386,27 +389,18 @@ export default function ProductClient({
             </div>
 
             <div className="flex-1 min-w-0 text-center sm:text-left z-10 w-full sm:w-auto">
-              <div className="flex items-center justify-center sm:justify-start gap-3 sm:gap-4 mb-4 sm:mb-6">
-                <span className="h-px w-8 sm:w-12 bg-linear-to-r from-transparent to-[#C19A6B]" />
-                <span className="text-[9px] sm:text-xs font-black tracking-[0.3em] sm:tracking-[0.4em] uppercase text-[#C19A6B] flex items-center gap-1.5 sm:gap-2 drop-shadow-sm">
-                  <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                  Lookbook Exclusivo
-                </span>
-                <span className="h-px w-8 sm:hidden bg-linear-to-l from-transparent to-[#C19A6B]" />
-              </div>
-
               <h2
-                className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl text-white mb-3 sm:mb-6 leading-[1.1] tracking-tight"
+                className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-light text-white mb-3 sm:mb-6 leading-[1.1] tracking-tight"
                 style={{ fontFamily: "Georgia, serif" }}
               >
-                Movimiento <br />
-                <span className="italic text-[#C19A6B]">&amp; Fluidez</span>
+                {activeItem ? activeItem.name : product.name}
               </h2>
 
-              <p className="hidden sm:block text-gray-300 font-light leading-relaxed max-w-md text-sm sm:text-base border-l-2 border-[#C19A6B]/50 pl-4">
-                Descubre cómo esta prenda se adapta a tu cuerpo. Diseñada para brindarte
-                comodidad absoluta sin perder la elegancia en cada uno de tus pasos.
-              </p>
+              {activeDescription && (
+                <p className="hidden sm:block text-gray-300 font-light leading-relaxed max-w-md text-sm sm:text-base border-l-2 border-[#C19A6B]/50 pl-4">
+                  {activeDescription}
+                </p>
+              )}
             </div>
 
             <div className="hidden sm:block absolute top-1/2 right-10 text-[250px] lg:text-[300px] text-white/5 font-serif leading-none -translate-y-1/2 pointer-events-none select-none transition-transform duration-1000 group-hover:scale-105">
