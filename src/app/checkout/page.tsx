@@ -61,6 +61,7 @@ export default function CheckoutPage() {
           earlyBirdDiscount={earlyBirdDiscount}
           earlyBirdActive={earlyBird.hasDiscount}
           total={total}
+          hidden={showModal}
         />
 
         {/* ── PANEL IZQUIERDO: formulario con scroll propio ── */}
