@@ -11,8 +11,8 @@ import { NEW_COLLECTION_WHERE, EMPTY_STATE_MESSAGE } from "./constants";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Nueva Colección | Casa Verde",
-  description: "Descubre los últimos lanzamientos de nuestra nueva colección.",
+  title: "Nuevos Ingresos | Casa Verde",
+  description: "Descubre los últimos ingresos de nuestra colección.",
 };
 
 export default async function NuevaColeccionPage() {
@@ -32,11 +32,11 @@ export default async function NuevaColeccionPage() {
 
       <main className="flex-1 w-full flex flex-col pt-6 pb-24 sm:pt-10 sm:pb-32 relative z-10">
         <div className="w-full max-w-400 mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
-          <h1 className="sr-only">Nueva Colección</h1>
+          <h1 className="sr-only">Nuevos Ingresos</h1>
 
           <BackButton className="mb-4 sm:mb-6" />
 
-          <CollectionHero title="Nueva Colección" />
+          <CollectionHero title="Nuevos Ingresos" />
 
           <div className="mt-4 sm:mt-6 lg:mt-8 w-full">
             {products.length === 0 ? (

@@ -58,11 +58,11 @@ export async function GET(req: NextRequest) {
   }
 
   if (!order.boldLinkId) {
-    console.error("[BOLD CALLBACK] Orden sin boldLinkId:", order.id);
-    return NextResponse.json(
-      { error: "Link de pago no encontrado en la orden" },
-      { status: 502 }
-    );
+    // Órdenes de Bold Botón de Pagos no tienen boldLinkId.
+    // El webhook actualizará el estado cuando Bold confirme — devolver RUNNING
+    // para que el polling en /pago/resultado siga esperando.
+    console.log("[BOLD CALLBACK] Orden sin boldLinkId (Bold Botón de Pagos) — esperando webhook, devolviendo RUNNING");
+    return NextResponse.json({ status: "RUNNING", orderId: order.id });
   }
 
   console.log("[BOLD CALLBACK] Consultando link:", order.boldLinkId);

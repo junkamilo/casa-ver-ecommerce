@@ -1,21 +1,40 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { Loader2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Loader2, AlertCircle } from "lucide-react";
+import Link from "next/link";
 import type { BoldPaymentClientProps } from "../types";
 
 export default function BoldPaymentClient({ orderRef, amount, integrity, orderId }: BoldPaymentClientProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [paymentInitiated, setPaymentInitiated] = useState(false);
 
   const identityKey = process.env.NEXT_PUBLIC_BOLD_IDENTITY_KEY;
   const appUrl      = process.env.NEXT_PUBLIC_APP_URL;
 
+  // Detectar si el usuario ya inició un pago (viene de vuelta después de ir a Bold)
+  useEffect(() => {
+    if (orderRef && sessionStorage.getItem(`bold_initiated_${orderRef}`)) {
+      setPaymentInitiated(true);
+    }
+  }, [orderRef]);
+
   useEffect(() => {
     if (!containerRef.current || !orderRef || !amount || !integrity || !orderId || !identityKey) return;
+    if (paymentInitiated) return;
 
-    const redirectionUrl = `${appUrl}/checkout/success?orderId=${orderId}`;
+    // Bold redirige al usuario a /pago/resultado donde el polling espera la confirmación
+    // del webhook antes de mostrar la pantalla de éxito.
+    // NO ir directo a /checkout/success — en ese momento la orden puede estar aún PENDING.
+    const redirectionUrl = `${appUrl}/pago/resultado`;
 
-    // Bold requiere un <script data-bold-button ...> con todos los atributos
+    // Advertir al usuario si intenta cerrar/recargar antes de que Bold lo redirija
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
     const script = document.createElement("script");
     script.src = "https://checkout.bold.co/library/boldPaymentButton.js";
     script.setAttribute("data-bold-button", "");
@@ -30,8 +49,6 @@ export default function BoldPaymentClient({ orderRef, amount, integrity, orderId
     const container = containerRef.current;
     container.appendChild(script);
 
-    // Intentar hacer click tan pronto como el botón aparezca en el DOM
-    // MutationObserver es más confiable que setTimeout fijo
     let clicked = false;
 
     const tryClick = () => {
@@ -39,6 +56,10 @@ export default function BoldPaymentClient({ orderRef, amount, integrity, orderId
       const btn = container.querySelector<HTMLElement>("button");
       if (btn) {
         clicked = true;
+        // Marcar pago como iniciado ANTES de navegar a Bold
+        sessionStorage.setItem(`bold_initiated_${orderRef}`, "1");
+        // Quitar el beforeunload para no bloquear la redirección de Bold
+        window.removeEventListener("beforeunload", handleBeforeUnload);
         btn.click();
       }
     };
@@ -46,7 +67,6 @@ export default function BoldPaymentClient({ orderRef, amount, integrity, orderId
     const observer = new MutationObserver(tryClick);
     observer.observe(container, { childList: true, subtree: true });
 
-    // Fallback: intentar cada 200ms hasta 5 segundos
     const interval = setInterval(tryClick, 200);
     const timeout = setTimeout(() => {
       clearInterval(interval);
@@ -57,13 +77,52 @@ export default function BoldPaymentClient({ orderRef, amount, integrity, orderId
       clearInterval(interval);
       clearTimeout(timeout);
       observer.disconnect();
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [orderRef, amount, integrity, orderId, identityKey, appUrl]);
+  }, [orderRef, amount, integrity, orderId, identityKey, appUrl, paymentInitiated]);
 
   if (!orderRef || !amount || !integrity || !orderId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-gray-500">Parámetros de pago inválidos.</p>
+      </div>
+    );
+  }
+
+  // El usuario regresó después de haber iniciado el pago en Bold
+  if (paymentInitiated) {
+    return (
+      <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center gap-6 px-4 text-center">
+        <div className="w-16 h-16 rounded-full bg-amber-50 border-2 border-amber-200 flex items-center justify-center">
+          <AlertCircle className="w-8 h-8 text-amber-600" />
+        </div>
+        <div>
+          <p
+            className="text-2xl text-[#154734] mb-2"
+            style={{ fontFamily: "Georgia, serif" }}
+          >
+            Tu pago está en proceso
+          </p>
+          <p className="text-sm text-gray-500 max-w-xs leading-relaxed">
+            Detectamos que ya iniciaste un pago para este pedido. No es necesario
+            volver a pagar. Tu pedido aparecerá en{" "}
+            <strong>Mis pedidos</strong> tan pronto como se confirme.
+          </p>
+        </div>
+        <div className="flex flex-col gap-3 w-full max-w-xs">
+          <Link
+            href={`/pago/resultado?reference_id=${orderRef}`}
+            className="w-full px-8 py-3 bg-[#154734] text-white rounded-full text-sm font-semibold text-center"
+          >
+            Verificar estado del pago
+          </Link>
+          <Link
+            href="/perfil?section=pedidos"
+            className="w-full px-8 py-3 border border-[#154734] text-[#154734] rounded-full text-sm font-semibold text-center"
+          >
+            Ver mis pedidos
+          </Link>
+        </div>
       </div>
     );
   }
@@ -84,6 +143,14 @@ export default function BoldPaymentClient({ orderRef, amount, integrity, orderId
         <p className="text-sm text-gray-500 max-w-xs">
           Serás redirigido a Bold para completar tu compra de forma segura.
         </p>
+        {/* Advertencia de no recargar */}
+        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 max-w-xs text-left mt-1">
+          <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+          <p className="text-xs text-amber-700">
+            Por favor, no cierres ni actualices esta ventana mientras se
+            procesa tu pago.
+          </p>
+        </div>
       </div>
 
       {/* Contenedor del botón Bold (el script lo renderiza aquí) */}

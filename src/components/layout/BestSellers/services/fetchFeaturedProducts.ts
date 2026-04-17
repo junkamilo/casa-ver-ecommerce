@@ -25,9 +25,12 @@ export async function fetchFeaturedProducts(): Promise<CollectionProduct[]> {
         orderBy: { order: "asc" },
         select: {
           price: true,
+          comparePrice: true,
           colors: {
             select: {
-              images: { orderBy: { order: "asc" }, take: 1, select: { url: true } },
+              name: true,
+              hexCode: true,
+              images: { orderBy: { order: "asc" }, take: 8, select: { url: true } },
               variants: { select: { stock: true } },
             },
           },
@@ -62,22 +65,40 @@ export async function fetchFeaturedProducts(): Promise<CollectionProduct[]> {
           acc + item.colors.reduce((s: number, c) =>
             s + c.variants.reduce((vs: number, v) => vs + v.stock, 0), 0), 0)
       : parentStock;
+
     const parentImages: string[] = p.images.map((i: { url: string }) => i.url);
-    const fallbackUrl = p.isSet && parentImages.length === 0
-      ? (p.items?.[0]?.colors?.[0]?.images?.[0]?.url ?? null)
-      : null;
-    const cardImages = fallbackUrl ? [fallbackUrl] : parentImages;
+    const cardImages: string[] =
+      parentImages.length > 0
+        ? parentImages
+        : p.isSet && (p.items?.[0]?.colors?.[0]?.images?.length ?? 0) > 0
+          ? (p.items[0].colors[0].images as { url: string }[]).map((i) => i.url)
+          : [];
+
     const itemPrices: number[] = p.isSet && p.items?.length > 0
       ? p.items.map((it: { price: unknown }) => it.price ? Number(it.price) : null).filter((v: number | null): v is number => v !== null)
       : [];
     const minPrice = itemPrices.length > 0 ? Math.min(...itemPrices) : undefined;
+
+    // Para sets: oldPrice = comparePrice de la primera subcategoría (si existe)
+    const oldPrice = p.isSet
+      ? (p.items?.[0]?.comparePrice ? Number(p.items[0].comparePrice) : undefined)
+      : (p.comparePrice ? Number(p.comparePrice) : undefined);
+
+    // Para sets: si el padre no tiene colores, usar los de la primera subcategoría
+    type ItemColor = { name: string; hexCode: string; images: { url: string }[] };
+    const parentColors = p.colors.length > 0
+      ? p.colors.map((c: ItemColor) => ({ name: c.name, hexCode: c.hexCode, imageUrl: c.images[0]?.url ?? null }))
+      : undefined;
+    const firstItemColors = p.isSet && !parentColors && p.items?.[0]?.colors?.length > 0
+      ? p.items[0].colors.map((c: ItemColor) => ({ name: c.name, hexCode: c.hexCode, imageUrl: c.images[0]?.url ?? null }))
+      : undefined;
 
     return {
       images: cardImages,
       name: p.name,
       slug: p.slug,
       price: Number(p.basePrice),
-      oldPrice: p.comparePrice ? Number(p.comparePrice) : undefined,
+      oldPrice,
       isSet: p.isSet || false,
       minPrice,
       badge: computeProductBadge({
@@ -86,14 +107,7 @@ export async function fetchFeaturedProducts(): Promise<CollectionProduct[]> {
         isOnSale: p.isOnSale,
         stock: totalStock,
       }),
-      colors:
-        p.colors.length > 0
-          ? p.colors.map((c: { name: string; hexCode: string; images: { url: string }[] }) => ({
-              name: c.name,
-              hexCode: c.hexCode,
-              imageUrl: c.images[0]?.url ?? null,
-            }))
-          : undefined,
+      colors: parentColors ?? firstItemColors,
     };
   });
 }

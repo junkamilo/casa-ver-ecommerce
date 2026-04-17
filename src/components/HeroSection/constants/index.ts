@@ -1,4 +1,5 @@
 import type { Slide, HeroButton } from "../types";
+import ImagenHeader1 from "@/assets/ImagenHeader1.jpg";
 import ImagenHeader2 from "@/assets/ImagenHeader2.jpeg";
 
 export const BRAND_GREEN = "#154734";
@@ -9,7 +10,7 @@ export const AUTOPLAY_TIME = 6000;
 export const SLIDES: Slide[] = [
   {
     id: "01",
-    image: "/heroImage1.jpg",
+    image: ImagenHeader1,
     headline: "¡Bienvenida!",
     subheadline: "A tu nueva tienda web favorita",
   },

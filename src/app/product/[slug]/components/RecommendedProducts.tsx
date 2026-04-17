@@ -1,53 +1,79 @@
 "use client";
 
-import type { CollectionProduct } from "@/components/shared/ProductCollection/types";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import ProductCard from "@/components/ui/ProductCard";
+import { useCarousel } from "@/components/shared/ProductCarousel/hooks/useCarousel";
+import type { CollectionProduct } from "@/components/shared/ProductCollection/types";
 
 interface Props {
   products: CollectionProduct[];
 }
 
 export default function RecommendedProducts({ products }: Props) {
+  const { scrollRef, canScrollLeft, canScrollRight, scroll } = useCarousel();
+
   if (!products.length) return null;
 
   return (
-    <section className="py-5 sm:py-7 lg:py-8 relative overflow-hidden bg-white border border-gray-200 rounded-2xl sm:rounded-3xl mx-3 sm:mx-6 lg:mx-8 xl:mx-12 shadow-[0_4px_24px_-6px_rgba(21,71,52,0.10)]">
+    <section className="relative w-full bg-white overflow-hidden py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-8 lg:px-12">
+      <div className="relative max-w-7xl 2xl:max-w-6xl mx-auto">
 
-      {/* Fondo decorativo sutil */}
-      <div
-        className="absolute inset-0 opacity-[0.025] pointer-events-none"
-        style={{ backgroundImage: "radial-gradient(#154734 1px, transparent 1px)", backgroundSize: "28px 28px" }}
-      />
+        {/* Título — mismo estilo que BestSellers / NewCollection */}
+        <h2
+          className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-light text-[#154734] leading-tight mb-6 sm:mb-8 md:mb-10 lg:mb-12"
+          style={{ fontFamily: "Georgia, serif" }}
+        >
+          Sugerencias{" "}
+          <span className="ml-1.5 sm:ml-2 md:ml-3">Exclusivas</span>
+        </h2>
 
-      {/* Contenedor central */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto">
-
-        {/* Cabecera editorial */}
-        <div className="flex flex-col items-center justify-center mb-4 sm:mb-6 px-4 sm:px-8 lg:px-12">
-          <h2
-            className="text-2xl sm:text-4xl lg:text-5xl text-[#154734] text-center tracking-tight leading-[1.1]"
-            style={{ fontFamily: "Georgia, serif" }}
+        <div className="relative mt-0">
+          {/* Flecha izquierda */}
+          <button
+            onClick={() => scroll("left")}
+            aria-label="Anterior"
+            className={`
+              hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20
+              w-11 h-11 rounded-full bg-white border border-[#154734]/15 shadow-md
+              items-center justify-center text-[#154734]
+              hover:bg-[#154734] hover:text-white hover:border-[#154734]
+              transition-all duration-200 active:scale-90
+              ${canScrollLeft ? "opacity-100 -translate-x-5" : "opacity-0 pointer-events-none"}
+            `}
           >
-            Sugerencias <span className="italic text-[#C19A6B]">Exclusivas</span>
-          </h2>
+            <ChevronLeft className="w-5 h-5 stroke-[1.5]" />
+          </button>
+
+          {/* Flecha derecha */}
+          <button
+            onClick={() => scroll("right")}
+            aria-label="Siguiente"
+            className={`
+              hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-20
+              w-11 h-11 rounded-full bg-white border border-[#154734]/15 shadow-md
+              items-center justify-center text-[#154734]
+              hover:bg-[#154734] hover:text-white hover:border-[#154734]
+              transition-all duration-200 active:scale-90
+              ${canScrollRight ? "opacity-100 translate-x-5" : "opacity-0 pointer-events-none"}
+            `}
+          >
+            <ChevronRight className="w-5 h-5 stroke-[1.5]" />
+          </button>
+
+          {/* Carrusel — misma clase exacta que BestSellers y NewCollection */}
+          <div
+            ref={scrollRef}
+            className="grid grid-flow-col auto-cols-[80vw] sm:auto-cols-[45vw] md:auto-cols-[calc(25%-18px)] gap-3 sm:gap-4 md:gap-6 overflow-x-auto scrollbar-hide pb-4 md:pb-2 snap-x snap-mandatory"
+            style={{ scrollBehavior: "smooth" }}
+          >
+            {products.map((item) => (
+              <div key={item.slug} className="snap-start">
+                <ProductCard item={item} />
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* ── Móvil: carrusel horizontal táctil ── */}
-        <div className="flex sm:hidden overflow-x-auto snap-x snap-mandatory scrollbar-hide gap-4 px-4 pb-2">
-          {products.map((product) => (
-            <div key={product.slug} className="snap-start shrink-0 w-[65vw]">
-              <ProductCard item={product} viewMode="grid" />
-            </div>
-          ))}
-          <div className="shrink-0 w-2" />
-        </div>
-
-        {/* ── sm+: grid ── */}
-        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 px-6 sm:px-8 lg:px-12">
-          {products.map((product) => (
-            <ProductCard key={product.slug} item={product} viewMode="grid" />
-          ))}
-        </div>
       </div>
     </section>
   );

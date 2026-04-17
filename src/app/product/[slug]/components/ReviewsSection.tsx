@@ -1,6 +1,6 @@
 "use client";
 
-import { Star, Sparkles } from "lucide-react";
+import { Star } from "lucide-react";
 import ReviewForm from "./ReviewForm";
 import type { ExistingReview } from "../types";
 
@@ -34,21 +34,13 @@ export default function ReviewsSection({
     <section className="py-8 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-360 mx-auto w-full flex justify-center">
       <div className="w-full max-w-6xl">
 
-        {/* Cabecera editorial */}
+        {/* Cabecera */}
         <div className="flex flex-col items-center justify-center mb-6 sm:mb-16 px-4">
-          <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-5">
-            <span className="h-px w-8 sm:w-16 bg-linear-to-r from-transparent to-[#C19A6B]" />
-            <span className="text-[9px] sm:text-xs font-black tracking-[0.3em] sm:tracking-[0.4em] uppercase text-[#C19A6B] flex items-center gap-1.5 sm:gap-2 drop-shadow-sm">
-              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              Testimonios
-            </span>
-            <span className="h-px w-8 sm:w-16 bg-linear-to-l from-transparent to-[#C19A6B]" />
-          </div>
           <h2
-            className="text-3xl sm:text-5xl lg:text-6xl text-[#154734] text-center leading-[1.1] tracking-tight"
+            className="text-3xl sm:text-5xl lg:text-6xl font-light text-[#154734] text-center leading-[1.1] tracking-tight"
             style={{ fontFamily: "Georgia, serif" }}
           >
-            Voces de nuestras <span className="italic text-[#C19A6B]">clientas</span>
+            Voces de nuestras clientas
           </h2>
         </div>
 

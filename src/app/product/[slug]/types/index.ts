@@ -26,6 +26,7 @@ export interface UIProductItem {
   name: string;
   description: string | null;
   price: number | null;
+  comparePrice: number | null;
   videoUrl: string | null;
   colors: UIColor[];
   stock: number;

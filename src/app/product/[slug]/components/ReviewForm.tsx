@@ -76,10 +76,10 @@ export default function ReviewForm({
           <MessageSquareQuote className="w-8 h-8 text-[#C19A6B] group-hover:text-[#154734] transition-colors duration-500" strokeWidth={1.5} />
         </div>
         <h3
-          className="text-2xl sm:text-4xl text-[#154734] mb-3 sm:mb-4 tracking-tight leading-[1.1]"
+          className="text-2xl sm:text-4xl font-light text-[#154734] mb-3 sm:mb-4 tracking-tight leading-[1.1]"
           style={{ fontFamily: "Georgia, serif" }}
         >
-          Tu opinión es <span className="italic text-[#C19A6B]">invaluable</span>
+          Tu opinión es invaluable
         </h3>
         <p className="text-sm sm:text-base text-gray-500 font-light mb-6 sm:mb-10 leading-relaxed">
           Para garantizar la autenticidad de nuestras reseñas y mantener la exclusividad de
@@ -115,13 +115,10 @@ export default function ReviewForm({
         
         <div className="text-center mb-5 sm:mb-8">
           <h3
-            className="text-2xl sm:text-4xl text-[#154734] mb-2 sm:mb-3 tracking-tight leading-[1.1]"
+            className="text-2xl sm:text-4xl font-light text-[#154734] mb-2 sm:mb-3 tracking-tight leading-[1.1]"
             style={{ fontFamily: "Georgia, serif" }}
           >
-            {existing ? "Actualiza tu " : "Déjanos tu "}
-            <span className="italic text-[#C19A6B]">
-              {existing ? "reseña" : "opinión"}
-            </span>
+            {existing ? "Actualiza tu reseña" : "Déjanos tu opinión"}
           </h3>
           <p className="text-[9px] sm:text-xs font-black uppercase tracking-[0.3em] text-gray-400">
             ¿Cómo calificarías este producto?

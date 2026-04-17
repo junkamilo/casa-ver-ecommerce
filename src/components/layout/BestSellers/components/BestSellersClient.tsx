@@ -1,14 +1,14 @@
 "use client";
 
 import useSWR from "swr";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import SectionHeader from "@/components/ui/SectionHeader";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
+import ProductCard from "@/components/ui/ProductCard";
 import { useCarousel } from "@/components/shared/ProductCarousel/hooks/useCarousel";
-import { BRAND_GOLD, BRAND_GREEN } from "../constants";
 import type { BestSellersClientProps } from "../types";
 import type { CollectionProduct } from "@/components/shared/ProductCollection/types";
-import { CarouselButton } from "./CarouselButton";
-import { ProductGrid } from "./ProductGrid";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -40,9 +40,73 @@ const BestSellersClient = ({ items: initialItems }: BestSellersClientProps) => {
 
         {items.length > 0 && (
           <div className="relative mt-10 sm:mt-12">
-            <CarouselButton direction="left"  onClick={() => scroll("left")}  visible={canScrollLeft}  />
-            <CarouselButton direction="right" onClick={() => scroll("right")} visible={canScrollRight} />
-            <ProductGrid items={items} scrollRef={scrollRef} />
+            {/* Flecha izquierda */}
+            <button
+              onClick={() => scroll("left")}
+              aria-label="Anterior"
+              className={`
+                hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20
+                w-11 h-11 rounded-full bg-white border border-[#154734]/15 shadow-md
+                items-center justify-center text-[#154734]
+                hover:bg-[#154734] hover:text-white hover:border-[#154734]
+                transition-all duration-200 active:scale-90
+                ${canScrollLeft ? "opacity-100 -translate-x-5" : "opacity-0 pointer-events-none"}
+              `}
+            >
+              <ChevronLeft className="w-5 h-5 stroke-[1.5]" />
+            </button>
+
+            {/* Flecha derecha */}
+            <button
+              onClick={() => scroll("right")}
+              aria-label="Siguiente"
+              className={`
+                hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-20
+                w-11 h-11 rounded-full bg-white border border-[#154734]/15 shadow-md
+                items-center justify-center text-[#154734]
+                hover:bg-[#154734] hover:text-white hover:border-[#154734]
+                transition-all duration-200 active:scale-90
+                ${canScrollRight ? "opacity-100 translate-x-5" : "opacity-0 pointer-events-none"}
+              `}
+            >
+              <ChevronRight className="w-5 h-5 stroke-[1.5]" />
+            </button>
+
+            {/* Carrusel */}
+            <div
+              ref={scrollRef}
+              className="grid grid-flow-col auto-cols-[80vw] sm:auto-cols-[45vw] md:auto-cols-[calc(25%-18px)] gap-3 sm:gap-4 md:gap-6 overflow-x-auto scrollbar-hide pb-4 md:pb-2 snap-x snap-mandatory"
+              style={{ scrollBehavior: "smooth" }}
+            >
+              {items.map((item) => (
+                <div key={item.slug} className="snap-start">
+                  <ProductCard item={item} />
+                </div>
+              ))}
+
+              {/* Tarjeta "Ver más" al final cuando hay más de 4 productos */}
+              {items.length > 4 && (
+                <div className="snap-start flex items-stretch">
+                  <Link
+                    href="/collections/mas-vendidos"
+                    className="
+                      flex flex-col items-center justify-center gap-3
+                      w-full min-h-70 md:min-h-80
+                      rounded-2xl border-2 border-dashed border-[#154734]/20
+                      bg-[#154734]/3 hover:bg-[#154734]/7
+                      text-[#154734] transition-all duration-200 group px-4
+                    "
+                  >
+                    <div className="w-12 h-12 rounded-full border-2 border-[#154734]/30 flex items-center justify-center group-hover:bg-[#154734] group-hover:border-[#154734] transition-all duration-200">
+                      <ArrowRight className="w-5 h-5 group-hover:text-white transition-colors duration-200" />
+                    </div>
+                    <span className="text-sm font-semibold text-center leading-snug">
+                      Ver más productos
+                    </span>
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
