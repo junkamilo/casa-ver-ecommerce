@@ -222,7 +222,11 @@ export async function POST(req: NextRequest) {
     },
     allyUrlRedirection: {
       logoUrl: `${appUrl}/logo.png`,
-      callbackUrl: `${appUrl}/api/addi/callback`,
+      // La clave secreta en la URL garantiza que solo Addi (que conoce esta URL exacta)
+      // pueda disparar el callback. Sin ella, cualquiera podría aprobar órdenes sin pagar.
+      callbackUrl: process.env.ADDI_CALLBACK_SECRET
+        ? `${appUrl}/api/addi/callback?key=${encodeURIComponent(process.env.ADDI_CALLBACK_SECRET)}`
+        : `${appUrl}/api/addi/callback`,
       redirectionUrl: `${appUrl}/checkout/pending?orderId=${order.id}&method=ADDI`,
     },
   };
