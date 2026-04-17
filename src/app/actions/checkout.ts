@@ -433,12 +433,30 @@ export async function releaseOrderStock(
         },
       });
 
-      // 4. Restaurar descuento Early Bird si aplica (para que el usuario pueda reintentar)
+      // 4. Restaurar descuento Early Bird SOLO si el usuario no ha completado todavía
+      // una compra con el descuento aplicado. Sin esta verificación, un webhook tardío
+      // de un intento fallido podría restaurar el flag después de un pago exitoso.
       if (order.earlyBirdDiscountApplied) {
-        await tx.user.update({
-          where: { id: order.userId },
-          data: { earlyBirdDiscount: true },
+        const alreadyUsedSuccessfully = await tx.order.findFirst({
+          where: {
+            userId: order.userId,
+            earlyBirdDiscountApplied: true,
+            status: "PAID",
+            id: { not: order.id },
+          },
+          select: { id: true },
         });
+
+        if (!alreadyUsedSuccessfully) {
+          await tx.user.update({
+            where: { id: order.userId },
+            data: { earlyBirdDiscount: true },
+          });
+        } else {
+          console.info(
+            `[releaseOrderStock] Early Bird NO restaurado — usuario ${order.userId} ya tiene orden PAID con descuento`
+          );
+        }
       }
 
       console.log(`[releaseOrderStock] ✓ Stock, cupón y early bird liberados — orden ${order.orderNumber} → ${newStatus}`);

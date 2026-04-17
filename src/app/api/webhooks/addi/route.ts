@@ -116,52 +116,63 @@ export async function POST(req: NextRequest) {
       const order = await markOrderPaid(orderId, addiPaymentId);
       console.info(`[Addi Webhook] Orden aprobada: ${orderId}`);
 
-      // Enviar email de confirmación — "best effort": si falla no revertimos el PAID
+      // Reclamar atómicamente el envío de email para evitar doble envío si el
+      // callback de Addi (/api/addi/callback) llega en paralelo.
       if (order.user?.email) {
-        try {
-          const emailResult = await sendOrderConfirmationEmail({
-            customerEmail: order.user.email,
-            customerName: order.shippingName,
-            orderNumber: order.orderNumber,
-            items: order.items.map((item) => ({
-              name: item.name,
-              quantity: item.quantity,
-              price: Number(item.price),
-              color: item.colorName,
-              size: item.size,
-              imageUrl: item.imageUrl ?? undefined,
-            })),
-            subtotal: Number(order.subtotal),
-            shippingCost: Number(order.shippingCost),
-            discount: Number(order.discount),
-            total: Number(order.total),
-          });
+        const emailClaim = await prisma.order.updateMany({
+          where: { id: order.id, confirmationEmailSentAt: null },
+          data: { confirmationEmailSentAt: new Date() },
+        });
 
-          if (emailResult.success) {
-            await prisma.order.update({
-              where: { id: order.id },
-              data: { confirmationEmailSentAt: new Date() },
+        if (emailClaim.count > 0) {
+          try {
+            const emailResult = await sendOrderConfirmationEmail({
+              customerEmail: order.user.email,
+              customerName: order.shippingName,
+              orderNumber: order.orderNumber,
+              items: order.items.map((item) => ({
+                name: item.name,
+                quantity: item.quantity,
+                price: Number(item.price),
+                color: item.colorName,
+                size: item.size,
+                imageUrl: item.imageUrl ?? undefined,
+              })),
+              subtotal: Number(order.subtotal),
+              shippingCost: Number(order.shippingCost),
+              discount: Number(order.discount),
+              total: Number(order.total),
             });
-            console.info("[Addi Webhook] Email enviado:", order.orderNumber);
-          } else {
+
+            if (!emailResult.success) {
+              await prisma.order.update({
+                where: { id: order.id },
+                data: {
+                  confirmationEmailSentAt: null,
+                  confirmationEmailFailedAt: new Date(),
+                  confirmationEmailError: emailResult.error ?? "Error desconocido",
+                },
+              }).catch(() => {});
+              console.warn("[Addi Webhook] Email falló:", emailResult.error);
+            } else {
+              console.info("[Addi Webhook] Email enviado:", order.orderNumber);
+            }
+          } catch (emailErr) {
             await prisma.order.update({
               where: { id: order.id },
               data: {
+                confirmationEmailSentAt: null,
                 confirmationEmailFailedAt: new Date(),
-                confirmationEmailError: emailResult.error ?? "Error desconocido",
+                confirmationEmailError: emailErr instanceof Error ? emailErr.message : "Error desconocido",
               },
-            });
-            console.warn("[Addi Webhook] Email falló:", emailResult.error);
+            }).catch(() => {});
+            console.error("[Addi Webhook] Error enviando email:", emailErr);
           }
-        } catch (emailErr) {
-          console.error("[Addi Webhook] Error enviando email:", emailErr);
-          await prisma.order.update({
-            where: { id: order.id },
-            data: {
-              confirmationEmailFailedAt: new Date(),
-              confirmationEmailError: emailErr instanceof Error ? emailErr.message : "Error desconocido",
-            },
-          }).catch(() => {});
+        } else {
+          console.info(
+            "[Addi Webhook] Email ya enviado por otro proceso (callback paralelo):",
+            order.orderNumber
+          );
         }
       }
     } catch (err) {
