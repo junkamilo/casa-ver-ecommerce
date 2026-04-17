@@ -4,14 +4,20 @@ export const MAX_ADDRESSES = 5;
 
 // ── Zod schema del formulario de dirección ──────────────────────────────────
 export const addressSchema = z.object({
-  fullName:      z.string().min(2, "Nombre requerido (mínimo 2 caracteres)"),
-  cedula:        z.string().regex(/^\d*$/, "Solo números"),
-  phone:         z.string().min(7, "Teléfono inválido").regex(/^\d+$/, "Solo números"),
-  department:    z.string().min(2, "Selecciona un departamento"),
-  city:          z.string().min(2, "Selecciona una ciudad"),
-  address:       z.string().min(5, "Dirección muy corta (mínimo 5 caracteres)"),
-  addressDetail: z.string(),
-  zipCode:       z.string(),
+  fullName:      z.string().trim().min(2, "Nombre requerido (mínimo 2 caracteres)").max(80, "Nombre muy largo"),
+  cedula:        z.string()
+                   .min(6, "Cédula debe tener entre 6 y 10 dígitos")
+                   .max(10, "Cédula debe tener entre 6 y 10 dígitos")
+                   .regex(/^\d+$/, "Solo dígitos numéricos"),
+  phone:         z.string()
+                   .min(7, "Teléfono inválido (mínimo 7 dígitos)")
+                   .max(15, "Teléfono muy largo")
+                   .regex(/^\d+$/, "Solo dígitos numéricos"),
+  department:    z.string().min(1, "Selecciona un departamento"),
+  city:          z.string().min(1, "Selecciona una ciudad"),
+  address:       z.string().trim().min(5, "Dirección muy corta (mínimo 5 caracteres)").max(150, "Dirección muy larga"),
+  addressDetail: z.string().max(80, "Detalle muy largo"),
+  zipCode:       z.string().max(10, "Código postal inválido"),
   isDefault:     z.boolean(),
 });
 

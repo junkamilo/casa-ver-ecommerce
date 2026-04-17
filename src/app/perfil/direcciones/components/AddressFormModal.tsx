@@ -1,14 +1,17 @@
 "use client";
 
-import { X, Loader2, ChevronDown, Truck } from "lucide-react";
+import { useState } from "react";
+import { X, Loader2, ChevronDown, Truck, AlertCircle } from "lucide-react";
 import { DEPARTAMENTOS } from "@/lib/constants/colombia";
 import { SHIPPING_SANTANDER, SHIPPING_NATIONAL } from "@/lib/shipping";
-import { AddressFormModalProps } from "../types";
+import { AddressFormModalProps, AddressFormValues } from "../types";
 import { FORM_STYLES } from "../constants";
 import { useAddressForm } from "../hooks/useAddressForm";
 import { FieldError } from "./FieldError";
 
 export function AddressFormModal({ open, editing, submitting, onSave, onClose }: AddressFormModalProps) {
+  const [serverError, setServerError] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -19,6 +22,14 @@ export function AddressFormModal({ open, editing, submitting, onSave, onClose }:
     municipios,
     shippingCost,
   } = useAddressForm({ open, editing });
+
+  async function handleSave(values: AddressFormValues) {
+    setServerError(null);
+    const result = await onSave(values);
+    if (!result.ok && result.error) {
+      setServerError(result.error);
+    }
+  }
 
   if (!open) return null;
 
@@ -51,7 +62,7 @@ export function AddressFormModal({ open, editing, submitting, onSave, onClose }:
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSave)} className="overflow-y-auto p-6 space-y-4">
+        <form onSubmit={handleSubmit(handleSave)} className="overflow-y-auto p-6 space-y-4">
 
           {/* Nombre completo */}
           <div className="relative">
@@ -184,6 +195,14 @@ export function AddressFormModal({ open, editing, submitting, onSave, onClose }:
               Establecer como dirección predeterminada
             </span>
           </label>
+
+          {/* Error del servidor */}
+          {serverError && (
+            <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              {serverError}
+            </div>
+          )}
 
           {/* Botones */}
           <div className="flex gap-3 pt-2">
