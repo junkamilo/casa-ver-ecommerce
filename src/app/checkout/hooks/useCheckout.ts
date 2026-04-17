@@ -230,14 +230,29 @@ export function useCheckout(options?: UseCheckoutOptions) {
         // PASO 2: Crear link de pago según método seleccionado y redirigir
         if (data.paymentMethod === "ADDI") {
           // ── Addi ──────────────────────────────────────────────────────────
-          const addiRes = await fetch("/api/payments/addi", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              orderId: orderResult.orderId,
-              cedula: data.cedula, // único dato personal que no está en la BD
-            }),
-          });
+          const addiAbort = new AbortController();
+          const addiAbortTimer = setTimeout(() => addiAbort.abort(), 20_000);
+
+          let addiRes: Response;
+          try {
+            addiRes = await fetch("/api/payments/addi", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                orderId: orderResult.orderId,
+                cedula: data.cedula,
+              }),
+              signal: addiAbort.signal,
+            });
+          } catch (fetchErr) {
+            clearTimeout(addiAbortTimer);
+            setSubmitError(
+              "El servicio de Addi no responde. Por favor elige otro método de pago."
+            );
+            return;
+          } finally {
+            clearTimeout(addiAbortTimer);
+          }
 
           const addiData = await addiRes.json();
 
