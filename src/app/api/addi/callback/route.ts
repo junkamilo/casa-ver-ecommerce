@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     approvedAmount,
   });
 
-  // Registrar en WebhookLog para auditoría (antes de cualquier procesamiento)
+  // Registrar en WebhookLog para auditoría
   let logEntry: { id: string } | undefined;
   try {
     const order = await prisma.order.findUnique({
@@ -82,20 +82,36 @@ export async function POST(req: NextRequest) {
       select: { id: true },
     });
 
-    logEntry = await prisma.webhookLog.create({
-      data: {
-        orderId: order?.id ?? null,
-        provider: "ADDI",
-        eventType: `callback.${normalizedStatus.toLowerCase()}`,
-        payload: payload as any,
-        signature: "",
-        status: 200,
-        attempt: 1,
-      },
-    });
+    // Guardar todos los estados para auditoría/QA, pero evitar duplicados:
+    // si ya existe un log para esta orden+estado, no crear otro.
+    // Addi puede enviar el mismo callback varias veces para la misma orden.
+    const eventType = `callback.${normalizedStatus.toLowerCase()}`;
+    const alreadyLogged = order
+      ? await prisma.webhookLog.findFirst({
+          where: { orderId: order.id, eventType },
+          select: { id: true },
+        })
+      : null;
+
+    if (!alreadyLogged) {
+      logEntry = await prisma.webhookLog.create({
+        data: {
+          orderId: order?.id ?? null,
+          provider: "ADDI",
+          eventType,
+          payload: payload as any,
+          signature: "",
+          status: 200,
+          attempt: 1,
+        },
+      });
+    } else {
+      console.info(
+        `[Addi Callback] Callback ${normalizedStatus} duplicado ignorado para orden: ${order!.id}`
+      );
+    }
   } catch (logErr) {
     console.error("[Addi Callback] Error registrando log:", logErr);
-    // No bloqueamos el procesamiento si falla el log
   }
 
   // Solo procesar si el crédito fue APROBADO
@@ -178,11 +194,32 @@ export async function POST(req: NextRequest) {
       // Retornamos 500 para que Addi reintente el callback
       return NextResponse.json({ error: "Error interno" }, { status: 500 });
     }
-  } else {
-    // PENDING, REJECTED, ABANDONED, DECLINED, INTERNAL_ERROR — solo logear
-    console.info(
-      `[Addi Callback] Estado no procesable: ${normalizedStatus} | orden: ${externalOrderId}`
-    );
+  } else if (normalizedStatus !== "PENDING") {
+    // REJECTED / DECLINED / ABANDONED / INTERNAL_ERROR — actualizar orden una sola vez
+    // para que QA/admin vean la causa raíz directamente en el pedido, no solo en WebhookLog.
+    const terminalStatusMap: Record<string, "FAILED" | "CANCELLED"> = {
+      REJECTED: "FAILED",
+      DECLINED: "FAILED",
+      INTERNAL_ERROR: "FAILED",
+      ABANDONED: "CANCELLED",
+    };
+    const newStatus = terminalStatusMap[normalizedStatus];
+
+    if (newStatus) {
+      try {
+        const updated = await prisma.order.updateMany({
+          where: { transactionId: externalOrderId, status: "PENDING" },
+          data: { status: newStatus },
+        });
+        if (updated.count > 0) {
+          console.info(
+            `[Addi Callback] Orden marcada como ${newStatus} por Addi (${normalizedStatus}): ${externalOrderId}`
+          );
+        }
+      } catch (updateErr) {
+        console.error("[Addi Callback] Error actualizando estado de orden:", updateErr);
+      }
+    }
   }
 
   return NextResponse.json({ received: true }, { status: 200 });

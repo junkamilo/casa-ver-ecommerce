@@ -630,6 +630,7 @@ model WebhookLog {
   createdAt    DateTime @default(now())
 
   @@index([orderId])
+  @@index([createdAt])
   @@map("webhook_logs")
 }
 
