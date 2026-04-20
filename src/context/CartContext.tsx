@@ -1,13 +1,13 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { StaticImageData } from "next/image";
 
 export interface CartItem {
   id: string;
-  variantId: string;    // ID de la variante en BD (requerido para crear la orden)
-  productId: string;    // ID del producto padre en BD
-  sku: string;          // SKU de la variante
+  variantId: string;
+  productId: string;
+  sku: string;
   name: string;
   price: number;
   image: StaticImageData | string;
@@ -34,54 +34,71 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+const CART_KEY     = "cv_cart";
+const BUY_NOW_KEY  = "cv_buy_now";
+
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [buyNowItem, setBuyNowItem] = useState<CartItem | null>(null);
 
-  // Cargar desde sessionStorage tras hidratación (evita mismatch SSR/cliente)
+  // ── Hidratación desde localStorage (evita mismatch SSR) ─────────────────────
   useEffect(() => {
     try {
-      const storedCart = sessionStorage.getItem("cartItems");
+      const storedCart = localStorage.getItem(CART_KEY);
       if (storedCart) setItems(JSON.parse(storedCart) as CartItem[]);
 
-      const storedBuyNow = sessionStorage.getItem("buyNowItem");
+      const storedBuyNow = localStorage.getItem(BUY_NOW_KEY);
       if (storedBuyNow) setBuyNowItem(JSON.parse(storedBuyNow) as CartItem);
     } catch {}
   }, []);
 
-  // Sincronizar items → sessionStorage en cada cambio
+  // ── Sincronizar items → localStorage ────────────────────────────────────────
   useEffect(() => {
     try {
       if (items.length > 0) {
-        sessionStorage.setItem("cartItems", JSON.stringify(items));
+        localStorage.setItem(CART_KEY, JSON.stringify(items));
       } else {
-        sessionStorage.removeItem("cartItems");
+        localStorage.removeItem(CART_KEY);
       }
     } catch {}
   }, [items]);
 
-  // Calcular total de items (para la bolita roja)
-  const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  
-  // Calcular dinero total
-  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  // ── Body scroll lock cuando el carrito está abierto ─────────────────────────
+  useEffect(() => {
+    if (!isCartOpen) return;
+    const scrollY = window.scrollY;
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      window.scrollTo(0, scrollY);
+    };
+  }, [isCartOpen]);
 
-  const addToCart = (product: any, qty: number, color: any, size?: string) => {
+  // ── Derivados ────────────────────────────────────────────────────────────────
+  const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const subtotal  = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  // ── Acciones ─────────────────────────────────────────────────────────────────
+  const addToCart = useCallback((product: any, qty: number, color: any, size?: string) => {
     const sizeLabel = size || "Única";
     const itemId = `${product.id ?? product.name}-${color.id ?? color.name}-${sizeLabel}`;
 
-    setItems((currentItems) => {
-      const existingItem = currentItems.find((item) => item.id === itemId);
-
-      if (existingItem) {
-        return currentItems.map((item) =>
+    setItems((current) => {
+      const existing = current.find((item) => item.id === itemId);
+      if (existing) {
+        return current.map((item) =>
           item.id === itemId ? { ...item, quantity: item.quantity + qty } : item
         );
       }
-
       return [
-        ...currentItems,
+        ...current,
         {
           id: itemId,
           variantId: product.variantId ?? color.variantId ?? "",
@@ -96,9 +113,29 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         },
       ];
     });
-  };
+  }, []);
 
-  const setBuyNow = (product: any, qty: number, color: any, size?: string) => {
+  const removeFromCart = useCallback((id: string) => {
+    setItems((current) => current.filter((item) => item.id !== id));
+  }, []);
+
+  const updateQuantity = useCallback((id: string, delta: number) => {
+    setItems((current) =>
+      current.map((item) =>
+        item.id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item
+      )
+    );
+  }, []);
+
+  const clearCart = useCallback(() => {
+    setItems([]);
+    try { localStorage.removeItem(CART_KEY); } catch {}
+  }, []);
+
+  const openCart  = useCallback(() => setIsCartOpen(true), []);
+  const closeCart = useCallback(() => setIsCartOpen(false), []);
+
+  const setBuyNow = useCallback((product: any, qty: number, color: any, size?: string) => {
     const sizeLabel = size || "Única";
     const item: CartItem = {
       id: `buynow-${product.id ?? product.name}-${color.id ?? color.name}-${sizeLabel}`,
@@ -113,37 +150,18 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       quantity: qty,
     };
     setBuyNowItem(item);
-    try { sessionStorage.setItem("buyNowItem", JSON.stringify(item)); } catch {}
-  };
+    try { localStorage.setItem(BUY_NOW_KEY, JSON.stringify(item)); } catch {}
+  }, []);
 
-  const clearBuyNow = () => {
+  const clearBuyNow = useCallback(() => {
     setBuyNowItem(null);
-    try { sessionStorage.removeItem("buyNowItem"); } catch {}
-  };
-
-  const clearCart = () => {
-    setItems([]);
-    try { sessionStorage.removeItem("cartItems"); } catch {}
-  };
-
-  const removeFromCart = (id: string) => {
-    setItems(items.filter(item => item.id !== id));
-  };
-
-  const updateQuantity = (id: string, delta: number) => {
-    setItems(currentItems => currentItems.map(item => {
-      if (item.id === id) {
-        const newQuantity = Math.max(1, item.quantity + delta);
-        return { ...item, quantity: newQuantity };
-      }
-      return item;
-    }));
-  };
+    try { localStorage.removeItem(BUY_NOW_KEY); } catch {}
+  }, []);
 
   return (
     <CartContext.Provider value={{
       items, addToCart, removeFromCart, updateQuantity, clearCart,
-      cartCount, subtotal, isCartOpen, openCart: () => setIsCartOpen(true), closeCart: () => setIsCartOpen(false),
+      cartCount, subtotal, isCartOpen, openCart, closeCart,
       buyNowItem, setBuyNow, clearBuyNow,
     }}>
       {children}

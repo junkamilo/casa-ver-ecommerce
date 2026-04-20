@@ -13,6 +13,7 @@ export interface CartDrawerItem {
 export interface CartHeaderProps {
   cartCount: number;
   onClose: () => void;
+  onClear: () => void;
 }
 
 export interface CartOverlayProps {

@@ -36,6 +36,13 @@ export interface Order {
   createdAt: string;
   updatedAt: string;
   total: number;
+  subtotal: number;
+  shippingCost: number;
+  discount: number;
+  paymentMethod: string | null;
+  paidAt: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
   items: OrderItem[];
   shippingAddress: OrderShippingAddress;
   trackingCode?: string;
@@ -49,7 +56,15 @@ export interface StatusConfig {
   dotColor: string;
 }
 
+export type SortBy = "newest" | "oldest" | "highest" | "lowest";
+
 // ── Hooks ─────────────────────────────────────────────────────────────────────
+
+export interface OrderStats {
+  total: number;
+  delivered: number;
+  totalSpent: number;
+}
 
 export interface UseOrdersResult {
   orders: Order[];
@@ -57,12 +72,18 @@ export interface UseOrdersResult {
   paginatedOrders: Order[];
   activeFilter: OrderFilter;
   setFilter: (filter: OrderFilter) => void;
+  searchQuery: string;
+  setSearch: (q: string) => void;
+  sortBy: SortBy;
+  setSortBy: (s: SortBy) => void;
   isLoading: boolean;
   error: string | null;
+  retryLoad: () => void;
   selectedOrder: Order | null;
   openOrder: (order: Order) => void;
   closeOrder: () => void;
   orderCountByStatus: Record<string, number>;
+  stats: OrderStats;
   markDelivered: (id: string) => void;
   currentPage: number;
   totalPages: number;
@@ -104,6 +125,7 @@ export interface OrderFiltersProps {
 
 export interface OrderEmptyStateProps {
   hasActiveFilter: boolean;
+  hasSearch?: boolean;
 }
 
 export interface OrderDetailModalProps {

@@ -120,6 +120,7 @@ model User {
   password      String?
   role          Role      @default(USER)
   phone         String?
+  cedula        String?
   recoveryEmail String?
   
   // Programa Early Bird: primeros 10 registros obtienen 10% de descuento permanente
@@ -473,6 +474,7 @@ model Order {
   shippingCity       String
   shippingDepartment String
   shippingPhone      String
+  shippingCedula     String?
 
   // Montos
   subtotal                  Decimal       @db.Decimal(10, 2)                          // Suma de ítems a precios reales de BD
@@ -652,4 +654,39 @@ model AdminNotification {
   @@index([isRead])
   @@index([createdAt])
   @@map("admin_notifications")
+}
+
+// ============================================================
+// CATÁLOGO GLOBAL DE COLORES (Administrable por el admin)
+// ============================================================
+
+model Color {
+  id        String   @id @default(cuid())
+  name      String   @unique           // Ej: "Verde Militar"
+  hexCode   String                     // Ej: "#4B5320"
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("colors")
+}
+
+// ============================================================
+// HERO / BANNER PRINCIPAL
+// ============================================================
+
+model HeroSlide {
+  id          String   @id @default(cuid())
+  position    Int      @unique          // orden de aparición en el slider
+  mediaUrl    String   @default("")     // URL de Cloudinary (imagen o video)
+  mediaType   String   @default("image") // "image" | "video"
+  headline    String?                   // Texto principal (opcional)
+  subheadline String?                   // Subtítulo (opcional)
+  isActive    Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+
+  @@index([position])
+  @@map("hero_slides")
 }

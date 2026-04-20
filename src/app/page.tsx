@@ -3,6 +3,9 @@
 
 import type { Metadata } from "next";
 import { AnnouncementBar, Header, HeroSection } from "@/components";
+import { prisma } from "@/lib/prisma";
+import { SLIDES } from "@/components/HeroSection/constants";
+import type { Slide } from "@/components/HeroSection/types";
 
 export const metadata: Metadata = {
   title: "Inicio",
@@ -26,12 +29,47 @@ import PaymentMethodsBanner from "@/components/PaymentMethodsBanner";
 
 
 
-export default function Home() {
+type DbSlide = {
+  id: string;
+  position: number;
+  mediaUrl: string;
+  mediaType: string;
+  headline: string | null;
+  subheadline: string | null;
+};
+
+async function fetchHeroSlides(): Promise<Slide[]> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = prisma as any;
+    const dbSlides: DbSlide[] = await db.heroSlide.findMany({
+      where: { isActive: true },
+      orderBy: { position: "asc" },
+    });
+
+    // Si no hay slides en DB (primera vez), usa los estáticos como fallback
+    if (dbSlides.length === 0) return SLIDES;
+
+    return dbSlides.map((s, i) => ({
+      id: `hero-${s.position}`,
+      image: s.mediaUrl || (SLIDES[i]?.image ?? SLIDES[0].image),
+      mediaType: (s.mediaType === "video" ? "video" : "image") as "image" | "video",
+      headline: s.headline ?? SLIDES[i]?.headline,
+      subheadline: s.subheadline ?? SLIDES[i]?.subheadline,
+    }));
+  } catch {
+    return SLIDES;
+  }
+}
+
+export default async function Home() {
+  const heroSlides = await fetchHeroSlides();
+
   return (
     <div className="min-h-screen bg-background">
       <AnnouncementBar />
       <Header />
-      <HeroSection />
+      <HeroSection slides={heroSlides} />
       <BestSellers />
       <NewCollection />
       <Categories />

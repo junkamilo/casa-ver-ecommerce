@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { Star, ChevronRight } from "lucide-react";
 import LogoAddi from "@/assets/LogoAddi2.png";
 
 import ProductGallery from "./ProductGallery";
@@ -13,7 +12,6 @@ import ReviewsSection from "./ReviewsSection";
 import RecommendedProducts from "./RecommendedProducts";
 import ProductVideo from "./ProductVideo";
 import PaymentCarousel, { PAYMENT_METHODS } from "./PaymentCarousel";
-import Testimonials from "@/components/layout/Testimonials";
 import BackButton from "@/components/ui/BackButton";
 import { Toast } from "./Toast";
 
@@ -38,8 +36,6 @@ export default function ProductClient({
     setSelectedSize,
     showAddedNotification,
     openAccordion,
-    descOpen,
-    setDescOpen,
     activeView,
     activeItem,
     activeColors,
@@ -54,7 +50,6 @@ export default function ProductClient({
     handleImageSelect,
     handleAddToCart,
     handleBuyNow,
-    scrollToReviews,
     toggleAccordion,
   } = useProductClient(product);
 
@@ -79,6 +74,7 @@ export default function ProductClient({
               productName={product.name}
               onSelect={handleImageSelect}
               activeColorHex={selectedColor?.hex}
+              isColorOutOfStock={selectedColor?.isOutOfStock ?? false}
             />
           </div>
 
@@ -106,6 +102,21 @@ export default function ProductClient({
               >
                 {product.name}
               </h1>
+
+              {/* Banner prenda completamente agotada */}
+              {product.stock === 0 && (
+                <div className="flex items-center gap-2.5 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-3">
+                  <span className="shrink-0 w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-red-600">
+                      Prenda Agotada
+                    </p>
+                    <p className="text-[10px] text-red-400 font-light mt-0.5">
+                      Todos los colores y tallas están agotados. Puedes explorar los colores disponibles.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Precio / Antes — móvil */}
               <div className="flex sm:hidden items-stretch pt-1">
@@ -142,31 +153,6 @@ export default function ProductClient({
                 )}
               </div>
             </div>
-
-            {/* Rating */}
-            {product.numReviews > 0 && (
-              <button
-                type="button"
-                onClick={scrollToReviews}
-                className="flex flex-col items-center sm:items-start sm:flex-row sm:gap-3 mb-5 sm:mb-8 cursor-pointer group w-full sm:w-fit focus:outline-none"
-              >
-                <div className="flex gap-1 text-[#C19A6B]">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className={`w-8 h-8 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 ${
-                        star <= Math.round(product.rating) ? "fill-current" : "fill-none text-gray-300"
-                      }`}
-                    />
-                  ))}
-                </div>
-                <span className="mt-1.5 sm:mt-0 text-sm sm:text-[11px] uppercase tracking-widest text-gray-500 group-hover:text-[#154734] transition-colors text-center sm:text-left">
-                  <span className="underline decoration-gray-300 group-hover:decoration-[#154734] underline-offset-4">
-                    {product.rating.toFixed(1)} · {product.numReviews} reseña{product.numReviews !== 1 ? "s" : ""}
-                  </span>
-                </span>
-              </button>
-            )}
 
             {/* Social proof */}
             {socialProof.totalBuyers > 0 && (
@@ -249,29 +235,6 @@ export default function ProductClient({
               </div>
             )}
 
-            {/* Descripción — desplegable */}
-            <div className="mb-5 sm:mb-8 border border-gray-100 rounded-xl overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setDescOpen((o) => !o)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-[#FAFAFA] hover:bg-[#f4f4f4] transition-colors duration-200 focus:outline-none"
-              >
-                <span className="text-xs uppercase tracking-[0.2em] font-bold text-[#154734]">Descripción</span>
-                <ChevronRight
-                  className={`w-4 h-4 text-[#154734] transition-transform duration-300 ${descOpen ? "rotate-90" : ""}`}
-                />
-              </button>
-              <div
-                className={`grid transition-all duration-300 ease-in-out ${descOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
-              >
-                <div className="overflow-hidden">
-                  <p className="px-4 py-3 text-gray-600 leading-relaxed font-light text-sm border-t border-gray-100">
-                    {activeDescription}
-                  </p>
-                </div>
-              </div>
-            </div>
-
             {/* Selectores de color y talla */}
             <div className="space-y-5 sm:space-y-8 mb-7 sm:mb-10">
               {activeColors.length > 0 && (
@@ -352,6 +315,7 @@ export default function ProductClient({
             <ProductAccordion
               openKey={openAccordion}
               onToggle={toggleAccordion}
+              description={activeDescription}
             />
           </div>
         </div>
@@ -396,7 +360,6 @@ export default function ProductClient({
         {/* Secciones finales */}
         <div className="mt-8 sm:mt-24 space-y-10 sm:space-y-24">
           <RecommendedProducts products={recommended} />
-          <Testimonials comments={reviews} />
           <div id="seccion-resenas" className="scroll-mt-32">
             <ReviewsSection
               productId={product.id}

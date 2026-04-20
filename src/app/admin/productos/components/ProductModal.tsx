@@ -23,6 +23,7 @@ export default function ProductModal({
   formLoading,
   submitting,
   categories,
+  presetColors,
   onClose,
   onSubmit,
   name, setName,
@@ -350,6 +351,7 @@ export default function ProductModal({
                       selectedColors={selectedColors}
                       selectedSizes={selectedSizes}
                       disabled={submitting}
+                      presetColors={presetColors}
                       onToggleColor={(name, hex) => { setColorError(null); toggleColor(name, hex); }}
                       onToggleSize={(size) => { setSizeError(null); toggleSize(size); }}
                       onSetColorImages={(colorName, images) => { setColorImagesError(null); setColorImages(colorName, images); }}
@@ -407,6 +409,7 @@ export default function ProductModal({
                   <SetItemsSection
                     items={setItems}
                     disabled={submitting}
+                    presetColors={presetColors}
                     itemErrors={itemErrors}
                     noItemsError={noItemsError}
                     onAdd={() => { setNoItemsError(null); addSetItem(); }}

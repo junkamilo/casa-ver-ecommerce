@@ -1,15 +1,41 @@
 "use client";
 
-import { ChevronDown, Truck, CreditCard, Shirt } from "lucide-react";
-import { CARE_INSTRUCTIONS } from "../constants";
+import { ChevronDown, Truck, CreditCard, Shirt, FileText, Clock } from "lucide-react";
+import { CARE_INSTRUCTIONS, PRODUCTION_TIME_CONTENT } from "../constants";
 
 interface Props {
   openKey: string | null;
   onToggle: (key: string) => void;
+  description?: string;
 }
 
-export default function ProductAccordion({ openKey, onToggle }: Props) {
+export default function ProductAccordion({ openKey, onToggle, description }: Props) {
   const items = [
+    {
+      key: "descripcion",
+      icon: <FileText className="w-4.5 h-4.5" strokeWidth={1.5} />,
+      title: "Descripción",
+      content: description ? (
+        <p className="leading-relaxed">{description}</p>
+      ) : (
+        <p className="leading-relaxed text-gray-400 italic">Sin descripción disponible.</p>
+      ),
+    },
+    {
+      key: "confeccion",
+      icon: <Clock className="w-4.5 h-4.5" strokeWidth={1.5} />,
+      title: "Tiempo de Confección",
+      content: (
+        <ul className="space-y-2 text-sm">
+          {PRODUCTION_TIME_CONTENT.map((line) => (
+            <li key={line} className="flex items-start gap-2">
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#C19A6B] shrink-0" />
+              <span>{line}</span>
+            </li>
+          ))}
+        </ul>
+      ),
+    },
     {
       key: "envio",
       icon: <Truck className="w-4.5 h-4.5" strokeWidth={1.5} />,

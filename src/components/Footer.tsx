@@ -59,9 +59,8 @@ const Footer = () => {
               <ul className="space-y-2 sm:space-y-3">
                 {[
                   { name: "Tienda", href: "/tienda" },
-                  { name: "Nueva Colección", href: "/collections/nueva" },
+                  { name: "Nuevos Ingresos", href: "/collections/nueva-coleccion" },
                   { name: "Más Vendidos", href: "/collections/mas-vendidos" },
-                  { name: "Nuestra Historia", href: "/nosotros" }
                 ].map((link) => (
                   <li key={link.name}>
                     <Link href={link.href} className="text-gray-300 text-sm hover:text-[#C19A6B] transition-all flex items-center gap-2 group w-fit p-1 touch-target active:scale-95">
@@ -81,9 +80,7 @@ const Footer = () => {
                 {[
                   { name: "Términos y Condiciones", href: "/terminos-y-condiciones" },
                   { name: "Envíos y Devoluciones", href: "/terminos-y-condiciones" },
-                  { name: "Guía de Tallas", href: "#" },
-                  { name: "Preguntas Frecuentes", href: "#" },
-                  { name: "Contacto", href: "#" }
+                  { name: "Guía de Tallas", href: "/guia-de-tallas" },
                 ].map((link) => (
                   <li key={link.name}>
                     <Link href={link.href} className="text-gray-300 text-sm hover:text-[#C19A6B] transition-all flex items-center gap-2 group w-fit p-1 touch-target active:scale-95">
@@ -101,22 +98,22 @@ const Footer = () => {
               </h4>
               <ul className="space-y-3 sm:space-y-4">
                 <li>
-                  <a href="mailto:contacto@casaverde.com" className="flex items-start gap-3 text-gray-300 text-sm hover:text-white transition-colors group p-1 touch-target active:scale-95">
+                  <a href="mailto:talentocasaverde@gmail.com" className="flex items-start gap-3 text-gray-300 text-sm hover:text-white transition-colors group p-1 touch-target active:scale-95">
                     <Mail className="w-4 h-4 text-[#C19A6B] shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
-                    <span>contacto@casaverde.com</span>
+                    <span>talentocasaverde@gmail.com</span>
                   </a>
                 </li>
                 <li>
-                  <a href="tel:+573001234567" className="flex items-start gap-3 text-gray-300 text-sm hover:text-white transition-colors group p-1 touch-target active:scale-95">
+                  <a href="tel:+573022457432" className="flex items-start gap-3 text-gray-300 text-sm hover:text-white transition-colors group p-1 touch-target active:scale-95">
                     <Phone className="w-4 h-4 text-[#C19A6B] shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
-                    <span>+57 300 123 4567</span>
+                    <span>+57 302 245 7432</span>
                   </a>
                 </li>
               </ul>
 
               <div className="flex items-center gap-3 mt-4 sm:mt-6">
                 <a
-                  href="https://wa.me/573001234567"
+                  href="https://wa.me/573022457432"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="WhatsApp"

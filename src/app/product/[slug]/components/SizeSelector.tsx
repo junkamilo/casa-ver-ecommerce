@@ -117,27 +117,36 @@ export default function SizeSelector({ availableSizes, selectedSize, onSelect }:
           </div>
         </div>
 
-        {/* Botones de talla */}
-        <div className="flex flex-nowrap overflow-x-auto gap-2 pb-2 scrollbar-hide sm:flex-wrap sm:overflow-x-visible sm:pb-0 sm:gap-3">
-          {availableSizes.map((size) => {
-            const isSelected = selectedSize === size;
-            return (
-              <button
-                key={size}
-                onClick={() => onSelect(size)}
-                aria-label={`Seleccionar talla ${size}`}
-                aria-pressed={isSelected}
-                className={`shrink-0 min-w-14 h-12 px-4 rounded-xl border text-sm font-bold tracking-widest transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C19A6B] focus-visible:ring-offset-2 ${
-                  isSelected
-                    ? "border-[#154734] bg-[#154734] text-white shadow-md scale-105"
-                    : "border-gray-200 bg-white text-gray-600 hover:border-[#C19A6B] hover:text-[#154734] hover:shadow-sm"
-                }`}
-              >
-                {size}
-              </button>
-            );
-          })}
-        </div>
+        {/* Botones de talla / estado agotado */}
+        {availableSizes.length === 0 ? (
+          <div className="flex items-center gap-2 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+            <p className="text-xs font-semibold text-red-500 uppercase tracking-[0.15em]">
+              Color agotado — sin tallas disponibles
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-nowrap overflow-x-auto gap-2 pb-2 scrollbar-hide sm:flex-wrap sm:overflow-x-visible sm:pb-0 sm:gap-3">
+            {availableSizes.map((size) => {
+              const isSelected = selectedSize === size;
+              return (
+                <button
+                  key={size}
+                  onClick={() => onSelect(size)}
+                  aria-label={`Seleccionar talla ${size}`}
+                  aria-pressed={isSelected}
+                  className={`shrink-0 min-w-14 h-12 px-4 rounded-xl border text-sm font-bold tracking-widest transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C19A6B] focus-visible:ring-offset-2 ${
+                    isSelected
+                      ? "border-[#154734] bg-[#154734] text-white shadow-md scale-105"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-[#C19A6B] hover:text-[#154734] hover:shadow-sm"
+                  }`}
+                >
+                  {size}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Trigger guía de tallas */}
         <button

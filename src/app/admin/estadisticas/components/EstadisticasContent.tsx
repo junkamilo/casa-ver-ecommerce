@@ -1,30 +1,102 @@
 import { Suspense } from "react";
 import type { Period } from "../types/types";
-import { getStatsByPeriod, getTopProductsByPeriod, getDailySalesByPeriod, getCategorySalesByPeriod } from "../utils/stats";
+import {
+  getStatsByPeriod, getTopProductsByPeriod, getDailySalesByPeriod,
+  getCategorySalesByPeriod, getSizesSalesByPeriod, getColorsSalesByPeriod,
+  getPaymentMethodsByPeriod, getGeographyByPeriod, getRetentionByPeriod,
+  getDiscountImpactByPeriod, getCancellationRateByPeriod, getReviewsByPeriod,
+  getAvgDeliveryTime, getPeakHoursByPeriod,
+} from "../utils/stats";
 import { KpiCards } from "./KpiCards";
 import { SalesChart } from "./SalesChart";
 import { CategoryChart } from "./CategoryChart";
 import { TopProductsTable } from "./TopProductsTable";
+import { PaymentMethodsChart } from "./PaymentMethodsChart";
+import { PeakHoursChart } from "./PeakHoursChart";
+import { SizesChart } from "./SizesChart";
+import { ColorsChart } from "./ColorsChart";
+import { GeographyChart } from "./GeographyChart";
+import { DiscountImpactCard } from "./DiscountImpactCard";
+import { ReviewsCard } from "./ReviewsCard";
+import { DeliveryTimeCard } from "./DeliveryTimeCard";
+import { SectionDivider } from "./SectionDivider";
 
 async function EstadisticasContentInner({ period }: { period: Period }) {
   try {
-    // Fetch all statistics data in parallel
-    const [statsData, topProducts, dailySales, categorySales] = await Promise.all([
+    const [
+      statsData, topProducts, dailySales, categorySales,
+      sizesSales, colorsSales, paymentMethods, geography,
+      retention, discountImpact, cancellation, reviews,
+      deliveryTime, peakHours,
+    ] = await Promise.all([
       getStatsByPeriod(period),
-      getTopProductsByPeriod(period, 6),
+      getTopProductsByPeriod(period, 8),
       getDailySalesByPeriod(period),
       getCategorySalesByPeriod(period),
+      getSizesSalesByPeriod(period),
+      getColorsSalesByPeriod(period),
+      getPaymentMethodsByPeriod(period),
+      getGeographyByPeriod(period),
+      getRetentionByPeriod(period),
+      getDiscountImpactByPeriod(period),
+      getCancellationRateByPeriod(period),
+      getReviewsByPeriod(period),
+      getAvgDeliveryTime(period),
+      getPeakHoursByPeriod(period),
     ]);
 
     return (
-      <>
-        <KpiCards data={statsData} />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div className="space-y-6 sm:space-y-8">
+
+        {/* ── Métricas Principales ── */}
+        <div className="space-y-4">
+          <SectionDivider title="Métricas Principales" />
+          <KpiCards data={statsData} retention={retention} cancellation={cancellation} />
+        </div>
+
+        {/* ── Tendencias de Ventas ── */}
+        <div className="space-y-4">
+          <SectionDivider title="Tendencias de Ventas" />
           <SalesChart salesData={dailySales} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <PaymentMethodsChart data={paymentMethods} />
+            <PeakHoursChart data={peakHours} />
+          </div>
+        </div>
+
+        {/* ── Análisis de Productos ── */}
+        <div className="space-y-4">
+          <SectionDivider title="Análisis de Productos" />
+          <TopProductsTable products={topProducts} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <SizesChart data={sizesSales} />
+            <ColorsChart data={colorsSales} />
+          </div>
+        </div>
+
+        {/* ── Por Categoría ── */}
+        <div className="space-y-4">
+          <SectionDivider title="Por Categoría" />
           <CategoryChart categorySales={categorySales} />
         </div>
-        <TopProductsTable products={topProducts} />
-      </>
+
+        {/* ── Clientes & Descuentos ── */}
+        <div className="space-y-4">
+          <SectionDivider title="Clientes & Descuentos" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <DiscountImpactCard data={discountImpact} />
+            <ReviewsCard data={reviews} />
+            <DeliveryTimeCard data={deliveryTime} />
+          </div>
+        </div>
+
+        {/* ── Distribución Geográfica ── */}
+        <div className="space-y-4">
+          <SectionDivider title="Distribución Geográfica" />
+          <GeographyChart data={geography} />
+        </div>
+
+      </div>
     );
   } catch (error) {
     console.error("❌ Error cargando estadísticas:", error);
@@ -41,7 +113,7 @@ async function EstadisticasContentInner({ period }: { period: Period }) {
 
 export async function EstadisticasContent({ period = "week" }: { period?: Period }) {
   return (
-    <Suspense fallback={<div className="animate-pulse">Cargando...</div>}>
+    <Suspense fallback={<div className="animate-pulse text-sm text-gray-400">Cargando estadísticas...</div>}>
       <EstadisticasContentInner period={period} />
     </Suspense>
   );

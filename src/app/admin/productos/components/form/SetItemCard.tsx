@@ -8,12 +8,13 @@ import VariantStockSection from "./VariantStockSection";
 import FieldError from "../shared/FieldError";
 import PriceInput from "../shared/PriceInput";
 import { SetItemCardProps } from "../../types";
-import { PRESET_COLORS, SIZES, fieldCls } from "../../constants";
+import { SIZES, fieldCls } from "../../constants";
 
 export default function SetItemCard({
   item,
   index,
   disabled,
+  presetColors,
   errors = {},
   onRemove,
   onUpdate,
@@ -192,7 +193,16 @@ export default function SetItemCard({
                 {colorsOpen && (
                   <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
                     <div className="overflow-y-auto max-h-52 p-2 space-y-0.5">
-                      {PRESET_COLORS.map((preset) => {
+                      {presetColors.length === 0 && (
+                        <p className="text-xs text-gray-400 text-center py-4 px-2">
+                          No hay colores activos. Ve a{" "}
+                          <a href="/admin/colores" className="underline text-[#154734]" target="_blank">
+                            Admin → Colores
+                          </a>{" "}
+                          para crear colores.
+                        </p>
+                      )}
+                      {presetColors.map((preset) => {
                         const selected = item.colors.some((c) => c.name === preset.name);
                         return (
                           <button

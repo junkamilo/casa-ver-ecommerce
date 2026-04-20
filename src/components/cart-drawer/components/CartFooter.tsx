@@ -1,11 +1,18 @@
 import Link from "next/link";
 import type { CartFooterProps } from "../types";
 
+const formatCOP = (value: number) =>
+  new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    minimumFractionDigits: 0,
+  }).format(value);
+
 const CartFooter = ({ subtotal, onClose }: CartFooterProps) => (
   <div className="p-5 border-t-2 border-accent bg-background">
     <div className="flex justify-between items-center mb-4 text-sm">
       <span className="text-foreground font-medium">Total estimado</span>
-      <span className="text-xl font-bold text-primary">${subtotal.toLocaleString()} COP</span>
+      <span className="text-xl font-bold text-primary">{formatCOP(subtotal)}</span>
     </div>
     <p className="text-[10px] text-muted-foreground mb-4 text-center">
       Los impuestos y los gastos de envío se calculan en la página de pago.

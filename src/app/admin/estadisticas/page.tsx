@@ -1,16 +1,17 @@
+export const dynamic = "force-dynamic";
+
 import { Suspense } from "react";
 import type { Period } from "./types/types";
 import { EstadisticasHeader } from "./components/EstadisticasHeader";
 import { EstadisticasContent } from "./components/EstadisticasContent";
-import { EstadisticasLoadingSkeleton } from "./components/EstadisticasLoadingSkeleton";
+import { EstadisticasLiveSection } from "./components/EstadisticasLiveSection";
+import { EstadisticasLoadingSkeleton, LiveSectionSkeleton } from "./components/EstadisticasLoadingSkeleton";
 
 interface PageProps {
   searchParams?: Promise<{ period?: string }>;
 }
 
-export default async function AdminEstadisticas({
-  searchParams,
-}: PageProps) {
+export default async function AdminEstadisticas({ searchParams }: PageProps) {
   const params = await searchParams;
   const period = (params?.period || "week") as Period;
 
@@ -19,10 +20,16 @@ export default async function AdminEstadisticas({
       <Suspense fallback={null}>
         <EstadisticasHeader />
       </Suspense>
+
+      {/* Sección en vivo — carga independiente, no depende del período */}
+      <Suspense fallback={<LiveSectionSkeleton />}>
+        <EstadisticasLiveSection />
+      </Suspense>
+
+      {/* Sección por período — se refetch al cambiar Hoy/Semana/Mes */}
       <Suspense fallback={<EstadisticasLoadingSkeleton />}>
         <EstadisticasContent period={period} />
       </Suspense>
     </div>
   );
 }
-

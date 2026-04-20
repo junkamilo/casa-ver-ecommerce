@@ -2,13 +2,13 @@
 
 import {
   X, User, Package, MapPin, CreditCard, Calendar,
-  ChevronDown, CheckCircle2, Lock, AlertCircle,
+  ChevronDown, CheckCircle2, Lock, AlertCircle, FileText,
 } from "lucide-react";
 import {
   getStatusStyles, formatPrice, getValidTransitions,
   PAYMENT_MANAGED_STATUSES, TERMINAL_STATUSES,
 } from "../constants";
-import { printOrder } from "@/lib/print/printOrder";
+import { printOrder, printCustomer } from "@/lib/print/printOrder";
 import { usePedidoDetail } from "../hooks/usePedidoDetail";
 import type { PedidoDetailModalProps } from "../types/types";
 
@@ -26,7 +26,7 @@ export function PedidoDetailModal({ order, onClose, onStatusUpdated }: PedidoDet
       orderNumber:  order.id,
       date:         order.date,
       status:       order.status,
-      customer:     { name: order.customer, email: order.email, phone: order.phone },
+      customer:     { name: order.customer, email: order.email, phone: order.phone, cedula: order.cedula },
       shipping:     { address: order.address },
       payment:      { method: order.paymentMethod },
       items:        order.items.map((i) => ({ name: i.name, qty: i.qty, unitPrice: i.price })),
@@ -34,6 +34,18 @@ export function PedidoDetailModal({ order, onClose, onStatusUpdated }: PedidoDet
       shippingCost: order.shippingCost ?? 0,
       discount:     order.discount     ?? 0,
       total:        order.total,
+    });
+  }
+
+  function handlePrintCustomer() {
+    printCustomer({
+      orderNumber: order.id,
+      date:        order.date,
+      name:        order.customer,
+      email:       order.email,
+      phone:       order.phone,
+      cedula:      order.cedula,
+      address:     order.address,
     });
   }
 
@@ -136,10 +148,20 @@ export function PedidoDetailModal({ order, onClose, onStatusUpdated }: PedidoDet
 
           {/* Datos del Cliente */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
-            <h3 className="text-sm font-bold text-gray-900 border-b border-gray-50 pb-2 mb-2 flex items-center gap-2">
-              <User className="w-4 h-4 text-[#C19A6B]" />
-              Datos del Cliente
-            </h3>
+            <div className="flex items-center justify-between border-b border-gray-50 pb-2 mb-2">
+              <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                <User className="w-4 h-4 text-[#C19A6B]" />
+                Datos del Cliente
+              </h3>
+              <button
+                onClick={handlePrintCustomer}
+                title="Descargar PDF del cliente"
+                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-[#154734] border border-[#154734]/30 rounded-lg hover:bg-[#154734]/5 transition-colors"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                PDF Cliente
+              </button>
+            </div>
             <div className="grid gap-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-500">Nombre</span>
@@ -147,11 +169,26 @@ export function PedidoDetailModal({ order, onClose, onStatusUpdated }: PedidoDet
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Email</span>
-                <span className="font-medium text-gray-900">{order.email}</span>
+                <span className="font-medium text-gray-900 text-right break-all max-w-[60%]">{order.email}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Teléfono</span>
                 <span className="font-medium text-gray-900">{order.phone}</span>
+              </div>
+              {order.cedula && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Cédula</span>
+                  <span className="font-medium text-gray-900">{order.cedula}</span>
+                </div>
+              )}
+              <div className="pt-2 border-t border-gray-50">
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-gray-500 text-xs mb-0.5">Dirección de Entrega</p>
+                    <p className="font-medium text-gray-900 text-xs leading-relaxed">{order.address}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -222,19 +259,31 @@ export function PedidoDetailModal({ order, onClose, onStatusUpdated }: PedidoDet
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-gray-50 border-t border-gray-100 flex gap-3">
-          <button
-            onClick={handlePrint}
-            className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Descargar PDF
-          </button>
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 bg-[#154734] text-white font-bold rounded-lg hover:bg-[#103a2a] transition-colors"
-          >
-            Cerrar
-          </button>
+        <div className="p-4 bg-gray-50 border-t border-gray-100 space-y-2">
+          <div className="flex gap-2">
+            <button
+              onClick={handlePrint}
+              title="PDF completo del pedido"
+              className="flex-1 py-2.5 text-xs font-semibold bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              PDF Pedido
+            </button>
+            <button
+              onClick={handlePrintCustomer}
+              title="PDF solo datos del cliente"
+              className="flex-1 py-2.5 text-xs font-semibold bg-white border border-[#154734]/30 text-[#154734] rounded-lg hover:bg-[#154734]/5 transition-colors flex items-center justify-center gap-1.5"
+            >
+              <User className="w-3.5 h-3.5" />
+              PDF Cliente
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 py-2.5 bg-[#154734] text-white text-sm font-bold rounded-lg hover:bg-[#103a2a] transition-colors"
+            >
+              Cerrar
+            </button>
+          </div>
         </div>
       </div>
     </div>

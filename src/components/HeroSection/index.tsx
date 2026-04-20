@@ -3,15 +3,20 @@
 import { useHeroSection } from "./hooks";
 import { HERO_BUTTONS, SLIDES } from "./constants";
 import { SlideTrack, Overlays, CtaButton } from "./components";
+import type { Slide } from "./types";
 
-export default function HeroSection() {
-  const { currentSlide } = useHeroSection();
-  const slide = SLIDES[currentSlide];
+interface HeroSectionProps {
+  slides?: Slide[];
+}
+
+export default function HeroSection({ slides = SLIDES }: HeroSectionProps) {
+  const { currentSlide } = useHeroSection(slides.length);
+  const slide = slides[currentSlide];
 
   return (
     <section className="relative w-full h-80 sm:h-screen md:h-[72vh] sm:min-h-120 md:min-h-125 md:max-h-190 lg:min-h-130 lg:max-h-200 xl:max-h-205 2xl:max-h-215 overflow-hidden select-none bg-black">
 
-      <SlideTrack currentSlide={currentSlide} />
+      <SlideTrack currentSlide={currentSlide} slides={slides} />
       <Overlays />
 
       {/* Texto del slide — se reanima en cada cambio de slide */}

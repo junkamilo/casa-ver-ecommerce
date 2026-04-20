@@ -5,6 +5,7 @@ import SetItemCard from "./SetItemCard";
 export default function SetItemsSection({
   items,
   disabled,
+  presetColors,
   itemErrors = {},
   noItemsError,
   onAdd,
@@ -34,6 +35,7 @@ export default function SetItemsSection({
               item={item}
               index={i}
               disabled={disabled}
+              presetColors={presetColors}
               errors={itemErrors[item.localId]}
               onRemove={onRemove}
               onUpdate={onUpdate}

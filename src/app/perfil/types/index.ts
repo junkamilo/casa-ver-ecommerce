@@ -10,6 +10,12 @@ export interface UserProfile {
   image: string | null;
   role: string;
   createdAt: string;
+  phone: string | null;
+  cedula: string | null;
+  recoveryEmail: string | null;
+  earlyBirdDiscount: boolean;
+  hasPassword: boolean;
+  linkedProviders: string[];
 }
 
 // ── Toast ────────────────────────────────────────────────────────────────────

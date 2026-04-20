@@ -13,7 +13,9 @@ export async function GET() {
     }
     const userId = (session.user as any).id as string;
 
-    const user = await prisma.user.findUnique({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = prisma as any;
+    const user = await db.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -22,6 +24,10 @@ export async function GET() {
         image: true,
         role: true,
         password: true,
+        phone: true,
+        cedula: true,
+        recoveryEmail: true,
+        earlyBirdDiscount: true,
         createdAt: true,
         accounts: { select: { provider: true } },
       },
@@ -36,7 +42,7 @@ export async function GET() {
     return NextResponse.json({
       ...userData,
       hasPassword: !!password,
-      linkedProviders: accounts.map((a) => a.provider),
+      linkedProviders: (accounts as { provider: string }[]).map((a) => a.provider),
     });
   } catch (err) {
     console.error("[GET /api/profile]", err);
@@ -53,9 +59,11 @@ export async function PUT(req: NextRequest) {
     const userId = (session.user as any).id as string;
 
     const body = await req.json();
-    const { name, currentPassword, newPassword } = body;
+    const { name, phone, cedula, recoveryEmail, currentPassword, newPassword } = body;
 
-    const user = await prisma.user.findUnique({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = prisma as any;
+    const user = await db.user.findUnique({
       where: { id: userId },
     });
 
@@ -63,13 +71,32 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ message: "Usuario no encontrado" }, { status: 404 });
     }
 
-    const updateData: { name?: string; password?: string } = {};
+    const updateData: Record<string, unknown> = {};
 
     if (name !== undefined) {
       if (!name.trim()) {
         return NextResponse.json({ message: "El nombre no puede estar vacío" }, { status: 400 });
       }
       updateData.name = name.trim();
+    }
+
+    if (phone !== undefined) {
+      updateData.phone = phone?.trim() || null;
+    }
+
+    if (cedula !== undefined) {
+      const val = cedula?.trim() || null;
+      if (val && !/^\d{6,12}$/.test(val)) {
+        return NextResponse.json({ message: "Cédula inválida (6–12 dígitos numéricos)" }, { status: 400 });
+      }
+      updateData.cedula = val;
+    }
+
+    if (recoveryEmail !== undefined) {
+      if (recoveryEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recoveryEmail)) {
+        return NextResponse.json({ message: "El email de recuperación no es válido" }, { status: 400 });
+      }
+      updateData.recoveryEmail = recoveryEmail?.trim() || null;
     }
 
     if (newPassword) {
@@ -100,13 +127,32 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ message: "No hay cambios para guardar" }, { status: 400 });
     }
 
-    const updated = await prisma.user.update({
+    const updated = await db.user.update({
       where: { id: user.id },
       data: updateData,
-      select: { id: true, name: true, email: true, image: true, role: true, createdAt: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        role: true,
+        phone: true,
+        cedula: true,
+        recoveryEmail: true,
+        earlyBirdDiscount: true,
+        createdAt: true,
+        password: true,
+        accounts: { select: { provider: true } },
+      },
     });
 
-    return NextResponse.json(updated);
+    const { password: pw, accounts, ...updatedData } = updated;
+
+    return NextResponse.json({
+      ...updatedData,
+      hasPassword: !!pw,
+      linkedProviders: (accounts as { provider: string }[]).map((a) => a.provider),
+    });
   } catch (err) {
     console.error("[PUT /api/profile]", err);
     return NextResponse.json({ message: "Error interno del servidor" }, { status: 500 });

@@ -289,6 +289,15 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         },
       });
 
+      // Guardar cédula como snapshot usando raw SQL (el cliente Prisma puede no
+      // conocer shippingCedula hasta que se regenere tras la migración).
+      if (cedula) {
+        await tx.$executeRaw`
+          UPDATE "orders" SET "shippingCedula" = ${cedula}
+          WHERE "orderNumber" = ${orderNumber}
+        `;
+      }
+
       // 7. Reservar stock
       for (const item of items) {
         if (variantTypeMap.get(item.variantId) === "product") {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { ProductListItem, Category } from "../types";
+import { ProductListItem, Category, PresetColor } from "../types";
 
 const PAGE_SIZE = 8;
 
@@ -9,6 +9,7 @@ export function useProductList() {
   const [products, setProducts] = useState<ProductListItem[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<ProductListItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [presetColors, setPresetColors] = useState<PresetColor[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -42,10 +43,24 @@ export function useProductList() {
     }
   }, []);
 
+  const fetchPresetColors = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/colors?active=true");
+      if (res.ok) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data: any[] = await res.json();
+        setPresetColors(data.map((c) => ({ name: c.name, hex: c.hexCode })));
+      }
+    } catch {
+      console.error("Error al cargar colores");
+    }
+  }, []);
+
   useEffect(() => {
     fetchProducts();
     fetchCategories();
-  }, [fetchProducts, fetchCategories]);
+    fetchPresetColors();
+  }, [fetchProducts, fetchCategories, fetchPresetColors]);
 
   // Resetea a página 1 solo cuando el usuario cambia filtros, no cuando se recargan datos
   useEffect(() => {
@@ -108,6 +123,7 @@ export function useProductList() {
     filteredProducts,
     paginatedProducts,
     categories,
+    presetColors,
     loading,
     fetchError,
     search,
