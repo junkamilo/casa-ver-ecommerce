@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Star, CheckCircle, MessageSquareQuote, Trash2 } from "lucide-react";
+import { CheckCircle, MessageSquareQuote, Trash2 } from "lucide-react";
 import { saveReview, deleteReview } from "../actions";
 import type { ExistingReview } from "../types";
 
@@ -12,21 +12,14 @@ interface Props {
   isAuthenticated: boolean;
 }
 
-export default function ReviewForm({
-  productId,
-  existing,
-  isAuthenticated,
-}: Props) {
+export default function ReviewForm({ productId, existing, isAuthenticated }: Props) {
   const router = useRouter();
-  const [hover, setHover] = useState(0);
-  const [rating, setRating] = useState(existing?.rating ?? 0);
   const [comment, setComment] = useState(existing?.comment ?? "");
   const [error, setError] = useState("");
   const [toast, setToast] = useState<"saved" | "deleted" | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    setRating(existing?.rating ?? 0);
     setComment(existing?.comment ?? "");
   }, [existing]);
 
@@ -50,14 +43,15 @@ export default function ReviewForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (rating === 0) { setError("Por favor selecciona una calificación"); return; }
+    if (!comment.trim()) { setError("Por favor escribe un comentario"); return; }
     if (comment.length > 500) { setError("El comentario no puede superar los 500 caracteres"); return; }
     if (/<[^>]*>/.test(comment)) { setError("El comentario no puede contener etiquetas HTML"); return; }
     setError("");
 
     startTransition(async () => {
+      // Calificación guardada en DB con valor neutro; las estrellas se habilitarán en el futuro
       const result = await saveReview(productId, {
-        rating,
+        rating: existing?.rating ?? 5,
         comment: comment || null,
       });
       if (result.success) {
@@ -112,8 +106,8 @@ export default function ReviewForm({
       </div>
 
       <form onSubmit={handleSubmit} className="w-full flex flex-col items-center">
-        
-        <div className="text-center mb-5 sm:mb-8">
+
+        <div className="text-center mb-6 sm:mb-10">
           <h3
             className="text-2xl sm:text-4xl font-light text-[#154734] mb-2 sm:mb-3 tracking-tight leading-[1.1]"
             style={{ fontFamily: "Georgia, serif" }}
@@ -121,32 +115,8 @@ export default function ReviewForm({
             {existing ? "Actualiza tu reseña" : "Déjanos tu opinión"}
           </h3>
           <p className="text-[9px] sm:text-xs font-black uppercase tracking-[0.3em] text-gray-400">
-            ¿Cómo calificarías este producto?
+            Cuéntanos tu experiencia con esta prenda
           </p>
-        </div>
-
-        {/* Estrellas interactivas */}
-        <div className="flex gap-1.5 sm:gap-3 bg-[#FAFAFA] px-4 sm:px-6 py-2.5 sm:py-4 rounded-full border border-gray-100 shadow-inner mb-5 sm:mb-8" onMouseLeave={() => setHover(0)}>
-          {[1, 2, 3, 4, 5].map((star) => (
-            <button
-              key={star}
-              type="button"
-              disabled={isPending}
-              onMouseEnter={() => setHover(star)}
-              onClick={() => setRating(star)}
-              className="text-[#C19A6B] transition-all duration-300 hover:scale-125 active:scale-95 disabled:cursor-default disabled:hover:scale-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#154734] focus-visible:ring-offset-2 rounded-full"
-              aria-label={`Calificar con ${star} estrella${star !== 1 ? "s" : ""}`}
-            >
-              <Star
-                className={`w-7 h-7 sm:w-10 sm:h-10 transition-colors duration-300 ${
-                  star <= (hover || rating)
-                    ? "fill-current drop-shadow-[0_0_10px_rgba(193,154,107,0.5)]"
-                    : "fill-none text-gray-300"
-                }`}
-                strokeWidth={1.2}
-              />
-            </button>
-          ))}
         </div>
 
         {/* Textarea */}
@@ -178,7 +148,7 @@ export default function ReviewForm({
         {/* Submit */}
         <button
           type="submit"
-          disabled={isPending || rating === 0}
+          disabled={isPending || !comment.trim()}
           className="w-full bg-[#154734] text-white text-xs sm:text-sm font-bold uppercase tracking-[0.2em] px-8 py-4 sm:py-5 rounded-xl hover:bg-[#C19A6B] shadow-[0_10px_20px_-10px_rgba(21,71,52,0.5)] hover:shadow-[0_15px_30px_-10px_rgba(193,154,107,0.6)] transition-all duration-500 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#154734] disabled:hover:shadow-none disabled:active:scale-100 flex items-center justify-center gap-3 relative overflow-hidden group/btn"
         >
           <div className="absolute inset-0 w-full h-full bg-white/20 -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite]" />

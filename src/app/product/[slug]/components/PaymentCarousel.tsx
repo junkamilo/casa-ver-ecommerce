@@ -1,6 +1,10 @@
 "use client";
 
 import { useRef, useEffect, useCallback, useState } from "react";
+import Image from "next/image";
+import LogoNequiPng  from "@/assets/LogoNequi.png";
+import LogoPaypalPng from "@/assets/LogoPaypal.png";
+import LogoPsePng    from "@/assets/pseLogo.png";
 
 /* ── Logos como JSX (HTML + SVG geométrico, sin <text> en SVG) ─────────── */
 
@@ -33,10 +37,7 @@ function ApplePayLogo() {
 
 function PayPalLogo() {
   return (
-    <div className="flex items-center">
-      <span className="font-bold text-[15px] leading-none" style={{ color: "#003087" }}>Pay</span>
-      <span className="font-bold text-[15px] leading-none" style={{ color: "#009cde" }}>Pal</span>
-    </div>
+    <Image src={LogoPaypalPng} alt="PayPal" height={28} style={{ width: "auto", height: 28 }} />
   );
 }
 
@@ -90,23 +91,13 @@ function DinersLogo() {
 
 function PSELogo() {
   return (
-    <div className="flex items-center gap-1.5">
-      <div className="flex items-center justify-center w-9 h-7 rounded-md" style={{ backgroundColor: "#00843D" }}>
-        <span className="font-black text-[12px] text-white tracking-tight">PSE</span>
-      </div>
-      <span className="font-semibold text-[12px] text-gray-600">Banco</span>
-    </div>
+    <Image src={LogoPsePng} alt="PSE" height={28} style={{ width: "auto", height: 28 }} />
   );
 }
 
 function NequiLogo() {
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex items-center justify-center w-7 h-7 rounded-lg" style={{ backgroundColor: "#6B21A8" }}>
-        <span className="font-black text-[11px] text-white">N</span>
-      </div>
-      <span className="font-bold text-[15px] leading-none" style={{ color: "#6B21A8" }}>nequi</span>
-    </div>
+    <Image src={LogoNequiPng} alt="Nequi" height={28} style={{ width: "auto", height: 28 }} />
   );
 }
 
@@ -114,11 +105,9 @@ function NequiLogo() {
 
 export const PAYMENT_METHODS = [
   { id: "gpay",       label: "Google Pay",   Logo: GooglePayLogo  },
-  { id: "apple",      label: "Apple Pay",    Logo: ApplePayLogo   },
   { id: "paypal",     label: "PayPal",       Logo: PayPalLogo     },
   { id: "mastercard", label: "Mastercard",   Logo: MastercardLogo },
   { id: "visa",       label: "Visa",         Logo: VisaLogo       },
-  { id: "diners",     label: "Diners Club",  Logo: DinersLogo     },
   { id: "pse",        label: "PSE",          Logo: PSELogo        },
   { id: "nequi",      label: "Nequi",        Logo: NequiLogo      },
 ];

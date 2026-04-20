@@ -28,10 +28,7 @@ export function useProfileInfo({
         body: JSON.stringify({ name }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        onToast("error", data.message);
-        return;
-      }
+      if (!res.ok) { onToast("error", data.message); return; }
       onProfileUpdate(data);
       setEditingName(false);
       onToast("success", "Nombre actualizado");
@@ -39,6 +36,103 @@ export function useProfileInfo({
       onToast("error", "Error de conexión");
     } finally {
       setSavingName(false);
+    }
+  };
+
+  // ── Phone ──
+  const [editingPhone, setEditingPhone] = useState(false);
+  const [phone, setPhone] = useState(profile.phone ?? "");
+  const [savingPhone, setSavingPhone] = useState(false);
+
+  const startEditPhone = () => setEditingPhone(true);
+  const cancelEditPhone = () => {
+    setEditingPhone(false);
+    setPhone(profile.phone ?? "");
+  };
+
+  const handleSavePhone = async () => {
+    setSavingPhone(true);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
+      const data = await res.json();
+      if (!res.ok) { onToast("error", data.message); return; }
+      onProfileUpdate(data);
+      setEditingPhone(false);
+      onToast("success", "Teléfono actualizado");
+    } catch {
+      onToast("error", "Error de conexión");
+    } finally {
+      setSavingPhone(false);
+    }
+  };
+
+  // ── Cedula ──
+  const [editingCedula, setEditingCedula] = useState(false);
+  const [cedula, setCedula] = useState(profile.cedula ?? "");
+  const [savingCedula, setSavingCedula] = useState(false);
+
+  const startEditCedula = () => setEditingCedula(true);
+  const cancelEditCedula = () => {
+    setEditingCedula(false);
+    setCedula(profile.cedula ?? "");
+  };
+
+  const handleSaveCedula = async () => {
+    if (cedula && !/^\d{6,12}$/.test(cedula)) {
+      onToast("error", "Cédula inválida (6–12 dígitos numéricos)");
+      return;
+    }
+    setSavingCedula(true);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cedula }),
+      });
+      const data = await res.json();
+      if (!res.ok) { onToast("error", data.message); return; }
+      onProfileUpdate(data);
+      setEditingCedula(false);
+      onToast("success", "Cédula actualizada");
+    } catch {
+      onToast("error", "Error de conexión");
+    } finally {
+      setSavingCedula(false);
+    }
+  };
+
+  // ── Recovery email ──
+  const [editingRecoveryEmail, setEditingRecoveryEmail] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState(profile.recoveryEmail ?? "");
+  const [savingRecoveryEmail, setSavingRecoveryEmail] = useState(false);
+
+  const startEditRecoveryEmail = () => setEditingRecoveryEmail(true);
+  const cancelEditRecoveryEmail = () => {
+    setEditingRecoveryEmail(false);
+    setRecoveryEmail(profile.recoveryEmail ?? "");
+  };
+
+  const handleSaveRecoveryEmail = async () => {
+    setSavingRecoveryEmail(true);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recoveryEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) { onToast("error", data.message); return; }
+      onProfileUpdate(data);
+      setEditingRecoveryEmail(false);
+      onToast("success", "Email de recuperación actualizado");
+    } catch {
+      onToast("error", "Error de conexión");
+    } finally {
+      setSavingRecoveryEmail(false);
     }
   };
 
@@ -75,10 +169,7 @@ export function useProfileInfo({
         body: JSON.stringify({ currentPassword, newPassword }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        onToast("error", data.message);
-        return;
-      }
+      if (!res.ok) { onToast("error", data.message); return; }
       onToast("success", "Contraseña actualizada correctamente");
       cancelPasswordForm();
     } catch {
@@ -89,27 +180,14 @@ export function useProfileInfo({
   };
 
   return {
-    editingName,
-    name,
-    savingName,
-    setName,
-    startEditName,
-    cancelEditName,
-    handleSaveName,
-    showPasswordSection,
-    currentPassword,
-    newPassword,
-    confirmPassword,
-    showCurrentPw,
-    showNewPw,
-    savingPassword,
-    setCurrentPassword,
-    setNewPassword,
-    setConfirmPassword,
-    toggleCurrentPw,
-    toggleNewPw,
-    showPasswordForm,
-    cancelPasswordForm,
-    handleChangePassword,
+    editingName, name, savingName, setName, startEditName, cancelEditName, handleSaveName,
+    editingPhone, phone, savingPhone, setPhone, startEditPhone, cancelEditPhone, handleSavePhone,
+    editingCedula, cedula, savingCedula, setCedula, startEditCedula, cancelEditCedula, handleSaveCedula,
+    editingRecoveryEmail, recoveryEmail, savingRecoveryEmail, setRecoveryEmail,
+    startEditRecoveryEmail, cancelEditRecoveryEmail, handleSaveRecoveryEmail,
+    showPasswordSection, currentPassword, newPassword, confirmPassword,
+    showCurrentPw, showNewPw, savingPassword,
+    setCurrentPassword, setNewPassword, setConfirmPassword,
+    toggleCurrentPw, toggleNewPw, showPasswordForm, cancelPasswordForm, handleChangePassword,
   };
 }

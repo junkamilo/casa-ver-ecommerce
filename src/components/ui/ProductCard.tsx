@@ -151,7 +151,7 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
 
           {item.badge && (
             <span className={`absolute top-2 right-2 z-20 text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-[0.2em] shadow-md ${
-              item.badge === "Oferta" ? "bg-[#C19A6B]" : item.badge === "Nuevo" ? "bg-[#154734]" : "bg-gray-900"
+              item.badge === "Oferta" ? "bg-[#C19A6B]" : item.badge === "Nuevo" ? "bg-[#154734]" : item.badge === "Agotado" ? "bg-red-600" : "bg-gray-900"
             }`}>
               {item.badge}
             </span>
@@ -330,7 +330,7 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
 
         {item.badge && (
           <span className={`absolute top-3 right-3 z-20 text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-md ${
-            item.badge === "Oferta" ? "bg-[#C19A6B]" : item.badge === "Nuevo" ? "bg-[#154734]" : "bg-gray-900"
+            item.badge === "Oferta" ? "bg-[#C19A6B]" : item.badge === "Nuevo" ? "bg-[#154734]" : item.badge === "Agotado" ? "bg-red-600" : "bg-gray-900"
           }`}>
             {item.badge}
           </span>

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
-// Máximo de pedidos devueltos por consulta — evita exponer volúmenes ilimitados de datos.
 const ORDER_PAGE_LIMIT = 50;
 
 export async function GET() {
@@ -26,12 +25,18 @@ export async function GET() {
         createdAt:         true,
         updatedAt:         true,
         total:             true,
+        subtotal:          true,
+        shippingCost:      true,
+        discount:          true,
+        paymentMethod:     true,
+        paidAt:            true,
+        shippedAt:         true,
+        deliveredAt:       true,
         trackingNumber:    true,
         shippingName:      true,
         shippingAddress:   true,
         shippingCity:      true,
         shippingDepartment: true,
-        // Sólo los campos necesarios de cada item — nunca el variantId interno
         items: {
           select: {
             id:        true,
@@ -49,13 +54,20 @@ export async function GET() {
     });
 
     const result = orders.map((o) => ({
-      id:          o.id,
-      orderNumber: o.orderNumber,
-      status:      o.status,
-      createdAt:   o.createdAt.toISOString(),
-      updatedAt:   o.updatedAt.toISOString(),
-      total:       Number(o.total),
-      trackingCode: o.trackingNumber ?? undefined,
+      id:            o.id,
+      orderNumber:   o.orderNumber,
+      status:        o.status,
+      createdAt:     o.createdAt.toISOString(),
+      updatedAt:     o.updatedAt.toISOString(),
+      total:         Number(o.total),
+      subtotal:      Number(o.subtotal ?? 0),
+      shippingCost:  Number(o.shippingCost ?? 0),
+      discount:      Number(o.discount ?? 0),
+      paymentMethod: o.paymentMethod ?? null,
+      paidAt:        o.paidAt?.toISOString() ?? null,
+      shippedAt:     o.shippedAt?.toISOString() ?? null,
+      deliveredAt:   o.deliveredAt?.toISOString() ?? null,
+      trackingCode:  o.trackingNumber ?? undefined,
       shippingAddress: {
         fullName:   o.shippingName,
         address:    o.shippingAddress,

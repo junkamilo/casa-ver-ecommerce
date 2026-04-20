@@ -14,6 +14,7 @@ interface Props {
   productName: string;
   onSelect: (index: number) => void;
   activeColorHex?: string;
+  isColorOutOfStock?: boolean;
 }
 
 export default function ProductGallery({
@@ -23,6 +24,7 @@ export default function ProductGallery({
   productName,
   onSelect,
   activeColorHex,
+  isColorOutOfStock = false,
 }: Props) {
   const {
     media,
@@ -93,7 +95,7 @@ export default function ProductGallery({
         <div
           className={`relative w-full aspect-4/5 sm:aspect-3/4 bg-[#FAFAFA] rounded-xl sm:rounded-2xl overflow-hidden shadow-sm border border-gray-100 group touch-target ${
             isCurrentVideo ? "cursor-default" : "cursor-zoom-in"
-          }`}
+          } ${isColorOutOfStock ? "border-gray-200" : ""}`}
           style={{
             boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
           }}
@@ -109,6 +111,7 @@ export default function ProductGallery({
               width: `${media.length * 100}%`,
               transform: `translateX(-${(currentIndex * 100) / media.length}%)`,
               transition: "transform 380ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+              filter: isColorOutOfStock ? "grayscale(80%)" : "none",
             }}
           >
             {media.map((url, i) => {
@@ -147,6 +150,15 @@ export default function ProductGallery({
               );
             })}
           </div>
+
+          {/* Badge agotado */}
+          {isColorOutOfStock && (
+            <div className="absolute inset-0 z-30 pointer-events-none flex items-center justify-center">
+              <span className="bg-black/55 backdrop-blur-sm text-white text-[11px] sm:text-xs font-black uppercase tracking-[0.25em] px-4 py-2 rounded-full shadow-lg">
+                Agotado
+              </span>
+            </div>
+          )}
 
           {media.length > 1 && (
             <>

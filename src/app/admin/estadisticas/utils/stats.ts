@@ -1,54 +1,91 @@
 import { prisma } from "@/lib/prisma";
 import { formatPrice, CATEGORY_COLORS } from "../constants/constants";
-import type { Period, SalesPeriodData, TopProduct, DailySale, CategorySale } from "../types/types";
+import type {
+  Period, SalesPeriodData, TopProduct, DailySale, CategorySale,
+  SizeSale, ColorSale, PaymentMethodSale, GeographyData,
+  RetentionData, DiscountData, CancellationData, ReviewsData,
+  DeliveryTimeData, PeakHourData, FunnelItem, StockAlert,
+} from "../types/types";
 
 // ── Helpers internos ──────────────────────────────────────────────────────────
 
 const DAY_NAMES = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"] as const;
 
-const getPeriodDateRange = (period: Period): { start: Date; end: Date } => {
-  const end = new Date();
-  end.setUTCHours(23, 59, 59, 999);
+const COLOMBIA_OFFSET_MS = 5 * 60 * 60 * 1000;
 
-  const start = new Date();
+const nowColombia = () => new Date(Date.now() - COLOMBIA_OFFSET_MS);
+const colombiaToUTC = (d: Date) => new Date(d.getTime() + COLOMBIA_OFFSET_MS);
+
+const getPeriodDateRange = (period: Period): { start: Date; end: Date; durationMs: number } => {
+  const now = nowColombia();
+
+  const endLocal = new Date(now);
+  endLocal.setUTCHours(23, 59, 59, 999);
+
+  const startLocal = new Date(now);
 
   switch (period) {
     case "day":
-      start.setUTCHours(0, 0, 0, 0);
+      startLocal.setUTCHours(0, 0, 0, 0);
       break;
     case "week": {
-      const dayOfWeek = start.getUTCDay();
-      const daysBack = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Lunes como inicio
-      start.setUTCDate(start.getUTCDate() - daysBack);
-      start.setUTCHours(0, 0, 0, 0);
+      const dayOfWeek = startLocal.getUTCDay();
+      const daysBack = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      startLocal.setUTCDate(startLocal.getUTCDate() - daysBack);
+      startLocal.setUTCHours(0, 0, 0, 0);
       break;
     }
     case "month":
-      start.setUTCDate(1);
-      start.setUTCHours(0, 0, 0, 0);
+      startLocal.setUTCDate(1);
+      startLocal.setUTCHours(0, 0, 0, 0);
       break;
   }
 
-  return { start, end };
+  const start = colombiaToUTC(startLocal);
+  const end = colombiaToUTC(endLocal);
+  return { start, end, durationMs: end.getTime() - start.getTime() };
 };
 
 const calculatePercentageChange = (current: number, previous: number): string => {
-  if (previous === 0) return "+0%";
+  if (previous === 0 && current === 0) return "0%";
+  if (previous === 0) return "+100%";
   const change = ((current - previous) / previous) * 100;
   return `${change >= 0 ? "+" : ""}${Math.round(change)}%`;
 };
 
-// ── Queries públicas ──────────────────────────────────────────────────────────
+const PAYMENT_LABELS: Record<string, string> = {
+  BOLD: "Bold",
+  ADDI: "Addi",
+  NEQUI: "Nequi",
+  BANCOLOMBIA: "Bancolombia",
+  DAVIPLATA: "Daviplata",
+};
 
-/**
- * Obtiene métricas de ventas para un período (comparadas con el período anterior)
- */
+const FUNNEL_CONFIG: Record<string, { label: string; color: string; actionable: boolean; order: number }> = {
+  PENDING:    { label: "Pendientes",    color: "yellow",  actionable: true,  order: 1 },
+  PROCESSING: { label: "Procesando",   color: "blue",    actionable: true,  order: 2 },
+  PAID:       { label: "Por Enviar",   color: "indigo",  actionable: true,  order: 3 },
+  SHIPPED:    { label: "En Camino",    color: "purple",  actionable: false, order: 4 },
+  DELIVERED:  { label: "Entregados",   color: "green",   actionable: false, order: 5 },
+  CANCELLED:  { label: "Cancelados",   color: "red",     actionable: false, order: 6 },
+  FAILED:     { label: "Fallidos",     color: "rose",    actionable: false, order: 7 },
+  REFUNDED:   { label: "Reembolsados", color: "gray",    actionable: false, order: 8 },
+};
+
+// ── Métricas principales ──────────────────────────────────────────────────────
+
 export async function getStatsByPeriod(period: Period): Promise<SalesPeriodData> {
-  const { start, end } = getPeriodDateRange(period);
+  const { start, end, durationMs } = getPeriodDateRange(period);
+  const prevEnd = new Date(start.getTime() - 1);
+  const prevStart = new Date(start.getTime() - durationMs);
 
-  const [ordersInPeriod, newCustomers] = await Promise.all([
+  const [ordersInPeriod, prevOrders, newCustomers] = await Promise.all([
     prisma.order.findMany({
-      where: { status: "PAID", createdAt: { gte: start, lte: end } },
+      where: { status: "DELIVERED", createdAt: { gte: start, lte: end } },
+      select: { total: true },
+    }),
+    prisma.order.findMany({
+      where: { status: "DELIVERED", createdAt: { gte: prevStart, lte: prevEnd } },
       select: { total: true },
     }),
     prisma.user.count({
@@ -59,20 +96,6 @@ export async function getStatsByPeriod(period: Period): Promise<SalesPeriodData>
   const totalRevenue = ordersInPeriod.reduce((sum, o) => sum + Number(o.total), 0);
   const orderCount = ordersInPeriod.length;
   const avgTicket = orderCount > 0 ? totalRevenue / orderCount : 0;
-
-  // Período anterior para variación porcentual
-  const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-  const prevEnd = new Date(start);
-  prevEnd.setUTCHours(23, 59, 59, 999);
-  const prevStart = new Date(start);
-  prevStart.setUTCDate(prevStart.getUTCDate() - daysDiff - 1);
-  prevStart.setUTCHours(0, 0, 0, 0);
-
-  const prevOrders = await prisma.order.findMany({
-    where: { status: "PAID", createdAt: { gte: prevStart, lte: prevEnd } },
-    select: { total: true },
-  });
-
   const previousRevenue = prevOrders.reduce((sum, o) => sum + Number(o.total), 0);
 
   return {
@@ -84,67 +107,70 @@ export async function getStatsByPeriod(period: Period): Promise<SalesPeriodData>
   };
 }
 
-/**
- * Obtiene los N productos más vendidos en un período
- */
-export async function getTopProductsByPeriod(
-  period: Period,
-  limit = 6
-): Promise<TopProduct[]> {
-  const { start, end } = getPeriodDateRange(period);
+// ── Productos más vendidos ────────────────────────────────────────────────────
 
-  const orderItems = await prisma.orderItem.findMany({
-    where: {
-      order: { status: "PAID", createdAt: { gte: start, lte: end } },
-    },
-    select: { productId: true, name: true, quantity: true, total: true },
-  });
+export async function getTopProductsByPeriod(period: Period, limit = 8): Promise<TopProduct[]> {
+  const { start, end, durationMs } = getPeriodDateRange(period);
+  const prevEnd = new Date(start.getTime() - 1);
+  const prevStart = new Date(start.getTime() - durationMs);
 
-  const productMap = new Map<string, { name: string; quantity: number; total: number }>();
+  const [currentItems, prevItems] = await Promise.all([
+    prisma.orderItem.findMany({
+      where: { order: { status: "DELIVERED", createdAt: { gte: start, lte: end } } },
+      select: { productId: true, name: true, quantity: true, total: true },
+    }),
+    prisma.orderItem.findMany({
+      where: { order: { status: "DELIVERED", createdAt: { gte: prevStart, lte: prevEnd } } },
+      select: { productId: true, quantity: true },
+    }),
+  ]);
 
-  for (const item of orderItems) {
-    const entry = productMap.get(item.productId) ?? { name: item.name, quantity: 0, total: 0 };
+  const currentMap = new Map<string, { name: string; quantity: number; total: number }>();
+  for (const item of currentItems) {
+    const entry = currentMap.get(item.productId) ?? { name: item.name, quantity: 0, total: 0 };
     entry.quantity += item.quantity;
     entry.total += Number(item.total);
-    productMap.set(item.productId, entry);
+    currentMap.set(item.productId, entry);
   }
 
-  return Array.from(productMap.values())
-    .sort((a, b) => b.quantity - a.quantity)
+  const prevMap = new Map<string, number>();
+  for (const item of prevItems) {
+    prevMap.set(item.productId, (prevMap.get(item.productId) ?? 0) + item.quantity);
+  }
+
+  return Array.from(currentMap.entries())
+    .sort(([, a], [, b]) => b.quantity - a.quantity)
     .slice(0, limit)
-    .map((product, idx) => ({
+    .map(([id, product]) => ({
       name: product.name,
       sold: product.quantity,
       revenue: formatPrice(product.total),
-      // TODO: calcular tendencia real comparando con período anterior
-      trend: `${idx === 0 ? "+" : Math.random() > 0.5 ? "+" : "-"}${Math.floor(Math.random() * 25)}%`,
+      trend: calculatePercentageChange(product.quantity, prevMap.get(id) ?? 0),
     }));
 }
 
-/**
- * Obtiene ventas agrupadas por día para el gráfico de barras
- */
+// ── Ventas diarias ────────────────────────────────────────────────────────────
+
 export async function getDailySalesByPeriod(period: Period): Promise<DailySale[]> {
   const { start, end } = getPeriodDateRange(period);
 
   const orders = await prisma.order.findMany({
-    where: { status: "PAID", createdAt: { gte: start, lte: end } },
+    where: { status: "DELIVERED", createdAt: { gte: start, lte: end } },
     select: { total: true, createdAt: true },
   });
 
-  // Inicializar mapa con todos los días del rango
   const dailyMap = new Map<string, number>();
   const cursor = new Date(start);
   while (cursor <= end) {
-    const key = `${cursor.getUTCDate()}-${DAY_NAMES[cursor.getUTCDay()]}`;
+    const localCursor = new Date(cursor.getTime() - COLOMBIA_OFFSET_MS);
+    const key = `${localCursor.getUTCDate()}-${DAY_NAMES[localCursor.getUTCDay()]}`;
     dailyMap.set(key, 0);
     cursor.setUTCDate(cursor.getUTCDate() + 1);
   }
 
-  // Acumular ventas por día
   for (const order of orders) {
-    const d = new Date(order.createdAt);
-    const key = `${d.getUTCDate()}-${DAY_NAMES[d.getUTCDay()]}`;
+    const localDate = new Date(new Date(order.createdAt).getTime() - COLOMBIA_OFFSET_MS);
+    const key = `${localDate.getUTCDate()}-${DAY_NAMES[localDate.getUTCDay()]}`;
     dailyMap.set(key, (dailyMap.get(key) ?? 0) + Number(order.total));
   }
 
@@ -154,38 +180,487 @@ export async function getDailySalesByPeriod(period: Period): Promise<DailySale[]
   }));
 }
 
-/**
- * Obtiene distribución de ventas por categoría
- */
-export async function getCategorySalesByPeriod(period: Period): Promise<CategorySale[]> {
-  const { start, end } = getPeriodDateRange(period);
+// ── Categorías ────────────────────────────────────────────────────────────────
 
-  const [orderItems, products] = await Promise.all([
+export async function getCategorySalesByPeriod(period: Period): Promise<CategorySale[]> {
+  const { start, end, durationMs } = getPeriodDateRange(period);
+  const prevEnd = new Date(start.getTime() - 1);
+  const prevStart = new Date(start.getTime() - durationMs);
+
+  const [currentItems, prevItems] = await Promise.all([
     prisma.orderItem.findMany({
-      where: { order: { status: "PAID", createdAt: { gte: start, lte: end } } },
-      select: { total: true, productId: true },
+      where: { order: { status: "DELIVERED", createdAt: { gte: start, lte: end } } },
+      select: { total: true, productId: true, quantity: true, orderId: true, name: true },
     }),
-    prisma.product.findMany({
-      select: { id: true, category: { select: { name: true } } },
+    prisma.orderItem.findMany({
+      where: { order: { status: "DELIVERED", createdAt: { gte: prevStart, lte: prevEnd } } },
+      select: { total: true, productId: true },
     }),
   ]);
 
-  const totalRevenue = orderItems.reduce((sum, item) => sum + Number(item.total), 0);
+  if (currentItems.length === 0) return [];
+
+  const totalRevenue = currentItems.reduce((sum, i) => sum + Number(i.total), 0);
   if (totalRevenue === 0) return [];
 
-  const productCategoryMap = new Map(products.map((p) => [p.id, p.category.name]));
+  const allProductIds = [...new Set([
+    ...currentItems.map((i) => i.productId),
+    ...prevItems.map((i) => i.productId),
+  ])];
 
-  const categoryMap = new Map<string, number>();
-  for (const item of orderItems) {
-    const cat = productCategoryMap.get(item.productId) ?? "Otros";
-    categoryMap.set(cat, (categoryMap.get(cat) ?? 0) + Number(item.total));
+  const products = await prisma.product.findMany({
+    where: { id: { in: allProductIds } },
+    select: { id: true, categoryId: true, category: { select: { name: true } } },
+  });
+
+  const productCatMap = new Map(products.map((p) => [p.id, { id: p.categoryId, name: p.category.name }]));
+
+  const categoryIds = [
+    ...new Set(currentItems.map((i) => productCatMap.get(i.productId)?.id).filter(Boolean) as string[]),
+  ];
+
+  const activeCountsRaw = await prisma.product.groupBy({
+    by: ["categoryId"],
+    where: { categoryId: { in: categoryIds }, status: "ACTIVE" },
+    _count: { id: true },
+  });
+  const activeMap = new Map(activeCountsRaw.map((r) => [r.categoryId, r._count.id]));
+
+  const prevRevMap = new Map<string, number>();
+  for (const item of prevItems) {
+    const cat = productCatMap.get(item.productId);
+    if (!cat) continue;
+    prevRevMap.set(cat.id, (prevRevMap.get(cat.id) ?? 0) + Number(item.total));
   }
 
-  return Array.from(categoryMap.entries())
-    .sort(([, a], [, b]) => b - a)
-    .map(([name, total], idx) => ({
-      name,
-      percentage: Math.round((total / totalRevenue) * 100),
-      color: CATEGORY_COLORS[idx % CATEGORY_COLORS.length],
+  type CatAgg = {
+    name: string;
+    revenue: number;
+    units: number;
+    orderIds: Set<string>;
+    productUnits: Map<string, { name: string; units: number }>;
+  };
+
+  const catMap = new Map<string, CatAgg>();
+
+  for (const item of currentItems) {
+    const cat = productCatMap.get(item.productId);
+    if (!cat) continue;
+
+    const entry: CatAgg = catMap.get(cat.id) ?? {
+      name: cat.name, revenue: 0, units: 0,
+      orderIds: new Set(), productUnits: new Map(),
+    };
+
+    entry.revenue += Number(item.total);
+    entry.units += item.quantity;
+    entry.orderIds.add(item.orderId);
+
+    const prod = entry.productUnits.get(item.productId) ?? { name: item.name, units: 0 };
+    prod.units += item.quantity;
+    entry.productUnits.set(item.productId, prod);
+    catMap.set(cat.id, entry);
+  }
+
+  return Array.from(catMap.entries())
+    .sort(([, a], [, b]) => b.revenue - a.revenue)
+    .map(([catId, cat], idx) => {
+      const orders = cat.orderIds.size;
+      const topProduct = Array.from(cat.productUnits.values()).sort((a, b) => b.units - a.units)[0];
+      return {
+        name: cat.name,
+        percentage: Math.round((cat.revenue / totalRevenue) * 100),
+        color: CATEGORY_COLORS[idx % CATEGORY_COLORS.length],
+        revenue: formatPrice(cat.revenue),
+        units: cat.units,
+        orders,
+        avgTicket: formatPrice(orders > 0 ? cat.revenue / orders : 0),
+        topProduct: topProduct?.name ?? "—",
+        topProductUnits: topProduct?.units ?? 0,
+        activeProducts: activeMap.get(catId) ?? 0,
+        trend: calculatePercentageChange(cat.revenue, prevRevMap.get(catId) ?? 0),
+      };
+    });
+}
+
+// ── Tallas más vendidas ───────────────────────────────────────────────────────
+
+export async function getSizesSalesByPeriod(period: Period): Promise<SizeSale[]> {
+  const { start, end, durationMs } = getPeriodDateRange(period);
+  const prevEnd = new Date(start.getTime() - 1);
+  const prevStart = new Date(start.getTime() - durationMs);
+
+  const [currentItems, prevItems] = await Promise.all([
+    prisma.orderItem.findMany({
+      where: { order: { status: "DELIVERED", createdAt: { gte: start, lte: end } } },
+      select: { size: true, quantity: true },
+    }),
+    prisma.orderItem.findMany({
+      where: { order: { status: "DELIVERED", createdAt: { gte: prevStart, lte: prevEnd } } },
+      select: { size: true, quantity: true },
+    }),
+  ]);
+
+  if (currentItems.length === 0) return [];
+
+  const sizeMap = new Map<string, number>();
+  for (const item of currentItems) {
+    sizeMap.set(item.size, (sizeMap.get(item.size) ?? 0) + item.quantity);
+  }
+
+  const prevSizeMap = new Map<string, number>();
+  for (const item of prevItems) {
+    prevSizeMap.set(item.size, (prevSizeMap.get(item.size) ?? 0) + item.quantity);
+  }
+
+  const totalUnits = Array.from(sizeMap.values()).reduce((a, b) => a + b, 0);
+  if (totalUnits === 0) return [];
+
+  const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL", "ONESIZE"];
+
+  return Array.from(sizeMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([size, units]) => ({
+      size: size === "ONESIZE" ? "Talla Única" : size,
+      units,
+      percentage: Math.round((units / totalUnits) * 100),
+      trend: calculatePercentageChange(units, prevSizeMap.get(size) ?? 0),
+    }));
+}
+
+// ── Colores más vendidos ──────────────────────────────────────────────────────
+
+export async function getColorsSalesByPeriod(period: Period): Promise<ColorSale[]> {
+  const { start, end, durationMs } = getPeriodDateRange(period);
+  const prevEnd = new Date(start.getTime() - 1);
+  const prevStart = new Date(start.getTime() - durationMs);
+
+  const [currentItems, prevItems] = await Promise.all([
+    prisma.orderItem.findMany({
+      where: { order: { status: "DELIVERED", createdAt: { gte: start, lte: end } } },
+      select: { colorName: true, quantity: true },
+    }),
+    prisma.orderItem.findMany({
+      where: { order: { status: "DELIVERED", createdAt: { gte: prevStart, lte: prevEnd } } },
+      select: { colorName: true, quantity: true },
+    }),
+  ]);
+
+  if (currentItems.length === 0) return [];
+
+  const colorMap = new Map<string, number>();
+  for (const item of currentItems) {
+    colorMap.set(item.colorName, (colorMap.get(item.colorName) ?? 0) + item.quantity);
+  }
+
+  const prevColorMap = new Map<string, number>();
+  for (const item of prevItems) {
+    prevColorMap.set(item.colorName, (prevColorMap.get(item.colorName) ?? 0) + item.quantity);
+  }
+
+  const totalUnits = Array.from(colorMap.values()).reduce((a, b) => a + b, 0);
+  if (totalUnits === 0) return [];
+
+  return Array.from(colorMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([colorName, units]) => ({
+      colorName,
+      units,
+      percentage: Math.round((units / totalUnits) * 100),
+      trend: calculatePercentageChange(units, prevColorMap.get(colorName) ?? 0),
+    }));
+}
+
+// ── Métodos de pago ───────────────────────────────────────────────────────────
+
+export async function getPaymentMethodsByPeriod(period: Period): Promise<PaymentMethodSale[]> {
+  const { start, end } = getPeriodDateRange(period);
+
+  const orders = await prisma.order.findMany({
+    where: { status: "DELIVERED", createdAt: { gte: start, lte: end } },
+    select: { paymentMethod: true, total: true },
+  });
+
+  if (orders.length === 0) return [];
+
+  const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total), 0);
+  const methodMap = new Map<string, { orders: number; revenue: number }>();
+
+  for (const order of orders) {
+    const entry = methodMap.get(order.paymentMethod) ?? { orders: 0, revenue: 0 };
+    entry.orders++;
+    entry.revenue += Number(order.total);
+    methodMap.set(order.paymentMethod, entry);
+  }
+
+  return Array.from(methodMap.entries())
+    .sort(([, a], [, b]) => b.revenue - a.revenue)
+    .map(([method, data]) => ({
+      method,
+      label: PAYMENT_LABELS[method] ?? method,
+      orders: data.orders,
+      revenue: formatPrice(data.revenue),
+      percentage: Math.round((data.revenue / totalRevenue) * 100),
+    }));
+}
+
+// ── Distribución geográfica ───────────────────────────────────────────────────
+
+export async function getGeographyByPeriod(period: Period): Promise<GeographyData> {
+  const { start, end } = getPeriodDateRange(period);
+
+  const orders = await prisma.order.findMany({
+    where: { status: "DELIVERED", createdAt: { gte: start, lte: end } },
+    select: { shippingDepartment: true, shippingCity: true, total: true },
+  });
+
+  if (orders.length === 0) return { departments: [], cities: [], totalOrders: 0 };
+
+  const deptMap = new Map<string, { orders: number; revenue: number }>();
+  const cityMap = new Map<string, { orders: number; revenue: number }>();
+
+  for (const order of orders) {
+    const dept = order.shippingDepartment;
+    const city = order.shippingCity;
+
+    const d = deptMap.get(dept) ?? { orders: 0, revenue: 0 };
+    d.orders++; d.revenue += Number(order.total);
+    deptMap.set(dept, d);
+
+    const c = cityMap.get(city) ?? { orders: 0, revenue: 0 };
+    c.orders++; c.revenue += Number(order.total);
+    cityMap.set(city, c);
+  }
+
+  const toSorted = (map: Map<string, { orders: number; revenue: number }>, limit: number) =>
+    Array.from(map.entries())
+      .sort(([, a], [, b]) => b.orders - a.orders)
+      .slice(0, limit)
+      .map(([name, data]) => ({
+        name,
+        orders: data.orders,
+        revenue: formatPrice(data.revenue),
+        percentage: Math.round((data.orders / orders.length) * 100),
+      }));
+
+  return {
+    departments: toSorted(deptMap, 6),
+    cities: toSorted(cityMap, 6),
+    totalOrders: orders.length,
+  };
+}
+
+// ── Retención de clientes ─────────────────────────────────────────────────────
+
+export async function getRetentionByPeriod(period: Period): Promise<RetentionData> {
+  const { start, end } = getPeriodDateRange(period);
+
+  const periodOrders = await prisma.order.findMany({
+    where: { status: "DELIVERED", createdAt: { gte: start, lte: end } },
+    select: { userId: true },
+    distinct: ["userId"],
+  });
+
+  if (periodOrders.length === 0) return { returning: 0, newBuyers: 0, returningPercentage: 0, totalBuyers: 0 };
+
+  const userIds = periodOrders.map((o) => o.userId);
+
+  const returningUsers = await prisma.order.findMany({
+    where: { userId: { in: userIds }, status: "DELIVERED", createdAt: { lt: start } },
+    select: { userId: true },
+    distinct: ["userId"],
+  });
+
+  const returning = returningUsers.length;
+  const total = periodOrders.length;
+
+  return {
+    returning,
+    newBuyers: total - returning,
+    returningPercentage: total > 0 ? Math.round((returning / total) * 100) : 0,
+    totalBuyers: total,
+  };
+}
+
+// ── Impacto de descuentos ─────────────────────────────────────────────────────
+
+export async function getDiscountImpactByPeriod(period: Period): Promise<DiscountData> {
+  const { start, end } = getPeriodDateRange(period);
+
+  const [orders, couponsUsed] = await Promise.all([
+    prisma.order.findMany({
+      where: { createdAt: { gte: start, lte: end }, discount: { gt: 0 } },
+      select: { discount: true, total: true, earlyBirdDiscountApplied: true, appliedPromotionId: true },
+    }),
+    prisma.coupon.count({ where: { isUsed: true, usedAt: { gte: start, lte: end } } }),
+  ]);
+
+  const totalDiscount = orders.reduce((sum, o) => sum + Number(o.discount), 0);
+  const grossRevenue = orders.reduce((sum, o) => sum + Number(o.total) + Number(o.discount), 0);
+  const earlyBirdOrders = orders.filter((o) => o.earlyBirdDiscountApplied).length;
+  const promotionOrders = orders.filter((o) => o.appliedPromotionId !== null).length;
+
+  return {
+    totalDiscount: formatPrice(totalDiscount),
+    discountedOrders: orders.length,
+    earlyBirdOrders,
+    promotionOrders,
+    couponsUsed,
+    percentageOfRevenue: grossRevenue > 0 ? `${Math.round((totalDiscount / grossRevenue) * 100)}%` : "0%",
+  };
+}
+
+// ── Tasa de cancelación ───────────────────────────────────────────────────────
+
+export async function getCancellationRateByPeriod(period: Period): Promise<CancellationData> {
+  const { start, end } = getPeriodDateRange(period);
+
+  const [total, cancelled, lostAgg] = await Promise.all([
+    prisma.order.count({ where: { createdAt: { gte: start, lte: end } } }),
+    prisma.order.count({ where: { status: "CANCELLED", createdAt: { gte: start, lte: end } } }),
+    prisma.order.aggregate({
+      where: { status: "CANCELLED", createdAt: { gte: start, lte: end } },
+      _sum: { total: true },
+    }),
+  ]);
+
+  return {
+    cancelled,
+    total,
+    rate: total > 0 ? `${Math.round((cancelled / total) * 100)}%` : "0%",
+    lostRevenue: formatPrice(Number(lostAgg._sum.total ?? 0)),
+  };
+}
+
+// ── Reseñas del período ───────────────────────────────────────────────────────
+
+export async function getReviewsByPeriod(period: Period): Promise<ReviewsData> {
+  const { start, end } = getPeriodDateRange(period);
+
+  const reviews = await prisma.review.findMany({
+    where: { createdAt: { gte: start, lte: end } },
+    select: { rating: true },
+  });
+
+  if (reviews.length === 0) return { newReviews: 0, avgRating: 0, distribution: [] };
+
+  const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+
+  return {
+    newReviews: reviews.length,
+    avgRating: Math.round(avg * 10) / 10,
+    distribution: [5, 4, 3, 2, 1].map((stars) => ({
+      stars,
+      count: reviews.filter((r) => r.rating === stars).length,
+    })),
+  };
+}
+
+// ── Tiempo promedio de entrega ────────────────────────────────────────────────
+
+export async function getAvgDeliveryTime(period: Period): Promise<DeliveryTimeData> {
+  const { start, end } = getPeriodDateRange(period);
+
+  const orders = await prisma.order.findMany({
+    where: {
+      status: "DELIVERED",
+      createdAt: { gte: start, lte: end },
+      paidAt: { not: null },
+      deliveredAt: { not: null },
+    },
+    select: { paidAt: true, deliveredAt: true },
+  });
+
+  if (orders.length === 0) return { avgDays: 0, minDays: 0, maxDays: 0, count: 0 };
+
+  const diffs = orders.map((o) =>
+    (new Date(o.deliveredAt!).getTime() - new Date(o.paidAt!).getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  return {
+    avgDays: Math.round((diffs.reduce((a, b) => a + b, 0) / diffs.length) * 10) / 10,
+    minDays: Math.round(Math.min(...diffs) * 10) / 10,
+    maxDays: Math.round(Math.max(...diffs) * 10) / 10,
+    count: orders.length,
+  };
+}
+
+// ── Horas pico de ventas ──────────────────────────────────────────────────────
+
+export async function getPeakHoursByPeriod(period: Period): Promise<PeakHourData[]> {
+  const { start, end } = getPeriodDateRange(period);
+
+  const orders = await prisma.order.findMany({
+    where: { status: "DELIVERED", createdAt: { gte: start, lte: end } },
+    select: { createdAt: true },
+  });
+
+  if (orders.length === 0) return [];
+
+  const hourMap = new Map<number, number>();
+  for (let h = 0; h < 24; h++) hourMap.set(h, 0);
+
+  for (const order of orders) {
+    const localDate = new Date(new Date(order.createdAt).getTime() - COLOMBIA_OFFSET_MS);
+    const hour = localDate.getUTCHours();
+    hourMap.set(hour, (hourMap.get(hour) ?? 0) + 1);
+  }
+
+  const maxCount = Math.max(...hourMap.values(), 1);
+
+  return Array.from(hourMap.entries()).map(([hour, count]) => ({
+    hour,
+    label: `${hour.toString().padStart(2, "0")}:00`,
+    orders: count,
+    percentage: Math.round((count / maxCount) * 100),
+  }));
+}
+
+// ── Embudo de pedidos (en vivo, sin período) ──────────────────────────────────
+
+export async function getOrdersFunnel(): Promise<FunnelItem[]> {
+  const counts = await prisma.order.groupBy({
+    by: ["status"],
+    _count: { id: true },
+    _sum: { total: true },
+  });
+
+  return counts
+    .map((c) => ({
+      status: c.status,
+      label: FUNNEL_CONFIG[c.status]?.label ?? c.status,
+      count: c._count.id,
+      revenue: formatPrice(Number(c._sum.total ?? 0)),
+      color: FUNNEL_CONFIG[c.status]?.color ?? "gray",
+      actionable: FUNNEL_CONFIG[c.status]?.actionable ?? false,
+      order: FUNNEL_CONFIG[c.status]?.order ?? 99,
+    }))
+    .sort((a, b) => a.order - b.order);
+}
+
+// ── Alertas de stock crítico (en vivo, sin período) ───────────────────────────
+
+export async function getLowStockAlerts(limit = 10): Promise<StockAlert[]> {
+  const candidates = await prisma.productVariant.findMany({
+    where: { isActive: true, stock: { lte: 5 } },
+    select: {
+      stock: true, minStock: true, size: true, sku: true,
+      color: { select: { name: true, product: { select: { name: true } } } },
+    },
+    orderBy: { stock: "asc" },
+    take: limit * 2,
+  });
+
+  return candidates
+    .filter((v) => v.stock <= v.minStock)
+    .slice(0, limit)
+    .map((v) => ({
+      productName: v.color.product.name,
+      colorName: v.color.name,
+      size: v.size === "ONESIZE" ? "Única" : v.size,
+      sku: v.sku,
+      stock: v.stock,
+      minStock: v.minStock,
     }));
 }

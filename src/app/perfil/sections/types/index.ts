@@ -25,6 +25,30 @@ export interface UseProfileInfoResult {
   startEditName: () => void;
   cancelEditName: () => void;
   handleSaveName: () => Promise<void>;
+  // Phone editing
+  editingPhone: boolean;
+  phone: string;
+  savingPhone: boolean;
+  setPhone: (v: string) => void;
+  startEditPhone: () => void;
+  cancelEditPhone: () => void;
+  handleSavePhone: () => Promise<void>;
+  // Cedula editing
+  editingCedula: boolean;
+  cedula: string;
+  savingCedula: boolean;
+  setCedula: (v: string) => void;
+  startEditCedula: () => void;
+  cancelEditCedula: () => void;
+  handleSaveCedula: () => Promise<void>;
+  // Recovery email editing
+  editingRecoveryEmail: boolean;
+  recoveryEmail: string;
+  savingRecoveryEmail: boolean;
+  setRecoveryEmail: (v: string) => void;
+  startEditRecoveryEmail: () => void;
+  cancelEditRecoveryEmail: () => void;
+  handleSaveRecoveryEmail: () => Promise<void>;
   // Password
   showPasswordSection: boolean;
   currentPassword: string;

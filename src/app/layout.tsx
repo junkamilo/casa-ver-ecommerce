@@ -4,6 +4,7 @@ import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import SocialProofWrapper from "@/components/SocialProofWrapper";
 import { Providers } from "@/components/Providers";
+import WhatsAppFloatingButton from "@/components/WhatsAppFloatingButton";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { BASE_METADATA } from "@/lib/seo";
 
@@ -28,6 +29,7 @@ export default function RootLayout({
           <CartProvider>
             {children}
             <SocialProofWrapper />
+            <WhatsAppFloatingButton />
           </CartProvider>
         </Providers>
         <SpeedInsights />

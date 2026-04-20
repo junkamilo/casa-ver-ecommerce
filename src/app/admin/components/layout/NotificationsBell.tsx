@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Bell, CheckCircle2, Clock, ArrowUpRight } from "lucide-react";
+import { Bell, CheckCircle2, Clock, ArrowUpRight, PackageX, Palette } from "lucide-react";
 import Link from "next/link";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
 import { timeAgo } from "../../utils";
+import type { StockAlert } from "@/app/api/admin/stock-alerts/route";
 
 interface AdminNotification {
   id: string;
@@ -15,34 +16,41 @@ interface AdminNotification {
   createdAt: string;
 }
 
-const POLL_INTERVAL = 30_000; // 30 segundos
+const POLL_INTERVAL = 30_000;
 
 export default function NotificationsBell() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
+  const [stockAlerts, setStockAlerts] = useState<StockAlert[]>([]);
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const fetchNotifications = useCallback(async () => {
+  const fetchAll = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/notifications", { cache: "no-store" });
-      if (!res.ok) return;
-      const data = await res.json();
-      setUnreadCount(data.unreadCount);
-      setNotifications(data.notifications);
+      const [notifRes, stockRes] = await Promise.all([
+        fetch("/api/admin/notifications", { cache: "no-store" }),
+        fetch("/api/admin/stock-alerts", { cache: "no-store" }),
+      ]);
+      if (notifRes.ok) {
+        const data = await notifRes.json();
+        setUnreadCount(data.unreadCount);
+        setNotifications(data.notifications);
+      }
+      if (stockRes.ok) {
+        const data = await stockRes.json();
+        setStockAlerts(data.alerts ?? []);
+      }
     } catch {
       // silently ignore network errors
     }
   }, []);
 
-  // Carga inicial + polling
   useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, POLL_INTERVAL);
+    fetchAll();
+    const interval = setInterval(fetchAll, POLL_INTERVAL);
     return () => clearInterval(interval);
-  }, [fetchNotifications]);
+  }, [fetchAll]);
 
-  // Cerrar al hacer clic fuera del panel
   useEffect(() => {
     if (!open) return;
     function handleClickOutside(e: MouseEvent) {
@@ -55,12 +63,8 @@ export default function NotificationsBell() {
   }, [open]);
 
   async function handleOpen() {
-    if (open) {
-      setOpen(false);
-      return;
-    }
+    if (open) { setOpen(false); return; }
     setOpen(true);
-    // Marcar como leídas al abrir
     if (unreadCount > 0) {
       try {
         await fetch("/api/admin/notifications/mark-read", { method: "POST" });
@@ -72,6 +76,8 @@ export default function NotificationsBell() {
     }
   }
 
+  const totalBadgeCount = unreadCount + stockAlerts.length;
+
   return (
     <div className="relative" ref={panelRef}>
       {/* Botón campana */}
@@ -81,9 +87,11 @@ export default function NotificationsBell() {
         aria-label="Notificaciones"
       >
         <Bell className="w-5 h-5" />
-        {unreadCount > 0 && (
-          <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none shadow-sm">
-            {unreadCount > 9 ? "9+" : unreadCount}
+        {totalBadgeCount > 0 && (
+          <span className={`absolute top-0.5 right-0.5 min-w-[18px] h-[18px] text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none shadow-sm ${
+            stockAlerts.length > 0 ? "bg-red-500" : "bg-red-500"
+          }`}>
+            {totalBadgeCount > 9 ? "9+" : totalBadgeCount}
           </span>
         )}
       </button>
@@ -91,7 +99,8 @@ export default function NotificationsBell() {
       {/* Panel desplegable */}
       {open && (
         <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl border border-gray-100 shadow-xl z-50 overflow-hidden">
-          {/* Header del panel */}
+
+          {/* Header */}
           <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100">
             <span className="text-sm font-bold text-gray-900">Notificaciones</span>
             <Link
@@ -99,13 +108,69 @@ export default function NotificationsBell() {
               onClick={() => setOpen(false)}
               className="text-xs font-semibold text-[#154734] flex items-center gap-0.5 hover:opacity-80 transition-opacity"
             >
-              Ver todos <ArrowUpRight className="w-3.5 h-3.5" />
+              Ver pedidos <ArrowUpRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
-          {/* Lista */}
-          <div className="divide-y divide-gray-50 max-h-[380px] overflow-y-auto">
-            {notifications.length === 0 ? (
+          <div className="divide-y divide-gray-50 max-h-[460px] overflow-y-auto">
+
+            {/* ── Alertas de stock ─────────────────────────── */}
+            {stockAlerts.length > 0 && (
+              <>
+                <div className="px-4 py-2 bg-red-50 flex items-center gap-2">
+                  <PackageX className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500">
+                    Alertas de stock ({stockAlerts.length})
+                  </span>
+                </div>
+
+                {stockAlerts.map((alert, i) => (
+                  <div
+                    key={`stock-${i}`}
+                    className="flex items-start gap-3 px-4 py-3 bg-red-50/40 hover:bg-red-50/70 transition-colors"
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                      alert.type === "product" ? "bg-red-100" : "bg-orange-100"
+                    }`}>
+                      {alert.type === "product" ? (
+                        <PackageX className="w-4 h-4 text-red-600" />
+                      ) : (
+                        <Palette className="w-4 h-4 text-orange-500" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-gray-800 leading-snug">
+                        {alert.type === "product" ? "Prenda agotada" : "Color agotado"}
+                      </p>
+                      <p className="text-[11px] text-gray-500 mt-0.5 truncate">
+                        {alert.type === "product"
+                          ? alert.productName
+                          : `${alert.productName} — ${alert.colorName}`}
+                      </p>
+                    </div>
+                    <Link
+                      href="/admin/productos"
+                      onClick={() => setOpen(false)}
+                      className="shrink-0 mt-0.5 text-[10px] font-bold text-red-500 hover:text-red-700 transition-colors whitespace-nowrap"
+                    >
+                      Ver →
+                    </Link>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* ── Notificaciones de pedidos ─────────────────── */}
+            {notifications.length > 0 && (
+              <div className="px-4 py-2 bg-gray-50 flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
+                  Pedidos
+                </span>
+              </div>
+            )}
+
+            {notifications.length === 0 && stockAlerts.length === 0 ? (
               <SectionEmptyState message="Sin notificaciones." />
             ) : (
               notifications.map((notif) => (
@@ -119,9 +184,7 @@ export default function NotificationsBell() {
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-gray-800 leading-snug">
-                      {notif.title}
-                    </p>
+                    <p className="text-xs font-semibold text-gray-800 leading-snug">{notif.title}</p>
                     <p className="text-[11px] text-gray-500 mt-0.5 truncate">{notif.body}</p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0 text-[10px] text-gray-400 mt-0.5">

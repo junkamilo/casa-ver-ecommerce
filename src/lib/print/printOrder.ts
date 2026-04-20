@@ -25,6 +25,7 @@ export interface PrintableOrder {
     name: string;
     email: string;
     phone: string;
+    cedula?: string;
   };
   shipping: {
     address: string;
@@ -37,6 +38,16 @@ export interface PrintableOrder {
   shippingCost: number;
   discount: number;
   total: number;
+}
+
+export interface PrintableCustomer {
+  orderNumber: string;
+  date: string;
+  name: string;
+  email: string;
+  phone: string;
+  cedula?: string;
+  address: string;
 }
 
 // ─── Helpers internos ─────────────────────────────────────────────────────────
@@ -230,6 +241,7 @@ function buildDocument(order: PrintableOrder): string {
       <div class="info-name">${order.customer.name}</div>
       <div class="info-line">${order.customer.email}</div>
       <div class="info-line">${order.customer.phone}</div>
+      ${order.customer.cedula ? `<div class="info-line">Cédula: <span class="info-value">${order.customer.cedula}</span></div>` : ""}
       <div class="info-line" style="margin-top:10px;">${order.shipping.address}</div>
     </div>
     <div>
@@ -294,7 +306,136 @@ export function printOrder(order: PrintableOrder): void {
 
   const win = window.open("", "_blank", "width=840,height=720");
   if (!win) {
-    // El navegador bloqueó el popup (bloqueador de ventanas emergentes activo)
+    alert("Permite ventanas emergentes en este sitio para poder descargar el PDF.");
+    return;
+  }
+
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+}
+
+// ─── PDF solo datos del cliente ───────────────────────────────────────────────
+
+function buildCustomerDocument(c: PrintableCustomer): string {
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Datos del Cliente — ${c.orderNumber} — Casa Verde</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Georgia, "Times New Roman", serif;
+      color: #1a1a1a;
+      background: #fff;
+      padding: 48px 56px;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding-bottom: 20px;
+      border-bottom: 2px solid ${BRAND_GREEN};
+      margin-bottom: 28px;
+    }
+    .brand-name { font-size: 24px; font-weight: 700; color: ${BRAND_GREEN}; letter-spacing: 2px; }
+    .brand-url  { font-size: 11px; color: #999; margin-top: 4px; }
+    .order-meta { text-align: right; }
+    .order-meta .label       { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+    .order-meta .order-number{ font-size: 18px; font-weight: 700; color: ${BRAND_GREEN}; margin-top: 2px; }
+    .order-meta .order-date  { font-size: 11px; color: #888; margin-top: 4px; }
+
+    .section-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: ${BRAND_GOLD};
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 16px;
+    }
+    .card {
+      background: #fafafa;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px 24px;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 13px;
+    }
+    .row:last-child { border-bottom: none; }
+    .row .key   { color: #6b7280; }
+    .row .val   { font-weight: 600; color: #111; text-align: right; max-width: 60%; }
+    .address-row {
+      padding: 12px 0 0;
+      font-size: 13px;
+    }
+    .address-row .key { color: #6b7280; margin-bottom: 4px; }
+    .address-row .val { font-weight: 600; color: #111; line-height: 1.5; }
+
+    .footer {
+      margin-top: 40px;
+      padding-top: 16px;
+      border-top: 1px solid #eee;
+      text-align: center;
+    }
+    .footer-thanks { font-size: 12px; color: ${BRAND_GREEN}; font-weight: 600; }
+    .footer-url    { font-size: 11px; color: #bbb; margin-top: 4px; }
+
+    @media print { body { padding: 20px 28px; } }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <div class="brand-name">CASA VERDE</div>
+      <div class="brand-url">casaverdeoficial.com</div>
+    </div>
+    <div class="order-meta">
+      <div class="label">Pedido</div>
+      <div class="order-number">${c.orderNumber}</div>
+      <div class="order-date">${c.date}</div>
+    </div>
+  </div>
+
+  <div class="section-title">Datos del Cliente</div>
+  <div class="card">
+    <div class="row"><span class="key">Nombre</span><span class="val">${c.name}</span></div>
+    <div class="row"><span class="key">Email</span><span class="val">${c.email}</span></div>
+    <div class="row"><span class="key">Teléfono</span><span class="val">${c.phone}</span></div>
+    ${c.cedula ? `<div class="row"><span class="key">Cédula</span><span class="val">${c.cedula}</span></div>` : ""}
+    <div class="address-row">
+      <div class="key">Dirección de Entrega</div>
+      <div class="val">${c.address}</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-thanks">Gracias por tu compra en Casa Verde</div>
+    <div class="footer-url">casaverdeoficial.com</div>
+  </div>
+
+  <script>window.onload = function () { window.print(); };</script>
+</body>
+</html>`;
+}
+
+/**
+ * Abre una ventana solo con los datos del cliente y dispara el diálogo de impresión.
+ */
+export function printCustomer(customer: PrintableCustomer): void {
+  const html = buildCustomerDocument(customer);
+
+  const win = window.open("", "_blank", "width=680,height=560");
+  if (!win) {
     alert("Permite ventanas emergentes en este sitio para poder descargar el PDF.");
     return;
   }

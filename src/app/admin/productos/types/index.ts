@@ -82,6 +82,7 @@ export interface ProductModalProps {
   formLoading: boolean;
   submitting: boolean;
   categories: Category[];
+  presetColors: PresetColor[];
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
   name: string; setName: (v: string) => void;
@@ -172,10 +173,16 @@ export interface GeneralInfoSectionProps {
   isSet?: boolean;
 }
 
+export interface PresetColor {
+  name: string;
+  hex: string;
+}
+
 export interface ColorsSectionProps {
   selectedColors: SelectedColor[];
   selectedSizes: string[];
   disabled: boolean;
+  presetColors: PresetColor[];
   colorError?: string | null;
   sizeError?: string | null;
   colorImagesError?: string | null;
@@ -189,6 +196,7 @@ export interface SetItemCardProps {
   item: SetItemForm;
   index: number;
   disabled: boolean;
+  presetColors: PresetColor[];
   errors?: SingleItemFormErrors;
   onRemove: (id: string) => void;
   onUpdate: (id: string, u: Partial<SetItemForm>) => void;
@@ -202,6 +210,7 @@ export interface SetItemCardProps {
 export interface SetItemsSectionProps {
   items: SetItemForm[];
   disabled: boolean;
+  presetColors: PresetColor[];
   itemErrors?: ItemFormErrors;
   noItemsError?: string | null;
   onAdd: () => void;

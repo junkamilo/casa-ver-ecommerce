@@ -5,7 +5,9 @@ import type { CollectionProduct } from "@/components/shared/ProductCollection/ty
 import type { TestimonialItem } from "@/components/layout/Testimonials/types/types";
 
 export function mapUIColor(color: any): UIColor {
-  const activeVariants = (color.variants as any[]).filter((v) => v.stock > 0);
+  const allVariants = color.variants as any[];
+  const activeVariants = allVariants.filter((v) => v.stock > 0);
+  const totalStock = allVariants.reduce((s: number, v: any) => s + (v.stock as number), 0);
   return {
     id: color.id,
     name: color.name,
@@ -17,6 +19,7 @@ export function mapUIColor(color: any): UIColor {
       variantId: v.id as string,
       sku: v.sku as string,
     })),
+    isOutOfStock: totalStock === 0,
   };
 }
 

@@ -21,7 +21,6 @@ export function useProductClient(product: UIProduct) {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [showAddedNotification, setShowAddedNotification] = useState(false);
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
-  const [descOpen, setDescOpen] = useState(false);
   const [activeView, setActiveView] = useState<string>(
     product.isSet && product.items.length > 0 ? product.items[0].id : "main"
   );
@@ -147,8 +146,6 @@ export function useProductClient(product: UIProduct) {
     setSelectedSize,
     showAddedNotification,
     openAccordion,
-    descOpen,
-    setDescOpen,
     activeView,
     // computed
     activeItem,

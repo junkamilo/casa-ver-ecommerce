@@ -19,6 +19,7 @@ export interface UIColor {
   images: string[];
   availableSizes: string[];
   variants: UIColorVariant[];
+  isOutOfStock: boolean;
 }
 
 export interface UIProductItem {

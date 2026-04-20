@@ -1,7 +1,21 @@
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, Search } from "lucide-react";
 import { OrderEmptyStateProps } from "../types";
 
-export function OrderEmptyState({ hasActiveFilter }: OrderEmptyStateProps) {
+export function OrderEmptyState({ hasActiveFilter, hasSearch }: OrderEmptyStateProps) {
+  if (hasSearch) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+        <div className="p-4 bg-gray-100 rounded-full mb-4">
+          <Search className="w-8 h-8 text-gray-400" />
+        </div>
+        <p className="text-sm font-semibold text-gray-700">Sin resultados</p>
+        <p className="text-xs text-gray-400 mt-1">
+          No encontramos pedidos con ese número. Verifica e intenta de nuevo.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
       <div className="p-4 bg-gray-100 rounded-full mb-4">

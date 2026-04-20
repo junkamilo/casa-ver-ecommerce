@@ -10,11 +10,19 @@ export function useHeaderClient() {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const { cartCount, openCart } = useCart();
   const { data: session } = useSession();
+
+  // isAdmin solo se evalúa después del montaje para evitar hydration mismatch:
+  // el servidor SSR tiene la sesión pero el cliente la recibe async via useSession.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const isAdmin = (session?.user as any)?.role === "ADMIN";
+  const isAdmin = mounted && (session?.user as any)?.role === "ADMIN";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);

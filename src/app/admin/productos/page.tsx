@@ -141,6 +141,7 @@ export default function AdminProductos() {
           formLoading={formLoading}
           submitting={submitting}
           categories={list.categories}
+          presetColors={list.presetColors}
           onClose={() => setShowModal(false)}
           onSubmit={handleSubmit}
           {...form}

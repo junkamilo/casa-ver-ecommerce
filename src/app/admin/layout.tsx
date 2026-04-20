@@ -8,6 +8,7 @@ import AccessDenied from "./components/layout/AccessDenied";
 import AppTopHeader from "@/components/layout/AppTopHeader";
 import NotificationsBell from "./components/layout/NotificationsBell";
 import AppSidebar from "@/components/layout/AppSidebar";
+import { Toaster } from "@/components/ui/sonner";
 import { ADMIN_NAV } from "./constants";
 
 const getPageLabel = (pathname: string): string => {
@@ -75,6 +76,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </main>
       </div>
+      <Toaster position="top-right" richColors />
     </div>
   );
 }

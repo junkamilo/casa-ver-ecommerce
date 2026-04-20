@@ -106,6 +106,22 @@ export async function updateOrderStatus(orderNumber: string, statusEs: string): 
 
 export async function getOrders(): Promise<Order[]> {
   await requireAdmin();
+
+  // Raw query: shippingCedula (snapshot del checkout) + cedula del usuario registrado.
+  // Prisma client aún no conoce estas columnas hasta que se regenere tras la migración.
+  const cedulaRows = await prisma.$queryRaw<{
+    orderNumber: string;
+    shippingCedula: string | null;
+    userCedula: string | null;
+  }[]>`
+    SELECT o."orderNumber", o."shippingCedula", u."cedula" AS "userCedula"
+    FROM "orders" o
+    LEFT JOIN "users" u ON o."userId" = u."id"
+  `;
+  const cedulaMap = new Map(
+    cedulaRows.map((r) => [r.orderNumber, r.shippingCedula ?? r.userCedula])
+  );
+
   const orders = await prisma.order.findMany({
     include: {
       user: { select: { email: true } },
@@ -119,6 +135,7 @@ export async function getOrders(): Promise<Order[]> {
     customer:      o.shippingName,
     email:         o.user.email ?? "",
     phone:         o.shippingPhone,
+    cedula:        cedulaMap.get(o.orderNumber) ?? undefined,
     total:         Number(o.total),
     subtotal:      Number(o.subtotal),
     shippingCost:  Number(o.shippingCost),

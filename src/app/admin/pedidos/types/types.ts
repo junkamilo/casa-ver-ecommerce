@@ -11,6 +11,7 @@ export interface Order {
   customer: string;
   email: string;
   phone: string;
+  cedula?: string;
   items: OrderItem[];
   total: number;
   subtotal?: number;
