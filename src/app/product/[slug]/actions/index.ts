@@ -53,11 +53,26 @@ export async function saveReview(
       return { success: false, error: "No puedes reseñar este producto" };
     }
 
+    // Buscar orden PAID del usuario que contenga este producto
+    const order = await prisma.order.findFirst({
+      where: {
+        userId,
+        status: "PAID",
+        items: { some: { productId } },
+      },
+      select: { id: true },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!order) {
+      return { success: false, error: "Solo puedes reseñar productos que hayas comprado" };
+    }
+    const orderId = order.id;
+
     await prisma.$transaction(async (tx) => {
       await tx.review.upsert({
-        where: { userId_productId: { userId, productId } },
-        update: { rating, comment: comment ?? null },
-        create: { userId, productId, rating, comment: comment ?? null },
+        where: { orderId_productId: { orderId, productId } },
+        update: { rating, comment: comment ?? "" },
+        create: { userId, productId, orderId, rating, comment: comment ?? "" },
       });
 
       const agg = await tx.review.aggregate({
@@ -102,15 +117,15 @@ export async function deleteReview(
     });
     if (!product) return { success: false, error: "Producto no encontrado" };
 
-    const existing = await prisma.review.findUnique({
-      where: { userId_productId: { userId, productId } },
+    const existing = await prisma.review.findFirst({
+      where: { userId, productId },
       select: { id: true },
     });
     if (!existing) return { success: false, error: "No tienes una reseña para eliminar" };
 
     await prisma.$transaction(async (tx) => {
       await tx.review.delete({
-        where: { userId_productId: { userId, productId } },
+        where: { id: existing.id },
       });
 
       const agg = await tx.review.aggregate({

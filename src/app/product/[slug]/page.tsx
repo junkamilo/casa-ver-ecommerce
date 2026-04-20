@@ -110,6 +110,7 @@ export default async function ProductPage({ params }: Props) {
         },
       },
       reviews: {
+        where: { status: "APPROVED" },
         orderBy: { createdAt: "desc" },
         include: {
           user: { select: { name: true } },
