@@ -74,10 +74,10 @@ export function TopProductsTable({ products }: TopProductsTableProps) {
         ) : (
           <>
             {/* Tabla Desktop */}
-            <div className="hidden sm:block overflow-x-auto">
+            <div className="hidden sm:block overflow-auto max-h-150">
               <table className="w-full">
                 <thead>
-                  <tr className="text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50/50 border-b border-gray-100">
+                  <tr className="sticky top-0 z-10 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50/50 border-b border-gray-100">
                     <th className="px-6 py-4">Ranking</th>
                     <th className="px-6 py-4">Producto</th>
                     <th className="px-6 py-4 text-center">Unidades</th>

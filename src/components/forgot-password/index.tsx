@@ -4,7 +4,12 @@ import { useForgotPasswordForm } from "./hooks";
 import { RecoveryEmailStep, NewPasswordStep, SuccessStep } from "./components";
 import VerifyCodeStep from "@/components/register/components/VerifyCodeStep";
 
-const ForgotPasswordForm = () => {
+interface ForgotPasswordFormProps {
+  initialTokenId?: string;
+  initialCode?: string;
+}
+
+const ForgotPasswordForm = ({ initialTokenId, initialCode }: ForgotPasswordFormProps) => {
   const {
     step,
     error,
@@ -22,7 +27,7 @@ const ForgotPasswordForm = () => {
     handleSubmitPassword,
     errorsPassword,
     onSubmitNewPassword,
-  } = useForgotPasswordForm();
+  } = useForgotPasswordForm({ initialTokenId, initialCode });
 
   if (step === "email") {
     return (

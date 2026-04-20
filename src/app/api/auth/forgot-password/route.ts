@@ -80,11 +80,15 @@ export async function POST(req: NextRequest) {
       select: { id: true },
     });
 
+    // ── Construir URL mágica de restablecimiento ──────────────────────────────
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://casaverdeoficial.com";
+    const resetUrl = `${baseUrl}/auth/recuperar-contrasena?tokenId=${token.id}&code=${code}`;
+
     // ── Enviar email al recoveryEmail ─────────────────────────────────────────
     await sendPasswordResetEmail({
       customerEmail: user.recoveryEmail,
       customerName:  user.name || user.recoveryEmail,
-      code,
+      resetUrl,
     });
 
     // ── Devolver tokenId opaco (sin userId, sin email) ────────────────────────

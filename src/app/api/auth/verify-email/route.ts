@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { compare } from "bcryptjs";
 import { z } from "zod";
+import { sendWelcomeEmail } from "@/services/email/client";
 
 const MAX_ATTEMPTS = 5;
 
@@ -115,6 +116,10 @@ export async function POST(request: Request) {
         where: { email: pending.email },
         select: { earlyBirdDiscount: true },
       });
+
+      sendWelcomeEmail({ customerEmail: pending.email, customerName: pending.name || pending.email }).catch(
+        (err) => console.error("[Email] Error enviando bienvenida:", err)
+      );
 
       return NextResponse.json({
         success: true,

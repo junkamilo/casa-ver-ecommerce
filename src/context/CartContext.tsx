@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react";
+import { useSession } from "next-auth/react";
 import { StaticImageData } from "next/image";
 
 export interface CartItem {
@@ -41,6 +42,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [buyNowItem, setBuyNowItem] = useState<CartItem | null>(null);
+  const { data: session } = useSession();
+  const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Hidratación desde localStorage (evita mismatch SSR) ─────────────────────
   useEffect(() => {
@@ -63,6 +66,32 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch {}
   }, [items]);
+
+  // ── Sincronizar carrito → servidor (debounce 2s, solo usuarios logueados) ───
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    if (syncTimer.current) clearTimeout(syncTimer.current);
+    syncTimer.current = setTimeout(() => {
+      fetch("/api/cart/sync", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          items: items.map((i) => ({
+            variantId: i.variantId,
+            productId: i.productId,
+            sku:       i.sku,
+            name:      i.name,
+            price:     i.price,
+            imageUrl:  typeof i.image === "string" ? i.image : null,
+            color:     i.color,
+            size:      i.size,
+            quantity:  i.quantity,
+          })),
+        }),
+      }).catch(() => {});
+    }, 2000);
+    return () => { if (syncTimer.current) clearTimeout(syncTimer.current); };
+  }, [items, session?.user?.id]);
 
   // ── Body scroll lock cuando el carrito está abierto ─────────────────────────
   useEffect(() => {

@@ -1,0 +1,9 @@
+export const FROM_EMAIL      = "noreply@talentocasaverde@gmail.com";
+export const FROM_NAME       = "Casa Verde";
+export const REPLY_TO        = "contacto@talentocasaverde@gmail.com";
+export const WHATSAPP_URL    = "https://wa.me/573022457432";
+export const WHATSAPP_NUMBER = "302 245 7432";
+export const CONTACT_EMAIL   = "talentocasaverde@gmail.com";
+export const BASE_URL        = "https://casaverdeoficial.com";
+export const BRAND_GREEN     = "#154734";
+export const BRAND_GOLD      = "#C19A6B";

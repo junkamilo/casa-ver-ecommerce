@@ -166,9 +166,10 @@ const GarmentTypeList = ({
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
       {/* Desktop */}
-      <table className="w-full hidden md:table">
+      <div className="hidden md:block overflow-auto max-h-150">
+      <table className="w-full">
         <thead>
-          <tr className="bg-gray-50/80 border-b border-gray-100">
+          <tr className="sticky top-0 z-10 bg-gray-50/80 border-b border-gray-100">
             {["Nombre", "Slug", "Productos", "Estado", "Acciones"].map((h, i) => (
               <th
                 key={h}
@@ -193,6 +194,7 @@ const GarmentTypeList = ({
           ))}
         </tbody>
       </table>
+      </div>
 
       {/* Móvil */}
       <div className="md:hidden">

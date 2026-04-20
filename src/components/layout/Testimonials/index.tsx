@@ -4,7 +4,7 @@ import { MessageSquare, Sparkles } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import TestimonialCard from "./components/TestimonialCard";
-import { TESTIMONIALS } from "./constants/constants";
+import { SEED_TESTIMONIALS } from "./constants/constants";
 import { TestimonialItem } from "./types/types";
 import { useEffect, useRef } from "react";
 
@@ -29,7 +29,7 @@ const Testimonials = ({ comments }: Props) => {
     [Autoplay({ delay: 3000, stopOnInteraction: false })]
   );
 
-  const items = comments ?? TESTIMONIALS;
+  const items = comments ?? SEED_TESTIMONIALS;
 
   useEffect(() => {
     if (!emblaApi) return;
