@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Star, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -16,7 +16,7 @@ interface ReviewInfo {
 
 type PageState = "loading" | "form" | "success" | "error";
 
-export default function ResenasPage() {
+function ResenasContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
@@ -247,5 +247,19 @@ export default function ResenasPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ResenasPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F2EAE0] flex items-center justify-center">
+          <Loader2 className="w-10 h-10 text-[#154734] animate-spin" />
+        </div>
+      }
+    >
+      <ResenasContent />
+    </Suspense>
   );
 }
