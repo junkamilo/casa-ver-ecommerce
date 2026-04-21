@@ -35,24 +35,32 @@ const SocialProofPopup = () => {
   useEffect(() => {
     if (isPermanentlyClosed || sales.length === 0) return;
 
+    let hideTimer: ReturnType<typeof setTimeout>;
+    let indexTimer: ReturnType<typeof setTimeout>;
+    let intervalId: ReturnType<typeof setInterval>;
+
     const runCycle = () => {
       setIsVisible(true);
-      const hideTimer = setTimeout(() => {
+      hideTimer = setTimeout(() => {
         setIsVisible(false);
-        setTimeout(() => {
+        indexTimer = setTimeout(() => {
           setCurrentIndex((prev) => (prev + 1) % sales.length);
         }, 500);
       }, DISPLAY_DURATION);
-      return hideTimer;
     };
 
     const initialTimeout = setTimeout(() => {
       runCycle();
-      const intervalId = setInterval(runCycle, INTERVAL_DURATION);
-      return () => clearInterval(intervalId);
+      intervalId = setInterval(runCycle, INTERVAL_DURATION);
     }, 4000);
 
-    return () => clearTimeout(initialTimeout);
+    return () => {
+      clearTimeout(initialTimeout);
+      clearTimeout(hideTimer);
+      clearTimeout(indexTimer);
+      clearInterval(intervalId);
+      setIsVisible(false);
+    };
   }, [isPermanentlyClosed, sales]);
 
   if (isPermanentlyClosed || sales.length === 0) return null;
@@ -62,7 +70,7 @@ const SocialProofPopup = () => {
   return (
     <div
       className={`
-        fixed z-[9999]
+        fixed z-40
         left-3 sm:left-4
         bottom-4 sm:bottom-6 md:bottom-8
         w-[calc(100vw-24px)] sm:w-[calc(100vw-32px)] md:max-w-sm lg:max-w-md

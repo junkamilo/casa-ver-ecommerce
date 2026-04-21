@@ -65,14 +65,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [items]);
 
   // ── Body scroll lock cuando el carrito está abierto ─────────────────────────
-  // Usar solo overflow: hidden en lugar de manipular position: fixed
-  // Esto evita romper el stacking context y afectar event handling en móvil
   useEffect(() => {
     if (!isCartOpen) return;
-    const originalOverflow = document.body.style.overflow;
+    document.body.dataset.scrollLockCart = "1";
     document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = originalOverflow;
+      delete document.body.dataset.scrollLockCart;
+      if (!document.body.dataset.scrollLockModal) {
+        document.body.style.overflow = "";
+      }
     };
   }, [isCartOpen]);
 

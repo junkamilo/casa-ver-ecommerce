@@ -53,7 +53,6 @@ export function useProductGallery(
     const absY = Math.abs(deltaY);
 
     if (absX > 50 && absX > absY) {
-      if (e.cancelable) e.preventDefault();
       goTo(deltaX < 0 ? currentIndex + 1 : currentIndex - 1);
     }
 

@@ -28,11 +28,13 @@ export function MobileFilterDrawer({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] lg:hidden flex">
+    <div className="fixed inset-0 z-50 lg:hidden flex">
       {/* Overlay */}
       <div
         className="absolute inset-0 bg-[#154734]/20 backdrop-blur-sm transition-opacity duration-300"
         onClick={onClose}
+        onTouchEnd={onClose}
+        style={{ touchAction: "manipulation" }}
       />
 
       {/* Panel */}
