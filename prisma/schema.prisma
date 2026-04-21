@@ -3,9 +3,14 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider     = "postgresql"
+  url          = env("DATABASE_URL")        // Pooler de Neon (puerto 6543)
+  directUrl    = env("DIRECT_URL")          // Conexión directa para migrations (puerto 5432)
+
+  // PRODUCCIÓN: DATABASE_URL debe incluir estos parámetros para soportar 50+ usuarios simultáneos:
+  //   ?pgbouncer=true&connection_limit=1
+  // Ejemplo: postgresql://user:pass@ep-xxx.neon.tech:6543/neondb?pgbouncer=true&connection_limit=1
+  // Sin estos parámetros, Neon agota las conexiones bajo carga y las transacciones fallan.
 }
 
 // ============================================================
