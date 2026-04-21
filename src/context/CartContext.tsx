@@ -65,19 +65,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [items]);
 
   // ── Body scroll lock cuando el carrito está abierto ─────────────────────────
+  // Usar solo overflow: hidden en lugar de manipular position: fixed
+  // Esto evita romper el stacking context y afectar event handling en móvil
   useEffect(() => {
     if (!isCartOpen) return;
-    const scrollY = window.scrollY;
+    const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = "100%";
     return () => {
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      window.scrollTo(0, scrollY);
+      document.body.style.overflow = originalOverflow;
     };
   }, [isCartOpen]);
 

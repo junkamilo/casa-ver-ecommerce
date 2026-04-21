@@ -110,8 +110,9 @@ const SearchModal = ({ onClose }: SearchModalProps) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 z-100 flex items-start justify-center pt-0 sm:pt-12 md:pt-20 lg:pt-24 px-0 sm:px-4"
+      className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-0 sm:pt-12 md:pt-20 lg:pt-24 px-0 sm:px-4"
       onClick={onClose}
+      role="presentation"
     >
       <div
         className="bg-background w-full h-full sm:h-auto sm:max-w-3xl 2xl:max-w-4xl sm:rounded-lg md:rounded-xl shadow-xl overflow-hidden relative animate-in fade-in slide-in-from-top-5 duration-200"
@@ -142,6 +143,7 @@ const SearchModal = ({ onClose }: SearchModalProps) => {
               placeholder="Buscar productos..."
               className="flex-1 bg-transparent outline-none text-base sm:text-lg md:text-xl text-foreground placeholder:text-muted-foreground h-10 sm:h-12"
               autoFocus
+              style={{ touchAction: "manipulation" }}
             />
             {query && (
               <button

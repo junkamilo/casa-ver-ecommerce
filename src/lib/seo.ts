@@ -19,6 +19,14 @@ export const BASE_METADATA: Metadata = {
     template: `%s | ${SITE_NAME}`, // Ej: "Tienda | Casa Verde"
   },
   description: DEFAULT_DESCRIPTION,
+  // ── Viewport explícito para optimizar touch/móvil ──
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+    viewportFit: "cover",
+  },
   robots: { index: true, follow: true },
   openGraph: {
     siteName: SITE_NAME,

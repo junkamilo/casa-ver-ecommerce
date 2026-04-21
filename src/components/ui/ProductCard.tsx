@@ -51,7 +51,6 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
 
   function handleColorClick(e: React.MouseEvent, color: NonNullable<CollectionProduct["colors"]>[number]) {
     e.preventDefault();
-    e.stopPropagation();
     setActiveColor((prev) => (prev?.name === color.name ? null : color));
     setCurrentIndex(0);
   }

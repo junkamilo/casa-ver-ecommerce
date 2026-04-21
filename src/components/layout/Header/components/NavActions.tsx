@@ -62,6 +62,7 @@ export default function NavActions({
         className="group relative flex flex-col items-center justify-center w-10 h-10 rounded-xl transition-all duration-400 cursor-pointer"
         onClick={onSearchOpen}
         aria-label="Buscar"
+        style={{ touchAction: "manipulation" }}
       >
         {/* Fondo tintado */}
         <span
@@ -154,6 +155,7 @@ export default function NavActions({
         className="group relative flex flex-col items-center justify-center w-10 h-10 rounded-xl transition-all duration-400 cursor-pointer"
         onClick={onCartOpen}
         aria-label="Carrito de compras"
+        style={{ touchAction: "manipulation" }}
       >
         {/* Fondo */}
         <span
