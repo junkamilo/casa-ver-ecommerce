@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import type { NextRequest } from "next/server";
 import { createColorVariants, createSetItems } from "./_helpers";
+import { rateLimit, getClientIP, RATE_LIMIT_CONFIGS } from "@/lib/ratelimit";
 
 // ── Constantes permitidas ─────────────────────────────────────────────────────
 
@@ -184,19 +185,41 @@ function validateProductBody(body: any, isCreate: boolean): string | null {
   return null;
 }
 
-// ── GET: Listar Productos (resumen para tabla) ────────────────────────────────
+// ── GET: Listar Productos (con paginación) ───────────────────────────────────
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const ip = getClientIP(request);
+  const rl = await rateLimit(`${ip}:admin-products`, RATE_LIMIT_CONFIGS.admin);
+  if (!rl.success) {
+    return new NextResponse("Demasiadas solicitudes. Intenta de nuevo más tarde.", {
+      status: 429,
+      headers: { "Retry-After": String(rl.retryAfter) },
+    });
+  }
+
   try {
     const session = await auth();
     if (!session?.user || (session.user as { role?: string }).role !== "ADMIN") {
       return new NextResponse("Acceso denegado", { status: 403 });
     }
+
+    // ✅ PAGINACIÓN: URL params ?page=1&limit=25
+    const url = new URL(request.url);
+    const page = Math.max(1, parseInt(url.searchParams.get("page") || "1"));
+    const limit = Math.min(100, parseInt(url.searchParams.get("limit") || "25")); // Max 25 por request
+    const skip = (page - 1) * limit;
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = prisma as any;
+
+    // ✅ Contar total ANTES de paginar
+    const totalProducts = await db.product.count();
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const products: any[] = await db.product.findMany({
       orderBy: { createdAt: "desc" },
+      take: limit,      // ✅ MÁXIMO 25 productos
+      skip: skip,       // ✅ Offset para paginación
       include: {
         category: { select: { id: true, name: true } },
         images: { where: { colorId: null }, orderBy: [{ isCover: "desc" }, { order: "asc" }], take: 1, select: { url: true } },
@@ -259,7 +282,18 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json(mapped);
+    // ✅ Retornar con información de paginación
+    return NextResponse.json({
+      data: mapped,
+      pagination: {
+        page,
+        limit,
+        total: totalProducts,
+        totalPages: Math.ceil(totalProducts / limit),
+        hasNextPage: page < Math.ceil(totalProducts / limit),
+        hasPrevPage: page > 1,
+      },
+    });
   } catch (error) {
     console.error("[PRODUCTS_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
@@ -269,6 +303,15 @@ export async function GET() {
 // ── POST: Crear Producto completo ─────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIP(req);
+  const rl = await rateLimit(`${ip}:admin-products`, RATE_LIMIT_CONFIGS.admin);
+  if (!rl.success) {
+    return new NextResponse("Demasiadas solicitudes. Intenta de nuevo más tarde.", {
+      status: 429,
+      headers: { "Retry-After": String(rl.retryAfter) },
+    });
+  }
+
   try {
     const session = await auth();
     if (!session?.user || (session.user as { role?: string }).role !== "ADMIN") {

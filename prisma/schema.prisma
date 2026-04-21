@@ -3,9 +3,14 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider     = "postgresql"
+  url          = env("DATABASE_URL")        // Pooler de Neon (puerto 6543)
+  directUrl    = env("DIRECT_URL")          // Conexión directa para migrations (puerto 5432)
+
+  // PRODUCCIÓN: DATABASE_URL debe incluir estos parámetros para soportar 50+ usuarios simultáneos:
+  //   ?pgbouncer=true&connection_limit=1
+  // Ejemplo: postgresql://user:pass@ep-xxx.neon.tech:6543/neondb?pgbouncer=true&connection_limit=1
+  // Sin estos parámetros, Neon agota las conexiones bajo carga y las transacciones fallan.
 }
 
 // ============================================================
@@ -50,6 +55,12 @@ enum PaymentMethod {
   NEQUI
   BANCOLOMBIA
   DAVIPLATA
+}
+
+enum ReviewStatus {
+  PENDING    // Esperando moderación del admin
+  APPROVED   // Visible en la tienda
+  REJECTED   // Rechazada por el admin
 }
 
 
@@ -134,6 +145,7 @@ model User {
   reviews               Review[]
   verificationTokens    EmailVerificationToken[]
   passwordResetTokens   PasswordResetToken[]
+  cart                  Cart?
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -505,6 +517,7 @@ model Order {
   items              OrderItem[]
   webhookLogs        WebhookLog[]
   notifications      AdminNotification[]
+  reviews            Review[]
 
   paidAt             DateTime?
   shippedAt          DateTime?
@@ -512,9 +525,11 @@ model Order {
   cancelledAt        DateTime?
 
   // Email tracking
-  confirmationEmailSentAt    DateTime?
-  confirmationEmailFailedAt  DateTime?
-  confirmationEmailError     String?
+  confirmationEmailSentAt       DateTime?
+  confirmationEmailFailedAt     DateTime?
+  confirmationEmailError        String?
+  abandonedCheckoutEmailSentAt  DateTime?
+  reviewRequestEmailSentAt      DateTime? // Solicitud de reseña (7 días post-entrega)
 
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
@@ -546,6 +561,41 @@ model OrderItem {
 }
 
 // ============================================================
+// CARRITO (Server-side para usuarios autenticados)
+// ============================================================
+
+model Cart {
+  id                    String     @id @default(cuid())
+  userId                String     @unique
+  user                  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items                 CartItem[]
+  abandonedEmailSentAt  DateTime?
+  updatedAt             DateTime   @updatedAt
+  createdAt             DateTime   @default(now())
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String  @id @default(cuid())
+  cartId    String
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  productId String
+  variantId String
+  sku       String
+  name      String
+  price     Decimal @db.Decimal(10, 2)
+  imageUrl  String?
+  color     String
+  size      String
+  quantity  Int
+
+  @@unique([cartId, variantId])
+  @@map("cart_items")
+}
+
+// ============================================================
 // RESEÑAS & CALIFICACIONES
 // ============================================================
 
@@ -554,17 +604,34 @@ model Review {
   productId String
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Usuario registrado (null si es invitado)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Invitado (null si es usuario registrado)
+  guestName String?
+
+  // Compra verificada: obligatorio para enviar reseña
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   rating    Int      // 1-5
-  comment   String?  @db.Text
+  comment   String   @db.Text
+
+  // Moderación
+  status    ReviewStatus @default(PENDING)
+
+  // Token de enlace mágico (enviado por email post-entrega)
+  reviewToken          String?   @unique
+  reviewTokenUsed      Boolean   @default(false)
+  reviewTokenExpiresAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([userId, productId])
+  @@unique([orderId, productId]) // Una reseña por producto por orden
   @@index([productId])
+  @@index([status])
   @@map("reviews")
 }
 

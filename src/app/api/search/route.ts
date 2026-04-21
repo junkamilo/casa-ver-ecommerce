@@ -1,9 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, getClientIP, RATE_LIMIT_CONFIGS } from "@/lib/ratelimit";
 
 const MAX_RESULTS = 12;
 
 export async function GET(req: NextRequest) {
+  const ip = getClientIP(req);
+  const rl = await rateLimit(`${ip}:search`, RATE_LIMIT_CONFIGS.search);
+
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: "Demasiadas solicitudes. Intenta de nuevo más tarde." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(rl.retryAfter),
+          "X-RateLimit-Limit": String(RATE_LIMIT_CONFIGS.search.limit),
+          "X-RateLimit-Remaining": "0",
+        },
+      }
+    );
+  }
+
   const q = req.nextUrl.searchParams.get("q")?.trim() ?? "";
 
   if (q.length < 2) {

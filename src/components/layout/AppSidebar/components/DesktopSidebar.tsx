@@ -61,7 +61,7 @@ export function DesktopSidebar({
 
       {/* Nav */}
       <nav
-        className={`flex-1 py-4 space-y-0.5 overflow-y-auto overflow-x-hidden transition-all duration-300 ${
+        className={`flex-1 py-4 space-y-0.5 overflow-y-auto overflow-x-hidden transition-all duration-300 scrollbar-sidebar ${
           isOpen ? "px-3" : "px-2"
         }`}
       >

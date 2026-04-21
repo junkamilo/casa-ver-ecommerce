@@ -3,6 +3,7 @@ import { hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { sendPasswordResetEmail } from "@/services/email/client";
 import { generateSecureCode } from "@/lib/auth/validation";
+import { rateLimit, getClientIP, RATE_LIMIT_CONFIGS } from "@/lib/ratelimit";
 import { z } from "zod";
 
 const forgotSchema = z.object({
@@ -21,6 +22,15 @@ const GENERIC_OK = {
 };
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIP(req);
+  const rl = await rateLimit(`${ip}:forgot-password`, RATE_LIMIT_CONFIGS.auth);
+  if (!rl.success) {
+    return NextResponse.json(
+      { message: "Demasiados intentos. Espera un momento e intenta de nuevo." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+    );
+  }
+
   try {
     let body: unknown;
     try {
@@ -80,11 +90,15 @@ export async function POST(req: NextRequest) {
       select: { id: true },
     });
 
+    // ── Construir URL mágica de restablecimiento ──────────────────────────────
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://casaverdeoficial.com";
+    const resetUrl = `${baseUrl}/auth/recuperar-contrasena?tokenId=${token.id}&code=${code}`;
+
     // ── Enviar email al recoveryEmail ─────────────────────────────────────────
     await sendPasswordResetEmail({
       customerEmail: user.recoveryEmail,
       customerName:  user.name || user.recoveryEmail,
-      code,
+      resetUrl,
     });
 
     // ── Devolver tokenId opaco (sin userId, sin email) ────────────────────────

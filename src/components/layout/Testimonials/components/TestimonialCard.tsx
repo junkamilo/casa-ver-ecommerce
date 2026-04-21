@@ -1,4 +1,4 @@
-import { Star, Quote } from "lucide-react";
+import { Quote } from "lucide-react";
 import { TestimonialItem } from "../types/types";
 
 export default function TestimonialCard({
@@ -17,19 +17,6 @@ export default function TestimonialCard({
       
       {/* Icono de Comilla de fondo */}
       <Quote className="absolute -bottom-2 -right-2 w-20 h-20 text-[#C19A6B] opacity-[0.04] -z-10 rotate-12 group-hover:opacity-[0.08] group-hover:scale-110 transition-all duration-700" />
-
-      {/* Estrellas en Badge */}
-      <div className="flex items-center gap-0.5 mb-4 bg-[#F2EAE0]/30 w-fit px-2.5 py-1 rounded-full border border-[#C19A6B]/10 shadow-sm group-hover:shadow-md transition-all duration-300">
-        {[...Array(5)].map((_, i) => (
-          <Star
-            key={i}
-            className={`w-3 h-3 transition-all duration-300 group-hover:scale-110 ${
-              i < rating ? "fill-[#C19A6B] text-[#C19A6B]" : "fill-gray-200 text-gray-300"
-            }`}
-            style={{ transitionDelay: `${i * 30}ms` }}
-          />
-        ))}
-      </div>
 
       {/* Comentario (Texto más pequeño y refinado) */}
       <p className="text-xs sm:text-[13px] text-gray-600 font-light leading-relaxed mb-5 flex-1 italic group-hover:text-[#154734] transition-colors duration-300 relative z-10">

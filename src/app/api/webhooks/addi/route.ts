@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
+import * as Sentry from "@sentry/nextjs";
 import { prisma } from "@/lib/prisma";
 import { markOrderPaid, releaseOrderStock } from "@/app/actions/checkout";
-import { sendOrderConfirmationEmail } from "@/services/email/client";
+import { enqueueOrderConfirmationEmail } from "@/lib/email-queue";
 
 // ---------------------------------------------------------------------------
 // Addi Webhook — Validación de firma con ADDI_WEBHOOK_SECRET
@@ -116,68 +117,42 @@ export async function POST(req: NextRequest) {
       const order = await markOrderPaid(orderId, addiPaymentId);
       console.info(`[Addi Webhook] Orden aprobada: ${orderId}`);
 
-      // Reclamar atómicamente el envío de email para evitar doble envío si el
-      // callback de Addi (/api/addi/callback) llega en paralelo.
+      // El consumer de la queue es idempotente: verifica confirmationEmailSentAt antes de enviar
       if (order.user?.email) {
-        const emailClaim = await prisma.order.updateMany({
-          where: { id: order.id, confirmationEmailSentAt: null },
-          data: { confirmationEmailSentAt: new Date() },
-        });
-
-        if (emailClaim.count > 0) {
-          try {
-            const emailResult = await sendOrderConfirmationEmail({
-              customerEmail: order.user.email,
-              customerName: order.shippingName,
-              orderNumber: order.orderNumber,
-              items: order.items.map((item) => ({
-                name: item.name,
-                quantity: item.quantity,
-                price: Number(item.price),
-                color: item.colorName,
-                size: item.size,
-                imageUrl: item.imageUrl ?? undefined,
-              })),
-              subtotal: Number(order.subtotal),
-              shippingCost: Number(order.shippingCost),
-              discount: Number(order.discount),
-              total: Number(order.total),
-            });
-
-            if (!emailResult.success) {
-              await prisma.order.update({
-                where: { id: order.id },
-                data: {
-                  confirmationEmailSentAt: null,
-                  confirmationEmailFailedAt: new Date(),
-                  confirmationEmailError: emailResult.error ?? "Error desconocido",
-                },
-              }).catch(() => {});
-              console.warn("[Addi Webhook] Email falló:", emailResult.error);
-            } else {
-              console.info("[Addi Webhook] Email enviado:", order.orderNumber);
-            }
-          } catch (emailErr) {
-            await prisma.order.update({
-              where: { id: order.id },
-              data: {
-                confirmationEmailSentAt: null,
-                confirmationEmailFailedAt: new Date(),
-                confirmationEmailError: emailErr instanceof Error ? emailErr.message : "Error desconocido",
-              },
-            }).catch(() => {});
-            console.error("[Addi Webhook] Error enviando email:", emailErr);
-          }
-        } else {
-          console.info(
-            "[Addi Webhook] Email ya enviado por otro proceso (callback paralelo):",
-            order.orderNumber
-          );
+        try {
+          await enqueueOrderConfirmationEmail(order.id, {
+            customerEmail: order.user.email,
+            customerName: order.shippingName,
+            orderNumber: order.orderNumber,
+            items: order.items.map((item) => ({
+              name: item.name,
+              quantity: item.quantity,
+              price: Number(item.price),
+              color: item.colorName,
+              size: item.size,
+              imageUrl: item.imageUrl ?? undefined,
+            })),
+            subtotal: Number(order.subtotal),
+            shippingCost: Number(order.shippingCost),
+            discount: Number(order.discount),
+            total: Number(order.total),
+          });
+          console.info("[Addi Webhook] Email encolado para orden:", order.orderNumber);
+        } catch (emailErr) {
+          console.error("[Addi Webhook] Error encolando email:", emailErr);
         }
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Error desconocido";
       console.error("[Addi Webhook] Error al marcar orden como pagada:", err);
+
+      Sentry.withScope((scope) => {
+        scope.setTag("payment_method", "addi");
+        scope.setTag("webhook_type", "payment");
+        scope.setContext("addi_webhook", { orderId });
+        scope.setLevel("error");
+        Sentry.captureException(err);
+      });
 
       if (logEntry) {
         await prisma.webhookLog.update({

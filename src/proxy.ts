@@ -5,6 +5,15 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
   const session = req.auth;
 
+  // ── API de administración → requiere rol ADMIN, responde JSON ────────────
+  if (pathname.startsWith("/api/admin")) {
+    const isAdmin = (session?.user as any)?.role === "ADMIN";
+    if (!isAdmin) {
+      return NextResponse.json({ message: "No autorizado" }, { status: 401 });
+    }
+    return NextResponse.next();
+  }
+
   // ── Rutas de administración → requiere rol ADMIN ─────────────────────────
   if (pathname.startsWith("/admin")) {
     const isAdmin = (session?.user as any)?.role === "ADMIN";
@@ -39,6 +48,7 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
+    "/api/admin/:path*",
     "/admin/:path*",
     "/perfil/:path*",
     "/checkout/:path*", // necesario para leer la sesión (earlyBird, etc.)

@@ -51,6 +51,7 @@ export async function fetchFeaturedProducts(): Promise<CollectionProduct[]> {
       },
     },
     orderBy: { createdAt: "desc" },
+    take: 12,  // ✅ MÁXIMO 12 productos featured (típicamente se muestran 8-12 en homepage)
   });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

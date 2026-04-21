@@ -52,7 +52,7 @@ export default function AdminAdministradores() {
         <AdminLoading />
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="hidden md:block">
+          <div className="hidden md:block overflow-auto max-h-150">
             <AdminTable
               filteredAdmins={pagedAdmins}
               currentUserId={currentUserId}

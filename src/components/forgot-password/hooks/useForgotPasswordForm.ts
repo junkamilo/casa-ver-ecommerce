@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -15,7 +15,14 @@ import type {
   UseForgotPasswordFormReturn,
 } from "../types";
 
-export function useForgotPasswordForm(): UseForgotPasswordFormReturn {
+interface UseForgotPasswordFormOptions {
+  initialTokenId?: string;
+  initialCode?: string;
+}
+
+export function useForgotPasswordForm(
+  { initialTokenId, initialCode }: UseForgotPasswordFormOptions = {}
+): UseForgotPasswordFormReturn {
   const [step, setStep]         = useState<ForgotPasswordStep>("email");
   const [error, setError]       = useState<string | null>(null);
   const [success, setSuccess]   = useState<string | null>(null);
@@ -24,6 +31,36 @@ export function useForgotPasswordForm(): UseForgotPasswordFormReturn {
 
   // tokenId del PasswordResetToken (opaco, nunca expone userId)
   const pendingTokenId = useRef<string | null>(null);
+
+  // Auto-verificar cuando llegan tokenId + code desde el enlace del email
+  useEffect(() => {
+    if (!initialTokenId || !initialCode) return;
+    pendingTokenId.current = initialTokenId;
+    setIsLoading(true);
+    setStep("verify");
+
+    fetch("/api/auth/verify-reset-code", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ tokenId: initialTokenId, code: initialCode }),
+    })
+      .then((res) => res.json().then((json) => ({ ok: res.ok, json })))
+      .then(({ ok, json }) => {
+        if (ok) {
+          setStep("new-pass");
+        } else {
+          setError(json.message ?? "El enlace no es válido o ya expiró.");
+          setStep("email");
+        }
+      })
+      .catch(() => {
+        setError(ERROR_MESSAGES.generic);
+        setStep("email");
+      })
+      .finally(() => setIsLoading(false));
+  // Solo al montar: initialTokenId e initialCode son props estáticas de la URL
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ─── Formulario paso 1 ────────────────────────────────────────────────────
   const {

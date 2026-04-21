@@ -14,7 +14,7 @@ const AdminTable = ({
 }: AdminTableProps) => (
   <table className="w-full">
     <thead>
-      <tr className="bg-gray-50/80 border-b border-gray-100">
+      <tr className="sticky top-0 z-10 bg-gray-50/80 border-b border-gray-100">
         <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
           Administrador
         </th>
