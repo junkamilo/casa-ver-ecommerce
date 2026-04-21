@@ -1,10 +1,21 @@
 import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
 import { sendVerificationEmail } from "@/services/email/client";
 import { registerServerSchema, generateSecureCode } from "@/lib/auth/validation";
+import { rateLimit, getClientIP, RATE_LIMIT_CONFIGS } from "@/lib/ratelimit";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const ip = getClientIP(request);
+  const rl = await rateLimit(`${ip}:register`, RATE_LIMIT_CONFIGS.auth);
+  if (!rl.success) {
+    return NextResponse.json(
+      { message: "Demasiados intentos. Espera un momento e intenta de nuevo." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+    );
+  }
+
   try {
     const body = await request.json();
 

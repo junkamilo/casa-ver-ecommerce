@@ -23,14 +23,15 @@ export default function ProductTable({
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
       {/* Desktop */}
-      <table className="w-full hidden md:table">
+      <div className="hidden md:block overflow-auto max-h-150">
+      <table className="w-full">
         <thead>
           <tr className="bg-gray-50/80 border-b border-gray-100">
             {["Producto", "Categoría", "Precio", "Stock", "Estado", "Acciones"].map(
               (h, i) => (
                 <th
                   key={h}
-                  className={`px-6 py-4 text-xs font-bold text-gray-500 uppercase ${
+                  className={`sticky top-0 z-10 bg-gray-50/80 px-6 py-4 text-xs font-bold text-gray-500 uppercase ${
                     i === 5 ? "text-right" : "text-left"
                   }`}
                 >
@@ -148,6 +149,7 @@ export default function ProductTable({
           })}
         </tbody>
       </table>
+      </div>
 
       {/* Mobile */}
       <ProductMobileList products={products} onEdit={onEdit} onDelete={onDelete} onToggleActive={onToggleActive} />

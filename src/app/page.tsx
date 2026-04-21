@@ -2,10 +2,13 @@
 
 
 import type { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import { AnnouncementBar, Header, HeroSection } from "@/components";
 import { prisma } from "@/lib/prisma";
 import { SLIDES } from "@/components/HeroSection/constants";
 import type { Slide } from "@/components/HeroSection/types";
+
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Inicio",
@@ -24,7 +27,8 @@ import BestSellers from "@/components/layout/BestSellers";
 import Categories from "@/components/layout/Categories";
 import NewCollection from "@/components/layout/NewCollection";
 import Testimonials from "@/components/layout/Testimonials";
-import { TESTIMONIALS } from "@/components/layout/Testimonials/constants/constants";
+import { SEED_TESTIMONIALS } from "@/components/layout/Testimonials/constants/constants";
+import type { TestimonialItem } from "@/components/layout/Testimonials/types/types";
 import PaymentMethodsBanner from "@/components/PaymentMethodsBanner";
 
 
@@ -37,6 +41,29 @@ type DbSlide = {
   headline: string | null;
   subheadline: string | null;
 };
+
+async function fetchTestimonials(): Promise<TestimonialItem[]> {
+  try {
+    const dbReviews = await prisma.review.findMany({
+      where: { comment: { not: "" }, status: "APPROVED" },
+      orderBy: { createdAt: "desc" },
+      take: SEED_TESTIMONIALS.length,
+      include: { user: { select: { name: true } } },
+    });
+
+    const realItems: TestimonialItem[] = dbReviews.map((r) => ({
+      rating: r.rating,
+      comment: r.comment!,
+      name: r.user?.name ?? "Cliente",
+    }));
+
+    // Rellena con seeds hasta completar el total
+    const seeds = SEED_TESTIMONIALS.slice(realItems.length);
+    return [...realItems, ...seeds];
+  } catch {
+    return SEED_TESTIMONIALS;
+  }
+}
 
 async function fetchHeroSlides(): Promise<Slide[]> {
   try {
@@ -62,8 +89,18 @@ async function fetchHeroSlides(): Promise<Slide[]> {
   }
 }
 
+const getCachedHeroSlides = unstable_cache(fetchHeroSlides, ["hero-slides"], {
+  revalidate: 3600,
+  tags: ["hero"],
+});
+
+const getCachedTestimonials = unstable_cache(fetchTestimonials, ["testimonials"], {
+  revalidate: 3600,
+  tags: ["testimonials"],
+});
+
 export default async function Home() {
-  const heroSlides = await fetchHeroSlides();
+  const [heroSlides, testimonials] = await Promise.all([getCachedHeroSlides(), getCachedTestimonials()]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,7 +111,7 @@ export default async function Home() {
       <NewCollection />
       <Categories />
       <PaymentMethodsBanner />
-      <Testimonials comments={TESTIMONIALS} />
+      <Testimonials comments={testimonials} />
       <Footer />
     </div>
   );

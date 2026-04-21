@@ -141,8 +141,6 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         const productVariant = await tx.productVariant.findUnique({
           where: { id: item.variantId },
           select: {
-            stock: true,
-            reserved: true,
             isActive: true,
             priceOverride: true,
             product: { select: { basePrice: true } },
@@ -150,15 +148,27 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         });
 
         if (productVariant) {
-          variantTypeMap.set(item.variantId, "product");
           if (!productVariant.isActive) {
             throw new Error(`El producto "${item.name}" ya no está disponible`);
           }
-          const available = productVariant.stock - productVariant.reserved;
-          if (available < item.quantity) {
+
+          // Reserva atómica: UPDATE con WHERE (stock - reserved) >= quantity
+          // Esto elimina la race condition: si dos transacciones concurrentes
+          // compiten por el último stock, solo una pasa el WHERE y reserva.
+          const reserved = await tx.$queryRaw<{ id: string }[]>`
+            UPDATE product_variants
+            SET reserved = reserved + ${item.quantity}
+            WHERE id = ${item.variantId}
+              AND "isActive" = true
+              AND (stock - reserved) >= ${item.quantity}
+            RETURNING id
+          `;
+
+          if (reserved.length === 0) {
             throw new Error(`Stock insuficiente para "${item.name}" (${item.colorName} / ${item.size})`);
           }
-          // priceOverride prevalece sobre basePrice cuando está definido
+
+          variantTypeMap.set(item.variantId, "product");
           const realPrice = Number(productVariant.priceOverride ?? productVariant.product.basePrice);
           realPriceMap.set(item.variantId, realPrice);
         } else {
@@ -166,7 +176,6 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
           const itemVariant = await (tx as any).productItemVariant.findUnique({
             where: { id: item.variantId },
             select: {
-              stock: true,
               isActive: true,
               color: {
                 select: {
@@ -183,18 +192,29 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
           if (!itemVariant) {
             throw new Error(`Variante ${item.variantId} no encontrada`);
           }
-          variantTypeMap.set(item.variantId, "item");
           if (!itemVariant.isActive) {
             throw new Error(`El producto "${item.name}" ya no está disponible`);
           }
-          if (itemVariant.stock < item.quantity) {
+
+          // Reserva atómica para subcategorías (conjuntos)
+          const reservedItem = await tx.$queryRaw<{ id: string }[]>`
+            UPDATE product_item_variants
+            SET stock = stock - ${item.quantity}
+            WHERE id = ${item.variantId}
+              AND "isActive" = true
+              AND stock >= ${item.quantity}
+            RETURNING id
+          `;
+
+          if (reservedItem.length === 0) {
             throw new Error(`Stock insuficiente para "${item.name}" (${item.colorName} / ${item.size})`);
           }
-          // Precio de la subcategoría → precio del producto padre como fallback
+
+          variantTypeMap.set(item.variantId, "item");
           const realPrice = Number(
             itemVariant.color?.item?.price ??
             itemVariant.color?.item?.product?.basePrice ??
-            item.price, // último recurso: precio enviado por el cliente
+            item.price,
           );
           realPriceMap.set(item.variantId, realPrice);
         }
@@ -298,20 +318,8 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         `;
       }
 
-      // 7. Reservar stock
-      for (const item of items) {
-        if (variantTypeMap.get(item.variantId) === "product") {
-          await tx.productVariant.update({
-            where: { id: item.variantId },
-            data: { reserved: { increment: item.quantity } },
-          });
-        } else {
-          await (tx as any).productItemVariant.update({
-            where: { id: item.variantId },
-            data: { stock: { decrement: item.quantity } },
-          });
-        }
-      }
+      // 7. Stock ya fue reservado atómicamente en el paso 2 (UPDATE con WHERE guard).
+      // No se necesita un segundo loop de reserva.
 
       // 8. Marcar cupón como usado (si aplica y fue validado arriba)
       if (couponId && couponDiscountAmount > 0) {

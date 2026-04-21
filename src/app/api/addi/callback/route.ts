@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { markOrderPaid, releaseOrderStock } from "@/app/actions/checkout";
-import { sendOrderConfirmationEmail } from "@/services/email/client";
+import { enqueueOrderConfirmationEmail } from "@/lib/email-queue";
 
 // ---------------------------------------------------------------------------
 // Addi — Callback de resultado de aplicación de crédito
@@ -205,70 +205,29 @@ export async function POST(req: NextRequest) {
       const order = await markOrderPaid(externalOrderId, (applicationId as string).trim());
       console.info("[Addi Callback] Orden marcada como pagada:", order.orderNumber);
 
-      // Reclamar atómicamente el envío de email para evitar doble envío si el
-      // webhook de Addi llega en paralelo. Solo el proceso que actualiza la fila
-      // (count > 0) envía el correo.
+      // El consumer de la queue es idempotente: verifica confirmationEmailSentAt antes de enviar
       if (order.user?.email) {
-        const emailClaim = await prisma.order.updateMany({
-          where: { id: order.id, confirmationEmailSentAt: null },
-          data: { confirmationEmailSentAt: new Date() },
-        });
-
-        if (emailClaim.count > 0) {
-          try {
-            const emailResult = await sendOrderConfirmationEmail({
-              customerEmail: order.user.email,
-              customerName: order.shippingName,
-              orderNumber: order.orderNumber,
-              items: order.items.map((item) => ({
-                name: item.name,
-                quantity: item.quantity,
-                price: Number(item.price),
-                color: item.colorName,
-                size: item.size,
-                imageUrl: item.imageUrl ?? undefined,
-              })),
-              subtotal: Number(order.subtotal),
-              shippingCost: Number(order.shippingCost),
-              discount: Number(order.discount),
-              total: Number(order.total),
-            });
-
-            if (!emailResult.success) {
-              // Revertir el claim para que otro intento o reintento manual pueda enviarlo
-              await prisma.order
-                .update({
-                  where: { id: order.id },
-                  data: {
-                    confirmationEmailSentAt: null,
-                    confirmationEmailFailedAt: new Date(),
-                    confirmationEmailError: emailResult.error ?? "Error desconocido",
-                  },
-                })
-                .catch(() => {});
-              console.warn("[Addi Callback] Email falló:", emailResult.error);
-            } else {
-              console.info("[Addi Callback] Email de confirmación enviado:", order.orderNumber);
-            }
-          } catch (emailErr) {
-            await prisma.order
-              .update({
-                where: { id: order.id },
-                data: {
-                  confirmationEmailSentAt: null,
-                  confirmationEmailFailedAt: new Date(),
-                  confirmationEmailError:
-                    emailErr instanceof Error ? emailErr.message : "Error desconocido",
-                },
-              })
-              .catch(() => {});
-            console.error("[Addi Callback] Error enviando email:", emailErr);
-          }
-        } else {
-          console.info(
-            "[Addi Callback] Email ya enviado por otro proceso (webhook paralelo):",
-            order.orderNumber
-          );
+        try {
+          await enqueueOrderConfirmationEmail(order.id, {
+            customerEmail: order.user.email,
+            customerName: order.shippingName,
+            orderNumber: order.orderNumber,
+            items: order.items.map((item) => ({
+              name: item.name,
+              quantity: item.quantity,
+              price: Number(item.price),
+              color: item.colorName,
+              size: item.size,
+              imageUrl: item.imageUrl ?? undefined,
+            })),
+            subtotal: Number(order.subtotal),
+            shippingCost: Number(order.shippingCost),
+            discount: Number(order.discount),
+            total: Number(order.total),
+          });
+          console.info("[Addi Callback] Email encolado para orden:", order.orderNumber);
+        } catch (emailErr) {
+          console.error("[Addi Callback] Error encolando email:", emailErr);
         }
       } else {
         console.warn("[Addi Callback] Orden sin email de cliente:", externalOrderId);

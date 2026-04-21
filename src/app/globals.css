@@ -238,6 +238,25 @@
     display: none;
 }
 .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Scrollbar para sidebar oscuro — fuera de @layer para que ::-webkit-scrollbar funcione */
+.scrollbar-sidebar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(193,154,107,0.5) transparent;
+}
+.scrollbar-sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollbar-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(193,154,107,0.45);
+  border-radius: 99px;
+}
+.scrollbar-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(193,154,107,0.8);
 }

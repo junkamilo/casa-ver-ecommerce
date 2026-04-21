@@ -6,9 +6,10 @@ import type { PedidosTableProps } from "../types/types";
 export function PedidosTable({ orders, onViewDetail }: PedidosTableProps) {
   return (
     <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="overflow-auto max-h-150">
       <table className="w-full">
         <thead>
-          <tr className="bg-gray-50/80 border-b border-gray-100">
+          <tr className="sticky top-0 z-10 bg-gray-50/80 border-b border-gray-100">
             <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Pedido</th>
             <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Cliente</th>
             <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Total</th>
@@ -59,6 +60,7 @@ export function PedidosTable({ orders, onViewDetail }: PedidosTableProps) {
           ))}
         </tbody>
       </table>
+      </div>
 
       {orders.length === 0 && <SectionEmptyState message="No se encontraron pedidos." />}
     </div>

@@ -14,26 +14,28 @@ const sections = [
     number: "1",
     title: "PRENDAS",
     items: [
-      "Las fotografías y descripciones buscan ser lo más precisas posible, sin embargo, pueden existir variaciones mínimas en color debido a la iluminación o pantallas.",
-      "La mayoría de nuestras prendas cuentan con tallaje estándar. Sin embargo, te ofrecemos asesoría personalizada para ayudarte a elegir la talla ideal a través de nuestro WhatsApp 302 245 7432.",
+      "Las fotografías y descripciones buscan ser lo más precisas posible; sin embargo, pueden existir ligeras variaciones en color debido a iluminación o configuración de pantalla.",
+      "La mayoría de nuestras prendas cuentan con tallaje estándar. Ofrecemos asesoría personalizada a través de WhatsApp 302 245 7432 para ayudarte a elegir la talla ideal.",
     ],
   },
   {
     number: "2",
-    title: "MEDIOS DE PAGOS",
+    title: "MEDIOS DE PAGO",
     items: [
-      "Puedes realizar tu pago mediante transferencia a Bancolombia, Nequi, Llave o Daviplata, o solicitar nuestro link de pago para tarjetas crédito, débito o PSE.",
-      "El servicio de pago contrarreembolso está disponible únicamente en Bucaramanga y su área metropolitana.",
+      "Transferencia bancaria: Bancolombia, Nequi, Daviplata o Llave.",
+      "Link de pago para tarjeta crédito, débito o PSE.",
+      "El pago contra entrega está disponible únicamente en Bucaramanga y su área metropolitana.",
     ],
   },
   {
     number: "3",
     title: "ENVÍOS",
     items: [
-      "Los envíos se realizan a través de transportadoras nacionales.",
-      "Los tiempos de entrega pueden variar según la ciudad y la empresa transportadora.",
-      "No nos hacemos responsables por retrasos originados por terceros, situaciones climáticas o eventos fuera de nuestro control.",
-      "El costo del envío es asumido por el cliente, salvo promociones específicas.",
+      "Los envíos se realizan a nivel nacional mediante transportadoras.",
+      "El tiempo de despacho es de 2 a 5 días hábiles una vez confirmada la compra, ya que la mayoría de nuestras prendas se elaboran bajo confección.",
+      "El tiempo de entrega dependerá de la ciudad y la transportadora.",
+      "No nos hacemos responsables por retrasos ocasionados por terceros, condiciones climáticas o situaciones externas.",
+      "El costo del envío es asumido por el cliente, salvo promociones especiales.",
     ],
   },
   {
@@ -41,39 +43,57 @@ const sections = [
     title: "CAMBIOS",
     items: [
       "Se aceptan cambios de talla o referencia dentro de los 15 días calendario siguientes a la entrega.",
-      "El producto debe estar: En perfecto estado, sin uso y con etiqueta.",
-      "El cliente asume los costos de envío para realizar cambios, excepto por errores de la tienda.",
+      "La prenda debe estar sin uso, conservar sus etiquetas y encontrarse en perfecto estado.",
+      "El cliente asume los costos de envío, excepto en caso de error por parte de la tienda.",
     ],
   },
   {
     number: "5",
-    title: "DEVOLUCIONES Y REEMBOLSO",
+    title: "DEVOLUCIONES Y REEMBOLSOS",
     items: [
-      "Solo se realizan devoluciones por productos defectuosos o por errores de envío.",
-      "Una vez aprobado el reembolso, se hará en un plazo razonable en el mismo medio de pago utilizado o como saldo a favor.",
-      "No se realizan devoluciones por: Motivos de gusto, talla o arrepentimiento de compra, retrasos ajenos a la tienda, falta de recepción por parte del cliente o ausencia en la dirección.",
+      "Solo se realizan devoluciones en caso de productos defectuosos o errores en el envío.",
+      "El reembolso se realizará en un tiempo razonable, a través del mismo medio de pago o como saldo a favor.",
+      "No se realizan devoluciones por motivos de gusto, talla, arrepentimiento de compra, retrasos ajenos a la tienda o falta de recepción del pedido.",
     ],
   },
   {
     number: "6",
     title: "GARANTÍA",
     items: [
-      "La garantía aplica únicamente por defectos de fábrica.",
-      "No cubre daños por mal uso, lavado inadecuado, desgaste normal o accidentes.",
+      "Aplica únicamente por defectos de fabricación.",
+      "No cubre daños por uso indebido, lavado incorrecto, desgaste normal o accidentes.",
     ],
   },
   {
     number: "7",
     title: "RETRASOS EN LA ENTREGA",
     items: [
-      "Si el pedido fue enviado dentro de los tiempos establecidos, pero la transportadora presenta retrasos, no aplican devoluciones de dinero. En estos casos, podemos: Esperar el retorno del paquete para reenviarlo, reprogramar la entrega o enviar el pedido a otra persona o dirección previamente indicada por el cliente.",
+      "Si el pedido fue despachado dentro del tiempo establecido pero la transportadora presenta retrasos, no aplican devoluciones.",
+      "En estos casos se podrá: reprogramar la entrega, enviar a otra dirección o esperar el retorno del paquete para reenviarlo.",
     ],
   },
   {
     number: "8",
-    title: "PAQUETES DEVUELTOS POR LA TRANSPORTADORA",
+    title: "PAQUETES DEVUELTOS",
     items: [
-      "Si la transportadora retorna el paquete por: Dirección incorrecta, ausencia del destinatario, o no reclamación, el cliente deberá asumir el nuevo costo de envío para reprogramar la entrega.",
+      "Si el pedido es devuelto por la transportadora debido a dirección incorrecta, ausencia del destinatario o no reclamación, el cliente deberá asumir el costo de un nuevo envío.",
+    ],
+  },
+  {
+    number: "9",
+    title: "DERECHO DE RETRACTO",
+    items: [
+      "De acuerdo con la Ley 1480 de 2011, el cliente podrá ejercer el derecho de retracto dentro de los cinco (5) días hábiles siguientes a la entrega del producto.",
+      "La prenda debe estar sin uso, en perfectas condiciones y con etiquetas.",
+      "El cliente deberá asumir los costos de devolución.",
+    ],
+  },
+  {
+    number: "10",
+    title: "CONTACTO",
+    items: [
+      "Para solicitudes de cambios, devoluciones, garantías o cualquier inquietud relacionada con tu pedido, comunícate con nosotros a través de nuestro canal oficial de atención.",
+      "Nuestro equipo estará disponible para brindarte acompañamiento durante todo el proceso.",
     ],
   },
 ];
@@ -96,7 +116,7 @@ export default function TerminosYCondicionesPage() {
                 backgroundSize: "28px 28px",
               }}
             />
-            <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#C19A6B]/50 to-transparent" />
+            <div className="absolute bottom-0 left-0 w-full h-px bg-linear-to-r from-transparent via-[#C19A6B]/50 to-transparent" />
 
             <div className="relative max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-16 sm:py-20 md:py-24 text-center">
               <p className="text-[10px] font-black tracking-[0.35em] text-[#C19A6B]/70 uppercase mb-4">
@@ -106,7 +126,8 @@ export default function TerminosYCondicionesPage() {
                 Términos y Condiciones
               </h1>
               <p className="text-white/70 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
-                Al realizar una compra, aceptas plenamente estas políticas.
+                Al realizar una compra, declaras haber leído y aceptado estas
+                condiciones.
               </p>
             </div>
           </section>
@@ -119,7 +140,7 @@ export default function TerminosYCondicionesPage() {
                   {/* Section header */}
                   <div className="flex items-center gap-4">
                     <span
-                      className="flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#154734] text-white text-sm font-bold flex items-center justify-center"
+                      className="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#154734] text-white text-sm font-bold flex items-center justify-center"
                       aria-hidden="true"
                     >
                       {section.number}
@@ -130,14 +151,14 @@ export default function TerminosYCondicionesPage() {
                   </div>
 
                   {/* Divider */}
-                  <div className="h-px bg-gradient-to-r from-[#C19A6B]/40 via-[#C19A6B]/10 to-transparent ml-13" />
+                  <div className="h-px bg-linear-to-r from-[#C19A6B]/40 via-[#C19A6B]/10 to-transparent ml-13" />
 
                   {/* Items */}
                   <ul className="flex flex-col gap-3 ml-13">
                     {section.items.map((item, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <span
-                          className="flex-shrink-0 mt-2 w-1.5 h-1.5 rotate-45 bg-[#C19A6B]"
+                          className="shrink-0 mt-2 w-1.5 h-1.5 rotate-45 bg-[#C19A6B]"
                           aria-hidden="true"
                         />
                         <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
@@ -151,7 +172,7 @@ export default function TerminosYCondicionesPage() {
             </div>
 
             {/* ── Commitment note ── */}
-            <div className="mt-14 sm:mt-16 border border-[#154734]/15 rounded-2xl bg-[#154734]/[0.03] p-6 sm:p-8 text-center flex flex-col gap-3">
+            <div className="mt-14 sm:mt-16 border border-[#154734]/15 rounded-2xl bg-[#154734]/3 p-6 sm:p-8 text-center flex flex-col gap-3">
               <p className="text-gray-700 text-sm sm:text-base leading-relaxed">
                 Nuestro compromiso siempre será cumplir con los tiempos de
                 despacho, acompañarte en el proceso y ayudarte con cualquier
@@ -163,7 +184,7 @@ export default function TerminosYCondicionesPage() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 text-[#154734] font-semibold text-sm sm:text-base hover:text-[#C19A6B] transition-colors duration-200"
               >
-                <span>Línea de atención:</span>
+                <span>WhatsApp:</span>
                 <span className="font-bold tracking-wide">302 245 74 32</span>
               </a>
             </div>

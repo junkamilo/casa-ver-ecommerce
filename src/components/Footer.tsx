@@ -79,8 +79,8 @@ const Footer = () => {
               <ul className="space-y-2 sm:space-y-3">
                 {[
                   { name: "Términos y Condiciones", href: "/terminos-y-condiciones" },
-                  { name: "Envíos y Devoluciones", href: "/terminos-y-condiciones" },
-                  { name: "Guía de Tallas", href: "/guia-de-tallas" },
+                  { name: "Términos del Servicio", href: "/terminos-del-servicio" },
+                  { name: "Política de Privacidad", href: "/politica-de-privacidad" },
                 ].map((link) => (
                   <li key={link.name}>
                     <Link href={link.href} className="text-gray-300 text-sm hover:text-[#C19A6B] transition-all flex items-center gap-2 group w-fit p-1 touch-target active:scale-95">
@@ -151,8 +151,8 @@ const Footer = () => {
               &copy; {new Date().getFullYear()} Casa Verde. Todos los derechos reservados.
             </p>
             <div className="flex flex-wrap gap-4 sm:gap-6 text-xs text-white/50 font-light tracking-wide justify-center sm:justify-end">
-              <Link href="#" className="hover:text-[#C19A6B] transition-colors p-1 touch-target active:scale-95">Políticas de Privacidad</Link>
-              <Link href="/terminos-y-condiciones" className="hover:text-[#C19A6B] transition-colors p-1 touch-target active:scale-95">Términos del Servicio</Link>
+              <Link href="/politica-de-privacidad" className="hover:text-[#C19A6B] transition-colors p-1 touch-target active:scale-95">Política de Privacidad</Link>
+              <Link href="/terminos-del-servicio" className="hover:text-[#C19A6B] transition-colors p-1 touch-target active:scale-95">Términos del Servicio</Link>
             </div>
           </div>
         </div>

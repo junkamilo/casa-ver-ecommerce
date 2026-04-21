@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Truck, CreditCard, Shirt, FileText, Clock } from "lucide-react";
+import { ChevronDown, Shirt, FileText, Clock } from "lucide-react";
 import { CARE_INSTRUCTIONS, PRODUCTION_TIME_CONTENT } from "../constants";
 
 interface Props {
@@ -34,32 +34,6 @@ export default function ProductAccordion({ openKey, onToggle, description }: Pro
             </li>
           ))}
         </ul>
-      ),
-    },
-    {
-      key: "envio",
-      icon: <Truck className="w-4.5 h-4.5" strokeWidth={1.5} />,
-      title: "Envíos y Entregas",
-      content: (
-        <p className="leading-relaxed">
-          El envío nacional se realiza con altos estándares de seguridad y llega a tu puerta
-          de <strong>2 a 4 días hábiles</strong>.
-          <span className="block mt-2 font-medium text-[#154734]">
-            Costo de envío: $18,000 COP.
-          </span>
-        </p>
-      ),
-    },
-    {
-      key: "pago",
-      icon: <CreditCard className="w-4.5 h-4.5" strokeWidth={1.5} />,
-      title: "Métodos de Pago",
-      content: (
-        <p className="leading-relaxed">
-          Garantizamos transacciones 100% seguras.{" "}
-          <strong className="text-[#154734]">Recibimos todas las tarjetas</strong> de
-          Crédito y Débito, PSE, Nequi, Davivienda y Bancolombia.
-        </p>
       ),
     },
     {

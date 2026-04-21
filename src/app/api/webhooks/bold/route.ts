@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { after } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
+import * as Sentry from "@sentry/nextjs";
 import { prisma } from "@/lib/prisma";
 import { markOrderPaid, releaseOrderStock } from "@/app/actions/checkout";
-import { sendOrderConfirmationEmail } from "@/services/email/client";
+import { enqueueOrderConfirmationEmail } from "@/lib/email-queue";
 
 // ---------------------------------------------------------------------------
 // Verificación HMAC-SHA256 — timing-safe
@@ -379,9 +380,8 @@ async function processWebhookAsync(fields: WebhookFields): Promise<void> {
         return;
       }
 
-      console.log("[BOLD WEBHOOK] 📧 Enviando correo de confirmación...");
-
-      const emailResult = await sendOrderConfirmationEmail({
+      console.log("[BOLD WEBHOOK] 📧 Encolando correo de confirmación...");
+      await enqueueOrderConfirmationEmail(order.id, {
         customerEmail: order.user.email,
         customerName: order.shippingName,
         orderNumber: order.orderNumber,
@@ -398,56 +398,27 @@ async function processWebhookAsync(fields: WebhookFields): Promise<void> {
         discount: Number(order.discount),
         total: Number(order.total),
       });
-
-      if (emailResult.success) {
-        // Registrar que el correo fue enviado exitosamente
-        await prisma.order.update({
-          where: { id: order.id },
-          data: { confirmationEmailSentAt: new Date() },
-        });
-        console.info(
-          `[BOLD WEBHOOK] ✓ Confirmación enviada a ${order.user.email} (messageId: ${emailResult.messageId})`
-        );
-      } else {
-        // Registrar fallo del correo pero NO fallar la orden
-        await prisma.order.update({
-          where: { id: order.id },
-          data: {
-            confirmationEmailFailedAt: new Date(),
-            confirmationEmailError: emailResult.error || "Error desconocido",
-          },
-        });
-        console.error(
-          `[BOLD WEBHOOK] ⚠ Error enviando confirmación a ${order.user.email}: ${emailResult.error}`
-        );
-      }
+      console.info(`[BOLD WEBHOOK] ✓ Email encolado para orden ${order.orderNumber}`);
     } catch (emailErr) {
-      // Capturar cualquier excepción no esperada en el envío de correo
-      const emailErrorMsg =
-        emailErr instanceof Error ? emailErr.message : "Error desconocido";
-      console.error(`[BOLD WEBHOOK] ⚠ Excepción enviando email:`, emailErrorMsg);
-
-      // Registrar el error pero continuar (no fallar la orden)
-      try {
-        await prisma.order.update({
-          where: { transactionId: reference },
-          data: {
-            confirmationEmailFailedAt: new Date(),
-            confirmationEmailError: emailErrorMsg,
-          },
-        });
-      } catch (updateErr) {
-        console.error(
-          "[BOLD WEBHOOK] ⚠ Error registrando fallo de email:",
-          updateErr instanceof Error ? updateErr.message : "Error desconocido"
-        );
-      }
+      console.error(
+        `[BOLD WEBHOOK] ⚠ Error encolando email para orden ${order.orderNumber}:`,
+        emailErr instanceof Error ? emailErr.message : "Error desconocido"
+      );
     }
 
     updateLog(200);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Error desconocido";
     console.error("[BOLD WEBHOOK] ✗ Error al marcar orden como pagada:", errorMessage);
+
+    Sentry.withScope((scope) => {
+      scope.setTag("payment_method", "bold");
+      scope.setTag("webhook_type", "payment");
+      scope.setContext("bold_webhook", { reference, boldPaymentId, eventType });
+      scope.setLevel("error");
+      Sentry.captureException(err);
+    });
+
     updateLog(500, errorMessage);
   }
 }
