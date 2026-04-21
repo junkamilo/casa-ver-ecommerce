@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { markOrderPaid } from "@/app/actions/checkout";
-import { sendOrderConfirmationEmail } from "@/services/email/client";
+import { enqueueOrderConfirmationEmail } from "@/lib/email-queue";
 
 const BOLD_LINK_API = "https://integrations.api.bold.co/online/link/v1";
 
@@ -106,7 +106,7 @@ export async function GET(req: NextRequest) {
       // Enviar email de confirmación si no fue enviado aún (puede llegar antes que el webhook)
       if (!paidOrder.confirmationEmailSentAt && paidOrder.user?.email) {
         try {
-          const emailResult = await sendOrderConfirmationEmail({
+          await enqueueOrderConfirmationEmail(paidOrder.id, {
             customerEmail: paidOrder.user.email,
             customerName: paidOrder.shippingName,
             orderNumber: paidOrder.orderNumber,
@@ -123,15 +123,8 @@ export async function GET(req: NextRequest) {
             discount: Number(paidOrder.discount),
             total: Number(paidOrder.total),
           });
-
-          await prisma.order.update({
-            where: { id: paidOrder.id },
-            data: emailResult.success
-              ? { confirmationEmailSentAt: new Date() }
-              : { confirmationEmailFailedAt: new Date(), confirmationEmailError: emailResult.error ?? "Error desconocido" },
-          });
         } catch (emailErr) {
-          console.error("[BOLD CALLBACK] Error enviando email:", emailErr);
+          console.error("[BOLD CALLBACK] Error encolando email:", emailErr);
         }
       }
     } catch (e) {

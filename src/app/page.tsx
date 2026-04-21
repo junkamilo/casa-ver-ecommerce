@@ -2,10 +2,13 @@
 
 
 import type { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import { AnnouncementBar, Header, HeroSection } from "@/components";
 import { prisma } from "@/lib/prisma";
 import { SLIDES } from "@/components/HeroSection/constants";
 import type { Slide } from "@/components/HeroSection/types";
+
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Inicio",
@@ -86,8 +89,18 @@ async function fetchHeroSlides(): Promise<Slide[]> {
   }
 }
 
+const getCachedHeroSlides = unstable_cache(fetchHeroSlides, ["hero-slides"], {
+  revalidate: 3600,
+  tags: ["hero"],
+});
+
+const getCachedTestimonials = unstable_cache(fetchTestimonials, ["testimonials"], {
+  revalidate: 3600,
+  tags: ["testimonials"],
+});
+
 export default async function Home() {
-  const [heroSlides, testimonials] = await Promise.all([fetchHeroSlides(), fetchTestimonials()]);
+  const [heroSlides, testimonials] = await Promise.all([getCachedHeroSlides(), getCachedTestimonials()]);
 
   return (
     <div className="min-h-screen bg-background">
