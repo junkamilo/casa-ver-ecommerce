@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
@@ -7,7 +7,7 @@ import { Providers } from "@/components/Providers";
 import WhatsAppFloatingButton from "@/components/WhatsAppFloatingButton";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
-import { BASE_METADATA } from "@/lib/seo";
+import { BASE_METADATA, BASE_VIEWPORT } from "@/lib/seo";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,6 +15,7 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = BASE_METADATA;
+export const viewport: Viewport = BASE_VIEWPORT;
 
 export default function RootLayout({
   children,
@@ -23,10 +24,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body
-        className={`${geistSans.variable} antialiased`}
-      >
-        <Providers> {/* <--- ENVUELVE TODO AQUÍ */}
+      <body className={`${geistSans.variable} antialiased`}>
+        <Providers>
           <CartProvider>
             {children}
             <SocialProofWrapper />

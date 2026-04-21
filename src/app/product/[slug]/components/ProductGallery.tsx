@@ -207,13 +207,13 @@ export default function ProductGallery({
 
       {isZoomOpen && createPortal(
         <div
-          className="fixed inset-0 z-9999 flex items-center justify-center bg-black/95 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm p-4"
           onClick={() => setIsZoomOpen(false)}
         >
           <button
             onClick={(e) => { e.stopPropagation(); setIsZoomOpen(false); }}
             aria-label="Cerrar zoom"
-            className="absolute top-4 sm:top-6 right-4 sm:right-6 z-10000 text-white/70 hover:text-white bg-black/50 hover:bg-black/80 p-2.5 sm:p-3 rounded-full transition-all cursor-pointer touch-target active:scale-90"
+            className="absolute top-4 sm:top-6 right-4 sm:right-6 z-10 text-white/70 hover:text-white bg-black/50 hover:bg-black/80 p-2.5 sm:p-3 rounded-full transition-all cursor-pointer touch-target active:scale-90"
           >
             <X className="w-4 sm:w-5 h-4 sm:h-5" />
           </button>

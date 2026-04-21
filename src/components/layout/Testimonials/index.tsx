@@ -20,13 +20,17 @@ const Testimonials = ({ comments }: Props) => {
       loop: true,
       align: "center",
       slidesToScroll: 1,
+      // ── Optimizaciones táctiles ──
+      dragFree: false,
+      dragThreshold: 10,
+      skipSnaps: false,
       breakpoints: {
         "(max-width: 768px)": { slidesToScroll: 1 },
         "(min-width: 769px) and (max-width: 1024px)": { slidesToScroll: 1 },
         "(min-width: 1025px)": { slidesToScroll: 1 },
       },
     },
-    [Autoplay({ delay: 3000, stopOnInteraction: false })]
+    [Autoplay({ delay: 3000, stopOnInteraction: true })]
   );
 
   const items = comments ?? SEED_TESTIMONIALS;

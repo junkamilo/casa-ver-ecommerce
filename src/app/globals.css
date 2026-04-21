@@ -126,9 +126,20 @@
   input, textarea, select {
     font-size: max(16px, 1em);
   }
+  /* Optimización táctil: permite pinch-zoom pero evita delays de 300ms en tap */
+  button, a, [role="button"], input[type="checkbox"], input[type="radio"], label {
+    touch-action: manipulation;
+  }
 }
 
 @layer utilities {
+  /* Utilidad para elementos táctiles optimizados */
+  .touch-optimize {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;

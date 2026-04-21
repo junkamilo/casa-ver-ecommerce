@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 // ── Constantes globales del sitio ────────────────────────────────────────────
 
@@ -12,11 +12,19 @@ export const DEFAULT_DESCRIPTION =
 // Todas las páginas heredan esto. Cada page.tsx puede sobreescribir
 // los campos que necesite — los demás se mantienen del base.
 
+export const BASE_VIEWPORT: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: "cover",
+};
+
 export const BASE_METADATA: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: SITE_NAME,
-    template: `%s | ${SITE_NAME}`, // Ej: "Tienda | Casa Verde"
+    template: `%s | ${SITE_NAME}`,
   },
   description: DEFAULT_DESCRIPTION,
   robots: { index: true, follow: true },

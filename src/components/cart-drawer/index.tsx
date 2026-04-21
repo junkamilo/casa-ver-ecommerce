@@ -24,7 +24,7 @@ const CartDrawer = () => {
   if (!isCartOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-100 flex flex-col justify-end sm:flex-row sm:justify-end">
+    <div className="fixed inset-0 z-50 flex flex-col justify-end sm:flex-row sm:justify-end">
       <CartOverlay onClose={closeCart} />
 
       <div className="relative w-full max-w-full sm:max-w-105 md:max-w-120 2xl:max-w-125 bg-background h-[92dvh] sm:h-full shadow-2xl flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-right duration-300 rounded-t-3xl sm:rounded-none">

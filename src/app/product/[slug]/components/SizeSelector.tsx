@@ -17,13 +17,19 @@ function SizeGuideModal({ onClose }: { onClose: () => void }) {
   }, [onClose]);
 
   useEffect(() => {
+    document.body.dataset.scrollLockModal = "1";
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      delete document.body.dataset.scrollLockModal;
+      if (!document.body.dataset.scrollLockCart) {
+        document.body.style.overflow = "";
+      }
+    };
   }, []);
 
   return (
     <div
-      className="fixed inset-0 z-9999 flex items-end sm:items-center justify-center"
+      className="fixed inset-0 z-60 flex items-end sm:items-center justify-center"
       role="dialog"
       aria-modal="true"
       aria-label="Guía de tallas"

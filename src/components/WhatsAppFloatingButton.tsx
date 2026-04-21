@@ -39,7 +39,7 @@ export default function WhatsAppFloatingButton() {
   };
 
   return (
-    <div className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-3">
+    <div className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">
       {/* Mini chat */}
       <div
         className={`transition-all duration-300 origin-bottom-right ${
@@ -105,7 +105,7 @@ export default function WhatsAppFloatingButton() {
       {/* FAB button */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#1ebe5c] text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center active:scale-90 relative"
+        className="pointer-events-auto w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#1ebe5c] text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center active:scale-90 relative"
         aria-label="Abrir chat de WhatsApp"
       >
         <span
