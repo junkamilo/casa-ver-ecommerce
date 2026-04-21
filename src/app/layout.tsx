@@ -6,7 +6,9 @@ import SocialProofWrapper from "@/components/SocialProofWrapper";
 import { Providers } from "@/components/Providers";
 import WhatsAppFloatingButton from "@/components/WhatsAppFloatingButton";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 import { BASE_METADATA, BASE_VIEWPORT } from "@/lib/seo";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -25,7 +27,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} antialiased`}
       >
-        <Providers> {/* <--- ENVUELVE TODO AQUÍ */}
+        <Providers>
           <CartProvider>
             {children}
             <SocialProofWrapper />
@@ -33,6 +35,7 @@ export default function RootLayout({
           </CartProvider>
         </Providers>
         <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
