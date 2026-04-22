@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { X, Send } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 const WA_NUMBER = "573022457432";
 const AGENT_NAME = "Casa Verde";
@@ -15,6 +16,8 @@ const WhatsAppIcon = () => (
 );
 
 export default function WhatsAppFloatingButton() {
+  const pathname = usePathname();
+  const isAdminPath = pathname?.startsWith("/admin");
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState(DEFAULT_MESSAGE);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -37,6 +40,10 @@ export default function WhatsAppFloatingButton() {
       handleSend();
     }
   };
+
+  if (isAdminPath) {
+    return null;
+  }
 
   return (
     <div className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">

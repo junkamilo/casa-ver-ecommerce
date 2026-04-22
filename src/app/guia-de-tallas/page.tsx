@@ -2,6 +2,7 @@ import Image from "next/image";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/Footer";
+import BackButton from "@/components/ui/BackButton";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -31,6 +32,9 @@ export default function GuiaDeTallasPage() {
             <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#C19A6B]/50 to-transparent" />
 
             <div className="relative max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-16 sm:py-20 md:py-24 text-center">
+              <div className="absolute top-6 left-4 sm:left-6 md:left-8">
+                <BackButton className="text-white/70 hover:text-white" />
+              </div>
               <p className="text-[10px] font-black tracking-[0.35em] text-[#C19A6B]/70 uppercase mb-4">
                 Casa Verde
               </p>

@@ -5,10 +5,7 @@ export function formatPrice(price: number): string {
 }
 
 export const PRODUCTION_TIME_CONTENT = [
-  "Nuestras prendas son elaboradas artesanalmente con dedicación y cuidado.",
-  "El tiempo estimado de confección es de 5 a 10 días hábiles a partir de la confirmación del pago.",
-  "Para pedidos con personalización o en tallas especiales, el tiempo puede extenderse de 10 a 15 días hábiles.",
-  "Te notificaremos por correo cuando tu pedido esté listo para envío.",
+  "El tiempo de despacho es de 2 a 5 días hábiles una vez confirmada la compra, ya que la mayoría de nuestras prendas se elaboran bajo confección.",
 ];
 
 export const CARE_INSTRUCTIONS = [

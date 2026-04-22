@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import type { NextRequest } from "next/server";
 import { createColorVariants, createSetItems } from "../_helpers";
+import { deleteCloudinaryAssetsByUrls } from "@/lib/cloudinary-admin";
 
 // ── Constantes permitidas ─────────────────────────────────────────────────────
 
@@ -46,11 +47,93 @@ function parseSafeDate(v: unknown): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
+function parseGarmentTypeIds(body: Record<string, unknown>): string[] {
+  const raw = Array.isArray(body.garmentTypes)
+    ? body.garmentTypes
+    : body.garmentType
+      ? [body.garmentType]
+      : [];
+
+  const normalized = raw
+    .filter((id): id is string => typeof id === "string")
+    .map((id) => id.trim())
+    .filter(Boolean);
+
+  return [...new Set(normalized)];
+}
+
+function collectBodyAssetUrls(body: Record<string, unknown>): string[] {
+  const urls: string[] = [];
+
+  if (typeof body.videoUrl === "string" && body.videoUrl.trim()) {
+    urls.push(body.videoUrl.trim());
+  }
+
+  const colors = Array.isArray(body.colors) ? body.colors : [];
+  for (const color of colors) {
+    if (!color || typeof color !== "object") continue;
+    const images = Array.isArray((color as { images?: unknown }).images)
+      ? (color as { images: unknown[] }).images
+      : [];
+    for (const image of images) {
+      if (typeof image === "string" && image.trim()) urls.push(image.trim());
+    }
+  }
+
+  const items = Array.isArray(body.items) ? body.items : [];
+  for (const item of items) {
+    if (!item || typeof item !== "object") continue;
+    const typedItem = item as { videoUrl?: unknown; colors?: unknown[] };
+    if (typeof typedItem.videoUrl === "string" && typedItem.videoUrl.trim()) {
+      urls.push(typedItem.videoUrl.trim());
+    }
+    const itemColors = Array.isArray(typedItem.colors) ? typedItem.colors : [];
+    for (const color of itemColors) {
+      if (!color || typeof color !== "object") continue;
+      const images = Array.isArray((color as { images?: unknown }).images)
+        ? (color as { images: unknown[] }).images
+        : [];
+      for (const image of images) {
+        if (typeof image === "string" && image.trim()) urls.push(image.trim());
+      }
+    }
+  }
+
+  return [...new Set(urls)];
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function collectProductAssetUrls(product: any): string[] {
+  if (!product) return [];
+
+  const urls: string[] = [];
+  if (product.videoUrl) urls.push(product.videoUrl);
+
+  for (const image of product.images ?? []) {
+    if (image.url) urls.push(image.url);
+  }
+  for (const color of product.colors ?? []) {
+    for (const image of color.images ?? []) {
+      if (image.url) urls.push(image.url);
+    }
+  }
+  for (const item of product.items ?? []) {
+    if (item.videoUrl) urls.push(item.videoUrl);
+    for (const color of item.colors ?? []) {
+      for (const image of color.images ?? []) {
+        if (image.url) urls.push(image.url);
+      }
+    }
+  }
+
+  return [...new Set(urls.map((u) => u.trim()).filter(Boolean))];
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function validateProductBody(body: any): string | null {
   const {
     name, categoryId, description, basePrice, comparePrice,
-    stock, status, sizes, colors, items, videoUrl, isSet,
+    stock, status, sizes, colors, items, videoUrl, isSet, garmentTypes,
   } = body;
 
   // ── Nombre ────────────────────────────────────────────────────────────────
@@ -92,6 +175,12 @@ function validateProductBody(body: any): string | null {
   // ── Estado ────────────────────────────────────────────────────────────────
   if (status && !ALLOWED_STATUSES.includes(status as never))
     return `Estado inválido: ${status}`;
+
+  // ── Tipos de prenda (muchos-a-muchos) ──────────────────────────────────────
+  if (garmentTypes !== undefined && !Array.isArray(garmentTypes))
+    return "Los tipos de prenda deben enviarse como lista";
+  if (Array.isArray(garmentTypes) && garmentTypes.length > 20)
+    return "Demasiados tipos de prenda (máximo 20)";
 
   // ── Tallas ────────────────────────────────────────────────────────────────
   if (Array.isArray(sizes)) {
@@ -204,6 +293,11 @@ export async function GET(
         category: { select: { id: true, name: true } },
         images: { orderBy: { order: "asc" } },
         colors: { include: { images: { orderBy: { order: "asc" } }, variants: true } },
+        garmentTypes: {
+          include: {
+            garmentType: { select: { id: true, name: true } },
+          },
+        },
         items: {
           orderBy: { order: "asc" },
           include: {
@@ -250,7 +344,7 @@ export async function GET(
       metaTitle: product.metaTitle,
       metaDescription: product.metaDescription,
       videoUrl: product.videoUrl,
-      garmentType: product.garmentTypeId ?? null,
+      garmentTypes: product.garmentTypes.map((relation: { garmentType: { id: string } }) => relation.garmentType.id),
       generalImages: product.images
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .filter((img: any) => !img.colorId)
@@ -353,7 +447,7 @@ export async function PATCH(
       name, description, basePrice, comparePrice, stock,
       categoryId, status, isFeatured, isNew,
       isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
-      videoUrl, garmentType: garmentTypeId, isSet, colors, sizes, items,
+      videoUrl, isSet, colors, sizes, items,
     } = body;
 
     // ── Verificar que la categoría existe y está activa en DB ─────────────────
@@ -368,6 +462,25 @@ export async function PATCH(
       return new NextResponse(`La categoría "${category.name}" está inactiva`, { status: 400 });
     }
 
+    const resolvedGarmentTypeIds = parseGarmentTypeIds(body);
+    if (resolvedGarmentTypeIds.length > 0) {
+      const validGarmentTypes = await prisma.garmentType.findMany({
+        where: {
+          id: { in: resolvedGarmentTypeIds },
+          isActive: true,
+          categories: { some: { categoryId: category.id } },
+        },
+        select: { id: true },
+      });
+
+      if (validGarmentTypes.length !== resolvedGarmentTypeIds.length) {
+        return new NextResponse(
+          "Uno o más tipos de prenda no existen, están inactivos o no pertenecen a la categoría seleccionada",
+          { status: 400 },
+        );
+      }
+    }
+
     // ── Fechas con parsing seguro ──────────────────────────────────────────────
     const resolvedProductNewAt = isProductNew
       ? (parseSafeDate(isProductNewAt) ?? new Date())
@@ -376,9 +489,28 @@ export async function PATCH(
       ? (parseSafeDate(isOnSaleAt) ?? new Date())
       : null;
 
+    const nextAssetUrls = collectBodyAssetUrls(body);
+    let previousAssetUrls: string[] = [];
+
     const result = await prisma.$transaction(async (tx) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const txDb = tx as any;
+
+      const existingProduct = await txDb.product.findUnique({
+        where: { id },
+        select: {
+          videoUrl: true,
+          images: { select: { url: true } },
+          colors: { select: { images: { select: { url: true } } } },
+          items: {
+            select: {
+              videoUrl: true,
+              colors: { select: { images: { select: { url: true } } } },
+            },
+          },
+        },
+      });
+      previousAssetUrls = collectProductAssetUrls(existingProduct);
 
       // 1. Liberar reservas de stock activas antes de borrar variantes.
       //    Previene que carritos de clientes queden apuntando a variantes eliminadas.
@@ -417,7 +549,12 @@ export async function PATCH(
           isOnSale: isOnSale ?? false,
           isOnSaleAt: resolvedOnSaleAt,
           videoUrl: videoUrl !== undefined ? (videoUrl || null) : undefined,
-          garmentTypeId: (garmentTypeId as string) || null,
+          garmentTypes: {
+            deleteMany: {},
+            create: resolvedGarmentTypeIds.map((garmentTypeId) => ({
+              garmentTypeId,
+            })),
+          },
           isSet: isSet ?? false,
           metaTitle: (name as string).trim().slice(0, 60),
           metaDescription: description
@@ -439,6 +576,16 @@ export async function PATCH(
       }
       return product;
     });
+
+    const nextAssetSet = new Set(nextAssetUrls);
+    const urlsToDelete = previousAssetUrls.filter((url) => !nextAssetSet.has(url));
+    if (urlsToDelete.length > 0) {
+      try {
+        await deleteCloudinaryAssetsByUrls(urlsToDelete);
+      } catch (cloudinaryError) {
+        console.error("[PRODUCT_PATCH] Error limpiando archivos en Cloudinary", cloudinaryError);
+      }
+    }
 
     revalidatePath("/");
     return NextResponse.json(result);
@@ -462,9 +609,27 @@ export async function DELETE(
 
     const { id } = await params;
 
+    let productAssetUrls: string[] = [];
+
     await prisma.$transaction(async (tx) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const txDb = tx as any;
+
+      const existingProduct = await txDb.product.findUnique({
+        where: { id },
+        select: {
+          videoUrl: true,
+          images: { select: { url: true } },
+          colors: { select: { images: { select: { url: true } } } },
+          items: {
+            select: {
+              videoUrl: true,
+              colors: { select: { images: { select: { url: true } } } },
+            },
+          },
+        },
+      });
+      productAssetUrls = collectProductAssetUrls(existingProduct);
 
       // Liberar reservas activas antes de eliminar para evitar errores en carritos
       await txDb.stockReservation.updateMany({
@@ -481,6 +646,14 @@ export async function DELETE(
       await txDb.productItem.deleteMany({ where: { productId: id } });
       await txDb.product.delete({ where: { id } });
     });
+
+    if (productAssetUrls.length > 0) {
+      try {
+        await deleteCloudinaryAssetsByUrls(productAssetUrls);
+      } catch (cloudinaryError) {
+        console.error("[PRODUCT_DELETE] Error limpiando archivos en Cloudinary", cloudinaryError);
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

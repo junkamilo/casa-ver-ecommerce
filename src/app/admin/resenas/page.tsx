@@ -202,12 +202,12 @@ export default function AdminResenas() {
               <div className="hidden md:block overflow-auto max-h-150">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="sticky top-0 z-10 border-b border-gray-100 bg-gray-50/50">
-                      <th className="text-left px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Cliente</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Prenda</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Reseña</th>
-                      <th className="text-center px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Estado</th>
-                      <th className="text-right px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Acciones</th>
+                    <tr className="border-b border-gray-200 bg-[#F8F9FA]">
+                      <th className="sticky top-0 z-20 bg-[#F8F9FA] text-left px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 shadow-[0_1px_0_0_rgba(229,231,235,1)]">Cliente</th>
+                      <th className="sticky top-0 z-20 bg-[#F8F9FA] text-left px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 shadow-[0_1px_0_0_rgba(229,231,235,1)]">Prenda</th>
+                      <th className="sticky top-0 z-20 bg-[#F8F9FA] text-left px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 shadow-[0_1px_0_0_rgba(229,231,235,1)]">Reseña</th>
+                      <th className="sticky top-0 z-20 bg-[#F8F9FA] text-center px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 shadow-[0_1px_0_0_rgba(229,231,235,1)]">Estado</th>
+                      <th className="sticky top-0 z-20 bg-[#F8F9FA] text-right px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 shadow-[0_1px_0_0_rgba(229,231,235,1)]">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">

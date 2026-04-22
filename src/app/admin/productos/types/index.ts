@@ -105,7 +105,7 @@ export interface ProductModalProps {
   toggleSize: (size: string) => void;
   setColorImages: (colorName: string, images: string[]) => void;
   updateVariantStock: (colorName: string, size: string, stock: number) => void;
-  garmentType: string | null; setGarmentType: (v: string | null) => void;
+  garmentTypes: string[]; setGarmentTypes: (v: string[]) => void;
   isSet: boolean; setIsSet: (v: boolean) => void;
   setItems: SetItemForm[];
   addSetItem: () => void;
@@ -167,7 +167,7 @@ export interface GeneralInfoSectionProps {
   isProductNewAt: string | null; onProductNewAt: (v: string | null) => void;
   isOnSale: boolean; onOnSale: (v: boolean) => void;
   isOnSaleAt: string | null; onOnSaleAt: (v: string | null) => void;
-  garmentType: string | null; onGarmentType: (v: string | null) => void;
+  garmentTypes: string[]; onGarmentType: (v: string[]) => void;
   categories: Category[];
   errors?: ProductFormErrors;
   isSet?: boolean;

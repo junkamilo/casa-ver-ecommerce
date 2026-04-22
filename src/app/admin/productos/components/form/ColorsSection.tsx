@@ -9,6 +9,14 @@ import ImageUpload from "@/components/ui/image-upload";
 import FieldError from "../shared/FieldError";
 import SectionTitle from "./SectionTitle";
 
+const normalizeColorName = (name: string) =>
+  name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
+
 export default function ColorsSection({
   selectedColors,
   selectedSizes,
@@ -34,8 +42,10 @@ export default function ColorsSection({
       return next;
     });
 
-  const isColorSelected = (name: string) =>
-    selectedColors.some((c) => c.name === name);
+  const isColorSelected = (name: string) => {
+    const key = normalizeColorName(name);
+    return selectedColors.some((c) => normalizeColorName(c.name) === key);
+  };
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {

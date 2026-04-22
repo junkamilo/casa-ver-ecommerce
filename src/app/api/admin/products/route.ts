@@ -47,11 +47,26 @@ function parseSafeDate(v: unknown): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
+function parseGarmentTypeIds(body: Record<string, unknown>): string[] {
+  const raw = Array.isArray(body.garmentTypes)
+    ? body.garmentTypes
+    : body.garmentType
+      ? [body.garmentType]
+      : [];
+
+  const normalized = raw
+    .filter((id): id is string => typeof id === "string")
+    .map((id) => id.trim())
+    .filter(Boolean);
+
+  return [...new Set(normalized)];
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function validateProductBody(body: any, isCreate: boolean): string | null {
   const {
     name, categoryId, description, basePrice, comparePrice,
-    stock, status, sizes, colors, items, videoUrl, isSet,
+    stock, status, sizes, colors, items, videoUrl, isSet, garmentTypes,
   } = body;
 
   // ── Nombre ────────────────────────────────────────────────────────────────
@@ -94,6 +109,12 @@ function validateProductBody(body: any, isCreate: boolean): string | null {
   // ── Estado ────────────────────────────────────────────────────────────────
   if (status && !ALLOWED_STATUSES.includes(status as never))
     return `Estado inválido: ${status}`;
+
+  // ── Tipos de prenda (muchos-a-muchos) ──────────────────────────────────────
+  if (garmentTypes !== undefined && !Array.isArray(garmentTypes))
+    return "Los tipos de prenda deben enviarse como lista";
+  if (Array.isArray(garmentTypes) && garmentTypes.length > 20)
+    return "Demasiados tipos de prenda (máximo 20)";
 
   // ── Tallas ────────────────────────────────────────────────────────────────
   if (Array.isArray(sizes)) {
@@ -332,7 +353,7 @@ export async function POST(req: NextRequest) {
       name, description, basePrice, comparePrice, stock,
       categoryId, status, isFeatured, isNew,
       isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
-      videoUrl, garmentType: garmentTypeId, isSet, colors, sizes, items,
+      videoUrl, isSet, colors, sizes, items,
     } = body;
 
     // ── Verificar que la categoría existe y está activa en DB ─────────────────
@@ -345,6 +366,25 @@ export async function POST(req: NextRequest) {
     }
     if (!category.isActive) {
       return new NextResponse(`La categoría "${category.name}" está inactiva`, { status: 400 });
+    }
+
+    const resolvedGarmentTypeIds = parseGarmentTypeIds(body);
+    if (resolvedGarmentTypeIds.length > 0) {
+      const validGarmentTypes = await prisma.garmentType.findMany({
+        where: {
+          id: { in: resolvedGarmentTypeIds },
+          isActive: true,
+          categories: { some: { categoryId: category.id } },
+        },
+        select: { id: true },
+      });
+
+      if (validGarmentTypes.length !== resolvedGarmentTypeIds.length) {
+        return new NextResponse(
+          "Uno o más tipos de prenda no existen, están inactivos o no pertenecen a la categoría seleccionada",
+          { status: 400 },
+        );
+      }
     }
 
     const slug =
@@ -379,7 +419,13 @@ export async function POST(req: NextRequest) {
           isOnSale: isOnSale || false,
           isOnSaleAt: resolvedOnSaleAt,
           videoUrl: videoUrl || null,
-          garmentTypeId: (garmentTypeId as string) || null,
+          garmentTypes: resolvedGarmentTypeIds.length
+            ? {
+                create: resolvedGarmentTypeIds.map((garmentTypeId) => ({
+                  garmentTypeId,
+                })),
+              }
+            : undefined,
           isSet: isSet || false,
           metaTitle: (name as string).trim().slice(0, 60),
           metaDescription: description

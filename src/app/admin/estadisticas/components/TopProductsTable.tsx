@@ -77,12 +77,12 @@ export function TopProductsTable({ products }: TopProductsTableProps) {
             <div className="hidden sm:block overflow-auto max-h-150">
               <table className="w-full">
                 <thead>
-                  <tr className="sticky top-0 z-10 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50/50 border-b border-gray-100">
-                    <th className="px-6 py-4">Ranking</th>
-                    <th className="px-6 py-4">Producto</th>
-                    <th className="px-6 py-4 text-center">Unidades</th>
-                    <th className="px-6 py-4 text-right">Ingresos</th>
-                    <th className="px-6 py-4 text-center">vs Período Anterior</th>
+                  <tr className="text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-[#F8F9FA] border-b border-gray-200">
+                    <th className="sticky top-0 z-20 bg-[#F8F9FA] px-6 py-4 shadow-[0_1px_0_0_rgba(229,231,235,1)]">Ranking</th>
+                    <th className="sticky top-0 z-20 bg-[#F8F9FA] px-6 py-4 shadow-[0_1px_0_0_rgba(229,231,235,1)]">Producto</th>
+                    <th className="sticky top-0 z-20 bg-[#F8F9FA] px-6 py-4 text-center shadow-[0_1px_0_0_rgba(229,231,235,1)]">Unidades</th>
+                    <th className="sticky top-0 z-20 bg-[#F8F9FA] px-6 py-4 text-right shadow-[0_1px_0_0_rgba(229,231,235,1)]">Ingresos</th>
+                    <th className="sticky top-0 z-20 bg-[#F8F9FA] px-6 py-4 text-center shadow-[0_1px_0_0_rgba(229,231,235,1)]">vs Período Anterior</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">

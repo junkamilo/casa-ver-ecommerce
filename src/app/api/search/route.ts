@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
       },
       // Fallback: primera imagen del primer color (mismo patrón que tienda)
       colors: {
-        take: 1,
+        take: 6,
         select: {
           images: {
             where: { url: { not: "" } },
@@ -60,18 +60,41 @@ export async function GET(req: NextRequest) {
           },
         },
       },
+      // Fallback para conjuntos: primera imagen del primer item/color
+      items: {
+        take: 1,
+        orderBy: { order: "asc" },
+        select: {
+          colors: {
+            take: 1,
+            select: {
+              images: {
+                where: { url: { not: "" } },
+                take: 1,
+                select: { url: true },
+                orderBy: { order: "asc" },
+              },
+            },
+          },
+        },
+      },
     },
     take: MAX_RESULTS,
     orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
   });
 
-  const results = products.map((p) => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    price: Number(p.basePrice),
-    image: p.images[0]?.url ?? p.colors[0]?.images[0]?.url ?? null,
-  }));
+  const results = products.map((p) => {
+    const firstColorImage = p.colors.find((c) => c.images[0]?.url)?.images[0]?.url ?? null;
+    const firstSetItemImage = p.items[0]?.colors[0]?.images[0]?.url ?? null;
+
+    return {
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      price: Number(p.basePrice),
+      image: p.images[0]?.url ?? firstColorImage ?? firstSetItemImage ?? null,
+    };
+  });
 
   return NextResponse.json(results);
 }

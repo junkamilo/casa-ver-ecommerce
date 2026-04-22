@@ -39,7 +39,7 @@ export default function ProductModal({
   isProductNewAt, setIsProductNewAt,
   isOnSale, setIsOnSale,
   isOnSaleAt, setIsOnSaleAt,
-  garmentType, setGarmentType,
+  garmentTypes, setGarmentTypes,
   selectedColors,
   selectedSizes,
   videoUrl, setVideoUrl,
@@ -240,7 +240,7 @@ export default function ProductModal({
                   isProductNewAt={isProductNewAt} onProductNewAt={setIsProductNewAt}
                   isOnSale={isOnSale} onOnSale={setIsOnSale}
                   isOnSaleAt={isOnSaleAt} onOnSaleAt={setIsOnSaleAt}
-                  garmentType={garmentType} onGarmentType={setGarmentType}
+                  garmentTypes={garmentTypes} onGarmentType={setGarmentTypes}
                   categories={categories}
                   errors={errors}
                   isSet={isSet}

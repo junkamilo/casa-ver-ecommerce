@@ -14,17 +14,17 @@ const AdminTable = ({
 }: AdminTableProps) => (
   <table className="w-full">
     <thead>
-      <tr className="sticky top-0 z-10 bg-gray-50/80 border-b border-gray-100">
-        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+      <tr className="bg-[#F8F9FA] border-b border-gray-200">
+        <th className="sticky top-0 z-20 bg-[#F8F9FA] px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider shadow-[0_1px_0_0_rgba(229,231,235,1)]">
           Administrador
         </th>
-        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+        <th className="sticky top-0 z-20 bg-[#F8F9FA] px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider shadow-[0_1px_0_0_rgba(229,231,235,1)]">
           Email
         </th>
-        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+        <th className="sticky top-0 z-20 bg-[#F8F9FA] px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider shadow-[0_1px_0_0_rgba(229,231,235,1)]">
           Fecha de Alta
         </th>
-        <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
+        <th className="sticky top-0 z-20 bg-[#F8F9FA] px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider shadow-[0_1px_0_0_rgba(229,231,235,1)]">
           Acciones
         </th>
       </tr>

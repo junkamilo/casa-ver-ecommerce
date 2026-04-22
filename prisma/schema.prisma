@@ -76,7 +76,7 @@ model GarmentType {
   isActive   Boolean  @default(true)
 
   categories CategoryGarmentType[]
-  products   Product[]
+  products   ProductGarmentType[]
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -95,6 +95,17 @@ model CategoryGarmentType {
 
   @@id([categoryId, garmentTypeId])
   @@map("category_garment_types")
+}
+
+model ProductGarmentType {
+  productId     String
+  garmentTypeId String
+
+  product     Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  garmentType GarmentType @relation(fields: [garmentTypeId], references: [id], onDelete: Cascade)
+
+  @@id([productId, garmentTypeId])
+  @@map("product_garment_types")
 }
 
 // ============================================================
@@ -292,9 +303,8 @@ model Product {
   rating          Float          @default(0)
   numReviews      Int            @default(0)
 
-  // Tipo de prenda (para filtros del menú — referencia a tabla dinámica)
-  garmentTypeId   String?
-  garmentType     GarmentType?   @relation(fields: [garmentTypeId], references: [id], onDelete: SetNull)
+  // Tipos de prenda (para filtros del menú — relación muchos-a-muchos)
+  garmentTypes    ProductGarmentType[]
 
   // Conjunto (Set) de piezas
   isSet           Boolean        @default(false)

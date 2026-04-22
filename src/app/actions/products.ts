@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { deleteCloudinaryAssetsByUrls } from "@/lib/cloudinary-admin";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = prisma as any;
@@ -38,6 +39,9 @@ export type ProductPayload = {
   isOnSale?: boolean;
   isOnSaleAt?: string | null;
   videoUrl?: string | null;
+  /** IDs de tipos de prenda (muchos-a-muchos) — lo que envía el formulario admin */
+  garmentTypes?: string[];
+  /** @deprecated usar garmentTypes */
   garmentType?: string | null;
   isSet?: boolean;
   colors?: ColorInput[];
@@ -95,6 +99,84 @@ function validatePayload(payload: ProductPayload, isCreate: boolean): string | n
   }
 
   return null;
+}
+
+function parseGarmentTypeIds(payload: ProductPayload): string[] {
+  const raw =
+    Array.isArray(payload.garmentTypes) && payload.garmentTypes.length > 0
+      ? payload.garmentTypes
+      : payload.garmentType
+        ? [payload.garmentType]
+        : [];
+  const normalized = raw
+    .filter((id): id is string => typeof id === "string")
+    .map((id) => id.trim())
+    .filter(Boolean);
+  return [...new Set(normalized)];
+}
+
+async function assertGarmentTypesValidForCategory(
+  categoryId: string,
+  ids: string[],
+): Promise<string | null> {
+  if (ids.length === 0) return null;
+  if (ids.length > 20) return "Demasiados tipos de prenda (máximo 20)";
+  const valid = await prisma.garmentType.findMany({
+    where: {
+      id: { in: ids },
+      isActive: true,
+      categories: { some: { categoryId } },
+    },
+    select: { id: true },
+  });
+  if (valid.length !== ids.length) {
+    return "Uno o más tipos de prenda no existen, están inactivos o no pertenecen a la categoría seleccionada";
+  }
+  return null;
+}
+
+function collectPayloadAssetUrls(payload: ProductPayload): string[] {
+  const urls: string[] = [];
+
+  if (payload.videoUrl) urls.push(payload.videoUrl);
+  for (const color of payload.colors ?? []) {
+    for (const url of color.images ?? []) urls.push(url);
+  }
+  for (const item of payload.items ?? []) {
+    if (item.videoUrl) urls.push(item.videoUrl);
+    for (const color of item.colors ?? []) {
+      for (const url of color.images ?? []) urls.push(url);
+    }
+  }
+
+  return [...new Set(urls.map((u) => u.trim()).filter(Boolean))];
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function collectProductAssetUrls(product: any): string[] {
+  if (!product) return [];
+
+  const urls: string[] = [];
+  if (product.videoUrl) urls.push(product.videoUrl);
+
+  for (const image of product.images ?? []) {
+    if (image.url) urls.push(image.url);
+  }
+  for (const color of product.colors ?? []) {
+    for (const image of color.images ?? []) {
+      if (image.url) urls.push(image.url);
+    }
+  }
+  for (const item of product.items ?? []) {
+    if (item.videoUrl) urls.push(item.videoUrl);
+    for (const color of item.colors ?? []) {
+      for (const image of color.images ?? []) {
+        if (image.url) urls.push(image.url);
+      }
+    }
+  }
+
+  return [...new Set(urls.map((u) => u.trim()).filter(Boolean))];
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -220,11 +302,18 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
   const validationError = validatePayload(payload, true);
   if (validationError) return { success: false, error: validationError };
 
+  const resolvedGarmentTypeIds = parseGarmentTypeIds(payload);
+  const garmentTypesError = await assertGarmentTypesValidForCategory(
+    payload.categoryId.trim(),
+    resolvedGarmentTypeIds,
+  );
+  if (garmentTypesError) return { success: false, error: garmentTypesError };
+
   try {
     const {
       name, description, categoryId, status, isFeatured, isNew,
       isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
-      videoUrl, garmentType, isSet, colors, sizes, items,
+      videoUrl, isSet, colors, sizes, items,
     } = payload;
 
     const basePrice    = parseFloat(String(payload.basePrice));
@@ -259,7 +348,11 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
           isOnSale: isOnSale || false,
           isOnSaleAt: resolvedOnSaleAt,
           videoUrl: videoUrl || null,
-          garmentTypeId: garmentType || null,
+          garmentTypes: resolvedGarmentTypeIds.length
+            ? {
+                create: resolvedGarmentTypeIds.map((garmentTypeId) => ({ garmentTypeId })),
+              }
+            : undefined,
           isSet: isSet || false,
           metaTitle: name.trim().slice(0, 60),
           metaDescription: (description || "").replace(/\s+/g, " ").trim().slice(0, 160),
@@ -291,11 +384,18 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
   const validationError = validatePayload(payload, false);
   if (validationError) return { success: false, error: validationError };
 
+  const resolvedGarmentTypeIds = parseGarmentTypeIds(payload);
+  const garmentTypesError = await assertGarmentTypesValidForCategory(
+    payload.categoryId.trim(),
+    resolvedGarmentTypeIds,
+  );
+  if (garmentTypesError) return { success: false, error: garmentTypesError };
+
   try {
     const {
       name, description, categoryId, status, isFeatured, isNew,
       isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
-      videoUrl, garmentType, isSet, colors, sizes, items,
+      videoUrl, isSet, colors, sizes, items,
     } = payload;
 
     const basePrice    = payload.basePrice  != null ? parseFloat(String(payload.basePrice))  : undefined;
@@ -309,7 +409,26 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
       ? (isOnSaleAt ? new Date(isOnSaleAt) : new Date())
       : null;
 
+    const nextAssetUrls = collectPayloadAssetUrls(payload);
+    let previousAssetUrls: string[] = [];
+
     const result = await db.$transaction(async (tx: any) => {
+      const existingProduct = await tx.product.findUnique({
+        where: { id },
+        select: {
+          videoUrl: true,
+          images: { select: { url: true } },
+          colors: { select: { images: { select: { url: true } } } },
+          items: {
+            select: {
+              videoUrl: true,
+              colors: { select: { images: { select: { url: true } } } },
+            },
+          },
+        },
+      });
+      previousAssetUrls = collectProductAssetUrls(existingProduct);
+
       // Limpiar variantes, imágenes, items y sub-productos existentes antes de recrear
       await Promise.all([
         tx.productVariant.deleteMany({ where: { productId: id } }),
@@ -334,7 +453,10 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
           isOnSale: isOnSale ?? false,
           isOnSaleAt: resolvedOnSaleAt,
           videoUrl: videoUrl !== undefined ? (videoUrl || null) : undefined,
-          garmentTypeId: garmentType !== undefined ? (garmentType || null) : undefined,
+          garmentTypes: {
+            deleteMany: {},
+            create: resolvedGarmentTypeIds.map((garmentTypeId) => ({ garmentTypeId })),
+          },
           isSet: isSet ?? false,
           metaTitle: name ? name.trim().slice(0, 60) : undefined,
           metaDescription: description != null
@@ -351,6 +473,16 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
 
       return product;
     }, { timeout: 30000 });
+
+    const nextAssetSet = new Set(nextAssetUrls);
+    const urlsToDelete = previousAssetUrls.filter((url) => !nextAssetSet.has(url));
+    if (urlsToDelete.length > 0) {
+      try {
+        await deleteCloudinaryAssetsByUrls(urlsToDelete);
+      } catch (cloudinaryError) {
+        console.error("[updateProduct] Error limpiando archivos en Cloudinary", cloudinaryError);
+      }
+    }
 
     revalidatePath("/admin/productos");
     revalidatePath(`/product/${result.slug}`);

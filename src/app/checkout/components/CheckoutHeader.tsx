@@ -16,13 +16,10 @@ const CheckoutHeader = () => {
       </Link>
       <Link
         href="/"
-        className="text-3xl sm:text-5xl text-[#154734] tracking-tight leading-none flex items-center gap-2 group"
+        className="text-3xl sm:text-5xl text-[#154734] tracking-tight leading-none shrink-0 transition-colors duration-300 hover:text-[#103a2a]"
         style={{ fontFamily: "Georgia, serif" }}
       >
-        CASA{" "}
-        <span className="italic text-[#C19A6B] group-hover:text-[#154734] transition-colors duration-500">
-          VERDE
-        </span>
+        CASA VERDE
       </Link>
     </header>
 
