@@ -265,7 +265,7 @@ export default function MobileMenu({ isAdmin, categories, onClose, onSearchOpen 
 
         {/* ── MI CUENTA ── */}
         <Link
-          href="/cuenta"
+          href="/perfil"
           className="group flex items-center gap-3 text-sm font-bold tracking-[0.15em] text-foreground hover:text-[#154734] pt-5 mt-2 border-t border-border/40 transition-colors duration-200"
           onClick={onClose}
         >

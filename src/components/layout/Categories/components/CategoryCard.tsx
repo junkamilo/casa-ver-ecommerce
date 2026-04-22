@@ -5,7 +5,7 @@ import type { CategoryCardProps } from "../types";
 const CategoryCard = ({ image, label, slug }: CategoryCardProps) => (
   <Link
     href={`/collections/${slug}`}
-    className="group block relative cursor-pointer w-full aspect-4/5 overflow-hidden bg-[#154734] shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_40px_-15px_rgba(21,71,52,0.2)] transition-all duration-500"
+    className="group block relative cursor-pointer w-full aspect-4/5 overflow-hidden rounded-2xl bg-[#154734] shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_40px_-15px_rgba(21,71,52,0.2)] transition-all duration-500"
   >
     {image ? (
       <>
@@ -27,7 +27,7 @@ const CategoryCard = ({ image, label, slug }: CategoryCardProps) => (
     )}
 
     {/* Marco Interior Dorado */}
-    <div className="absolute inset-4 border border-[#C19A6B]/0 group-hover:border-[#C19A6B]/30 transition-colors duration-700 pointer-events-none z-10" />
+    <div className="absolute inset-4 rounded-xl border border-[#C19A6B]/0 group-hover:border-[#C19A6B]/30 transition-colors duration-700 pointer-events-none z-10" />
 
     {/* Contenido de Texto (solo visible con imagen) */}
     {image && (

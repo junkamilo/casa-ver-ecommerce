@@ -3,12 +3,12 @@ import type { CategoryCardProps } from "../types/types";
 
 const CategoryCard = ({ category, onEdit, onToggleActive }: CategoryCardProps) => (
   <div
-    className={`group bg-white rounded-3xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl will-change-transform ${
+    className={`group bg-white rounded-3xl overflow-hidden border transition-all duration-300 hover:shadow-xl ${
       !category.isActive ? "opacity-60 border-gray-200 grayscale-[0.2]" : "border-[#C19A6B]/10 shadow-sm"
     }`}
   >
     {/* Imagen / Fallback Superior */}
-    <div className="relative h-32 border-b border-gray-100 overflow-hidden rounded-t-3xl flex items-center justify-center">
+    <div className="relative h-32 border-b border-gray-100 overflow-hidden flex items-center justify-center">
       {category.image ? (
         <>
           <img

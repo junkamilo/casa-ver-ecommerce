@@ -65,6 +65,7 @@ async function getCollectionData(
   tipoSlug?: string,
 ): Promise<{
   category: { name: string } | null;
+  garmentTypeName?: string;
   products: CollectionProduct[];
   filterOptions: FilterOptions;
 }> {
@@ -78,20 +79,28 @@ async function getCollectionData(
 
     if (!category) return empty;
 
-    // Si viene ?tipo=slug, buscamos el id del garmentType para filtrar
+    // Si viene ?tipo=slug, buscamos el id y nombre del garmentType para filtrar
     let garmentTypeId: string | undefined;
+    let garmentTypeName: string | undefined;
     if (tipoSlug) {
       const gt = await prisma.garmentType.findUnique({
         where: { slug: tipoSlug },
-        select: { id: true },
+        select: { id: true, name: true },
       });
       garmentTypeId = gt?.id;
+      garmentTypeName = gt?.name;
     }
 
     const where: Prisma.ProductWhereInput = {
       category: { slug },
       status: "ACTIVE",
-      ...(garmentTypeId ? { garmentTypeId } : {}),
+      ...(garmentTypeId
+        ? {
+            garmentTypes: {
+              some: { garmentTypeId },
+            },
+          }
+        : {}),
     };
 
     // Fetch all active products (filtering happens client-side)
@@ -156,7 +165,7 @@ async function getCollectionData(
       };
     });
 
-    return { category, products, filterOptions: { availableColors, maxPriceDb } };
+    return { category, garmentTypeName, products, filterOptions: { availableColors, maxPriceDb } };
   } catch {
     return empty;
   }
@@ -220,8 +229,8 @@ export default async function CollectionPage({
 }) {
   const { slug } = await params;
   const { tipo } = await searchParams;
-  const { category, products, filterOptions } = await getCollectionData(slug, tipo);
-  const title = category?.name?.toUpperCase() ?? slug.replace(/-/g, " ").toUpperCase();
+  const { category, garmentTypeName, products, filterOptions } = await getCollectionData(slug, tipo);
+  const title = (garmentTypeName ?? category?.name ?? slug.replace(/-/g, " ")).toUpperCase();
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFA] selection:bg-[#C19A6B]/20 relative overflow-hidden">

@@ -10,6 +10,14 @@ import PriceInput from "../shared/PriceInput";
 import { SetItemCardProps } from "../../types";
 import { SIZES, fieldCls } from "../../constants";
 
+const normalizeColorName = (name: string) =>
+  name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
+
 export default function SetItemCard({
   item,
   index,
@@ -203,7 +211,10 @@ export default function SetItemCard({
                         </p>
                       )}
                       {presetColors.map((preset) => {
-                        const selected = item.colors.some((c) => c.name === preset.name);
+                        const key = normalizeColorName(preset.name);
+                        const selected = item.colors.some(
+                          (c) => normalizeColorName(c.name) === key
+                        );
                         return (
                           <button
                             key={preset.name}

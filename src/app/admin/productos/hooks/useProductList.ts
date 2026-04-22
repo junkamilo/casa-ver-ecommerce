@@ -19,22 +19,29 @@ export function useProductList() {
   const fetchProducts = useCallback(async () => {
     setFetchError(null);
     try {
-      // ✅ Parámetros de paginación: obtener página 1 con límite 25
-      const params = new URLSearchParams({
-        page: "1",
-        limit: "25",
-      });
-      const res = await fetch(`/api/admin/products?${params}`);
-      if (!res.ok) {
-        setFetchError("No se pudieron cargar los productos. Intenta de nuevo.");
-        return;
-      }
-      const response = await res.json();
+      // Carga todos los productos en múltiples páginas si es necesario
+      let allProducts: ProductListItem[] = [];
+      let page = 1;
+      const limit = 100;
 
-      // ✅ Maneja la nueva estructura {data: [], pagination: {...}}
-      const data = response.data || response; // Backwards compatible
-      setProducts(data);
-      setFilteredProducts(data);
+      while (true) {
+        const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+        const res = await fetch(`/api/admin/products?${params}`);
+        if (!res.ok) {
+          setFetchError("No se pudieron cargar los productos. Intenta de nuevo.");
+          return;
+        }
+        const response = await res.json();
+        const data: ProductListItem[] = response.data || response;
+        allProducts = [...allProducts, ...data];
+
+        const pagination = response.pagination;
+        if (!pagination || !pagination.hasNextPage) break;
+        page++;
+      }
+
+      setProducts(allProducts);
+      setFilteredProducts(allProducts);
     } catch {
       setFetchError("Error de conexión al cargar los productos.");
     } finally {

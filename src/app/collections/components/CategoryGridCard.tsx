@@ -34,7 +34,7 @@ export function CategoryGridCard({ category }: CategoryGridCardProps) {
       )}
 
       {/* Borde interior hover */}
-      <div className="absolute inset-4 border border-[#C19A6B]/0 group-hover:border-[#C19A6B]/30 transition-colors duration-700 pointer-events-none z-10" />
+      <div className="absolute inset-4 rounded-xl border border-[#C19A6B]/0 group-hover:border-[#C19A6B]/30 transition-colors duration-700 pointer-events-none z-10" />
 
       {/* Nombre + Explorar (con imagen) */}
       {category.image && (

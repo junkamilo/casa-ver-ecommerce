@@ -29,29 +29,6 @@ const Footer = () => {
       <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-12 md:py-16 relative z-10">
         <div className="max-w-7xl 2xl:max-w-6xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6 sm:gap-8 md:gap-10 lg:gap-8">
-
-            <div className="sm:col-span-2 lg:col-span-5">
-              <h4 className="text-[9px] sm:text-[10px] font-black tracking-[0.25em] text-white/50 mb-2 sm:mb-3 uppercase">
-                Newsletter
-              </h4>
-              <p className="text-white/70 text-sm mb-4 sm:mb-5 leading-relaxed">
-                Recibe novedades, lanzamientos y descuentos exclusivos directo en tu correo.
-              </p>
-              <form className="flex flex-col sm:flex-row gap-2 sm:gap-2">
-                <input
-                  type="email"
-                  placeholder="Tu correo electrónico"
-                  className="flex-1 min-w-0 bg-white/5 border border-white/20 text-white placeholder:text-gray-400 text-sm px-4 py-3 rounded-full focus:outline-none focus:border-[#C19A6B] focus:bg-white/10 transition-all duration-300"
-                />
-                <button
-                  type="submit"
-                  className="shrink-0 bg-[#C19A6B] hover:bg-white hover:text-[#154734] text-white font-semibold text-sm px-5 py-3 rounded-full transition-colors duration-300 whitespace-nowrap h-10 active:scale-95 touch-target"
-                >
-                  Suscribirse
-                </button>
-              </form>
-            </div>
-
             <div className="lg:col-span-2 lg:col-start-7">
               <h4 className="text-[9px] sm:text-[10px] font-black tracking-[0.25em] text-white/50 mb-2 sm:mb-3 uppercase">
                 Explorar
@@ -98,7 +75,7 @@ const Footer = () => {
               </h4>
               <ul className="space-y-3 sm:space-y-4">
                 <li>
-                  <a href="mailto:talentocasaverde@gmail.com" className="flex items-start gap-3 text-gray-300 text-sm hover:text-white transition-colors group p-1 touch-target active:scale-95">
+                  <a href="https://mail.google.com/mail/?view=cm&fs=1&to=talentocasaverde@gmail.com" target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 text-gray-300 text-sm hover:text-white transition-colors group p-1 touch-target active:scale-95">
                     <Mail className="w-4 h-4 text-[#C19A6B] shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
                     <span>talentocasaverde@gmail.com</span>
                   </a>
@@ -131,7 +108,9 @@ const Footer = () => {
                   <InstagramIcon />
                 </a>
                 <a
-                  href="mailto:contacto@casaverde.com"
+                  href="https://mail.google.com/mail/?view=cm&fs=1&to=talentocasaverde@gmail.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label="Correo electrónico"
                   className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-gray-300 hover:text-white hover:border-[#C19A6B] hover:bg-[#C19A6B]/10 transition-all duration-300 touch-target active:scale-90"
                 >

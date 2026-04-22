@@ -14,7 +14,7 @@ export default function ProductAccordion({ openKey, onToggle, description }: Pro
     {
       key: "descripcion",
       icon: <FileText className="w-4.5 h-4.5" strokeWidth={1.5} />,
-      title: "Descripción",
+      title: "Descripción del Producto",
       content: description ? (
         <p className="leading-relaxed">{description}</p>
       ) : (

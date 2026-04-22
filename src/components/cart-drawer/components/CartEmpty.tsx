@@ -12,11 +12,11 @@ const CartEmpty = ({ onClose }: CartEmptyProps) => (
       Agrega productos para comenzar tu compra
     </p>
     <Link
-      href="/colecciones"
+      href="/tienda"
       onClick={onClose}
       className="px-5 py-2.5 bg-[#154734] text-white text-sm font-medium rounded-lg hover:bg-[#103a2a] active:scale-95 transition-all"
     >
-      Ver colecciones
+      Ver tienda
     </Link>
   </div>
 );

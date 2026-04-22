@@ -4,6 +4,29 @@ import { useRef, useState } from "react";
 import { SelectedColor, SetItemForm } from "../types";
 import { calcEffectiveStock, newSetItem } from "../utils";
 
+function normalizeColorName(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function resolveCanonicalColor(
+  color: SelectedColor,
+  catalogByKey: Map<string, { name: string; hex: string }>
+): SelectedColor {
+  const key = normalizeColorName(color.name);
+  const canonical = catalogByKey.get(key);
+  if (!canonical) return color;
+  return {
+    ...color,
+    name: canonical.name,
+    hexCode: canonical.hex,
+  };
+}
+
 export function useProductForm() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -24,7 +47,7 @@ export function useProductForm() {
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [videoUrl, setVideoUrl] = useState("");
 
-  const [garmentType, setGarmentType] = useState<string | null>(null);
+  const [garmentTypes, setGarmentTypes] = useState<string[]>([]);
 
   // Subcategorías (conjunto)
   const [isSet, setIsSet] = useState(false);
@@ -48,14 +71,21 @@ export function useProductForm() {
     setSelectedColors([]);
     setSelectedSizes([]);
     setVideoUrl("");
-    setGarmentType(null);
+    setGarmentTypes([]);
     setIsSet(false);
     setSetItems([]);
     colorImageCache.current = {};
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const loadFromProduct = (data: any) => {
+  const loadFromProduct = (
+    data: any,
+    presetColors: { name: string; hex: string }[] = []
+  ) => {
+    const catalogByKey = new Map(
+      presetColors.map((c) => [normalizeColorName(c.name), c])
+    );
+
     setName(data.name);
     setDescription(data.description || "");
     setBasePrice(data.basePrice?.toString() || "");
@@ -70,17 +100,22 @@ export function useProductForm() {
     setIsOnSale(data.isOnSale || false);
     setIsOnSaleAt(data.isOnSaleAt ? new Date(data.isOnSaleAt).toISOString() : null);
     setVideoUrl(data.videoUrl || "");
-    setGarmentType(data.garmentType ?? null);
+    setGarmentTypes(data.garmentTypes ?? []);
     setIsSet(data.isSet || false);
 
     // Parent product colors/sizes always loaded regardless of isSet
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const loadedColors = (data.colors || []).map((c: any) => ({
-      name: c.name,
-      hexCode: c.hexCode,
-      images: c.images || [],
-      variantStocks: c.variantStocks || {},
-    }));
+    const loadedColors = (data.colors || []).map((c: any) =>
+      resolveCanonicalColor(
+        {
+          name: c.name,
+          hexCode: c.hexCode,
+          images: c.images || [],
+          variantStocks: c.variantStocks || {},
+        },
+        catalogByKey
+      )
+    );
     // Precargar caché con imágenes existentes para preservarlas si el admin deselecciona
     colorImageCache.current = {};
     for (const c of loadedColors) {
@@ -100,12 +135,17 @@ export function useProductForm() {
         videoUrl: item.videoUrl || "",
         stock: item.stock?.toString() || "",
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        colors: (item.colors || []).map((c: any) => ({
-          name: c.name,
-          hexCode: c.hexCode,
-          images: c.images || [],
-          variantStocks: c.variantStocks || {},
-        })),
+        colors: (item.colors || []).map((c: any) =>
+          resolveCanonicalColor(
+            {
+              name: c.name,
+              hexCode: c.hexCode,
+              images: c.images || [],
+              variantStocks: c.variantStocks || {},
+            },
+            catalogByKey
+          )
+        ),
         sizes: item.sizes || [],
       })));
     } else {
@@ -145,7 +185,7 @@ export function useProductForm() {
     isOnSale,
     isOnSaleAt: isOnSaleAt ?? null,
     videoUrl: videoUrl || null,
-    garmentType: garmentType || null,
+    garmentTypes,
     isSet,
     colors: selectedColors,
     sizes: selectedSizes,
@@ -167,13 +207,14 @@ export function useProductForm() {
 
   const toggleColor = (name: string, hexCode: string) =>
     setSelectedColors((prev) => {
-      if (prev.some((c) => c.name === name)) {
+      const key = normalizeColorName(name);
+      const existing = prev.find((c) => normalizeColorName(c.name) === key);
+      if (existing) {
         // Al deseleccionar: guardar imágenes en caché antes de eliminar
-        const color = prev.find((c) => c.name === name);
-        if (color && color.images.length > 0) {
-          colorImageCache.current[name] = color.images;
+        if (existing.images.length > 0) {
+          colorImageCache.current[name] = existing.images;
         }
-        return prev.filter((c) => c.name !== name);
+        return prev.filter((c) => normalizeColorName(c.name) !== key);
       }
       // Al seleccionar: restaurar imágenes del caché si existen
       const cachedImages = colorImageCache.current[name] ?? [];
@@ -224,9 +265,10 @@ export function useProductForm() {
     setSetItems((prev) =>
       prev.map((i) => {
         if (i.localId !== localId) return i;
-        const has = i.colors.some((c) => c.name === colorName);
+        const key = normalizeColorName(colorName);
+        const has = i.colors.some((c) => normalizeColorName(c.name) === key);
         const newColors = has
-          ? i.colors.filter((c) => c.name !== colorName)
+          ? i.colors.filter((c) => normalizeColorName(c.name) !== key)
           : [...i.colors, { name: colorName, hexCode, images: [], variantStocks: {} }];
         return { ...i, colors: newColors };
       })
@@ -305,7 +347,7 @@ export function useProductForm() {
     selectedColors,
     selectedSizes,
     videoUrl, setVideoUrl,
-    garmentType, setGarmentType,
+    garmentTypes, setGarmentTypes,
     isSet, setIsSet,
     setItems,
     reset,

@@ -9,14 +9,14 @@ export function PedidosTable({ orders, onViewDetail }: PedidosTableProps) {
       <div className="overflow-auto max-h-150">
       <table className="w-full">
         <thead>
-          <tr className="sticky top-0 z-10 bg-gray-50/80 border-b border-gray-100">
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Pedido</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Cliente</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Total</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Estado</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Método</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Fecha</th>
-            <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Acciones</th>
+          <tr className="bg-[#F8F9FA] border-b border-gray-200">
+            <th className="sticky top-0 z-20 bg-[#F8F9FA] px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider shadow-[0_1px_0_0_rgba(229,231,235,1)]">Pedido</th>
+            <th className="sticky top-0 z-20 bg-[#F8F9FA] px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider shadow-[0_1px_0_0_rgba(229,231,235,1)]">Cliente</th>
+            <th className="sticky top-0 z-20 bg-[#F8F9FA] px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider shadow-[0_1px_0_0_rgba(229,231,235,1)]">Total</th>
+            <th className="sticky top-0 z-20 bg-[#F8F9FA] px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider shadow-[0_1px_0_0_rgba(229,231,235,1)]">Estado</th>
+            <th className="sticky top-0 z-20 bg-[#F8F9FA] px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider shadow-[0_1px_0_0_rgba(229,231,235,1)]">Método</th>
+            <th className="sticky top-0 z-20 bg-[#F8F9FA] px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider shadow-[0_1px_0_0_rgba(229,231,235,1)]">Fecha</th>
+            <th className="sticky top-0 z-20 bg-[#F8F9FA] px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider shadow-[0_1px_0_0_rgba(229,231,235,1)]">Acciones</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">

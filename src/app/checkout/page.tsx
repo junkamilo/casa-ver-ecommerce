@@ -13,7 +13,6 @@ import { AuthenticatedDelivery } from "./components/AuthenticatedDelivery";
 import PaymentSection from "./components/PaymentSection";
 import BillingSection from "./components/BillingSection";
 import CheckoutSubmitButton from "./components/CheckoutSubmitButton";
-import CheckoutFooterLinks from "./components/CheckoutFooterLinks";
 import OrderSummaryPanel from "./components/OrderSummaryPanel";
 import GuestCheckoutModal from "./components/GuestCheckoutModal";
 
@@ -96,7 +95,6 @@ export default function CheckoutPage() {
             )}
 
             <CheckoutSubmitButton isPending={isPending} />
-            <CheckoutFooterLinks />
           </div>
         </div>
 

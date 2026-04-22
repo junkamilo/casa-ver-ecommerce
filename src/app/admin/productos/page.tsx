@@ -44,7 +44,7 @@ export default function AdminProductos() {
     try {
       const res = await fetch(`/api/admin/products/${productId}`);
       if (!res.ok) throw new Error();
-      form.loadFromProduct(await res.json());
+      form.loadFromProduct(await res.json(), list.presetColors);
     } catch {
       showToast("error", "No se pudo cargar el producto");
       setShowModal(false);
