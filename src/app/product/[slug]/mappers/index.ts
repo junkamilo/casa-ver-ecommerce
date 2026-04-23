@@ -8,17 +8,35 @@ import {
 } from "@/app/collections/utils/fetchCollectionProducts";
 import type { TestimonialItem } from "@/components/layout/Testimonials/types/types";
 
+const SIZE_ORDER = ["XS", "S", "M", "L", "XL"] as const;
+
+function sortSizes(a: string, b: string): number {
+  const ai = SIZE_ORDER.indexOf(a as (typeof SIZE_ORDER)[number]);
+  const bi = SIZE_ORDER.indexOf(b as (typeof SIZE_ORDER)[number]);
+  if (ai === -1 && bi === -1) return a.localeCompare(b);
+  if (ai === -1) return 1;
+  if (bi === -1) return -1;
+  return ai - bi;
+}
+
 export function mapUIColor(color: any): UIColor {
   const allVariants = color.variants as any[];
   const activeVariants = allVariants.filter((v) => v.stock > 0);
+  const sortedActiveVariants = [...activeVariants].sort((a, b) =>
+    sortSizes(String(a.size), String(b.size))
+  );
   const totalStock = allVariants.reduce((s: number, v: any) => s + (v.stock as number), 0);
+  const availableSizes = Array.from(
+    new Set(sortedActiveVariants.map((v) => String(v.size)))
+  );
+
   return {
     id: color.id,
     name: color.name,
     hex: color.hexCode,
     images: (color.images as any[]).map((img) => img.url).filter((u: string) => !isVideoUrl(u)),
-    availableSizes: activeVariants.map((v) => v.size as string),
-    variants: activeVariants.map((v) => ({
+    availableSizes,
+    variants: sortedActiveVariants.map((v) => ({
       size: v.size as string,
       variantId: v.id as string,
       sku: v.sku as string,

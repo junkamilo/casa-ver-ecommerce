@@ -61,6 +61,7 @@ export interface BuyerInfo {
 export interface ProductClientProps {
   product: UIProduct;
   recommended: CollectionProduct[];
+  initialSetItemKey?: string | null;
   existingReview: ExistingReview | null;
   isAuthenticated: boolean;
   reviews: TestimonialItem[];

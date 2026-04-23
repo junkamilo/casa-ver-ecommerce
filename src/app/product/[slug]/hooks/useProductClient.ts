@@ -6,13 +6,44 @@ import { useCart } from "@/context/CartContext";
 import { UIProduct, UIColor, UIProductItem } from "../types";
 import { isVideoUrl } from "../utils";
 
-export function useProductClient(product: UIProduct) {
+function normalizeKey(v: string): string {
+  return v
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "")
+    .trim();
+}
+
+function toSingular(v: string): string {
+  return v.endsWith("s") ? v.slice(0, -1) : v;
+}
+
+function isItemMatch(itemName: string, key: string): boolean {
+  const a = normalizeKey(itemName);
+  const b = normalizeKey(key);
+  if (!a || !b) return false;
+  if (a === b) return true;
+
+  const a1 = toSingular(a);
+  const b1 = toSingular(b);
+  if (a1 === b1) return true;
+
+  // Soporta slug vs nombre corto: "shorts" -> "short", "pantalones" -> "pantalon"
+  return a1.startsWith(b1) || b1.startsWith(a1);
+}
+
+export function useProductClient(product: UIProduct, initialSetItemKey?: string | null) {
   const { addToCart, setBuyNow } = useCart();
   const router = useRouter();
 
+  const initialMatchedItem =
+    product.isSet && product.items.length > 0 && initialSetItemKey
+      ? product.items.find((it) => isItemMatch(it.name, initialSetItemKey))
+      : null;
   // items ya vienen ordenados por `order` en mapUIItems — el primero es Pantalón o Short según CMS
   const initialItem =
-    product.isSet && product.items.length > 0 ? product.items[0] : null;
+    product.isSet && product.items.length > 0 ? (initialMatchedItem ?? product.items[0]) : null;
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState<UIColor | null>(
@@ -23,7 +54,7 @@ export function useProductClient(product: UIProduct) {
   const [showAddedNotification, setShowAddedNotification] = useState(false);
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<string>(
-    product.isSet && product.items.length > 0 ? product.items[0].id : "main"
+    product.isSet && product.items.length > 0 ? initialItem!.id : "main"
   );
 
   // ─── Datos activos según la vista seleccionada ──────────────────────────

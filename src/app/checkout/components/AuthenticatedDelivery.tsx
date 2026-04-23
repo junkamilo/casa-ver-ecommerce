@@ -114,6 +114,9 @@ export function AuthenticatedDelivery({ onAutoSaveChange }: Props) {
           <MapPin className="w-4 sm:w-5 h-4 sm:h-5 text-[#C19A6B] shrink-0" />
           Dirección de entrega
         </h2>
+        <p className="-mt-3 mb-5 sm:mb-6 text-xs text-gray-500">
+          Envíos a zonas de difícil acceso pueden tener costo adicional
+        </p>
         <div className="space-y-3 animate-pulse">
           <div className="h-18 bg-gray-100 rounded-xl" />
           <div className="h-18 bg-gray-100 rounded-xl" />
@@ -138,6 +141,9 @@ export function AuthenticatedDelivery({ onAutoSaveChange }: Props) {
           <MapPin className="w-4 sm:w-5 h-4 sm:h-5 text-[#C19A6B] shrink-0" />
           Dirección de entrega
         </h2>
+        <p className="-mt-3 mb-5 sm:mb-6 text-xs text-gray-500">
+          Envíos a zonas de difícil acceso pueden tener costo adicional
+        </p>
 
         <AdminSelect
           value={selectedId}
@@ -213,6 +219,9 @@ export function AuthenticatedDelivery({ onAutoSaveChange }: Props) {
           </button>
         )}
       </div>
+      <p className="-mt-3 mb-5 sm:mb-6 text-xs text-gray-500">
+        Envíos a zonas de difícil acceso pueden tener costo adicional
+      </p>
 
       <DeliveryFormFields />
 

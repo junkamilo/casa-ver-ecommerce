@@ -22,6 +22,7 @@ import {
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ item?: string }>;
 }
 
 // ── SEO dinámico ─────────────────────────────────────────────────────────────
@@ -71,8 +72,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function ProductPage({ params }: Props) {
+export default async function ProductPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const query = searchParams ? await searchParams : undefined;
+  const initialSetItemKey = query?.item?.trim() ? query.item.trim() : null;
   const session = await auth();
   const userEmail = session?.user?.email ?? null;
   const dbUser = userEmail
@@ -230,6 +233,7 @@ export default async function ProductPage({ params }: Props) {
         <ProductClient
           product={uiProduct}
           recommended={recommended}
+          initialSetItemKey={initialSetItemKey}
           existingReview={userReview}
           isAuthenticated={!!userId}
           reviews={productReviews}

@@ -156,10 +156,10 @@ const SearchModal = ({ onClose }: SearchModalProps) => {
             {query && (
               <button
                 onClick={() => setQuery("")}
-                className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                className="px-2 py-1 text-xs sm:text-sm font-semibold text-muted-foreground hover:text-[#154734] transition-colors rounded-md hover:bg-[#154734]/5"
                 aria-label="Limpiar"
               >
-                <X className="w-4 h-4" />
+                Limpiar
               </button>
             )}
           </div>

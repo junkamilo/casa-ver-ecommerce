@@ -8,7 +8,7 @@ import { CollectionClientProps } from '../types/index';
 
 
 
-export default function CollectionClient({ products, filterOptions }: CollectionClientProps) {
+export default function CollectionClient({ products, filterOptions, setItemKey }: CollectionClientProps) {
   const {
     sortBy,
     setSortBy,
@@ -54,7 +54,7 @@ export default function CollectionClient({ products, filterOptions }: Collection
           />
 
           <div className="mt-8 sm:mt-10">
-            <ProductGrid products={sortedProducts} />
+            <ProductGrid products={sortedProducts} setItemKey={setItemKey} />
           </div>
 
         </div>

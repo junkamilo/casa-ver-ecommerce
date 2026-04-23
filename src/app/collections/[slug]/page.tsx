@@ -181,7 +181,11 @@ export default async function CollectionPage({
           <CollectionHero title={title} />
 
           <div className="mt-4 sm:mt-6 lg:mt-8 w-full">
-            <CollectionClient products={products} filterOptions={filterOptions} />
+            <CollectionClient
+              products={products}
+              filterOptions={filterOptions}
+              setItemKey={tipo ?? null}
+            />
           </div>
 
         </div>
