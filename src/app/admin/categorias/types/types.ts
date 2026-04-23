@@ -26,6 +26,7 @@ export interface CategoryCardProps {
   category: Category;
   onEdit: (category: Category) => void;
   onToggleActive: (category: Category) => void;
+  onDelete: (category: Category) => void;
 }
 
 export interface CategoryGridProps {
@@ -33,6 +34,7 @@ export interface CategoryGridProps {
   filtered: Category[];
   onEdit: (category: Category) => void;
   onToggleActive: (category: Category) => void;
+  onDelete: (category: Category) => void;
 }
 
 export interface CategorySearchProps {

@@ -15,6 +15,9 @@ const DeliverySection = () => {
         <MapPin className="w-4 sm:w-5 h-4 sm:h-5 text-[#C19A6B] shrink-0" />
         Dirección de entrega
       </h2>
+      <p className="-mt-3 mb-4 text-[11px] sm:text-xs text-amber-700">
+        Envíos a zonas de difícil acceso pueden tener costo adicional
+      </p>
       <DeliveryFormFields />
     </section>
   );

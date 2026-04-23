@@ -6,12 +6,17 @@ import { useCart } from "@/context/CartContext";
 import { UIProduct, UIColor, UIProductItem } from "../types";
 import { isVideoUrl } from "../utils";
 
-export function useProductClient(product: UIProduct) {
+export function useProductClient(product: UIProduct, initialItemId?: string | null) {
   const { addToCart, setBuyNow } = useCart();
   const router = useRouter();
 
+  const preferredItem =
+    product.isSet && initialItemId
+      ? product.items.find((item) => item.id === initialItemId) ?? null
+      : null;
+
   const initialItem =
-    product.isSet && product.items.length > 0 ? product.items[0] : null;
+    preferredItem ?? (product.isSet && product.items.length > 0 ? product.items[0] : null);
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState<UIColor | null>(
@@ -22,7 +27,7 @@ export function useProductClient(product: UIProduct) {
   const [showAddedNotification, setShowAddedNotification] = useState(false);
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<string>(
-    product.isSet && product.items.length > 0 ? product.items[0].id : "main"
+    initialItem ? initialItem.id : "main"
   );
 
   // ─── Datos activos según la vista seleccionada ──────────────────────────

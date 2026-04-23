@@ -46,6 +46,13 @@ function formatPrice(price: number): string {
   return `$ ${price.toLocaleString("es-CO")}`;
 }
 
+const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".ogg"];
+
+function isVideoUrl(url: string): boolean {
+  const clean = url.split("?")[0].toLowerCase();
+  return VIDEO_EXTENSIONS.some((ext) => clean.endsWith(ext));
+}
+
 // ── Modal ─────────────────────────────────────────────────────────────────────
 
 const SearchModal = ({ onClose }: SearchModalProps) => {
@@ -148,10 +155,10 @@ const SearchModal = ({ onClose }: SearchModalProps) => {
             {query && (
               <button
                 onClick={() => setQuery("")}
-                className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                className="text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted/60"
                 aria-label="Limpiar"
               >
-                <X className="w-4 h-4" />
+                Limpiar
               </button>
             )}
           </div>
@@ -249,35 +256,41 @@ const ProductSearchCard = ({
 }: {
   item: SearchProduct;
   onClose: () => void;
-}) => (
-  <Link
-    href={`/product/${item.slug}`}
-    className="flex flex-col group cursor-pointer"
-    onClick={onClose}
-  >
-    <div className="relative w-full aspect-3/4 overflow-hidden rounded-md bg-muted mb-2">
-      {item.image ? (
-        <Image
-          src={item.image}
-          alt={item.name}
-          fill
-          sizes="(max-width: 640px) 45vw, (max-width: 768px) 30vw, 200px"
-          loading="lazy"
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center">
-          <Package className="w-8 h-8 text-muted-foreground/30" />
-        </div>
-      )}
-    </div>
-    <h4 className="text-xs sm:text-sm font-medium text-foreground line-clamp-2 group-hover:text-[#154734] transition-colors">
-      {item.name}
-    </h4>
-    <p className="text-xs sm:text-sm font-semibold text-foreground mt-1">
-      {formatPrice(item.price)}
-    </p>
-  </Link>
-);
+}) => {
+  const [imageFailed, setImageFailed] = useState(false);
+  const hasImage = !!item.image && !isVideoUrl(item.image) && !imageFailed;
+
+  return (
+    <Link
+      href={`/product/${item.slug}`}
+      className="flex flex-col group cursor-pointer"
+      onClick={onClose}
+    >
+      <div className="relative w-full aspect-3/4 overflow-hidden rounded-md bg-muted mb-2">
+        {hasImage ? (
+          <Image
+            src={item.image!}
+            alt={item.name}
+            fill
+            sizes="(max-width: 640px) 45vw, (max-width: 768px) 30vw, 200px"
+            loading="lazy"
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={() => setImageFailed(true)}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-[#154734]">
+            <Package className="w-8 h-8 text-white/60" />
+          </div>
+        )}
+      </div>
+      <h4 className="text-xs sm:text-sm font-medium text-foreground line-clamp-2 group-hover:text-[#154734] transition-colors">
+        {item.name}
+      </h4>
+      <p className="text-xs sm:text-sm font-semibold text-foreground mt-1">
+        {formatPrice(item.price)}
+      </p>
+    </Link>
+  );
+};
 
 export default SearchModal;

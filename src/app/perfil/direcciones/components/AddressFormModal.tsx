@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { X, Loader2, ChevronDown, Truck, AlertCircle } from "lucide-react";
 import { DEPARTAMENTOS } from "@/lib/constants/colombia";
-import { SHIPPING_SANTANDER, SHIPPING_NATIONAL } from "@/lib/shipping";
+import { SHIPPING_SANTANDER, SHIPPING_NATIONAL, SHIPPING_ISLANDS } from "@/lib/shipping";
 import { AddressFormModalProps, AddressFormValues } from "../types";
 import { FORM_STYLES } from "../constants";
 import { useAddressForm } from "../hooks/useAddressForm";
@@ -157,16 +157,31 @@ export function AddressFormModal({ open, editing, submitting, onSave, onClose }:
               className={`flex items-start gap-3 px-4 py-3 rounded-xl border text-sm font-medium ${
                 shippingCost === SHIPPING_SANTANDER
                   ? "bg-[#154734]/5 border-[#154734]/20 text-[#154734]"
+                  : shippingCost === SHIPPING_ISLANDS
+                    ? "bg-purple-50 border-purple-200 text-purple-800"
                   : "bg-amber-50 border-amber-200 text-amber-800"
               }`}
             >
-              <Truck className={`w-4 h-4 mt-0.5 shrink-0 ${shippingCost === SHIPPING_SANTANDER ? "text-[#154734]" : "text-amber-600"}`} />
+              <Truck
+                className={`w-4 h-4 mt-0.5 shrink-0 ${
+                  shippingCost === SHIPPING_SANTANDER
+                    ? "text-[#154734]"
+                    : shippingCost === SHIPPING_ISLANDS
+                      ? "text-purple-600"
+                      : "text-amber-600"
+                }`}
+              />
               <div>
                 {shippingCost === SHIPPING_SANTANDER ? (
                   <>
                     <span className="font-semibold">¡Envío especial disponible!</span> Tus pedidos
                     a esta ciudad tendrán un costo de{" "}
                     <span className="font-bold">${SHIPPING_SANTANDER.toLocaleString("es-CO")}</span>.
+                  </>
+                ) : shippingCost === SHIPPING_ISLANDS ? (
+                  <>
+                    Los envíos a San Andrés y Providencia tienen un costo de{" "}
+                    <span className="font-bold">${SHIPPING_ISLANDS.toLocaleString("es-CO")}</span>.
                   </>
                 ) : (
                   <>

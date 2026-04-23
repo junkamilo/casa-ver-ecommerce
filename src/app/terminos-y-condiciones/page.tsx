@@ -37,6 +37,7 @@ const sections = [
       "El tiempo de entrega dependerá de la ciudad y la transportadora.",
       "No nos hacemos responsables por retrasos ocasionados por terceros, condiciones climáticas o situaciones externas.",
       "El costo del envío es asumido por el cliente, salvo promociones especiales.",
+      "Tarifas vigentes: $11.000 para San Gil, Barrancabermeja, Bucaramanga, Girón, Piedecuesta, Floridablanca, Lebrija, Sabana de Torres, Valledupar, Cúcuta y Cantagallo (Bolívar); $30.000 para San Andrés y Providencia; $18.000 para el resto del país.",
     ],
   },
   {

@@ -22,6 +22,7 @@ import {
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ tipo?: string }>;
 }
 
 // ── SEO dinámico ─────────────────────────────────────────────────────────────
@@ -71,8 +72,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function ProductPage({ params }: Props) {
+function normalizeToSlug(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function normalizeTipoCandidates(tipo: string): string[] {
+  const normalized = normalizeToSlug(tipo);
+  const singular = normalized.endsWith("s") ? normalized.slice(0, -1) : normalized;
+  return Array.from(new Set([normalized, singular])).filter(Boolean);
+}
+
+export default async function ProductPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const { tipo } = await searchParams;
   const session = await auth();
   const userEmail = session?.user?.email ?? null;
   const dbUser = userEmail
@@ -198,6 +216,20 @@ export default async function ProductPage({ params }: Props) {
 
   // Mapping con funciones centralizadas
   const uiItems = mapUIItems(product.items ?? []);
+  const tipoCandidates = tipo ? normalizeTipoCandidates(tipo) : [];
+  const initialItemId =
+    product.isSet && tipoCandidates.length > 0
+      ? (uiItems.find((item) => {
+          const normalizedItemName = normalizeToSlug(item.name);
+          return tipoCandidates.some(
+            (candidate) =>
+              normalizedItemName === candidate ||
+              normalizedItemName.includes(candidate) ||
+              candidate.includes(normalizedItemName)
+          );
+        })?.id ?? null)
+      : null;
+
   const totalStock = computeTotalStock(product, uiItems);
   const uiProduct = mapUIProduct(
     product,
@@ -233,6 +265,7 @@ export default async function ProductPage({ params }: Props) {
           isAuthenticated={!!userId}
           reviews={productReviews}
           socialProof={socialProof}
+          initialItemId={initialItemId}
         />
       </div>
       <Footer />

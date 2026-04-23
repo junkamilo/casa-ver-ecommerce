@@ -5,6 +5,7 @@ export const ERROR_MESSAGES = {
   create: "Error al crear",
   edit: "Error al actualizar",
   toggle: "No se pudo actualizar la categoría",
+  delete: "No se pudo eliminar la categoría",
   load: "Error al cargar categorías",
   unknown: "Error desconocido",
 } as const;
@@ -14,4 +15,5 @@ export const SUCCESS_MESSAGES = {
   updated: "Categoría actualizada correctamente",
   deactivated: "Categoría desactivada",
   activated: "Categoría activada",
+  deleted: "Categoría eliminada correctamente",
 } as const;

@@ -1,29 +1,39 @@
 /**
  * Lógica de tarifas de envío para Casa Verde.
  *
- * Municipios con tarifa preferencial Santander: $11.000
+ * Municipios con tarifa preferencial: $11.000
+ * San Andrés / Providencia: $30.000
  * Resto del país: $18.000
  */
 
 export const SHIPPING_SANTANDER = 11_000;
 export const SHIPPING_NATIONAL = 18_000;
+export const SHIPPING_ISLANDS = 30_000;
 
 /**
- * Municipios de Santander con tarifa especial de $11.000.
- * Los nombres deben coincidir exactamente con los de MUNICIPIOS["Santander"] en colombia.ts.
+ * Ciudades/municipios con tarifa especial de $11.000.
  */
-export const SANTANDER_CHEAP_CITIES = new Set([
+export const CHEAP_SHIPPING_CITIES = new Set([
   "Bucaramanga",
   "Girón",
   "Piedecuesta",
   "Floridablanca",
   "Barrancabermeja",
   "San Gil",
-  "Barichara",
-  "Zapatoca",
-  "Socorro",
   "Sabana de Torres",
   "Lebrija",
+  "Valledupar",
+  "Cúcuta",
+  "Cantagallo",
+]);
+
+/**
+ * Ciudades/municipios con tarifa especial de $30.000.
+ */
+export const ISLAND_SHIPPING_CITIES = new Set([
+  "San Andrés",
+  "Providencia",
+  "Providencia y Santa Catalina",
 ]);
 
 /**
@@ -37,9 +47,11 @@ export function getShippingCost(city: string, department: string): number {
   // ⚠️ TEMPORAL — tarifa de prueba $1.000. Eliminar cuando ya no se necesite.
   if (deptNorm === "prueba") return 1_000;
 
-  if (deptNorm !== "santander") return SHIPPING_NATIONAL;
+  for (const islandCity of ISLAND_SHIPPING_CITIES) {
+    if (islandCity.toLowerCase() === cityNorm) return SHIPPING_ISLANDS;
+  }
 
-  for (const cheapCity of SANTANDER_CHEAP_CITIES) {
+  for (const cheapCity of CHEAP_SHIPPING_CITIES) {
     if (cheapCity.toLowerCase() === cityNorm) return SHIPPING_SANTANDER;
   }
 

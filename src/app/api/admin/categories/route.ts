@@ -1,15 +1,17 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import type { NextRequest } from "next/server";
-
-function generateSlug(raw: string): string {
-  return raw
-    .toLowerCase()
-    .trim()
-    .replace(/[\s\W-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
+import {
+  createCategoryUseCase,
+} from "@/modules/adminCatalog/categories/application/create-category.use-case";
+import { listCategoriesUseCase } from "@/modules/adminCatalog/categories/application/list-categories.use-case";
+import { updateCategoryUseCase } from "@/modules/adminCatalog/categories/application/update-category.use-case";
+import { deleteCategoryUseCase } from "@/modules/adminCatalog/categories/application/delete-category.use-case";
+import {
+  CategoryConflictError,
+  CategoryNotFoundError,
+  CategoryValidationError,
+} from "@/modules/adminCatalog/categories/application/category.errors";
 
 // ── GET: Listar categorías (con sus tipos de prenda asignados) ─────────────────
 
@@ -18,38 +20,8 @@ export async function GET() {
     const session = await auth();
     if (!session?.user || (session.user as { role?: string }).role !== "ADMIN")
       return new NextResponse("Acceso denegado", { status: 403 });
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = prisma as any;
-    const categories = await db.category.findMany({
-      orderBy: { order: "asc" },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        image: true,
-        isActive: true,
-        order: true,
-        _count: { select: { products: true } },
-        garmentTypes: {
-          select: {
-            garmentType: { select: { id: true, name: true } },
-          },
-        },
-      },
-    });
-
-    // Aplanar la relación join para retornar array directo
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mapped = categories.map((cat: any) => ({
-      ...cat,
-      garmentTypes: (cat.garmentTypes ?? []).map(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (cgt: any) => cgt.garmentType
-      ),
-    }));
-
-    return NextResponse.json(mapped);
+    const categories = await listCategoriesUseCase();
+    return NextResponse.json(categories);
   } catch (error) {
     console.error("[CATEGORIES_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
@@ -65,43 +37,16 @@ export async function POST(req: NextRequest) {
       return new NextResponse("Acceso denegado", { status: 403 });
 
     const body = await req.json();
-    const rawName: string = typeof body.name === "string" ? body.name.trim() : "";
-    const image: string | undefined = body.image;
-    const garmentTypeIds: string[] = Array.isArray(body.garmentTypeIds) ? body.garmentTypeIds : [];
-
-    if (!rawName) return new NextResponse("El nombre es requerido", { status: 400 });
-    if (rawName.length < 2)
-      return new NextResponse("El nombre debe tener al menos 2 caracteres", { status: 400 });
-    if (rawName.length > 100)
-      return new NextResponse("El nombre no puede superar los 100 caracteres", { status: 400 });
-
-    const slug = generateSlug(rawName);
-    if (!slug) return new NextResponse("El nombre ingresado no genera un slug válido", { status: 400 });
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = prisma as any;
-    const existing = await db.category.findUnique({ where: { slug } });
-    if (existing) return new NextResponse("Esta categoría ya existe", { status: 409 });
-
-    const maxOrderResult = await db.category.aggregate({ _max: { order: true } });
-    const nextOrder = (maxOrderResult._max.order ?? 0) + 1;
-
-    const category = await db.category.create({
-      data: {
-        name: rawName,
-        slug,
-        image: image || null,
-        order: nextOrder,
-        garmentTypes: garmentTypeIds.length
-          ? {
-              create: garmentTypeIds.map((garmentTypeId: string) => ({ garmentTypeId })),
-            }
-          : undefined,
-      },
-    });
+    const category = await createCategoryUseCase(body);
 
     return NextResponse.json(category);
   } catch (error) {
+    if (error instanceof CategoryValidationError) {
+      return new NextResponse(error.message, { status: 400 });
+    }
+    if (error instanceof CategoryConflictError) {
+      return new NextResponse(error.message, { status: 409 });
+    }
     console.error("[CATEGORIES_POST]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
@@ -118,76 +63,52 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
-
-    if (!id) return new NextResponse("ID requerido", { status: 400 });
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = prisma as any;
-
-    // --- Toggle activo / inactivo ---
-    if (body.action === "toggle") {
-      const category = await db.category.findUnique({
-        where: { id },
-        include: { _count: { select: { products: true } } },
-      });
-
-      if (!category) return new NextResponse("Categoría no encontrada", { status: 404 });
-
-      if (category.isActive && category._count.products > 0) {
-        return NextResponse.json(
-          { error: "has_products", count: category._count.products, name: category.name },
-          { status: 409 }
-        );
-      }
-
-      const updated = await db.category.update({
-        where: { id },
-        data: { isActive: !category.isActive },
-      });
-
-      return NextResponse.json(updated);
-    }
-
-    // --- Editar nombre / imagen / tipos de prenda ---
-    const rawName: string = typeof body.name === "string" ? body.name.trim() : "";
-    const image: string | undefined = body.image;
-    const garmentTypeIds: string[] = Array.isArray(body.garmentTypeIds) ? body.garmentTypeIds : [];
-
-    if (!rawName) return new NextResponse("El nombre es requerido", { status: 400 });
-    if (rawName.length < 2)
-      return new NextResponse("El nombre debe tener al menos 2 caracteres", { status: 400 });
-    if (rawName.length > 100)
-      return new NextResponse("El nombre no puede superar los 100 caracteres", { status: 400 });
-
-    const slug = generateSlug(rawName);
-    if (!slug) return new NextResponse("El nombre ingresado no genera un slug válido", { status: 400 });
-
-    const existing = await db.category.findFirst({ where: { slug, NOT: { id } } });
-    if (existing) return new NextResponse("Esta categoría ya existe", { status: 409 });
-
-    // Actualizar en transacción: datos + reemplazar relaciones de tipos de prenda
-    const updated = await db.$transaction(async (tx: any) => {
-      // Borrar relaciones anteriores y crear las nuevas
-      await tx.categoryGarmentType.deleteMany({ where: { categoryId: id } });
-
-      return tx.category.update({
-        where: { id },
-        data: {
-          name: rawName,
-          slug,
-          image: image || null,
-          garmentTypes: garmentTypeIds.length
-            ? {
-                create: garmentTypeIds.map((garmentTypeId: string) => ({ garmentTypeId })),
-              }
-            : undefined,
-        },
-      });
-    });
-
+    const updated = await updateCategoryUseCase({ id, ...body });
     return NextResponse.json(updated);
   } catch (error) {
+    if (error instanceof CategoryValidationError) {
+      return new NextResponse(error.message, { status: 400 });
+    }
+    if (error instanceof CategoryNotFoundError) {
+      return new NextResponse(error.message, { status: 404 });
+    }
+    if (error instanceof CategoryConflictError) {
+      if (error.details) {
+        return NextResponse.json(error.details, { status: 409 });
+      }
+      return new NextResponse(error.message, { status: 409 });
+    }
     console.error("[CATEGORIES_PATCH]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
+
+// ── DELETE: Eliminar categoría ────────────────────────────────────────────────
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user || (session.user as { role?: string }).role !== "ADMIN")
+      return new NextResponse("Acceso denegado", { status: 403 });
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    const result = await deleteCategoryUseCase({ id });
+    return NextResponse.json(result);
+  } catch (error) {
+    if (error instanceof CategoryValidationError) {
+      return new NextResponse(error.message, { status: 400 });
+    }
+    if (error instanceof CategoryNotFoundError) {
+      return new NextResponse(error.message, { status: 404 });
+    }
+    if (error instanceof CategoryConflictError) {
+      if (error.details) {
+        return NextResponse.json(error.details, { status: 409 });
+      }
+      return new NextResponse(error.message, { status: 409 });
+    }
+    console.error("[CATEGORIES_DELETE]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Play, ChevronLeft, ChevronRight } from "lucide-react";
 import type { CollectionProduct } from "@/components/shared/ProductCollection/types";
 
@@ -30,9 +31,16 @@ const GRID_SIZES = "(max-width: 640px) 47vw, (max-width: 1280px) 30vw, (max-widt
 const PRIORITY_THRESHOLD = 4;
 
 const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) => {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [activeColor, setActiveColor] = useState<ActiveColor>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const activeTipo = searchParams.get("tipo");
+  const productHref =
+    pathname.startsWith("/collections/") && activeTipo
+      ? `/product/${item.slug}?tipo=${encodeURIComponent(activeTipo)}`
+      : `/product/${item.slug}`;
 
   const images = item.images;
   const hasImages = images.length > 0;
@@ -85,7 +93,7 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
   if (viewMode === "list") {
     return (
       <Link
-        href={`/product/${item.slug}`}
+        href={productHref}
         className="cursor-pointer flex gap-4 sm:gap-6 bg-white p-3 sm:p-4 rounded-3xl border border-[#C19A6B]/20 hover:border-[#C19A6B]/60 shadow-[0_4px_15px_-5px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_30px_-5px_rgba(193,154,107,0.15)] transition-all duration-500 group"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -182,7 +190,7 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
 
   return (
     <Link
-      href={`/product/${item.slug}`}
+      href={productHref}
       className="cursor-pointer flex flex-col h-full bg-white p-2 sm:p-3 md:p-4 rounded-3xl border border-[#C19A6B]/20 hover:border-[#C19A6B]/60 shadow-[0_4px_15px_-5px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_30px_-5px_rgba(193,154,107,0.15)] transition-all duration-500 group overflow-hidden"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
