@@ -1,14 +1,35 @@
 import { prisma } from "@/lib/prisma";
-import { computeProductBadge } from "@/lib/productBadge";
+import type { Prisma } from "@prisma/client";
 import type { CollectionProduct, FilterOptions } from "@/components/shared/ProductCollection/types";
 import type { TiendaFilters } from "../types";
+import {
+  COLLECTION_PRODUCT_GRID_SELECT,
+  transformProduct,
+  type CollectionRawProduct,
+} from "@/app/collections/utils/fetchCollectionProducts";
+
+/** Misma forma que la grilla global, con menos imágenes por fila en listado tienda. */
+const TIENDA_PRODUCT_SELECT = {
+  ...COLLECTION_PRODUCT_GRID_SELECT,
+  images: {
+    orderBy: { order: "asc" as const },
+    take: 2,
+    select: { url: true },
+  },
+};
+
+const TIENDA_PAGE_SIZE = 24;
 
 export async function getAllProducts(filters: TiendaFilters): Promise<{
   products: CollectionProduct[];
   filterOptions: FilterOptions;
+  page: number;
+  pageSize: number;
+  totalProducts: number;
+  totalPages: number;
 }> {
   try {
-    const where: Record<string, unknown> = { status: "ACTIVE" };
+    const where: Prisma.ProductWhereInput = { status: "ACTIVE" };
 
     const minPrice = filters.minPrice ? parseFloat(filters.minPrice) : undefined;
     const maxPrice = filters.maxPrice ? parseFloat(filters.maxPrice) : undefined;
@@ -24,9 +45,9 @@ export async function getAllProducts(filters: TiendaFilters): Promise<{
       where.colors = { some: { hexCode: `#${filters.color}` } };
     }
 
-    // ── Ambas queries en paralelo — ahorra el tiempo de la más lenta ──────────
-    const [allForFilters, raw] = await Promise.all([
-      // Query 1: solo datos para construir los filtros (sin joins de imágenes)
+    const parsedPage = Math.max(1, parseInt(filters.page ?? "1", 10) || 1);
+
+    const [allForFilters, totalProducts] = await Promise.all([
       prisma.product.findMany({
         where: { status: "ACTIVE" },
         select: {
@@ -35,57 +56,22 @@ export async function getAllProducts(filters: TiendaFilters): Promise<{
         },
       }),
 
-      // Query 2: productos filtrados — solo 2 imágenes por producto (card usa máximo 2)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (prisma as any).product.findMany({
-        where,
-        select: {
-          name: true,
-          slug: true,
-          basePrice: true,
-          comparePrice: true,
-          isSet: true,
-          isProductNew: true,
-          isProductNewAt: true,
-          isOnSale: true,
-          images: {
-            orderBy: { order: "asc" },
-            take: 2, // card solo necesita 1 principal + 1 hover
-            select: { url: true },
-          },
-          items: {
-            orderBy: { order: "asc" },
-            select: {
-              price: true,
-              colors: {
-                take: 1,
-                select: {
-                  images: {
-                    orderBy: { order: "asc" },
-                    take: 1,
-                    select: { url: true },
-                  },
-                },
-              },
-            },
-          },
-          colors: {
-            select: {
-              name: true,
-              hexCode: true,
-              images: {
-                orderBy: { order: "asc" },
-                take: 1,
-                select: { url: true },
-              },
-            },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-      }),
+      prisma.product.count({ where }),
     ]);
 
-    // Construir filterOptions desde allForFilters
+    const totalPages = Math.max(1, Math.ceil(totalProducts / TIENDA_PAGE_SIZE));
+    const page = Math.min(parsedPage, totalPages);
+    const skip = (page - 1) * TIENDA_PAGE_SIZE;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw = await (prisma as any).product.findMany({
+      where,
+      select: TIENDA_PRODUCT_SELECT,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: TIENDA_PAGE_SIZE,
+    });
+
     const colorMap = new Map<string, string>();
     let maxPriceDb = 0;
     for (const p of allForFilters) {
@@ -95,50 +81,24 @@ export async function getAllProducts(filters: TiendaFilters): Promise<{
     }
     const availableColors = Array.from(colorMap.entries()).map(([hexCode, name]) => ({ hexCode, name }));
 
-    // Mapear productos al tipo CollectionProduct
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const products: CollectionProduct[] = (raw as any[]).map((p) => {
-      const parentImages: string[] = p.images.map((i: { url: string }) => i.url);
-      const fallbackUrl =
-        p.isSet && parentImages.length === 0
-          ? (p.items?.[0]?.colors?.[0]?.images?.[0]?.url ?? null)
-          : null;
-      const cardImages = fallbackUrl ? [fallbackUrl] : parentImages;
+    const products = (raw as CollectionRawProduct[]).map(transformProduct);
 
-      const itemPrices: number[] =
-        p.isSet && p.items?.length > 0
-          ? p.items
-              .map((it: { price: unknown }) => (it.price ? Number(it.price) : null))
-              .filter((v: number | null): v is number => v !== null)
-          : [];
-      const minPrice = itemPrices.length > 0 ? Math.min(...itemPrices) : undefined;
-
-      return {
-        images: cardImages,
-        name: p.name,
-        slug: p.slug,
-        price: Number(p.basePrice),
-        oldPrice: p.comparePrice ? Number(p.comparePrice) : undefined,
-        isSet: p.isSet || false,
-        minPrice,
-        badge: computeProductBadge({
-          isProductNew: p.isProductNew,
-          isProductNewAt: p.isProductNewAt,
-          isOnSale: p.isOnSale,
-        }),
-        colors:
-          p.colors.length > 0
-            ? p.colors.map((c: { name: string; hexCode: string; images: { url: string }[] }) => ({
-                name: c.name,
-                hexCode: c.hexCode,
-                imageUrl: c.images[0]?.url ?? null,
-              }))
-            : undefined,
-      };
-    });
-
-    return { products, filterOptions: { availableColors, maxPriceDb } };
+    return {
+      products,
+      filterOptions: { availableColors, maxPriceDb },
+      page,
+      pageSize: TIENDA_PAGE_SIZE,
+      totalProducts,
+      totalPages,
+    };
   } catch {
-    return { products: [], filterOptions: { availableColors: [], maxPriceDb: 0 } };
+    return {
+      products: [],
+      filterOptions: { availableColors: [], maxPriceDb: 0 },
+      page: 1,
+      pageSize: TIENDA_PAGE_SIZE,
+      totalProducts: 0,
+      totalPages: 1,
+    };
   }
 }

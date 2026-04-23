@@ -10,6 +10,7 @@ export function useProductClient(product: UIProduct) {
   const { addToCart, setBuyNow } = useCart();
   const router = useRouter();
 
+  // items ya vienen ordenados por `order` en mapUIItems — el primero es Pantalón o Short según CMS
   const initialItem =
     product.isSet && product.items.length > 0 ? product.items[0] : null;
 
@@ -34,7 +35,9 @@ export function useProductClient(product: UIProduct) {
   const activeColors = activeItem ? activeItem.colors : product.colors;
   const activeVideoUrl = activeItem ? activeItem.videoUrl : product.videoUrl;
   const activePrice = activeItem ? (activeItem.price ?? product.basePrice) : product.basePrice;
-  const activeComparePrice = activeItem ? activeItem.comparePrice : product.comparePrice;
+  const activeComparePrice = activeItem
+    ? (activeItem.comparePrice ?? product.comparePrice)
+    : product.comparePrice;
   const activeStock = activeItem ? activeItem.stock : product.stock;
   const activeDescription = activeItem
     ? (activeItem.description ?? product.description)
@@ -64,7 +67,10 @@ export function useProductClient(product: UIProduct) {
     setActiveView(view);
     const item =
       view === "main" ? null : (product.items.find((i) => i.id === view) ?? null);
-    setSelectedColor(item ? (item.colors[0] ?? null) : (product.colors[0] ?? null));
+    const nextColor = item
+      ? (item.colors[0] ?? null)
+      : (product.colors[0] ?? null);
+    setSelectedColor(nextColor);
     setSelectedSize(null);
     setSelectedImage(0);
   };

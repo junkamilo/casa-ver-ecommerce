@@ -99,6 +99,7 @@ export default async function ProductPage({ params }: Props) {
         orderBy: { order: "asc" },
         include: {
           colors: {
+            orderBy: { id: "asc" },
             include: {
               images: { orderBy: { order: "asc" } },
               variants: {

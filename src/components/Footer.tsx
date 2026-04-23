@@ -28,48 +28,8 @@ const Footer = () => {
 
       <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-12 md:py-16 relative z-10">
         <div className="max-w-7xl 2xl:max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6 sm:gap-8 md:gap-10 lg:gap-8">
-            <div className="lg:col-span-2 lg:col-start-7">
-              <h4 className="text-[9px] sm:text-[10px] font-black tracking-[0.25em] text-white/50 mb-2 sm:mb-3 uppercase">
-                Explorar
-              </h4>
-              <ul className="space-y-2 sm:space-y-3">
-                {[
-                  { name: "Tienda", href: "/tienda" },
-                  { name: "Nuevos Ingresos", href: "/collections/nueva-coleccion" },
-                  { name: "Más Vendidos", href: "/collections/mas-vendidos" },
-                ].map((link) => (
-                  <li key={link.name}>
-                    <Link href={link.href} className="text-gray-300 text-sm hover:text-[#C19A6B] transition-all flex items-center gap-2 group w-fit p-1 touch-target active:scale-95">
-                      <span className="w-0 h-[1px] bg-[#C19A6B] transition-all duration-300 group-hover:w-4" />
-                      {link.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="lg:col-span-2">
-              <h4 className="text-[9px] sm:text-[10px] font-black tracking-[0.25em] text-white/50 mb-2 sm:mb-3 uppercase">
-                Ayuda
-              </h4>
-              <ul className="space-y-2 sm:space-y-3">
-                {[
-                  { name: "Términos y Condiciones", href: "/terminos-y-condiciones" },
-                  { name: "Términos del Servicio", href: "/terminos-del-servicio" },
-                  { name: "Política de Privacidad", href: "/politica-de-privacidad" },
-                ].map((link) => (
-                  <li key={link.name}>
-                    <Link href={link.href} className="text-gray-300 text-sm hover:text-[#C19A6B] transition-all flex items-center gap-2 group w-fit p-1 touch-target active:scale-95">
-                      <span className="w-0 h-[1px] bg-[#C19A6B] transition-all duration-300 group-hover:w-4" />
-                      {link.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="sm:col-span-2 lg:col-span-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10 md:gap-12 lg:gap-16 items-start">
+            <div>
               <h4 className="text-[9px] sm:text-[10px] font-black tracking-[0.25em] text-white/50 mb-2 sm:mb-3 uppercase">
                 Contacto
               </h4>
@@ -117,6 +77,46 @@ const Footer = () => {
                   <Mail className="w-4 h-4" />
                 </a>
               </div>
+            </div>
+
+            <div>
+              <h4 className="text-[9px] sm:text-[10px] font-black tracking-[0.25em] text-white/50 mb-2 sm:mb-3 uppercase">
+                Explorar
+              </h4>
+              <ul className="space-y-2 sm:space-y-3">
+                {[
+                  { name: "Tienda", href: "/tienda" },
+                  { name: "Nuevos Ingresos", href: "/collections/nueva-coleccion" },
+                  { name: "Más Vendidos", href: "/collections/mas-vendidos" },
+                ].map((link) => (
+                  <li key={link.name}>
+                    <Link href={link.href} className="text-gray-300 text-sm hover:text-[#C19A6B] transition-all flex items-center gap-2 group w-fit p-1 touch-target active:scale-95">
+                      <span className="w-0 h-[1px] bg-[#C19A6B] transition-all duration-300 group-hover:w-4" />
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-[9px] sm:text-[10px] font-black tracking-[0.25em] text-white/50 mb-2 sm:mb-3 uppercase">
+                Ayuda
+              </h4>
+              <ul className="space-y-2 sm:space-y-3">
+                {[
+                  { name: "Términos y Condiciones", href: "/terminos-y-condiciones" },
+                  { name: "Términos del Servicio", href: "/terminos-del-servicio" },
+                  { name: "Política de Privacidad", href: "/politica-de-privacidad" },
+                ].map((link) => (
+                  <li key={link.name}>
+                    <Link href={link.href} className="text-gray-300 text-sm hover:text-[#C19A6B] transition-all flex items-center gap-2 group w-fit p-1 touch-target active:scale-95">
+                      <span className="w-0 h-[1px] bg-[#C19A6B] transition-all duration-300 group-hover:w-4" />
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
 
           </div>
