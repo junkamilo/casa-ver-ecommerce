@@ -4,7 +4,6 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { SITE_NAME } from "@/lib/seo";
-import { computeProductBadge } from "@/lib/productBadge";
 import Footer from "@/components/Footer";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/layout/Header";
@@ -12,51 +11,16 @@ import CollectionHero from "./components/CollectionHero";
 import CollectionClient from "./components/CollectionClient";
 import BackButton from "@/components/ui/BackButton";
 import type { CollectionProduct, FilterOptions } from "./types";
+import {
+  COLLECTION_PRODUCT_GRID_SELECT,
+  transformProduct,
+  type CollectionRawProduct,
+} from "../utils/fetchCollectionProducts";
 
-// ── Product query select shape ────────────────────────────────────────────────
 const PRODUCT_SELECT = {
-  name: true,
-  slug: true,
-  basePrice: true,
-  comparePrice: true,
+  ...COLLECTION_PRODUCT_GRID_SELECT,
   isFeatured: true,
   isNew: true,
-  isSet: true,
-  isProductNew: true,
-  isProductNewAt: true,
-  isOnSale: true,
-  images: {
-    orderBy: { order: "asc" as const },
-    take: 8,
-    select: { url: true },
-  },
-  items: {
-    orderBy: { order: "asc" as const },
-    select: {
-      price: true,
-      colors: {
-        take: 1,
-        select: {
-          images: {
-            orderBy: { order: "asc" as const },
-            take: 1,
-            select: { url: true },
-          },
-        },
-      },
-    },
-  },
-  colors: {
-    select: {
-      name: true,
-      hexCode: true,
-      images: {
-        orderBy: { order: "asc" as const },
-        take: 1,
-        select: { url: true },
-      },
-    },
-  },
 };
 
 // ── Data fetcher ──────────────────────────────────────────────────────────────
@@ -125,45 +89,7 @@ async function getCollectionData(
 
     const availableColors = Array.from(colorMap.entries()).map(([hexCode, name]) => ({ hexCode, name }));
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const products: CollectionProduct[] = (raw as any[]).map((p) => {
-      const parentImages: string[] = p.images.map((i: { url: string }) => i.url);
-      const fallbackUrl =
-        p.isSet && parentImages.length === 0
-          ? (p.items?.[0]?.colors?.[0]?.images?.[0]?.url ?? null)
-          : null;
-      const cardImages = fallbackUrl ? [fallbackUrl] : parentImages;
-      const itemPrices: number[] =
-        p.isSet && p.items?.length > 0
-          ? p.items
-              .map((it: { price: unknown }) => (it.price ? Number(it.price) : null))
-              .filter((v: number | null): v is number => v !== null)
-          : [];
-      const minPrice = itemPrices.length > 0 ? Math.min(...itemPrices) : undefined;
-
-      return {
-        images: cardImages,
-        name: p.name,
-        slug: p.slug,
-        price: Number(p.basePrice),
-        oldPrice: p.comparePrice ? Number(p.comparePrice) : undefined,
-        isSet: p.isSet || false,
-        minPrice,
-        badge: computeProductBadge({
-          isProductNew: p.isProductNew,
-          isProductNewAt: p.isProductNewAt,
-          isOnSale: p.isOnSale,
-        }),
-        colors:
-          p.colors.length > 0
-            ? p.colors.map((c: { name: string; hexCode: string; images: { url: string }[] }) => ({
-                name: c.name,
-                hexCode: c.hexCode,
-                imageUrl: c.images[0]?.url ?? null,
-              }))
-            : undefined,
-      };
-    });
+    const products = (raw as CollectionRawProduct[]).map(transformProduct);
 
     return { category, garmentTypeName, products, filterOptions: { availableColors, maxPriceDb } };
   } catch {

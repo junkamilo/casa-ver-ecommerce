@@ -24,6 +24,8 @@ export interface UIColor {
 
 export interface UIProductItem {
   id: string;
+  /** Orden en CMS (menor = primero en tabs y vista inicial). */
+  order: number;
   name: string;
   description: string | null;
   price: number | null;

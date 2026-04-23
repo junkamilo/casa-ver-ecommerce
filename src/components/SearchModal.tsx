@@ -10,7 +10,12 @@ interface SearchProduct {
   name: string;
   slug: string;
   price: number;
+  /** Conjunto: precio mostrado en tienda suele ser el mínimo entre ítems (basePrice del padre puede ser 0). */
+  isSet?: boolean;
+  minPrice?: number | null;
   image: string | null;
+  /** Portada en video: en el buscador se muestra bloque verde con el nombre (como categorías sin foto). */
+  coverVideo?: boolean;
 }
 
 interface SearchModalProps {
@@ -42,8 +47,11 @@ function clearRecentProducts() {
   localStorage.removeItem(RECENT_KEY);
 }
 
-function formatPrice(price: number): string {
-  return `$ ${price.toLocaleString("es-CO")}`;
+function formatProductPrice(item: Pick<SearchProduct, "price" | "isSet" | "minPrice">): string {
+  if (item.isSet && item.minPrice != null) {
+    return `Desde $ ${item.minPrice.toLocaleString("es-CO")}`;
+  }
+  return `$ ${item.price.toLocaleString("es-CO")}`;
 }
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
@@ -256,7 +264,13 @@ const ProductSearchCard = ({
     onClick={onClose}
   >
     <div className="relative w-full aspect-3/4 overflow-hidden rounded-md bg-muted mb-2">
-      {item.image ? (
+      {item.coverVideo ? (
+        <div className="absolute inset-0 flex items-center justify-center px-2 sm:px-3 bg-[#154734]">
+          <span className="text-[#C19A6B] font-black uppercase tracking-widest text-[9px] sm:text-[10px] text-center leading-tight line-clamp-4">
+            {item.name}
+          </span>
+        </div>
+      ) : item.image ? (
         <Image
           src={item.image}
           alt={item.name}
@@ -275,7 +289,7 @@ const ProductSearchCard = ({
       {item.name}
     </h4>
     <p className="text-xs sm:text-sm font-semibold text-foreground mt-1">
-      {formatPrice(item.price)}
+      {formatProductPrice(item)}
     </p>
   </Link>
 );
