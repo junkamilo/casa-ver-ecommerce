@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { Mail, Phone } from "lucide-react";
 
+const GMAIL_COMPOSE_URL =
+  "https://mail.google.com/mail/u/0/?view=cm&fs=1&tf=1&to=talentocasaverde@gmail.com";
+
 const InstagramIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
     <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
@@ -35,7 +38,7 @@ const Footer = () => {
               </h4>
               <ul className="space-y-3 sm:space-y-4">
                 <li>
-                  <a href="https://mail.google.com/mail/?view=cm&fs=1&to=talentocasaverde@gmail.com" target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 text-gray-300 text-sm hover:text-white transition-colors group p-1 touch-target active:scale-95">
+                  <a href={GMAIL_COMPOSE_URL} className="flex items-start gap-3 text-gray-300 text-sm hover:text-white transition-colors group p-1 touch-target active:scale-95">
                     <Mail className="w-4 h-4 text-[#C19A6B] shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
                     <span>talentocasaverde@gmail.com</span>
                   </a>
@@ -59,7 +62,7 @@ const Footer = () => {
                   <WhatsAppIcon />
                 </a>
                 <a
-                  href="https://instagram.com/casaverde"
+                  href="https://www.instagram.com/casaverde.col?igsh=MWxrNXNiZWdqNHUwbg=="
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram"
@@ -68,9 +71,7 @@ const Footer = () => {
                   <InstagramIcon />
                 </a>
                 <a
-                  href="https://mail.google.com/mail/?view=cm&fs=1&to=talentocasaverde@gmail.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={GMAIL_COMPOSE_URL}
                   aria-label="Correo electrónico"
                   className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-gray-300 hover:text-white hover:border-[#C19A6B] hover:bg-[#C19A6B]/10 transition-all duration-300 touch-target active:scale-90"
                 >

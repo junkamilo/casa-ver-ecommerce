@@ -22,6 +22,7 @@ import { useProductClient } from "../hooks/useProductClient";
 export default function ProductClient({
   product,
   recommended,
+  initialSetItemKey,
   existingReview,
   isAuthenticated,
   reviews,
@@ -51,7 +52,7 @@ export default function ProductClient({
     handleAddToCart,
     handleBuyNow,
     toggleAccordion,
-  } = useProductClient(product);
+  } = useProductClient(product, initialSetItemKey);
 
   return (
     <div className="bg-white selection:bg-[#C19A6B]/20 min-h-screen">
