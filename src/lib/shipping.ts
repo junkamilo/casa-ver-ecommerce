@@ -1,29 +1,39 @@
 /**
  * Lógica de tarifas de envío para Casa Verde.
  *
- * Municipios con tarifa preferencial Santander: $11.000
+ * Ciudades con tarifa preferencial: $11.000
+ * San Andrés / Providencia: $30.000
  * Resto del país: $18.000
  */
 
 export const SHIPPING_SANTANDER = 11_000;
 export const SHIPPING_NATIONAL = 18_000;
+export const SHIPPING_ISLANDS = 30_000;
+
+function normalizeValue(v: string): string {
+  return v
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
+}
 
 /**
- * Municipios de Santander con tarifa especial de $11.000.
- * Los nombres deben coincidir exactamente con los de MUNICIPIOS["Santander"] en colombia.ts.
+ * Ciudades con tarifa especial de $11.000.
  */
-export const SANTANDER_CHEAP_CITIES = new Set([
+export const PREFERRED_11000_CITIES = new Set([
+  "San Gil",
+  "Barrancabermeja",
   "Bucaramanga",
-  "Girón",
+  "Giron",
   "Piedecuesta",
   "Floridablanca",
-  "Barrancabermeja",
-  "San Gil",
-  "Barichara",
-  "Zapatoca",
-  "Socorro",
-  "Sabana de Torres",
   "Lebrija",
+  "Sabana de torres",
+  "Valledupar",
+  "Cucuta",
+  "Cantagallo",
 ]);
 
 /**
@@ -31,16 +41,21 @@ export const SANTANDER_CHEAP_CITIES = new Set([
  * Comparación case-insensitive para robustez.
  */
 export function getShippingCost(city: string, department: string): number {
-  const cityNorm = city.trim().toLowerCase();
-  const deptNorm = department.trim().toLowerCase();
+  const cityNorm = normalizeValue(city);
+  const deptNorm = normalizeValue(department);
 
   // ⚠️ TEMPORAL — tarifa de prueba $1.000. Eliminar cuando ya no se necesite.
   if (deptNorm === "prueba") return 1_000;
 
-  if (deptNorm !== "santander") return SHIPPING_NATIONAL;
+  const isIslandsDepartment = deptNorm === "san andres y providencia";
+  const isIslandsCity =
+    cityNorm === "san andres" ||
+    cityNorm === "providencia" ||
+    cityNorm === "providencia y santa catalina";
+  if (isIslandsDepartment || isIslandsCity) return SHIPPING_ISLANDS;
 
-  for (const cheapCity of SANTANDER_CHEAP_CITIES) {
-    if (cheapCity.toLowerCase() === cityNorm) return SHIPPING_SANTANDER;
+  for (const preferredCity of PREFERRED_11000_CITIES) {
+    if (normalizeValue(preferredCity) === cityNorm) return SHIPPING_SANTANDER;
   }
 
   return SHIPPING_NATIONAL;
