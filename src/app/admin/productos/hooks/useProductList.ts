@@ -2,6 +2,21 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ProductListItem, Category, PresetColor } from "../types";
+import {
+  AdminProductsApiError,
+  deleteAdminProduct,
+  fetchActivePresetColors,
+  fetchAdminCategories,
+  fetchAdminProducts,
+  toggleAdminProduct,
+} from "@/modules/adminCatalog/products/presentation/api-client";
+import {
+  AdminCategoryDTO,
+  AdminColorDTO,
+  mapAdminCategoriesToUi,
+  mapAdminProductsResponseToUi,
+  mapPresetColorsToUi,
+} from "@/modules/adminCatalog/products/presentation/mappers";
 
 const PAGE_SIZE = 8;
 
@@ -25,24 +40,23 @@ export function useProductList() {
       const limit = 100;
 
       while (true) {
-        const params = new URLSearchParams({ page: String(page), limit: String(limit) });
-        const res = await fetch(`/api/admin/products?${params}`);
-        if (!res.ok) {
-          setFetchError("No se pudieron cargar los productos. Intenta de nuevo.");
-          return;
-        }
-        const response = await res.json();
-        const data: ProductListItem[] = response.data || response;
+        const response = await fetchAdminProducts({ page, limit });
+        const mappedResponse = mapAdminProductsResponseToUi(response);
+        const data = mappedResponse.data;
         allProducts = [...allProducts, ...data];
 
-        const pagination = response.pagination;
+        const pagination = mappedResponse.pagination;
         if (!pagination || !pagination.hasNextPage) break;
         page++;
       }
 
       setProducts(allProducts);
       setFilteredProducts(allProducts);
-    } catch {
+    } catch (error: unknown) {
+      if (error instanceof AdminProductsApiError) {
+        setFetchError(error.message);
+        return;
+      }
       setFetchError("Error de conexión al cargar los productos.");
     } finally {
       setLoading(false);
@@ -51,8 +65,8 @@ export function useProductList() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/categories");
-      if (res.ok) setCategories(await res.json());
+      const response = await fetchAdminCategories();
+      setCategories(mapAdminCategoriesToUi(response as AdminCategoryDTO[]));
     } catch {
       console.error("Error al cargar categorías");
     }
@@ -60,12 +74,8 @@ export function useProductList() {
 
   const fetchPresetColors = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/colors?active=true");
-      if (res.ok) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const data: any[] = await res.json();
-        setPresetColors(data.map((c) => ({ name: c.name, hex: c.hexCode })));
-      }
+      const response = await fetchActivePresetColors();
+      setPresetColors(mapPresetColorsToUi(response as AdminColorDTO[]));
     } catch {
       console.error("Error al cargar colores");
     }
@@ -95,12 +105,9 @@ export function useProductList() {
 
   const deleteProduct = async (id: string): Promise<boolean> => {
     try {
-      const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        await fetchProducts();
-        return true;
-      }
-      return false;
+      await deleteAdminProduct(id);
+      await fetchProducts();
+      return true;
     } catch {
       return false;
     }
@@ -111,12 +118,7 @@ export function useProductList() {
       prev.map((p) => (p.id === id ? { ...p, active: !currentState } : p))
     );
     try {
-      const res = await fetch(`/api/admin/products/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ active: !currentState }),
-      });
-      if (!res.ok) throw new Error("Failed");
+      await toggleAdminProduct(id, !currentState);
       return true;
     } catch {
       // Roll back optimistic update

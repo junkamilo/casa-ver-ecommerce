@@ -1,12 +1,21 @@
 import { Suspense } from "react";
 import type { Period } from "../types/types";
 import {
-  getStatsByPeriod, getTopProductsByPeriod, getDailySalesByPeriod,
-  getCategorySalesByPeriod, getSizesSalesByPeriod, getColorsSalesByPeriod,
-  getPaymentMethodsByPeriod, getGeographyByPeriod, getRetentionByPeriod,
-  getDiscountImpactByPeriod, getCancellationRateByPeriod, getReviewsByPeriod,
-  getAvgDeliveryTime, getPeakHoursByPeriod,
-} from "../utils/stats";
+  fetchAvgDeliveryTime,
+  fetchCancellationRateByPeriod,
+  fetchCategorySalesByPeriod,
+  fetchColorsSalesByPeriod,
+  fetchDailySalesByPeriod,
+  fetchDiscountImpactByPeriod,
+  fetchGeographyByPeriod,
+  fetchPaymentMethodsByPeriod,
+  fetchPeakHoursByPeriod,
+  fetchRetentionByPeriod,
+  fetchReviewsByPeriod,
+  fetchSizesSalesByPeriod,
+  fetchStatsByPeriod,
+  fetchTopProductsByPeriod,
+} from "@/modules/adminCatalog/stats/presentation/api-client";
 import { KpiCards } from "./KpiCards";
 import { SalesChart } from "./SalesChart";
 import { CategoryChart } from "./CategoryChart";
@@ -29,20 +38,20 @@ async function EstadisticasContentInner({ period }: { period: Period }) {
       retention, discountImpact, cancellation, reviews,
       deliveryTime, peakHours,
     ] = await Promise.all([
-      getStatsByPeriod(period),
-      getTopProductsByPeriod(period, 8),
-      getDailySalesByPeriod(period),
-      getCategorySalesByPeriod(period),
-      getSizesSalesByPeriod(period),
-      getColorsSalesByPeriod(period),
-      getPaymentMethodsByPeriod(period),
-      getGeographyByPeriod(period),
-      getRetentionByPeriod(period),
-      getDiscountImpactByPeriod(period),
-      getCancellationRateByPeriod(period),
-      getReviewsByPeriod(period),
-      getAvgDeliveryTime(period),
-      getPeakHoursByPeriod(period),
+      fetchStatsByPeriod(period),
+      fetchTopProductsByPeriod(period, 8),
+      fetchDailySalesByPeriod(period),
+      fetchCategorySalesByPeriod(period),
+      fetchSizesSalesByPeriod(period),
+      fetchColorsSalesByPeriod(period),
+      fetchPaymentMethodsByPeriod(period),
+      fetchGeographyByPeriod(period),
+      fetchRetentionByPeriod(period),
+      fetchDiscountImpactByPeriod(period),
+      fetchCancellationRateByPeriod(period),
+      fetchReviewsByPeriod(period),
+      fetchAvgDeliveryTime(period),
+      fetchPeakHoursByPeriod(period),
     ]);
 
     return (

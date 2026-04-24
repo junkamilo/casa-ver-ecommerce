@@ -1,15 +1,9 @@
 import type { Dispatch, SetStateAction, FormEvent } from "react";
+import type { AdminProfileUiModel } from "@/modules/adminCatalog/profile/presentation/mappers";
 
 // ─── Entidades de Dominio ────────────────────────────────────────────────────
 
-export interface UserProfile {
-  id: string;
-  name: string | null;
-  email: string;
-  image: string | null;
-  role: string;
-  createdAt: string;
-}
+export type UserProfile = AdminProfileUiModel;
 
 export type ToastState = { type: "success" | "error"; message: string } | null;
 

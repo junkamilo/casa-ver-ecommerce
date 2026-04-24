@@ -4,6 +4,13 @@ import { useState, useEffect, useCallback } from "react";
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "../constants/constants";
 import type { Category } from "../types/types";
 import { toast } from "sonner";
+import {
+  CategoryApiError,
+  deleteCategory,
+  fetchCategories as fetchCategoriesRequest,
+  toggleCategory,
+} from "@/modules/adminCatalog/categories/presentation/api-client";
+import { mapCategoryDtoListToUi } from "@/modules/adminCatalog/categories/presentation/mappers";
 
 interface UseCategoryListOptions {
   showToast: (type: "success" | "error", message: string) => void;
@@ -16,11 +23,8 @@ export function useCategoryList({ showToast }: UseCategoryListOptions) {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/categories");
-      if (res.ok) {
-        const data = await res.json();
-        setCategories(data);
-      }
+      const data = await fetchCategoriesRequest();
+      setCategories(mapCategoryDtoListToUi(data));
     } catch {
       showToast("error", ERROR_MESSAGES.load);
     } finally {
@@ -41,30 +45,21 @@ export function useCategoryList({ showToast }: UseCategoryListOptions) {
   const handleToggleActive = useCallback(
     async (category: Category) => {
       try {
-        const res = await fetch(`/api/admin/categories?id=${category.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "toggle" }),
-        });
-
-        if (res.status === 409) {
-          const data = await res.json();
-          const count: number = data.count;
-          showToast(
-            "error",
-            `No se puede ocultar esta categoría. Hay ${count} producto${count === 1 ? "" : "s"} asociado${count === 1 ? "" : "s"} a "${data.name}". Reasigna u oculta esos productos primero.`
-          );
-          return;
-        }
-
-        if (!res.ok) throw new Error(ERROR_MESSAGES.toggle);
-
+        await toggleCategory(category.id);
         showToast(
           "success",
           category.isActive ? SUCCESS_MESSAGES.deactivated : SUCCESS_MESSAGES.activated
         );
         fetchCategories();
       } catch (err: unknown) {
+        if (err instanceof CategoryApiError && err.status === 409) {
+          const count = err.data?.count ?? 0;
+          showToast(
+            "error",
+            `No se puede ocultar esta categoría. Hay ${count} producto${count === 1 ? "" : "s"} asociado${count === 1 ? "" : "s"} a "${err.data?.name ?? category.name}". Reasigna u oculta esos productos primero.`
+          );
+          return;
+        }
         showToast("error", err instanceof Error ? err.message : ERROR_MESSAGES.unknown);
       }
     },
@@ -109,25 +104,18 @@ export function useCategoryList({ showToast }: UseCategoryListOptions) {
       if (!confirmed) return;
 
       try {
-        const res = await fetch(`/api/admin/categories?id=${category.id}`, {
-          method: "DELETE",
-        });
-
-        if (res.status === 409) {
-          const data = await res.json();
-          const count: number = data.count ?? 0;
-          showToast(
-            "error",
-            `No se puede eliminar "${data.name ?? category.name}". Tiene ${count} producto${count === 1 ? "" : "s"} activo${count === 1 ? "" : "s"} relacionado${count === 1 ? "" : "s"}.`
-          );
-          return;
-        }
-
-        if (!res.ok) throw new Error(ERROR_MESSAGES.delete);
-
+        await deleteCategory(category.id);
         showToast("success", SUCCESS_MESSAGES.deleted);
         fetchCategories();
       } catch (err: unknown) {
+        if (err instanceof CategoryApiError && err.status === 409) {
+          const count = err.data?.count ?? 0;
+          showToast(
+            "error",
+            `No se puede eliminar "${err.data?.name ?? category.name}". Tiene ${count} producto${count === 1 ? "" : "s"} activo${count === 1 ? "" : "s"} relacionado${count === 1 ? "" : "s"}.`
+          );
+          return;
+        }
         showToast("error", err instanceof Error ? err.message : ERROR_MESSAGES.unknown);
       }
     },

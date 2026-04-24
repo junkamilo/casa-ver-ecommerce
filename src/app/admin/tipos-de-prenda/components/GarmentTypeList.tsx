@@ -33,7 +33,7 @@ const GarmentTypeRow = ({
   onToggleActive: (gt: GarmentType) => void;
   onDelete: (gt: GarmentType) => void;
 }) => {
-  const total = (gt._count?.products ?? 0) + (gt._count?.items ?? 0);
+  const total = (gt._count?.products ?? 0) + (gt._count?.categories ?? 0);
 
   return (
     <tr className="hover:bg-gray-50/60 transition-colors group">
@@ -93,7 +93,7 @@ const GarmentTypeMobileCard = ({
   onToggleActive: (gt: GarmentType) => void;
   onDelete: (gt: GarmentType) => void;
 }) => {
-  const total = (gt._count?.products ?? 0) + (gt._count?.items ?? 0);
+  const total = (gt._count?.products ?? 0) + (gt._count?.categories ?? 0);
 
   return (
     <div className="p-4 border-b border-gray-100 last:border-b-0">

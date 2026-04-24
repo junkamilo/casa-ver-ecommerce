@@ -17,6 +17,12 @@ export class PrismaHeroRepository {
     });
   }
 
+  async getAllSlides() {
+    return this.db.heroSlide.findMany({
+      orderBy: { position: "asc" },
+    });
+  }
+
   async getNextPosition(): Promise<number> {
     const last = await this.db.heroSlide.findFirst({ orderBy: { position: "desc" } });
     return (last?.position ?? 0) + 1;

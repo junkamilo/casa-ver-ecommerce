@@ -3,6 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { PAGE_SIZE } from "../constants/constants";
 import type { Admin } from "../types/types";
+import {
+  AdminUsersApiError,
+  fetchAdminUsers,
+  revokeAdminUser,
+} from "@/modules/adminCatalog/users/presentation/api-client";
+import { mapAdminUserListDtoToUi } from "@/modules/adminCatalog/users/presentation/mappers";
 
 interface UseAdminListOptions {
   showToast: (type: "success" | "error", message: string) => void;
@@ -20,13 +26,15 @@ export function useAdminList({ showToast }: UseAdminListOptions) {
 
   const fetchAdmins = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/users");
-      if (res.ok) {
-        const data = await res.json();
-        setAdmins(data);
-        setFilteredAdmins(data);
+      const data = await fetchAdminUsers();
+      const mapped = mapAdminUserListDtoToUi(data);
+      setAdmins(mapped);
+      setFilteredAdmins(mapped);
+    } catch (error: unknown) {
+      if (error instanceof AdminUsersApiError) {
+        showToast("error", error.message);
+        return;
       }
-    } catch {
       showToast("error", "Error al cargar administradores");
     } finally {
       setLoading(false);
@@ -59,16 +67,15 @@ export function useAdminList({ showToast }: UseAdminListOptions) {
     async (id: string) => {
       setDeleting(true);
       try {
-        const res = await fetch(`/api/admin/users?id=${id}`, { method: "DELETE" });
-        const data = await res.json();
-        if (!res.ok) {
-          showToast("error", data.message || "Error al revocar admin");
-          return;
-        }
+        await revokeAdminUser(id);
         showToast("success", "Acceso de administrador revocado");
         setConfirmDelete(null);
         fetchAdmins();
-      } catch {
+      } catch (error: unknown) {
+        if (error instanceof AdminUsersApiError) {
+          showToast("error", error.message);
+          return;
+        }
         showToast("error", "Error de conexión");
       } finally {
         setDeleting(false);

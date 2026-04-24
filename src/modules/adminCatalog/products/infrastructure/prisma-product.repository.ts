@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { ProductCreateInputDTO } from "../contracts/product-create.dto";
-import { createColorVariants, createSetItems } from "@/app/api/admin/products/_helpers";
+import { createColorVariants, createSetItems } from "./product-relations.helpers";
 import { collectProductAssetUrls } from "../application/product-assets";
 import type {
   AdminProductListItemDTO,

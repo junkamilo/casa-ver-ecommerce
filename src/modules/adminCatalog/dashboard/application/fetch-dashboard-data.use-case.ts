@@ -1,9 +1,16 @@
-import { DollarSign, ShoppingCart, Package, Users, Star } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { formatCOP } from "../utils";
-import type { DashboardData, RecentOrder, StatItem } from "../types";
+import type { DashboardDataDTO, DashboardRecentOrderDTO, DashboardStatDTO } from "../contracts/dashboard.dto";
 
-// --- Helpers de rango de fechas (privados a este módulo) ---
+const formatCOP = (amount: number | bigint | string): string => {
+  const num = Number(amount);
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(num);
+};
+
 const getTodayRange = () => {
   const startDate = new Date();
   startDate.setUTCHours(0, 0, 0, 0);
@@ -18,12 +25,9 @@ const getLast30DaysStart = (): Date => {
   return date;
 };
 
-// --- Query principal del dashboard ---
-// Ejecuta todas las consultas en paralelo con Promise.all para máximo rendimiento
-export async function fetchDashboardData(): Promise<DashboardData> {
+export async function fetchDashboardDataUseCase(): Promise<DashboardDataDTO> {
   const { startDate: todayStart, endDate: todayEnd } = getTodayRange();
   const thirtyDaysAgo = getLast30DaysStart();
-
   const EARLY_BIRD_LIMIT = 10;
 
   const [salesResult, todayOrdersCount, activeProductsCount, newCustomersCount, earlyBirdCount, rawOrders] =
@@ -62,12 +66,12 @@ export async function fetchDashboardData(): Promise<DashboardData> {
 
   const todaySales = salesResult._sum.total ? Number(salesResult._sum.total) : 0;
 
-  const stats: StatItem[] = [
+  const stats: DashboardStatDTO[] = [
     {
       label: "Ventas Hoy",
       value: formatCOP(todaySales),
       change: "+0%",
-      icon: DollarSign,
+      icon: "dollar",
       color: "text-emerald-600",
       bg: "bg-emerald-50",
       border: "border-emerald-100",
@@ -76,7 +80,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
       label: "Pedidos Hoy",
       value: todayOrdersCount.toString(),
       change: `${todayOrdersCount > 0 ? "+" : ""}${todayOrdersCount}`,
-      icon: ShoppingCart,
+      icon: "cart",
       color: "text-blue-600",
       bg: "bg-blue-50",
       border: "border-blue-100",
@@ -85,7 +89,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
       label: "Productos Activos",
       value: activeProductsCount.toString(),
       change: `${activeProductsCount > 0 ? "+" : ""}${activeProductsCount}`,
-      icon: Package,
+      icon: "package",
       color: "text-[#C19A6B]",
       bg: "bg-orange-50",
       border: "border-orange-100",
@@ -94,7 +98,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
       label: "Clientes Nuevos",
       value: newCustomersCount.toString(),
       change: `+${newCustomersCount}`,
-      icon: Users,
+      icon: "users",
       color: "text-purple-600",
       bg: "bg-purple-50",
       border: "border-purple-100",
@@ -103,7 +107,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
       label: "Early Bird",
       value: `${earlyBirdCount}/${EARLY_BIRD_LIMIT}`,
       change: earlyBirdCount >= EARLY_BIRD_LIMIT ? "Agotado" : `${EARLY_BIRD_LIMIT - earlyBirdCount} libres`,
-      icon: Star,
+      icon: "star",
       color: "text-amber-600",
       bg: "bg-amber-50",
       border: "border-amber-100",
@@ -112,10 +116,9 @@ export async function fetchDashboardData(): Promise<DashboardData> {
     },
   ];
 
-  // Prisma retorna Decimal para `total` — normalizamos a number para serialización segura
-  const recentOrders: RecentOrder[] = rawOrders.map((o) => ({
-    ...o,
-    total: Number(o.total),
+  const recentOrders: DashboardRecentOrderDTO[] = rawOrders.map((order) => ({
+    ...order,
+    total: Number(order.total),
   }));
 
   return { stats, recentOrders };

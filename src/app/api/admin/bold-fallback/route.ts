@@ -1,6 +1,7 @@
 import { BoldFallbackUnauthorizedError, BoldFallbackConfigError } from "@/modules/adminCatalog/boldFallback/application/bold-fallback.errors";
 import { runBoldFallbackUseCase } from "@/modules/adminCatalog/boldFallback/application/run-bold-fallback.use-case";
 import { NextRequest, NextResponse } from "next/server";
+import { toErrorResponse } from "@/server/http/error-response";
 
 
 export async function GET(req: NextRequest) {
@@ -17,13 +18,11 @@ export async function GET(req: NextRequest) {
 
   } catch (error) {
     if (error instanceof BoldFallbackUnauthorizedError) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return toErrorResponse(error);
     }
     if (error instanceof BoldFallbackConfigError) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return toErrorResponse(error);
     }
-    
-    console.error("[BOLD FALLBACK] Error Interno:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return toErrorResponse(error);
   }
 }

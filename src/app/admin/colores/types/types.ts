@@ -1,11 +1,6 @@
-export interface Color {
-  id: string;
-  name: string;
-  hexCode: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { AdminColorUiModel } from "@/modules/adminCatalog/colors/presentation/mappers";
+
+export type Color = AdminColorUiModel;
 
 export type ToastState = { type: "success" | "error"; message: string } | null;
 

@@ -1,12 +1,12 @@
-import { getOrdersFunnel, getLowStockAlerts } from "../utils/stats";
+import { fetchLowStockAlerts, fetchOrdersFunnel } from "@/modules/adminCatalog/stats/presentation/api-client";
 import { OrdersFunnel } from "./OrdersFunnel";
 import { LowStockAlerts } from "./LowStockAlerts";
 import { SectionDivider } from "./SectionDivider";
 
 export async function EstadisticasLiveSection() {
   const [funnel, stockAlerts] = await Promise.all([
-    getOrdersFunnel(),
-    getLowStockAlerts(),
+    fetchOrdersFunnel(),
+    fetchLowStockAlerts(),
   ]);
 
   return (

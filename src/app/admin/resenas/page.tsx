@@ -3,8 +3,14 @@
 import { useEffect, useState, useCallback } from "react";
 import { CheckCircle, XCircle, Trash2, Search, Star, Clock, RefreshCw } from "lucide-react";
 import AdminPageHeader from "@/components/ui/AdminPageHeader";
-
-type ReviewStatus = "PENDING" | "APPROVED" | "REJECTED";
+import type { ReviewStatus } from "@/modules/adminCatalog/reviews/contracts/review.dto";
+import {
+  AdminReviewsApiError,
+  deleteAdminReview,
+  fetchAdminReviews,
+  updateAdminReviewStatus,
+} from "@/modules/adminCatalog/reviews/presentation/api-client";
+import { mapAdminReviewListDtoToUi } from "@/modules/adminCatalog/reviews/presentation/mappers";
 
 interface AdminReview {
   id: string;
@@ -46,15 +52,8 @@ export default function AdminResenas() {
   const fetchReviews = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        status: statusFilter,
-        search,
-        page: String(page),
-      });
-      const res  = await fetch(`/api/admin/reviews?${params}`);
-      const text = await res.text();
-      const data = text ? JSON.parse(text) : {};
-      setReviews(data.reviews ?? []);
+      const data = await fetchAdminReviews({ status: statusFilter, search, page });
+      setReviews(mapAdminReviewListDtoToUi(data.reviews ?? []));
       setTotal(data.total ?? 0);
       setTotalPages(data.totalPages ?? 1);
     } catch (err) {
@@ -74,35 +73,41 @@ export default function AdminResenas() {
 
   async function changeStatus(id: string, status: ReviewStatus) {
     setActionLoading(id + status);
-    const res = await fetch(`/api/admin/reviews/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-    const data = await res.json();
-    setActionLoading(null);
-    if (data.success) {
+    try {
+      await updateAdminReviewStatus(id, status);
       showToast(
-        status === "APPROVED" ? "Reseña aprobada ✓" : status === "REJECTED" ? "Reseña rechazada" : "Estado actualizado",
+        status === "APPROVED"
+          ? "Reseña aprobada ✓"
+          : status === "REJECTED"
+            ? "Reseña rechazada"
+            : "Estado actualizado",
         true
       );
       fetchReviews();
-    } else {
-      showToast("Error al actualizar", false);
+    } catch (error: unknown) {
+      showToast(
+        error instanceof AdminReviewsApiError ? error.message : "Error al actualizar",
+        false
+      );
+    } finally {
+      setActionLoading(null);
     }
   }
 
   async function deleteReview(id: string) {
     if (!confirm("¿Eliminar esta reseña permanentemente?")) return;
     setActionLoading(id + "delete");
-    const res = await fetch(`/api/admin/reviews/${id}`, { method: "DELETE" });
-    const data = await res.json();
-    setActionLoading(null);
-    if (data.success) {
+    try {
+      await deleteAdminReview(id);
       showToast("Reseña eliminada", true);
       fetchReviews();
-    } else {
-      showToast("Error al eliminar", false);
+    } catch (error: unknown) {
+      showToast(
+        error instanceof AdminReviewsApiError ? error.message : "Error al eliminar",
+        false
+      );
+    } finally {
+      setActionLoading(null);
     }
   }
 

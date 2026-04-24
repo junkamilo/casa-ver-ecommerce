@@ -3,6 +3,15 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { TOAST_DURATION, ERROR_MESSAGES, SUCCESS_MESSAGES } from "../constants";
 import type { Color, ToastState } from "../types/types";
+import {
+  AdminColorsApiError,
+  createAdminColor,
+  deleteAdminColor,
+  fetchAdminColors,
+  toggleAdminColor,
+  updateAdminColor,
+} from "@/modules/adminCatalog/colors/presentation/api-client";
+import { mapColorListDtoToUi } from "@/modules/adminCatalog/colors/presentation/mappers";
 
 const PAGE_SIZE = 12;
 
@@ -49,9 +58,13 @@ export function useColorManager() {
 
   const fetchColors = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/colors");
-      if (res.ok) setColors(await res.json());
-    } catch {
+      const data = await fetchAdminColors();
+      setColors(mapColorListDtoToUi(data));
+    } catch (error: unknown) {
+      if (error instanceof AdminColorsApiError) {
+        showToast("error", error.message);
+        return;
+      }
       showToast("error", ERROR_MESSAGES.load);
     } finally {
       setLoading(false);
@@ -66,21 +79,17 @@ export function useColorManager() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const res = await fetch("/api/admin/colors", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, hexCode }),
-      });
-      if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(res.status === 409 ? ERROR_MESSAGES.duplicate : msg || ERROR_MESSAGES.create);
-      }
+      await createAdminColor({ name, hexCode });
       showToast("success", SUCCESS_MESSAGES.created);
       setShowModal(false);
       setName("");
       setHexCode("#000000");
       fetchColors();
     } catch (err: unknown) {
+      if (err instanceof AdminColorsApiError && err.status === 409) {
+        showToast("error", ERROR_MESSAGES.duplicate);
+        return;
+      }
       showToast("error", err instanceof Error ? err.message : ERROR_MESSAGES.unknown);
     } finally {
       setSubmitting(false);
@@ -106,19 +115,15 @@ export function useColorManager() {
     if (!editingColor) return;
     setEditSubmitting(true);
     try {
-      const res = await fetch(`/api/admin/colors?id=${editingColor.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editName, hexCode: editHexCode }),
-      });
-      if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(res.status === 409 ? ERROR_MESSAGES.duplicate : msg || ERROR_MESSAGES.edit);
-      }
+      await updateAdminColor(editingColor.id, { name: editName, hexCode: editHexCode });
       showToast("success", SUCCESS_MESSAGES.updated);
       closeEditModal();
       fetchColors();
     } catch (err: unknown) {
+      if (err instanceof AdminColorsApiError && err.status === 409) {
+        showToast("error", ERROR_MESSAGES.duplicate);
+        return;
+      }
       showToast("error", err instanceof Error ? err.message : ERROR_MESSAGES.unknown);
     } finally {
       setEditSubmitting(false);
@@ -129,12 +134,7 @@ export function useColorManager() {
 
   const handleToggleActive = useCallback(async (color: Color) => {
     try {
-      const res = await fetch(`/api/admin/colors?id=${color.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "toggle" }),
-      });
-      if (!res.ok) throw new Error(ERROR_MESSAGES.toggle);
+      await toggleAdminColor(color.id);
       showToast("success", color.isActive ? SUCCESS_MESSAGES.deactivated : SUCCESS_MESSAGES.activated);
       fetchColors();
     } catch (err: unknown) {
@@ -146,8 +146,7 @@ export function useColorManager() {
 
   const handleDelete = useCallback(async (color: Color) => {
     try {
-      const res = await fetch(`/api/admin/colors?id=${color.id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(ERROR_MESSAGES.delete);
+      await deleteAdminColor(color.id);
       showToast("success", SUCCESS_MESSAGES.deleted);
       fetchColors();
     } catch (err: unknown) {

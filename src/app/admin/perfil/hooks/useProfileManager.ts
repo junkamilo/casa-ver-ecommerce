@@ -9,6 +9,8 @@ import type {
   ToastState,
   UseProfileManagerReturn,
 } from "../types/types";
+import { fetchAdminProfile } from "@/modules/adminCatalog/profile/presentation/api-client";
+import { mapAdminProfileDtoToUi } from "@/modules/adminCatalog/profile/presentation/mappers";
 
 /**
  * Hook orquestador del perfil de administrador.
@@ -29,9 +31,8 @@ export function useProfileManager(): UseProfileManagerReturn {
   }, []);
 
   useEffect(() => {
-    fetch("/api/profile")
-      .then((res) => res.json())
-      .then(setProfile)
+    fetchAdminProfile()
+      .then((data) => setProfile(mapAdminProfileDtoToUi(data)))
       .catch(() => showToast("error", ERROR_MESSAGES.load))
       .finally(() => setLoading(false));
   }, [showToast]);

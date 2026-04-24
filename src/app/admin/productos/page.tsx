@@ -10,9 +10,14 @@ import ProductFilters from "./components/ProductFilters";
 import ProductTable from "./components/ProductTable";
 import AdminPagination from "@/components/ui/AdminPagination";
 import ProductModal from "./components/ProductModal";
-import { createProduct, updateProduct } from "@/app/actions/products";
 import AdminPageHeader from "@/components/ui/AdminPageHeader";
 import { Plus } from "lucide-react";
+import {
+  AdminProductsApiError,
+  createAdminProduct,
+  fetchAdminProductById,
+  updateAdminProduct,
+} from "@/modules/adminCatalog/products/presentation/api-client";
 
 export default function AdminProductos() {
   const router = useRouter();
@@ -42,11 +47,11 @@ export default function AdminProductos() {
     setFormLoading(true);
     setShowModal(true);
     try {
-      const res = await fetch(`/api/admin/products/${productId}`);
-      if (!res.ok) throw new Error();
-      form.loadFromProduct(await res.json(), list.presetColors);
-    } catch {
-      showToast("error", "No se pudo cargar el producto");
+      const data = await fetchAdminProductById(productId);
+      form.loadFromProduct(data, list.presetColors);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "No se pudo cargar el producto";
+      showToast("error", message);
       setShowModal(false);
     } finally {
       setFormLoading(false);
@@ -72,17 +77,22 @@ export default function AdminProductos() {
     setSubmitting(true);
     try {
       const payload = form.buildPayload();
-      const result = editingId
-        ? await updateProduct(editingId, payload)
-        : await createProduct(payload);
-
-      if (!result.success) throw new Error(result.error);
+      if (editingId) {
+        await updateAdminProduct(editingId, payload);
+      } else {
+        await createAdminProduct(payload);
+      }
       showToast("success", editingId ? "Producto actualizado" : "Producto creado");
       setShowModal(false);
       router.refresh();
       await list.fetchProducts();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error al guardar el producto";
+      const msg =
+        err instanceof AdminProductsApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Error al guardar el producto";
       showToast("error", msg);
     } finally {
       setSubmitting(false);

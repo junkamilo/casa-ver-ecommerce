@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { updateOrderStatus } from "@/app/actions/orders";
 import type { UsePedidoDetailOptions, UsePedidoDetailReturn } from "../types/types";
+import {
+  AdminOrdersApiError,
+  updateAdminOrderStatus,
+} from "@/modules/adminCatalog/orders/presentation/api-client";
 
 export function usePedidoDetail({ onStatusUpdated }: UsePedidoDetailOptions = {}): UsePedidoDetailReturn {
   const [selectedStatus, setSelectedStatus] = useState<string>("");
@@ -14,11 +17,17 @@ export function usePedidoDetail({ onStatusUpdated }: UsePedidoDetailOptions = {}
     setError(null);
     setSaving(true);
     try {
-      await updateOrderStatus(orderId, selectedStatus);
+      await updateAdminOrderStatus({ orderNumber: orderId, statusEs: selectedStatus });
       onStatusUpdated?.(orderId, selectedStatus);
       setSelectedStatus("");
-    } catch (e: any) {
-      setError(e?.message ?? "Error al cambiar el estado");
+    } catch (error: unknown) {
+      if (error instanceof AdminOrdersApiError) {
+        setError(error.message);
+      } else if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Error al cambiar el estado");
+      }
     } finally {
       setSaving(false);
     }

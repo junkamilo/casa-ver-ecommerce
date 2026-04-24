@@ -1,4 +1,4 @@
-import { fetchDashboardData } from "./queries/dashboard.queries";
+import { fetchDashboardData } from "@/modules/adminCatalog/dashboard/presentation/api-client";
 
 export const dynamic = "force-dynamic";
 import AdminPageHeader from "@/components/ui/AdminPageHeader";

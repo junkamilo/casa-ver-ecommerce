@@ -3,6 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { generatePassword } from "../constants/constants";
 import type { LookupResult } from "../types/types";
+import {
+  AdminUsersApiError,
+  createAdminUser,
+  lookupAdminUserByEmail,
+} from "@/modules/adminCatalog/users/presentation/api-client";
+import { mapLookupDtoToUi } from "@/modules/adminCatalog/users/presentation/mappers";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const LOOKUP_DEBOUNCE_MS = 600;
@@ -36,9 +42,8 @@ export function useAdminForm({ showToast, onSuccess }: UseAdminFormOptions) {
     setLookingUp(true);
     setLookupDone(false);
     try {
-      const res = await fetch(`/api/admin/users?lookup=${encodeURIComponent(emailToCheck)}`);
-      const data: LookupResult = res.ok ? await res.json() : { exists: false };
-      setLookupResult(data);
+      const data = await lookupAdminUserByEmail(emailToCheck);
+      setLookupResult(mapLookupDtoToUi(data));
     } catch {
       setLookupResult({ exists: false });
     } finally {
@@ -86,17 +91,7 @@ export function useAdminForm({ showToast, onSuccess }: UseAdminFormOptions) {
       setSubmitting(true);
       try {
         const body = isExistingUser ? { email } : { name, email, password };
-        const res = await fetch("/api/admin/users", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        const data = await res.json();
-
-        if (!res.ok) {
-          showToast("error", data.message || "Error al crear admin");
-          return;
-        }
+        const data = await createAdminUser(body);
 
         if (data.promoted) {
           showToast("success", `${data.name || data.email} fue promovido a administrador`);
@@ -107,7 +102,11 @@ export function useAdminForm({ showToast, onSuccess }: UseAdminFormOptions) {
         setShowModal(false);
         resetForm();
         onSuccess();
-      } catch {
+      } catch (error: unknown) {
+        if (error instanceof AdminUsersApiError) {
+          showToast("error", error.message);
+          return;
+        }
         showToast("error", "Error de conexión");
       } finally {
         setSubmitting(false);

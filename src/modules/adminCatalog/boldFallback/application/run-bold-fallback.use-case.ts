@@ -4,9 +4,8 @@ import { BOLD_PENDING_THRESHOLD_MS, determineOrderActionFromBoldStatus } from ".
 import { BoldFallbackUnauthorizedError, BoldFallbackConfigError } from "./bold-fallback.errors";
 import type { BoldFallbackResponseDTO, RunBoldFallbackInputDTO } from "../contracts/bold-fallback.dto";
 
-// Importaciones a tu lógica existente
-import { markOrderPaid } from "@/app/actions/checkout";
 import { enqueueOrderConfirmationEmail } from "@/lib/email-queue";
+import { markOrderPaidUseCase } from "@/modules/adminCatalog/orders/application/mark-order-paid.use-case";
 
 const fallbackRepository = new PrismaOrderFallbackRepository();
 const boldService = new BoldPaymentService();
@@ -59,7 +58,7 @@ export async function runBoldFallbackUseCase(input: RunBoldFallbackInputDTO): Pr
     if (decision === "MARK_PAID") {
       try {
         const resolvedPaymentId = boldPaymentId ?? `bold-fallback-${order.transactionId}`;
-        const paidOrder = await markOrderPaid(order.transactionId, resolvedPaymentId);
+        const paidOrder = await markOrderPaidUseCase(order.transactionId, resolvedPaymentId);
         
         results.updated++;
         results.details.push({ orderId: order.id, orderNumber: order.orderNumber, boldStatus: status, action: "marked_paid" });

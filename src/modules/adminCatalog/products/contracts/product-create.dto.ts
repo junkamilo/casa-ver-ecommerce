@@ -1,4 +1,4 @@
-import type { ColorInput, SetItemInput } from "@/app/api/admin/products/_helpers";
+import type { ColorInput, SetItemInput } from "../infrastructure/product-relations.helpers";
 
 export type ProductCreateInputDTO = {
   name: string;

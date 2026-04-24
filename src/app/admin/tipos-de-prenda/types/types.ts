@@ -1,16 +1,8 @@
+import type { GarmentTypeUiModel } from "@/modules/adminCatalog/garmentTypes/presentation/mappers";
+
 // ── Entidades ─────────────────────────────────────────────────────────────────
 
-export interface GarmentType {
-  id: string;
-  name: string;
-  slug: string;
-  order: number;
-  isActive: boolean;
-  _count?: {
-    products: number;
-    items: number;
-  };
-}
+export type GarmentType = GarmentTypeUiModel;
 
 export type ToastState = { type: "success" | "error"; message: string } | null;
 

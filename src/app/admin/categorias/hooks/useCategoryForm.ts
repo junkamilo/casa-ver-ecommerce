@@ -3,6 +3,11 @@
 import { useState, useCallback } from "react";
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "../constants/constants";
 import type { Category } from "../types/types";
+import {
+  CategoryApiError,
+  createCategory,
+  updateCategory,
+} from "@/modules/adminCatalog/categories/presentation/api-client";
 
 interface UseCategoryFormOptions {
   showToast: (type: "success" | "error", message: string) => void;
@@ -31,16 +36,7 @@ export function useCategoryForm({ showToast, onSuccess }: UseCategoryFormOptions
       e.preventDefault();
       setSubmitting(true);
       try {
-        const res = await fetch("/api/admin/categories", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, image, garmentTypeIds }),
-        });
-
-        if (!res.ok) {
-          if (res.status === 409) throw new Error(ERROR_MESSAGES.duplicate);
-          throw new Error(ERROR_MESSAGES.create);
-        }
+        await createCategory({ name, image, garmentTypeIds });
 
         showToast("success", SUCCESS_MESSAGES.created);
         setShowModal(false);
@@ -49,6 +45,11 @@ export function useCategoryForm({ showToast, onSuccess }: UseCategoryFormOptions
         setGarmentTypeIds([]);
         onSuccess();
       } catch (err: unknown) {
+        if (err instanceof CategoryApiError && err.status === 409) {
+          showToast("error", ERROR_MESSAGES.duplicate);
+          return;
+        }
+
         showToast("error", err instanceof Error ? err.message : ERROR_MESSAGES.unknown);
       } finally {
         setSubmitting(false);
@@ -79,25 +80,21 @@ export function useCategoryForm({ showToast, onSuccess }: UseCategoryFormOptions
       if (!editingCategory) return;
       setEditSubmitting(true);
       try {
-        const res = await fetch(`/api/admin/categories?id=${editingCategory.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: editName,
-            image: editImage,
-            garmentTypeIds: editGarmentTypeIds,
-          }),
+        await updateCategory(editingCategory.id, {
+          name: editName,
+          image: editImage,
+          garmentTypeIds: editGarmentTypeIds,
         });
-
-        if (!res.ok) {
-          if (res.status === 409) throw new Error(ERROR_MESSAGES.duplicate);
-          throw new Error(ERROR_MESSAGES.edit);
-        }
 
         showToast("success", SUCCESS_MESSAGES.updated);
         closeEditModal();
         onSuccess();
       } catch (err: unknown) {
+        if (err instanceof CategoryApiError && err.status === 409) {
+          showToast("error", ERROR_MESSAGES.duplicate);
+          return;
+        }
+
         showToast("error", err instanceof Error ? err.message : ERROR_MESSAGES.unknown);
       } finally {
         setEditSubmitting(false);

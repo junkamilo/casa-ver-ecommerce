@@ -8,6 +8,12 @@ import {
 } from "lucide-react";
 import ImageUpload from "@/components/ui/image-upload";
 import type { HeroSlideData } from "../types";
+import {
+  createHeroSlide,
+  deleteHeroSlide,
+  HeroApiError,
+  updateHeroSlide,
+} from "@/modules/adminCatalog/hero/presentation/api-client";
 
 // ─── Toast local (mismo patrón que admin/productos) ───────────────────────────
 
@@ -128,29 +134,30 @@ export default function HeroSlidesClient({ slides }: Props) {
 
     try {
       const isNew = form.id === null;
-      const res = await fetch("/api/admin/hero", {
-        method: isNew ? "POST" : "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...(isNew ? {} : { id: form.id }),
-          mediaUrl: form.mediaUrl,
-          mediaType: form.mediaType,
-          headline: form.headline,
-          subheadline: form.subheadline,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Error al guardar");
-      }
-
-      const saved = await res.json();
+      const saved = isNew
+        ? await createHeroSlide({
+            mediaUrl: form.mediaUrl,
+            mediaType: form.mediaType,
+            headline: form.headline,
+            subheadline: form.subheadline,
+          })
+        : await updateHeroSlide({
+            id: form.id!,
+            mediaUrl: form.mediaUrl,
+            mediaType: form.mediaType,
+            headline: form.headline,
+            subheadline: form.subheadline,
+          });
       patch(index, { id: saved.id, saving: false, collapsed: true });
       showToast("success", `Slide ${form.position} guardado correctamente.`);
     } catch (err) {
       patch(index, { saving: false });
-      showToast("error", err instanceof Error ? err.message : "Error inesperado al guardar.");
+      showToast(
+        "error",
+        err instanceof HeroApiError || err instanceof Error
+          ? err.message
+          : "Error inesperado al guardar."
+      );
     }
   }
 
@@ -165,8 +172,7 @@ export default function HeroSlidesClient({ slides }: Props) {
     patch(index, { deleting: true });
 
     try {
-      const res = await fetch(`/api/admin/hero?id=${form.id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Error al eliminar");
+      await deleteHeroSlide(form.id);
 
       setForms((prev) => prev.filter((_, i) => i !== index));
       showToast("success", "Slide eliminado correctamente.");
