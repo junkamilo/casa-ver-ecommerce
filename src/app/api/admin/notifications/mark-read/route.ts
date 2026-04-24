@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { markNotificationsReadUseCase } from "@/modules/adminCatalog/notifications/application/mark-notifications-read.use-case";
 
 async function verifyAdmin() {
   const session = await auth();
@@ -14,10 +14,6 @@ export async function POST() {
     return NextResponse.json({ message: "No autorizado" }, { status: 401 });
   }
 
-  await (prisma as any).adminNotification.updateMany({
-    where: { isRead: false },
-    data: { isRead: true },
-  });
-
-  return NextResponse.json({ ok: true });
+  const result = await markNotificationsReadUseCase();
+  return NextResponse.json(result);
 }

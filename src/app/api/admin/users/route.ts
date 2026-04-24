@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { hash } from "bcryptjs";
 import { auth } from "@/auth";
-import { passwordSchema } from "@/lib/auth/validation";
 import type { NextRequest } from "next/server";
+import { getAdminUsersUseCase } from "@/modules/adminCatalog/users/application/get-admin-users.use-case";
+import { createAdminUserUseCase } from "@/modules/adminCatalog/users/application/create-admin-user.use-case";
+import { revokeAdminUserUseCase } from "@/modules/adminCatalog/users/application/revoke-admin-user.use-case";
+import {
+  UserAdminConflictError,
+  UserAdminValidationError,
+} from "@/modules/adminCatalog/users/application/user-admin.errors";
 
 async function verifyAdmin() {
   const session = await auth();
@@ -19,38 +23,8 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const lookupEmail = searchParams.get("lookup");
-
-  // Lookup: buscar si un usuario existe por email
-  if (lookupEmail) {
-    const user = await prisma.user.findUnique({
-      where: { email: lookupEmail },
-      select: { id: true, name: true, email: true, role: true, image: true },
-    });
-
-    if (!user) {
-      return NextResponse.json({ exists: false });
-    }
-
-    return NextResponse.json({
-      exists: true,
-      isAdmin: user.role === "ADMIN",
-      user: { id: user.id, name: user.name, email: user.email, image: user.image },
-    });
-  }
-
-  const admins = await prisma.user.findMany({
-    where: { role: "ADMIN" },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      createdAt: true,
-      image: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  return NextResponse.json(admins);
+  const result = await getAdminUsersUseCase({ lookupEmail });
+  return NextResponse.json(result);
 }
 
 // POST - Crear nuevo admin
@@ -61,65 +35,13 @@ export async function POST(req: NextRequest) {
 
   try {
     const { name, email, password } = await req.json();
-
-    if (!email) {
-      return NextResponse.json(
-        { message: "El email es obligatorio" },
-        { status: 400 }
-      );
-    }
-
-    const existing = await prisma.user.findUnique({ where: { email } });
-
-    if (existing) {
-      // Si el usuario ya existe pero no es admin, lo promovemos
-      if (existing.role !== "ADMIN") {
-        const promoted = await prisma.user.update({
-          where: { email },
-          data: { role: "ADMIN" },
-          select: { id: true, name: true, email: true, createdAt: true },
-        });
-        return NextResponse.json(
-          { ...promoted, promoted: true },
-          { status: 200 }
-        );
-      }
-      return NextResponse.json(
-        { message: "Este usuario ya es administrador" },
-        { status: 400 }
-      );
-    }
-
-    // Para usuarios nuevos, nombre y contraseña son obligatorios
-    if (!name || !password) {
-      return NextResponse.json(
-        { message: "Nombre y contraseña son obligatorios para usuarios nuevos" },
-        { status: 400 }
-      );
-    }
-
-    const parsed = passwordSchema.safeParse(password);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { message: parsed.error.issues[0].message },
-        { status: 400 }
-      );
-    }
-
-    const hashedPassword = await hash(password, 12);
-
-    const newAdmin = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: "ADMIN",
-      },
-      select: { id: true, name: true, email: true, createdAt: true },
-    });
-
-    return NextResponse.json(newAdmin, { status: 201 });
+    const result = await createAdminUserUseCase({ name, email, password });
+    const status = "promoted" in result ? 200 : 201;
+    return NextResponse.json(result, { status });
   } catch (error) {
+    if (error instanceof UserAdminValidationError || error instanceof UserAdminConflictError) {
+      return NextResponse.json({ message: error.message }, { status: 400 });
+    }
     console.error("Error creando admin:", error);
     return NextResponse.json(
       { message: "Error en el servidor" },
@@ -137,39 +59,15 @@ export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("id");
-
-    if (!userId) {
-      return NextResponse.json(
-        { message: "ID de usuario requerido" },
-        { status: 400 }
-      );
-    }
-
-    // Verificar que no se elimine a sí mismo
     const session = await auth();
-    if ((session?.user as any)?.id === userId) {
-      return NextResponse.json(
-        { message: "No puedes revocar tu propio acceso de administrador" },
-        { status: 400 }
-      );
-    }
-
-    // Verificar que quede al menos un admin
-    const adminCount = await prisma.user.count({ where: { role: "ADMIN" } });
-    if (adminCount <= 1) {
-      return NextResponse.json(
-        { message: "Debe haber al menos un administrador" },
-        { status: 400 }
-      );
-    }
-
-    await prisma.user.update({
-      where: { id: userId },
-      data: { role: "USER" },
-    });
-
-    return NextResponse.json({ message: "Admin revocado exitosamente" });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const currentUserId = (session?.user as any)?.id ?? null;
+    const result = await revokeAdminUserUseCase({ userId, currentUserId });
+    return NextResponse.json(result);
   } catch (error) {
+    if (error instanceof UserAdminValidationError) {
+      return NextResponse.json({ message: error.message }, { status: 400 });
+    }
     console.error("Error revocando admin:", error);
     return NextResponse.json(
       { message: "Error en el servidor" },

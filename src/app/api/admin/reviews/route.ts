@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import type { NextRequest } from "next/server";
+import { listReviewsUseCase } from "@/modules/adminCatalog/reviews/application/list-reviews.use-case";
+import { ReviewValidationError } from "@/modules/adminCatalog/reviews/application/review.errors";
+import type { ReviewStatus } from "@/modules/adminCatalog/reviews/contracts/review.dto";
 
 async function verifyAdmin() {
   const session = await auth();
@@ -17,45 +19,17 @@ export async function GET(req: NextRequest) {
 
   try {
     const { searchParams } = new URL(req.url);
-    const status  = searchParams.get("status") ?? "ALL";
-    const search  = searchParams.get("search") ?? "";
-    const page    = Math.max(1, Number(searchParams.get("page") ?? "1"));
-    const limit   = 20;
-    const skip    = (page - 1) * limit;
+    const result = await listReviewsUseCase({
+      status: (searchParams.get("status") ?? "ALL") as "ALL" | ReviewStatus,
+      search: searchParams.get("search") ?? "",
+      page: Number(searchParams.get("page") ?? "1"),
+    });
 
-    const where = {
-      ...(status !== "ALL" ? { status: status as "PENDING" | "APPROVED" | "REJECTED" } : {}),
-      ...(search
-        ? {
-            OR: [
-              { comment: { contains: search, mode: "insensitive" as const } },
-              { guestName: { contains: search, mode: "insensitive" as const } },
-              { user: { name: { contains: search, mode: "insensitive" as const } } },
-              { product: { name: { contains: search, mode: "insensitive" as const } } },
-            ],
-          }
-        : {}),
-    };
-
-    const [reviews, total] = await Promise.all([
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (prisma as any).review.findMany({
-        where,
-        include: {
-          product: { select: { id: true, name: true, slug: true } },
-          order:   { select: { orderNumber: true } },
-          user:    { select: { name: true, email: true } },
-        },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-      }),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (prisma as any).review.count({ where }),
-    ]);
-
-    return NextResponse.json({ reviews, total, page, totalPages: Math.ceil(total / limit) });
+    return NextResponse.json(result);
   } catch (err) {
+    if (err instanceof ReviewValidationError) {
+      return NextResponse.json({ error: err.message }, { status: 400 });
+    }
     console.error("[Admin/Reviews GET]", err);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }

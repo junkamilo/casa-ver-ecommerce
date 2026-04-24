@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { listNotificationsUseCase } from "@/modules/adminCatalog/notifications/application/list-notifications.use-case";
 
 async function verifyAdmin() {
   const session = await auth();
@@ -14,21 +14,6 @@ export async function GET() {
     return NextResponse.json({ message: "No autorizado" }, { status: 401 });
   }
 
-  const [unreadCount, notifications] = await Promise.all([
-    (prisma as any).adminNotification.count({ where: { isRead: false } }),
-    (prisma as any).adminNotification.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 20,
-      select: {
-        id: true,
-        orderId: true,
-        title: true,
-        body: true,
-        isRead: true,
-        createdAt: true,
-      },
-    }),
-  ]);
-
-  return NextResponse.json({ unreadCount, notifications });
+  const result = await listNotificationsUseCase();
+  return NextResponse.json(result);
 }

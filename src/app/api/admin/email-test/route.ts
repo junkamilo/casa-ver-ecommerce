@@ -1,119 +1,52 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { validateEmailConfig, sendOrderConfirmationEmail } from "@/services/email/client";
+import { EmailTestUnauthorizedError, EmailTestValidationError, EmailConfigUnavailableError } from "@/modules/adminCatalog/emailTest/application/email-test.errors";
+import { getEmailDiagnosticUseCase } from "@/modules/adminCatalog/emailTest/application/get-email-diagnostic.use-case";
+import { sendTestEmailUseCase } from "@/modules/adminCatalog/emailTest/application/send-test-email.use-case";
 
-/**
- * 🧪 ENDPOINT DE DIAGNÓSTICO DE EMAILS
- *
- * GET /api/admin/email-test
- *   - Valida la configuración de Resend
- *   - Verifica que el RESEND_API_KEY esté configurado
- *   - Muestra información sobre el estado del servicio
- *
- * POST /api/admin/email-test
- *   - Envía un email de prueba
- *   - Requiere autenticación de admin
- *   - Cuerpo esperado: { customerEmail: string; customerName: string }
- */
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Error interno";
+}
 
-export async function GET(req: NextRequest) {
-  const config = validateEmailConfig();
-
-  return NextResponse.json({
-    status: config.isConfigured ? "✅ Configurado" : "❌ No configurado",
-    apiKeyConfigured: !!process.env.RESEND_API_KEY,
-    apiKeyLength: process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.length : 0,
-    apiKeyPrefix: process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.slice(0, 10) + "..." : "no",
-    fromEmail: "noreply@casaverdeoficial.com",
-    warnings: config.warnings,
-    timestamp: new Date().toISOString(),
-  });
+export async function GET() {
+  const result = getEmailDiagnosticUseCase(process.env.RESEND_API_KEY);
+  return NextResponse.json(result);
 }
 
 export async function POST(req: NextRequest) {
-  // Verificar autenticación: sesión de admin O CLI_SECRET
-  const cliSecret = req.headers.get("x-cli-secret");
-  const isCliAuth = cliSecret && cliSecret === process.env.CLI_SECRET;
-
-  if (!isCliAuth) {
-    const session = await auth();
-    if (!session?.user || (session.user as any).role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "No autorizado. Se requiere rol ADMIN." },
-        { status: 403 }
-      );
-    }
-  }
-
-  // Parsear cuerpo
-  let body: { customerEmail?: string; customerName?: string };
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json(
-      { error: "Body JSON inválido" },
-      { status: 400 }
-    );
-  }
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      throw new EmailTestValidationError("Body JSON inválido");
+    }
 
-  const { customerEmail, customerName } = body;
+    const session = await auth();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const userRole = (session?.user as any)?.role;
 
-  if (!customerEmail || !customerName) {
-    return NextResponse.json(
-      { error: "Se requieren customerEmail y customerName" },
-      { status: 400 }
-    );
-  }
+    const result = await sendTestEmailUseCase(body, {
+      userRole,
+      providedCliSecret: req.headers.get("x-cli-secret"),
+      envCliSecret: process.env.CLI_SECRET,
+    });
 
-  // Validar configuración antes de intentar
-  const config = validateEmailConfig();
-  if (!config.isConfigured) {
-    return NextResponse.json(
-      {
-        error: "Servicio de email no configurado",
-        warnings: config.warnings,
-      },
-      { status: 503 }
-    );
-  }
+    return NextResponse.json(result, { status: 200 });
 
-  // Enviar email de prueba
-  const result = await sendOrderConfirmationEmail({
-    customerEmail,
-    customerName,
-    orderNumber: "TEST-001",
-    items: [
-      {
-        name: "Producto de Prueba",
-        quantity: 1,
-        price: 99000,
-        color: "Verde Militar",
-        size: "M",
-      },
-    ],
-    subtotal: 99000,
-    shippingCost: 15000,
-    discount: 0,
-    total: 114000,
-  });
+  } catch (error: unknown) {
+    if (error instanceof EmailTestValidationError) {
+      return NextResponse.json({ error: getErrorMessage(error) }, { status: 400 });
+    }
+    if (error instanceof EmailTestUnauthorizedError) {
+      return NextResponse.json({ error: getErrorMessage(error) }, { status: 403 });
+    }
+    if (error instanceof EmailConfigUnavailableError) {
+      return NextResponse.json({ error: getErrorMessage(error), warnings: error.warnings }, { status: 503 });
+    }
 
-  if (result.success) {
     return NextResponse.json(
-      {
-        success: true,
-        message: `✅ Email enviado exitosamente a ${customerEmail}`,
-        messageId: result.messageId,
-        timestamp: new Date().toISOString(),
-      },
-      { status: 200 }
-    );
-  } else {
-    return NextResponse.json(
-      {
-        success: false,
-        error: result.error || "Error desconocido",
-        timestamp: new Date().toISOString(),
-      },
+      { success: false, error: getErrorMessage(error), timestamp: new Date().toISOString() },
       { status: 500 }
     );
   }
