@@ -117,6 +117,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
         orderBy: { order: "asc" },
         include: {
           colors: {
+            orderBy: { id: "asc" },
             include: {
               images: { orderBy: { order: "asc" } },
               variants: {
@@ -261,6 +262,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
         <ProductClient
           product={uiProduct}
           recommended={recommended}
+          initialSetItemKey={initialSetItemKey}
           existingReview={userReview}
           isAuthenticated={!!userId}
           reviews={productReviews}

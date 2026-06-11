@@ -5,7 +5,7 @@ import ProductCard from "@/components/ui/ProductCard";
 import { ProductGridProps } from '../types/index';
 
 
-export function ProductGrid({ products }: ProductGridProps) {
+export function ProductGrid({ products, setItemKey }: ProductGridProps) {
   if (products.length === 0) {
     return <SectionEmptyState message="Pronto añadiremos nuevas prendas exclusivas a esta colección." />;
   }
@@ -19,7 +19,7 @@ export function ProductGrid({ products }: ProductGridProps) {
           // Máximo 300 ms de delay — con 44 productos antes llegaba a 4.4 s
           style={{ animationDelay: `${Math.min(index * 40, 300)}ms` }}
         >
-          <ProductCard item={item} viewMode="grid" index={index} />
+          <ProductCard item={item} viewMode="grid" setItemKey={setItemKey} index={index} />
         </div>
       ))}
     </div>

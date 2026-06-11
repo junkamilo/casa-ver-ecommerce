@@ -24,6 +24,8 @@ export interface UIColor {
 
 export interface UIProductItem {
   id: string;
+  /** Orden en CMS (menor = primero en tabs y vista inicial). */
+  order: number;
   name: string;
   description: string | null;
   price: number | null;
@@ -59,6 +61,7 @@ export interface BuyerInfo {
 export interface ProductClientProps {
   product: UIProduct;
   recommended: CollectionProduct[];
+  initialSetItemKey?: string | null;
   existingReview: ExistingReview | null;
   isAuthenticated: boolean;
   reviews: TestimonialItem[];

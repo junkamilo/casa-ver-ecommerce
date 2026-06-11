@@ -1,6 +1,4 @@
-import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight } from "lucide-react";
 import LogoAddi from "@/assets/LogoAddi.png";
 
 
@@ -47,19 +45,9 @@ const PaymentMethodsBanner = () => {
                 <span className="block italic">Paga Después.</span>
               </h3>
 
-              <p className="text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8 leading-relaxed">
+              <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
                 Llévate tus favoritos hoy y paga en cuotas sin interés. Aprobación en minutos solo con tu cédula y WhatsApp.
               </p>
-
-              <Link
-                href="#"
-                className="group/btn inline-flex items-center justify-center sm:justify-start gap-2 sm:gap-3 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-[#154734] hover:text-[#C19A6B] transition-colors mt-auto p-2 h-10 touch-target active:scale-95"
-              >
-                Pagar con Addi
-                <span className="relative flex items-center justify-center w-8 h-8 rounded-full border border-[#154734]/20 group-hover/btn:border-[#C19A6B] transition-colors">
-                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
-                </span>
-              </Link>
             </div>
 
             <div className="w-full md:w-1/2 h-56 sm:h-64 md:h-auto relative p-2 md:pl-0">
