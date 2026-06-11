@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Play, ChevronLeft, ChevronRight } from "lucide-react";
 import type { CollectionProduct } from "@/components/shared/ProductCollection/types";
 
@@ -30,18 +31,17 @@ const GRID_SIZES = "(max-width: 640px) 47vw, (max-width: 1280px) 30vw, (max-widt
 // Índices < PRIORITY_THRESHOLD reciben priority=true (preload) para mejorar el LCP
 const PRIORITY_THRESHOLD = 4;
 
-function buildProductHref(slug: string, isSet: boolean | undefined, setItemKey?: string | null): string {
-  if (!isSet || !setItemKey) return `/product/${slug}`;
-  const q = new URLSearchParams({ item: setItemKey });
-  return `/product/${slug}?${q.toString()}`;
-}
-
-const ProductCard = ({ item, viewMode = "grid", setItemKey, index = 99 }: ProductCardProps) => {
-  const productHref = buildProductHref(item.slug, item.isSet, setItemKey);
-
+const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) => {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [activeColor, setActiveColor] = useState<ActiveColor>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const activeTipo = searchParams.get("tipo");
+  const productHref =
+    pathname.startsWith("/collections/") && activeTipo
+      ? `/product/${item.slug}?tipo=${encodeURIComponent(activeTipo)}`
+      : `/product/${item.slug}`;
 
   const images = item.images;
   const hasImages = images.length > 0;

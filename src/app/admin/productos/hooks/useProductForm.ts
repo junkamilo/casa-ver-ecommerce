@@ -2,7 +2,12 @@
 
 import { useRef, useState } from "react";
 import { SelectedColor, SetItemForm } from "../types";
-import { calcEffectiveStock, newSetItem } from "../utils";
+import { newSetItem } from "../utils";
+import {
+  AdminProductDetailDTO,
+  mapAdminProductDetailToFormInitialValues,
+  mapProductFormToCreatePayload,
+} from "@/modules/adminCatalog/products/presentation/mappers";
 
 function normalizeColorName(name: string): string {
   return name
@@ -77,35 +82,35 @@ export function useProductForm() {
     colorImageCache.current = {};
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const loadFromProduct = (
-    data: any,
+    data: AdminProductDetailDTO,
     presetColors: { name: string; hex: string }[] = []
   ) => {
     const catalogByKey = new Map(
       presetColors.map((c) => [normalizeColorName(c.name), c])
     );
 
-    setName(data.name);
-    setDescription(data.description || "");
-    setBasePrice(data.basePrice?.toString() || "");
-    setComparePrice(data.comparePrice?.toString() || "");
-    setStock(data.stock?.toString() || "");
-    setCategoryId(data.categoryId);
-    setStatus(data.status);
-    setIsFeatured(data.isFeatured);
-    setIsNew(data.isNew);
-    setIsProductNew(data.isProductNew || false);
-    setIsProductNewAt(data.isProductNewAt ? new Date(data.isProductNewAt).toISOString() : null);
-    setIsOnSale(data.isOnSale || false);
-    setIsOnSaleAt(data.isOnSaleAt ? new Date(data.isOnSaleAt).toISOString() : null);
-    setVideoUrl(data.videoUrl || "");
-    setGarmentTypes(data.garmentTypes ?? []);
-    setIsSet(data.isSet || false);
+    const mapped = mapAdminProductDetailToFormInitialValues(data);
+
+    setName(mapped.name);
+    setDescription(mapped.description);
+    setBasePrice(mapped.basePrice);
+    setComparePrice(mapped.comparePrice);
+    setStock(mapped.stock);
+    setCategoryId(mapped.categoryId);
+    setStatus(mapped.status);
+    setIsFeatured(mapped.isFeatured);
+    setIsNew(mapped.isNew);
+    setIsProductNew(mapped.isProductNew);
+    setIsProductNewAt(mapped.isProductNewAt);
+    setIsOnSale(mapped.isOnSale);
+    setIsOnSaleAt(mapped.isOnSaleAt);
+    setVideoUrl(mapped.videoUrl);
+    setGarmentTypes(mapped.garmentTypes);
+    setIsSet(mapped.isSet);
 
     // Parent product colors/sizes always loaded regardless of isSet
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const loadedColors = (data.colors || []).map((c: any) =>
+    const loadedColors = (mapped.selectedColors || []).map((c) =>
       resolveCanonicalColor(
         {
           name: c.name,
@@ -122,20 +127,12 @@ export function useProductForm() {
       if (c.images.length > 0) colorImageCache.current[c.name] = c.images;
     }
     setSelectedColors(loadedColors);
-    setSelectedSizes(data.sizes || []);
+    setSelectedSizes(mapped.selectedSizes || []);
 
-    if (data.isSet && data.items?.length > 0) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setSetItems(data.items.map((item: any) => ({
-        localId: crypto.randomUUID(),
-        name: item.name || "",
-        description: item.description || "",
-        price: item.price?.toString() || "",
-        comparePrice: item.comparePrice != null ? String(item.comparePrice) : "",
-        videoUrl: item.videoUrl || "",
-        stock: item.stock?.toString() || "",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        colors: (item.colors || []).map((c: any) =>
+    if (mapped.isSet && mapped.setItems.length > 0) {
+      setSetItems(mapped.setItems.map((item) => ({
+        ...item,
+        colors: (item.colors || []).map((c) =>
           resolveCanonicalColor(
             {
               name: c.name,
@@ -146,7 +143,6 @@ export function useProductForm() {
             catalogByKey
           )
         ),
-        sizes: item.sizes || [],
       })));
     } else {
       setSetItems([]);
@@ -170,38 +166,28 @@ export function useProductForm() {
 
   // Parent product fields are ALWAYS included in payload regardless of isSet.
   // When isSet=true, subcategory items are added on top.
-  const buildPayload = () => ({
-    name,
-    description: description || "",
-    basePrice: basePrice ? parseFloat(basePrice) : 0,
-    comparePrice: comparePrice ? parseFloat(comparePrice) : null,
-    stock: calcEffectiveStock(selectedColors, stock),
-    categoryId,
-    status,
-    isFeatured,
-    isNew,
-    isProductNew,
-    isProductNewAt: isProductNewAt ?? null,
-    isOnSale,
-    isOnSaleAt: isOnSaleAt ?? null,
-    videoUrl: videoUrl || null,
-    garmentTypes,
-    isSet,
-    colors: selectedColors,
-    sizes: selectedSizes,
-    items: isSet
-      ? setItems.map((item) => ({
-          name: item.name,
-          description: item.description || null,
-          price: item.price ? parseFloat(item.price) : null,
-          comparePrice: item.comparePrice ? parseFloat(item.comparePrice) : null,
-          videoUrl: item.videoUrl || null,
-          stock: calcEffectiveStock(item.colors, item.stock),
-          colors: item.colors,
-          sizes: item.sizes,
-        }))
-      : [],
-  });
+  const buildPayload = () =>
+    mapProductFormToCreatePayload({
+      name,
+      description,
+      basePrice,
+      comparePrice,
+      stock,
+      categoryId,
+      status,
+      isFeatured,
+      isNew,
+      isProductNew,
+      isProductNewAt,
+      isOnSale,
+      isOnSaleAt,
+      videoUrl,
+      garmentTypes,
+      isSet,
+      selectedColors,
+      selectedSizes,
+      setItems,
+    });
 
   // ── Helpers colores producto principal ────────────────────────────────────
 

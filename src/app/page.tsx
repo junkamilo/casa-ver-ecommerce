@@ -3,6 +3,7 @@
 
 import type { Metadata } from "next";
 import { unstable_cache } from "next/cache";
+import { Suspense } from "react";
 import { AnnouncementBar, Header, HeroSection } from "@/components";
 import { prisma } from "@/lib/prisma";
 import { SLIDES } from "@/components/HeroSection/constants";
@@ -107,8 +108,12 @@ export default async function Home() {
       <AnnouncementBar />
       <Header />
       <HeroSection slides={heroSlides} />
-      <BestSellers />
-      <NewCollection />
+      <Suspense fallback={null}>
+        <BestSellers />
+      </Suspense>
+      <Suspense fallback={null}>
+        <NewCollection />
+      </Suspense>
       <Categories />
       <PaymentMethodsBanner />
       <Testimonials comments={testimonials} />

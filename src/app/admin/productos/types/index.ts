@@ -1,24 +1,11 @@
+import type { AdminProductListItemDTO } from "@/modules/adminCatalog/products/contracts/product-list.dto";
+import type { GarmentTypeDTO } from "@/modules/adminCatalog/categories/contracts/category.dto";
+
 // ── Domain Types ─────────────────────────────────────────────────────────────
 
-export interface ProductListItem {
-  id: string;
-  name: string;
-  price: number;
-  stock: number;
-  category: { name: string };
-  active: boolean;
-  images: { url: string }[];
-  videoUrl?: string | null;
-  description?: string;
-  categoryId: string;
-  isSet?: boolean;
-  setItems?: { name: string; price: number | null; stock: number }[];
-}
+export type ProductListItem = AdminProductListItemDTO;
 
-export interface GarmentTypeOption {
-  id: string;
-  name: string;
-}
+export type GarmentTypeOption = GarmentTypeDTO;
 
 export interface Category {
   id: string;

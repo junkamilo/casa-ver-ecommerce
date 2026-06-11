@@ -6,6 +6,10 @@ import type {
   UseProfilePasswordOptions,
   UseProfilePasswordReturn,
 } from "../types/types";
+import {
+  AdminProfileApiError,
+  updateAdminProfile,
+} from "@/modules/adminCatalog/profile/presentation/api-client";
 
 /**
  * Gestiona el estado y la lógica del formulario de cambio de contraseña.
@@ -37,19 +41,14 @@ export function useProfilePassword({
     }
     setSavingPassword(true);
     try {
-      const res = await fetch("/api/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        showToast("error", data.message || ERROR_MESSAGES.changePassword);
-        return;
-      }
+      await updateAdminProfile({ currentPassword, newPassword });
       showToast("success", SUCCESS_MESSAGES.passwordChanged);
       cancelPasswordSection();
-    } catch {
+    } catch (error: unknown) {
+      if (error instanceof AdminProfileApiError) {
+        showToast("error", error.message || ERROR_MESSAGES.changePassword);
+        return;
+      }
       showToast("error", ERROR_MESSAGES.connection);
     } finally {
       setSavingPassword(false);

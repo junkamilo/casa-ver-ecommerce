@@ -1,8 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { getOrders } from "@/app/actions/orders";
 import type { Order, UsePedidosListReturn } from "../types/types";
+import {
+  AdminOrdersApiError,
+  fetchAdminOrders,
+} from "@/modules/adminCatalog/orders/presentation/api-client";
+import { mapAdminOrderListDtoToUi } from "@/modules/adminCatalog/orders/presentation/mappers";
 
 const PAGE_SIZE = 5;
 
@@ -16,14 +20,29 @@ export function usePedidosList(): UsePedidosListReturn {
   const [page, setPage] = useState(1);
 
   const refreshOrders = useCallback(() => {
-    getOrders().then(setOrders).catch(console.error);
+    fetchAdminOrders()
+      .then((data) => setOrders(mapAdminOrderListDtoToUi(data)))
+      .catch((error: unknown) => {
+        if (error instanceof AdminOrdersApiError) {
+          console.error(error.message);
+          return;
+        }
+        console.error(error);
+      });
   }, []);
 
   // Carga inicial
   useEffect(() => {
     setLoading(true);
-    getOrders()
-      .then(setOrders)
+    fetchAdminOrders()
+      .then((data) => setOrders(mapAdminOrderListDtoToUi(data)))
+      .catch((error: unknown) => {
+        if (error instanceof AdminOrdersApiError) {
+          console.error(error.message);
+          return;
+        }
+        console.error(error);
+      })
       .finally(() => setLoading(false));
   }, []);
 

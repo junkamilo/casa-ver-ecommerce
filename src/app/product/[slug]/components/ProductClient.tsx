@@ -27,6 +27,7 @@ export default function ProductClient({
   isAuthenticated,
   reviews,
   socialProof,
+  initialItemId,
 }: ProductClientProps) {
   const {
     selectedImage,
@@ -52,7 +53,7 @@ export default function ProductClient({
     handleAddToCart,
     handleBuyNow,
     toggleAccordion,
-  } = useProductClient(product, initialSetItemKey);
+  } = useProductClient(product, initialItemId);
 
   return (
     <div className="bg-white selection:bg-[#C19A6B]/20 min-h-screen">

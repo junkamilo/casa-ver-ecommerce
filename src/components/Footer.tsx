@@ -27,12 +27,12 @@ const Footer = () => {
         style={{ backgroundImage: "radial-gradient(#C19A6B 1.5px, transparent 1.5px)", backgroundSize: "32px 32px" }}
       />
 
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#C19A6B] to-transparent opacity-50" />
+      <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-[#C19A6B] to-transparent opacity-50" />
 
-      <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-12 md:py-16 relative z-10">
+      <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-12 md:py-14 relative z-10">
         <div className="max-w-7xl 2xl:max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10 md:gap-12 lg:gap-16 items-start">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10 lg:gap-12">
+            <div className="sm:col-span-2 lg:col-span-1">
               <h4 className="text-[9px] sm:text-[10px] font-black tracking-[0.25em] text-white/50 mb-2 sm:mb-3 uppercase">
                 Contacto
               </h4>
@@ -92,7 +92,7 @@ const Footer = () => {
                 ].map((link) => (
                   <li key={link.name}>
                     <Link href={link.href} className="text-gray-300 text-sm hover:text-[#C19A6B] transition-all flex items-center gap-2 group w-fit p-1 touch-target active:scale-95">
-                      <span className="w-0 h-[1px] bg-[#C19A6B] transition-all duration-300 group-hover:w-4" />
+                      <span className="w-0 h-px bg-[#C19A6B] transition-all duration-300 group-hover:w-4" />
                       {link.name}
                     </Link>
                   </li>
@@ -100,7 +100,7 @@ const Footer = () => {
               </ul>
             </div>
 
-            <div>
+            <div className="lg:col-span-1 lg:col-start-3">
               <h4 className="text-[9px] sm:text-[10px] font-black tracking-[0.25em] text-white/50 mb-2 sm:mb-3 uppercase">
                 Ayuda
               </h4>
@@ -112,7 +112,7 @@ const Footer = () => {
                 ].map((link) => (
                   <li key={link.name}>
                     <Link href={link.href} className="text-gray-300 text-sm hover:text-[#C19A6B] transition-all flex items-center gap-2 group w-fit p-1 touch-target active:scale-95">
-                      <span className="w-0 h-[1px] bg-[#C19A6B] transition-all duration-300 group-hover:w-4" />
+                      <span className="w-0 h-px bg-[#C19A6B] transition-all duration-300 group-hover:w-4" />
                       {link.name}
                     </Link>
                   </li>

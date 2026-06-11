@@ -66,4 +66,5 @@ export interface ProductClientProps {
   isAuthenticated: boolean;
   reviews: TestimonialItem[];
   socialProof: { totalBuyers: number; recentBuyers: BuyerInfo[] };
+  initialItemId?: string | null;
 }

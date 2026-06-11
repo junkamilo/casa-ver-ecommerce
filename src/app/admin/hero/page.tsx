@@ -1,24 +1,13 @@
-import { prisma } from "@/lib/prisma";
 import AdminPageHeader from "@/components/ui/AdminPageHeader";
 import HeroSlidesClient from "./components/HeroSlidesClient";
 import type { HeroSlideData } from "./types";
 import { ImageIcon } from "lucide-react";
+import { fetchAdminHeroSlides } from "@/modules/adminCatalog/hero/presentation/api-client";
 
 export const dynamic = "force-dynamic";
 
-async function getHeroSlides(): Promise<HeroSlideData[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = prisma as any;
-  const rows = await db.heroSlide.findMany({ orderBy: { position: "asc" } });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return rows.map((r: any) => ({
-    ...r,
-    updatedAt: r.updatedAt instanceof Date ? r.updatedAt.toISOString() : String(r.updatedAt ?? ""),
-  }));
-}
-
 export default async function HeroAdminPage() {
-  const slides = await getHeroSlides();
+  const slides: HeroSlideData[] = await fetchAdminHeroSlides();
 
   return (
     <div className="space-y-6 p-4 sm:p-6 md:p-8 bg-gray-50 min-h-screen font-sans">

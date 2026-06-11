@@ -1,0 +1,149 @@
+import { prisma } from "@/lib/prisma";
+import type { CategoryListItemDTO } from "../contracts/category.dto";
+
+type CategoryCreateData = {
+  name: string;
+  slug: string;
+  image: string | null;
+  garmentTypeIds: string[];
+  order: number;
+};
+
+type CategoryUpdateData = {
+  id: string;
+  name: string;
+  slug: string;
+  image: string | null;
+  garmentTypeIds: string[];
+};
+
+export class PrismaCategoryRepository {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private readonly db: any;
+
+  constructor() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.db = prisma as any;
+  }
+
+  async listCategories(): Promise<CategoryListItemDTO[]> {
+    const categories = await this.db.category.findMany({
+      orderBy: { order: "asc" },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        image: true,
+        isActive: true,
+        order: true,
+        _count: { select: { products: true } },
+        garmentTypes: {
+          select: {
+            garmentType: { select: { id: true, name: true } },
+          },
+        },
+      },
+    });
+
+    return categories.map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (cat: any): CategoryListItemDTO => ({
+        ...cat,
+        // Aplana la relación pivote para mantener el contrato actual del endpoint.
+        garmentTypes: (cat.garmentTypes ?? []).map(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (cgt: any) => cgt.garmentType
+        ),
+      })
+    );
+  }
+
+  async findBySlug(slug: string) {
+    return this.db.category.findUnique({ where: { slug } });
+  }
+
+  async findBySlugExcludingId(slug: string, id: string) {
+    return this.db.category.findFirst({ where: { slug, NOT: { id } } });
+  }
+
+  async findById(id: string) {
+    return this.db.category.findUnique({
+      where: { id },
+      include: { _count: { select: { products: true } } },
+    });
+  }
+
+  async findCategoryBaseById(id: string) {
+    return this.db.category.findUnique({
+      where: { id },
+      select: { id: true, name: true },
+    });
+  }
+
+  async getNextOrder(): Promise<number> {
+    const maxOrderResult = await this.db.category.aggregate({ _max: { order: true } });
+    return (maxOrderResult._max.order ?? 0) + 1;
+  }
+
+  async createCategory(data: CategoryCreateData) {
+    return this.db.category.create({
+      data: {
+        name: data.name,
+        slug: data.slug,
+        image: data.image,
+        order: data.order,
+        garmentTypes: data.garmentTypeIds.length
+          ? {
+              create: data.garmentTypeIds.map((garmentTypeId) => ({ garmentTypeId })),
+            }
+          : undefined,
+      },
+    });
+  }
+
+  async toggleActive(id: string, isActive: boolean) {
+    return this.db.category.update({
+      where: { id },
+      data: { isActive },
+    });
+  }
+
+  async updateCategoryAndReplaceGarments(data: CategoryUpdateData) {
+    return this.db.$transaction(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      async (tx: any) => {
+        await tx.categoryGarmentType.deleteMany({ where: { categoryId: data.id } });
+
+        return tx.category.update({
+          where: { id: data.id },
+          data: {
+            name: data.name,
+            slug: data.slug,
+            image: data.image,
+            garmentTypes: data.garmentTypeIds.length
+              ? {
+                  create: data.garmentTypeIds.map((garmentTypeId) => ({ garmentTypeId })),
+                }
+              : undefined,
+          },
+        });
+      }
+    );
+  }
+
+  async countActiveProductsByCategory(id: string): Promise<number> {
+    return this.db.product.count({
+      where: { categoryId: id, status: "ACTIVE" },
+    });
+  }
+
+  async deleteCategoryWithRelations(id: string) {
+    return this.db.$transaction(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      async (tx: any) => {
+        await tx.categoryGarmentType.deleteMany({ where: { categoryId: id } });
+        await tx.category.delete({ where: { id } });
+      }
+    );
+  }
+}

@@ -8,23 +8,30 @@ import {
 } from "@/app/collections/utils/fetchCollectionProducts";
 import type { TestimonialItem } from "@/components/layout/Testimonials/types/types";
 
-const SIZE_ORDER = ["XS", "S", "M", "L", "XL"] as const;
+const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL"] as const;
+const SIZE_ORDER_INDEX = new Map<string, number>(SIZE_ORDER.map((size, index) => [size, index]));
 
-function sortSizes(a: string, b: string): number {
-  const ai = SIZE_ORDER.indexOf(a as (typeof SIZE_ORDER)[number]);
-  const bi = SIZE_ORDER.indexOf(b as (typeof SIZE_ORDER)[number]);
-  if (ai === -1 && bi === -1) return a.localeCompare(b);
-  if (ai === -1) return 1;
-  if (bi === -1) return -1;
-  return ai - bi;
+function normalizeSize(size: unknown): string {
+  return String(size ?? "").trim().toUpperCase();
+}
+
+function compareSizes(a: unknown, b: unknown): number {
+  const sizeA = normalizeSize(a);
+  const sizeB = normalizeSize(b);
+  const orderA = SIZE_ORDER_INDEX.get(sizeA);
+  const orderB = SIZE_ORDER_INDEX.get(sizeB);
+
+  if (orderA !== undefined && orderB !== undefined) return orderA - orderB;
+  if (orderA !== undefined) return -1;
+  if (orderB !== undefined) return 1;
+  return sizeA.localeCompare(sizeB, "es");
 }
 
 export function mapUIColor(color: any): UIColor {
   const allVariants = color.variants as any[];
-  const activeVariants = allVariants.filter((v) => v.stock > 0);
-  const sortedActiveVariants = [...activeVariants].sort((a, b) =>
-    sortSizes(String(a.size), String(b.size))
-  );
+  const activeVariants = allVariants
+    .filter((v) => v.stock > 0)
+    .sort((a, b) => compareSizes(a.size, b.size));
   const totalStock = allVariants.reduce((s: number, v: any) => s + (v.stock as number), 0);
   const availableSizes = Array.from(
     new Set(sortedActiveVariants.map((v) => String(v.size)))
@@ -35,9 +42,9 @@ export function mapUIColor(color: any): UIColor {
     name: color.name,
     hex: color.hexCode,
     images: (color.images as any[]).map((img) => img.url).filter((u: string) => !isVideoUrl(u)),
-    availableSizes,
-    variants: sortedActiveVariants.map((v) => ({
-      size: v.size as string,
+    availableSizes: activeVariants.map((v) => normalizeSize(v.size)),
+    variants: activeVariants.map((v) => ({
+      size: normalizeSize(v.size),
       variantId: v.id as string,
       sku: v.sku as string,
     })),

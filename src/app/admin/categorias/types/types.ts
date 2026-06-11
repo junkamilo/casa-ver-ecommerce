@@ -1,22 +1,12 @@
+import type { CategoryListItemDTO, GarmentTypeDTO } from "@/modules/adminCatalog/categories/contracts/category.dto";
+
 // ── Entidades ────────────────────────────────────────────────────────────────
 
-export interface GarmentTypeOption {
-  id: string;
-  name: string;
-}
+export type GarmentTypeOption = GarmentTypeDTO;
 
-export interface Category {
-  id: string;
-  name: string;
-  slug: string;
+export type Category = Omit<CategoryListItemDTO, "image"> & {
   image?: string;
-  isActive: boolean;
-  order: number;
-  garmentTypes: GarmentTypeOption[];
-  _count?: {
-    products: number;
-  };
-}
+};
 
 export type ToastState = { type: "success" | "error"; message: string } | null;
 
@@ -26,6 +16,7 @@ export interface CategoryCardProps {
   category: Category;
   onEdit: (category: Category) => void;
   onToggleActive: (category: Category) => void;
+  onDelete: (category: Category) => void;
 }
 
 export interface CategoryGridProps {
@@ -33,6 +24,7 @@ export interface CategoryGridProps {
   filtered: Category[];
   onEdit: (category: Category) => void;
   onToggleActive: (category: Category) => void;
+  onDelete: (category: Category) => void;
 }
 
 export interface CategorySearchProps {

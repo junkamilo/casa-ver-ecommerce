@@ -37,6 +37,7 @@ export default function AdminCategorias() {
     closeEditModal,
     handleEditSubmit,
     handleToggleActive,
+    handleDelete,
     allGarmentTypes,
   } = useCategoryManager();
 
@@ -58,6 +59,7 @@ export default function AdminCategorias() {
           filtered={filtered}
           onEdit={openEditModal}
           onToggleActive={handleToggleActive}
+          onDelete={handleDelete}
         />
 
       </main>

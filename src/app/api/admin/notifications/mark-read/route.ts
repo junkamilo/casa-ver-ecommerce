@@ -1,23 +1,16 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
-
-async function verifyAdmin() {
-  const session = await auth();
-  if (!session?.user || (session.user as any).role !== "ADMIN") return false;
-  return true;
-}
+import { markNotificationsReadUseCase } from "@/modules/adminCatalog/notifications/application/mark-notifications-read.use-case";
+import { runAdminRoute } from "@/server/http/admin-route";
+import { toErrorResponse } from "@/server/http/error-response";
 
 // POST — marca todas las notificaciones no leídas como leídas
 export async function POST() {
-  if (!(await verifyAdmin())) {
-    return NextResponse.json({ message: "No autorizado" }, { status: 401 });
-  }
-
-  await (prisma as any).adminNotification.updateMany({
-    where: { isRead: false },
-    data: { isRead: true },
+  return runAdminRoute(async () => {
+    try {
+      const result = await markNotificationsReadUseCase();
+      return NextResponse.json(result);
+    } catch (error) {
+      return toErrorResponse(error);
+    }
   });
-
-  return NextResponse.json({ ok: true });
 }

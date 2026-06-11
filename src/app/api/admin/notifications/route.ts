@@ -1,34 +1,16 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
-
-async function verifyAdmin() {
-  const session = await auth();
-  if (!session?.user || (session.user as any).role !== "ADMIN") return false;
-  return true;
-}
+import { listNotificationsUseCase } from "@/modules/adminCatalog/notifications/application/list-notifications.use-case";
+import { runAdminRoute } from "@/server/http/admin-route";
+import { toErrorResponse } from "@/server/http/error-response";
 
 // GET — devuelve unreadCount + últimas 20 notificaciones
 export async function GET() {
-  if (!(await verifyAdmin())) {
-    return NextResponse.json({ message: "No autorizado" }, { status: 401 });
-  }
-
-  const [unreadCount, notifications] = await Promise.all([
-    (prisma as any).adminNotification.count({ where: { isRead: false } }),
-    (prisma as any).adminNotification.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 20,
-      select: {
-        id: true,
-        orderId: true,
-        title: true,
-        body: true,
-        isRead: true,
-        createdAt: true,
-      },
-    }),
-  ]);
-
-  return NextResponse.json({ unreadCount, notifications });
+  return runAdminRoute(async () => {
+    try {
+      const result = await listNotificationsUseCase();
+      return NextResponse.json(result);
+    } catch (error) {
+      return toErrorResponse(error);
+    }
+  });
 }

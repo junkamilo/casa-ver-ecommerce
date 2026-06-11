@@ -1,7 +1,7 @@
 /**
  * Lógica de tarifas de envío para Casa Verde.
  *
- * Ciudades con tarifa preferencial: $11.000
+ * Municipios con tarifa preferencial: $11.000
  * San Andrés / Providencia: $30.000
  * Resto del país: $18.000
  */
@@ -10,30 +10,30 @@ export const SHIPPING_SANTANDER = 11_000;
 export const SHIPPING_NATIONAL = 18_000;
 export const SHIPPING_ISLANDS = 30_000;
 
-function normalizeValue(v: string): string {
-  return v
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, " ");
-}
-
 /**
- * Ciudades con tarifa especial de $11.000.
+ * Ciudades/municipios con tarifa especial de $11.000.
  */
-export const PREFERRED_11000_CITIES = new Set([
-  "San Gil",
-  "Barrancabermeja",
+export const CHEAP_SHIPPING_CITIES = new Set([
   "Bucaramanga",
   "Giron",
   "Piedecuesta",
   "Floridablanca",
+  "Barrancabermeja",
+  "San Gil",
+  "Sabana de Torres",
   "Lebrija",
-  "Sabana de torres",
   "Valledupar",
-  "Cucuta",
+  "Cúcuta",
   "Cantagallo",
+]);
+
+/**
+ * Ciudades/municipios con tarifa especial de $30.000.
+ */
+export const ISLAND_SHIPPING_CITIES = new Set([
+  "San Andrés",
+  "Providencia",
+  "Providencia y Santa Catalina",
 ]);
 
 /**
@@ -47,15 +47,12 @@ export function getShippingCost(city: string, department: string): number {
   // ⚠️ TEMPORAL — tarifa de prueba $1.000. Eliminar cuando ya no se necesite.
   if (deptNorm === "prueba") return 1_000;
 
-  const isIslandsDepartment = deptNorm === "san andres y providencia";
-  const isIslandsCity =
-    cityNorm === "san andres" ||
-    cityNorm === "providencia" ||
-    cityNorm === "providencia y santa catalina";
-  if (isIslandsDepartment || isIslandsCity) return SHIPPING_ISLANDS;
+  for (const islandCity of ISLAND_SHIPPING_CITIES) {
+    if (islandCity.toLowerCase() === cityNorm) return SHIPPING_ISLANDS;
+  }
 
-  for (const preferredCity of PREFERRED_11000_CITIES) {
-    if (normalizeValue(preferredCity) === cityNorm) return SHIPPING_SANTANDER;
+  for (const cheapCity of CHEAP_SHIPPING_CITIES) {
+    if (cheapCity.toLowerCase() === cityNorm) return SHIPPING_SANTANDER;
   }
 
   return SHIPPING_NATIONAL;

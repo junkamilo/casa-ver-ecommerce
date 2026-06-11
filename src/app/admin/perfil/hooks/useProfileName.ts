@@ -6,6 +6,11 @@ import type {
   UseProfileNameOptions,
   UseProfileNameReturn,
 } from "../types/types";
+import {
+  AdminProfileApiError,
+  updateAdminProfile,
+} from "@/modules/adminCatalog/profile/presentation/api-client";
+import { mapAdminProfileDtoToUi } from "@/modules/adminCatalog/profile/presentation/mappers";
 
 /**
  * Gestiona el estado y la lógica de edición del nombre del perfil.
@@ -28,20 +33,15 @@ export function useProfileName({
   const handleSaveName = async (): Promise<void> => {
     setSavingName(true);
     try {
-      const res = await fetch("/api/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        showToast("error", data.message || ERROR_MESSAGES.saveName);
-        return;
-      }
-      onProfileUpdate(data);
+      const data = await updateAdminProfile({ name });
+      onProfileUpdate(mapAdminProfileDtoToUi(data));
       setEditingName(false);
       showToast("success", SUCCESS_MESSAGES.nameSaved);
-    } catch {
+    } catch (error: unknown) {
+      if (error instanceof AdminProfileApiError) {
+        showToast("error", error.message || ERROR_MESSAGES.saveName);
+        return;
+      }
       showToast("error", ERROR_MESSAGES.connection);
     } finally {
       setSavingName(false);

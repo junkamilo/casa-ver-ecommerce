@@ -3,6 +3,15 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { TOAST_DURATION, ERROR_MESSAGES, SUCCESS_MESSAGES } from "../constants";
 import type { GarmentType, ToastState } from "../types/types";
+import {
+  AdminGarmentTypesApiError,
+  createGarmentType,
+  deleteGarmentType,
+  fetchGarmentTypes as fetchGarmentTypesRequest,
+  toggleGarmentType,
+  updateGarmentType,
+} from "@/modules/adminCatalog/garmentTypes/presentation/api-client";
+import { mapGarmentTypeListDtoToUi } from "@/modules/adminCatalog/garmentTypes/presentation/mappers";
 
 const PAGE_SIZE = 10;
 
@@ -53,9 +62,13 @@ export function useGarmentTypeManager() {
 
   const fetchGarmentTypes = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/garment-types");
-      if (res.ok) setGarmentTypes(await res.json());
-    } catch {
+      const data = await fetchGarmentTypesRequest();
+      setGarmentTypes(mapGarmentTypeListDtoToUi(data));
+    } catch (error: unknown) {
+      if (error instanceof AdminGarmentTypesApiError) {
+        showToast("error", error.message);
+        return;
+      }
       showToast("error", ERROR_MESSAGES.load);
     } finally {
       setLoading(false);
@@ -70,20 +83,16 @@ export function useGarmentTypeManager() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const res = await fetch("/api/admin/garment-types", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
-      });
-      if (!res.ok) {
-        if (res.status === 409) throw new Error(ERROR_MESSAGES.duplicate);
-        throw new Error(ERROR_MESSAGES.create);
-      }
+      await createGarmentType({ name });
       showToast("success", SUCCESS_MESSAGES.created);
       setShowModal(false);
       setName("");
       fetchGarmentTypes();
     } catch (err: unknown) {
+      if (err instanceof AdminGarmentTypesApiError && err.status === 409) {
+        showToast("error", ERROR_MESSAGES.duplicate);
+        return;
+      }
       showToast("error", err instanceof Error ? err.message : ERROR_MESSAGES.unknown);
     } finally {
       setSubmitting(false);
@@ -107,19 +116,15 @@ export function useGarmentTypeManager() {
     if (!editingGT) return;
     setEditSubmitting(true);
     try {
-      const res = await fetch(`/api/admin/garment-types?id=${editingGT.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editName }),
-      });
-      if (!res.ok) {
-        if (res.status === 409) throw new Error(ERROR_MESSAGES.duplicate);
-        throw new Error(ERROR_MESSAGES.edit);
-      }
+      await updateGarmentType(editingGT.id, { name: editName });
       showToast("success", SUCCESS_MESSAGES.updated);
       closeEditModal();
       fetchGarmentTypes();
     } catch (err: unknown) {
+      if (err instanceof AdminGarmentTypesApiError && err.status === 409) {
+        showToast("error", ERROR_MESSAGES.duplicate);
+        return;
+      }
       showToast("error", err instanceof Error ? err.message : ERROR_MESSAGES.unknown);
     } finally {
       setEditSubmitting(false);
@@ -130,12 +135,7 @@ export function useGarmentTypeManager() {
 
   const handleToggleActive = useCallback(async (gt: GarmentType) => {
     try {
-      const res = await fetch(`/api/admin/garment-types?id=${gt.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "toggle" }),
-      });
-      if (!res.ok) throw new Error(ERROR_MESSAGES.toggle);
+      await toggleGarmentType(gt.id);
       showToast("success", gt.isActive ? SUCCESS_MESSAGES.deactivated : SUCCESS_MESSAGES.activated);
       fetchGarmentTypes();
     } catch (err: unknown) {
@@ -147,21 +147,18 @@ export function useGarmentTypeManager() {
 
   const handleDelete = useCallback(async (gt: GarmentType) => {
     try {
-      const res = await fetch(`/api/admin/garment-types?id=${gt.id}`, { method: "DELETE" });
-
-      if (res.status === 409) {
-        const data = await res.json();
-        showToast(
-          "error",
-          `No se puede eliminar "${data.name}". Hay ${data.count} producto(s) usando este tipo de prenda.`
-        );
-        return;
-      }
-      if (!res.ok) throw new Error(ERROR_MESSAGES.delete);
-
+      await deleteGarmentType(gt.id);
       showToast("success", SUCCESS_MESSAGES.deleted);
       fetchGarmentTypes();
     } catch (err: unknown) {
+      if (err instanceof AdminGarmentTypesApiError && err.status === 409) {
+        const count = err.data?.count ?? 0;
+        showToast(
+          "error",
+          `No se puede eliminar "${err.data?.name ?? gt.name}". Hay ${count} producto(s) usando este tipo de prenda.`
+        );
+        return;
+      }
       showToast("error", err instanceof Error ? err.message : ERROR_MESSAGES.unknown);
     }
   }, [showToast, fetchGarmentTypes]);

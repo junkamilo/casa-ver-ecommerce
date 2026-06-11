@@ -1,7 +1,7 @@
-import { Pencil, Eye, EyeOff } from "lucide-react";
+import { Pencil, Eye, EyeOff, Trash2 } from "lucide-react";
 import type { CategoryCardProps } from "../types/types";
 
-const CategoryCard = ({ category, onEdit, onToggleActive }: CategoryCardProps) => (
+const CategoryCard = ({ category, onEdit, onToggleActive, onDelete }: CategoryCardProps) => (
   <div
     className={`group bg-white rounded-3xl overflow-hidden border transition-all duration-300 hover:shadow-xl ${
       !category.isActive ? "opacity-60 border-gray-200 grayscale-[0.2]" : "border-[#C19A6B]/10 shadow-sm"
@@ -16,7 +16,7 @@ const CategoryCard = ({ category, onEdit, onToggleActive }: CategoryCardProps) =
             alt={category.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent" />
         </>
       ) : (
         <div className="absolute inset-0 bg-[#154734] flex items-center justify-center px-4">
@@ -80,6 +80,13 @@ const CategoryCard = ({ category, onEdit, onToggleActive }: CategoryCardProps) =
             ) : (
               <Eye className="w-4 h-4" />
             )}
+          </button>
+          <button
+            onClick={() => onDelete(category)}
+            className="p-2.5 rounded-xl transition-all text-gray-400 hover:text-red-600 hover:bg-red-50"
+            title="Eliminar colección"
+          >
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
       </div>

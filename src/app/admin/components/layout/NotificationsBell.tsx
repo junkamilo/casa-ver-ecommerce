@@ -5,7 +5,7 @@ import { Bell, CheckCircle2, Clock, ArrowUpRight, PackageX, Palette } from "luci
 import Link from "next/link";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
 import { timeAgo } from "../../utils";
-import type { StockAlert } from "@/app/api/admin/stock-alerts/route";
+import type { StockAlertDTO as StockAlert } from "@/modules/adminCatalog/stockAlerts/contracts/stock-alert.dto";
 
 interface AdminNotification {
   id: string;
