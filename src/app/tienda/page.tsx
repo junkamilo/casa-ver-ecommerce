@@ -7,6 +7,7 @@ import CollectionClient from "@/components/shared/ProductCollection/components/C
 import BackButton from "@/components/ui/BackButton";
 import { getAllProducts } from "./services";
 import type { TiendaFilters } from "./types";
+import TiendaPagination from "./components/TiendaPagination";
 
 // ISR: la página se cachea y se regenera como máximo cada 60 s.
 // Cada combinación de filtros (URL única) tiene su propia entrada de caché.
@@ -30,7 +31,8 @@ export default async function TiendaPage({
   searchParams: Promise<TiendaFilters>;
 }) {
   const filters = await searchParams;
-  const { products, filterOptions } = await getAllProducts(filters);
+  const { products, filterOptions, page, totalPages, totalProducts } =
+    await getAllProducts(filters);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFA] selection:bg-[#C19A6B]/20 relative overflow-hidden">
@@ -59,6 +61,12 @@ export default async function TiendaPage({
 
           <div className="mt-6 sm:mt-8 lg:mt-10 w-full">
             <CollectionClient products={products} filterOptions={filterOptions} />
+            <TiendaPagination
+              page={page}
+              totalPages={totalPages}
+              totalProducts={totalProducts}
+              filters={filters}
+            />
           </div>
 
         </div>

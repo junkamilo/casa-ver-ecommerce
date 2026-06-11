@@ -19,6 +19,7 @@ type ActiveColor = { name: string; hexCode: string; imageUrl?: string | null } |
 interface ProductCardProps {
   item: CollectionProduct;
   viewMode?: "grid" | "list";
+  setItemKey?: string | null;
   /** Posición en la grilla — las primeras 4 reciben priority=true para LCP */
   index?: number;
 }

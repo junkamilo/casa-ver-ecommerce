@@ -10,7 +10,12 @@ interface SearchProduct {
   name: string;
   slug: string;
   price: number;
+  /** Conjunto: precio mostrado en tienda suele ser el mínimo entre ítems (basePrice del padre puede ser 0). */
+  isSet?: boolean;
+  minPrice?: number | null;
   image: string | null;
+  /** Portada en video: en el buscador se muestra bloque verde con el nombre (como categorías sin foto). */
+  coverVideo?: boolean;
 }
 
 interface SearchModalProps {
@@ -42,8 +47,11 @@ function clearRecentProducts() {
   localStorage.removeItem(RECENT_KEY);
 }
 
-function formatPrice(price: number): string {
-  return `$ ${price.toLocaleString("es-CO")}`;
+function formatProductPrice(item: Pick<SearchProduct, "price" | "isSet" | "minPrice">): string {
+  if (item.isSet && item.minPrice != null) {
+    return `Desde $ ${item.minPrice.toLocaleString("es-CO")}`;
+  }
+  return `$ ${item.price.toLocaleString("es-CO")}`;
 }
 
 const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".ogg"];

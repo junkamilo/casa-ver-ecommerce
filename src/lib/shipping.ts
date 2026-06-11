@@ -15,7 +15,7 @@ export const SHIPPING_ISLANDS = 30_000;
  */
 export const CHEAP_SHIPPING_CITIES = new Set([
   "Bucaramanga",
-  "Girón",
+  "Giron",
   "Piedecuesta",
   "Floridablanca",
   "Barrancabermeja",
@@ -41,8 +41,8 @@ export const ISLAND_SHIPPING_CITIES = new Set([
  * Comparación case-insensitive para robustez.
  */
 export function getShippingCost(city: string, department: string): number {
-  const cityNorm = city.trim().toLowerCase();
-  const deptNorm = department.trim().toLowerCase();
+  const cityNorm = normalizeValue(city);
+  const deptNorm = normalizeValue(department);
 
   // ⚠️ TEMPORAL — tarifa de prueba $1.000. Eliminar cuando ya no se necesite.
   if (deptNorm === "prueba") return 1_000;
