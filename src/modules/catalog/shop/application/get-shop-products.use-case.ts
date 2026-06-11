@@ -1,9 +1,10 @@
 import type { Prisma } from "@prisma/client";
 import { PrismaShopRepository } from "../infrastructure/prisma-shop.repository";
 import { transformProduct } from "@/modules/collections/domain/product-mapper.entity";
-import type {
-  ShopProductsResultDTO,
-  TiendaFilters,
+import {
+  TIENDA_PAGE_SIZE,
+  type ShopProductsResultDTO,
+  type TiendaFilters,
 } from "../contracts/shop.dto";
 import type { FilterOptions } from "@/components/shared/ProductCollection/types";
 
@@ -12,12 +13,11 @@ const repository = new PrismaShopRepository();
 const EMPTY_RESULT: ShopProductsResultDTO = {
   products: [],
   filterOptions: { availableColors: [], maxPriceDb: 0 },
+  page: 1,
+  pageSize: TIENDA_PAGE_SIZE,
+  totalProducts: 0,
+  totalPages: 1,
 };
-
-// ── Parser de filtros desde la URL ───────────────────────────────────────────
-//
-// Convierte los strings que llegan en `searchParams` a un `WhereInput` de
-// Prisma. Tolerante a valores ausentes o inválidos.
 
 function buildShopWhereFromFilters(
   filters: TiendaFilters,
@@ -57,25 +57,30 @@ function buildFilterOptionsFromAll(
   return { availableColors, maxPriceDb };
 }
 
+function parsePage(filters: TiendaFilters): number {
+  return Math.max(1, parseInt(filters.page ?? "1", 10) || 1);
+}
+
 /**
- * Productos del catálogo `/tienda` con filtros opcionales en la URL.
- * Equivalente al antiguo `getAllProducts(filters)` de
- * `app/tienda/services/index.ts`. Usa el mapper unificado del módulo
- * `collections` para `CollectionProduct`.
- *
- * Si la query falla, devuelve resultado vacío (la página renderiza estado
- * vacío en `CollectionClient`) — replica el comportamiento defensivo previo.
+ * Productos del catálogo `/tienda` con filtros opcionales y paginación (24/página).
  */
 export async function getShopProductsUseCase(
   filters: TiendaFilters,
 ): Promise<ShopProductsResultDTO> {
   try {
     const where = buildShopWhereFromFilters(filters);
-    const { allForFilters, raw } = await repository.getProductsForShop(where);
+    const requestedPage = parsePage(filters);
+
+    const { allForFilters, totalProducts, totalPages, page, raw } =
+      await repository.getProductsForShop(where, requestedPage);
 
     return {
       products: raw.map(transformProduct),
       filterOptions: buildFilterOptionsFromAll(allForFilters),
+      page,
+      pageSize: TIENDA_PAGE_SIZE,
+      totalProducts,
+      totalPages,
     };
   } catch {
     return EMPTY_RESULT;

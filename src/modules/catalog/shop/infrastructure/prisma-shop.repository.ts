@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import type { RawCollectionProduct } from "@/modules/collections/domain/product-mapper.entity";
+import { TIENDA_PAGE_SIZE } from "../contracts/shop.dto";
 
 // ── Select shape para tienda ──────────────────────────────────────────────────
 //
@@ -58,9 +59,6 @@ const SHOP_SELECT = {
   },
 } as const;
 
-// Datos mínimos para construir filterOptions sin pagar el costo de joins
-// de imágenes (la query corre en paralelo con la query principal).
-
 interface ShopFilterOptionsRow {
   basePrice: unknown;
   colors: { name: string; hexCode: string }[];
@@ -76,17 +74,19 @@ export class PrismaShopRepository {
   }
 
   /**
-   * Ejecuta en paralelo:
-   *   1. Una query liviana sobre TODOS los productos ACTIVE para construir
-   *      `availableColors` y `maxPriceDb` (independiente de los filtros).
-   *   2. Una query con los filtros aplicados (`status: ACTIVE` + price + color)
-   *      con el select shape de la card.
+   * Ejecuta en paralelo filterOptions + count; luego la página solicitada.
    */
-  async getProductsForShop(where: Prisma.ProductWhereInput): Promise<{
+  async getProductsForShop(
+    where: Prisma.ProductWhereInput,
+    requestedPage: number,
+  ): Promise<{
     allForFilters: ShopFilterOptionsRow[];
+    totalProducts: number;
+    totalPages: number;
+    page: number;
     raw: RawCollectionProduct[];
   }> {
-    const [allForFilters, raw] = await Promise.all([
+    const [allForFilters, totalProducts] = await Promise.all([
       this.db.product.findMany({
         where: { status: "ACTIVE" },
         select: {
@@ -94,13 +94,21 @@ export class PrismaShopRepository {
           colors: { select: { name: true, hexCode: true } },
         },
       }),
-      this.db.product.findMany({
-        where,
-        select: SHOP_SELECT,
-        orderBy: { createdAt: "desc" },
-      }),
+      this.db.product.count({ where }),
     ]);
 
-    return { allForFilters, raw };
+    const totalPages = Math.max(1, Math.ceil(totalProducts / TIENDA_PAGE_SIZE));
+    const page = Math.min(Math.max(1, requestedPage), totalPages);
+    const skip = (page - 1) * TIENDA_PAGE_SIZE;
+
+    const raw = await this.db.product.findMany({
+      where,
+      select: SHOP_SELECT,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: TIENDA_PAGE_SIZE,
+    });
+
+    return { allForFilters, totalProducts, totalPages, page, raw };
   }
 }

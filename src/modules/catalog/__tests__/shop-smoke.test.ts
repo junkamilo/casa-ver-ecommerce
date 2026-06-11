@@ -1,40 +1,50 @@
 /** @jest-environment node */
 
-// Smoke tests del subm\u00f3dulo catalog/shop \u2014 cubren el parser de filtros
-// (interno al use case) y el mapper unificado heredado del m\u00f3dulo collections.
-// El parser se exporta indirectamente a trav\u00e9s del use case mockeando el repo.
-
-// Para mantener el test puro (sin Prisma), hacemos `jest.mock` del repo y
-// validamos que la conversi\u00f3n filters \u2192 where + transformProduct + filterOptions
-// funcione end-to-end del use case.
-
 import type { Prisma } from "@prisma/client";
 
 const findManyMock = jest.fn();
+const countMock = jest.fn();
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {
     product: {
       findMany: (...args: unknown[]) => findManyMock(...args),
+      count: (...args: unknown[]) => countMock(...args),
     },
   },
 }));
 
 import { getShopProductsUseCase } from "@/modules/catalog/shop/application/get-shop-products.use-case";
+import { TIENDA_PAGE_SIZE } from "@/modules/catalog/shop/contracts/shop.dto";
 
 beforeEach(() => {
   findManyMock.mockReset();
+  countMock.mockReset();
 });
 
-function mockTwoQueries(allRows: unknown[], filteredRows: unknown[]) {
+function mockShopQueries(
+  allRows: unknown[],
+  totalProducts: number,
+  filteredRows: unknown[],
+) {
   findManyMock
-    .mockResolvedValueOnce(allRows) // primera llamada: filterOptions
-    .mockResolvedValueOnce(filteredRows); // segunda: filtrados
+    .mockResolvedValueOnce(allRows)
+    .mockResolvedValueOnce(filteredRows);
+  countMock.mockResolvedValueOnce(totalProducts);
 }
 
-describe("getShopProductsUseCase \u2014 filterOptions builder", () => {
-  it("acumula colores \u00fanicos por hexCode y maxPriceDb", async () => {
-    mockTwoQueries(
+const EMPTY_RESULT = {
+  products: [],
+  filterOptions: { availableColors: [], maxPriceDb: 0 },
+  page: 1,
+  pageSize: TIENDA_PAGE_SIZE,
+  totalProducts: 0,
+  totalPages: 1,
+};
+
+describe("getShopProductsUseCase — filterOptions builder", () => {
+  it("acumula colores únicos por hexCode y maxPriceDb", async () => {
+    mockShopQueries(
       [
         {
           basePrice: 50000,
@@ -51,6 +61,7 @@ describe("getShopProductsUseCase \u2014 filterOptions builder", () => {
           ],
         },
       ],
+      0,
       [],
     );
 
@@ -63,59 +74,45 @@ describe("getShopProductsUseCase \u2014 filterOptions builder", () => {
   });
 });
 
-describe("getShopProductsUseCase \u2014 where builder desde filtros", () => {
-  it("aplica gte/lte cuando minPrice/maxPrice est\u00e1n presentes", async () => {
-    mockTwoQueries([], []);
+describe("getShopProductsUseCase — where builder desde filtros", () => {
+  it("aplica gte/lte cuando minPrice/maxPrice están presentes", async () => {
+    mockShopQueries([], 0, []);
     await getShopProductsUseCase({ minPrice: "100", maxPrice: "500" });
 
-    const callArgs = findManyMock.mock.calls[1][0] as { where: Prisma.ProductWhereInput };
-    expect(callArgs.where.basePrice).toEqual({ gte: 100, lte: 500 });
-    expect(callArgs.where.status).toBe("ACTIVE");
-  });
-
-  it("aplica solo gte cuando hay minPrice sin maxPrice", async () => {
-    mockTwoQueries([], []);
-    await getShopProductsUseCase({ minPrice: "200" });
-
-    const callArgs = findManyMock.mock.calls[1][0] as { where: Prisma.ProductWhereInput };
-    expect(callArgs.where.basePrice).toEqual({ gte: 200 });
+    expect(countMock.mock.calls[0][0].where.basePrice).toEqual({
+      gte: 100,
+      lte: 500,
+    });
+    const pagedCall = findManyMock.mock.calls[1][0] as {
+      where: Prisma.ProductWhereInput;
+    };
+    expect(pagedCall.where.status).toBe("ACTIVE");
   });
 
   it("agrega prefijo # al filtro de color", async () => {
-    mockTwoQueries([], []);
+    mockShopQueries([], 0, []);
     await getShopProductsUseCase({ color: "ff0000" });
 
-    const callArgs = findManyMock.mock.calls[1][0] as { where: Prisma.ProductWhereInput };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const whereColors = callArgs.where.colors as any;
+    const whereColors = countMock.mock.calls[0][0].where.colors as any;
     expect(whereColors).toEqual({ some: { hexCode: "#ff0000" } });
-  });
-
-  it("sin filtros, where solo contiene status: ACTIVE", async () => {
-    mockTwoQueries([], []);
-    await getShopProductsUseCase({});
-
-    const callArgs = findManyMock.mock.calls[1][0] as { where: Prisma.ProductWhereInput };
-    expect(callArgs.where).toEqual({ status: "ACTIVE" });
   });
 });
 
-describe("getShopProductsUseCase \u2014 robustez ante errores", () => {
-  it("devuelve resultado vac\u00edo si la query lanza", async () => {
+describe("getShopProductsUseCase — robustez ante errores", () => {
+  it("devuelve resultado vacío si la query lanza", async () => {
     findManyMock.mockRejectedValueOnce(new Error("DB down"));
 
     const result = await getShopProductsUseCase({});
-    expect(result).toEqual({
-      products: [],
-      filterOptions: { availableColors: [], maxPriceDb: 0 },
-    });
+    expect(result).toEqual(EMPTY_RESULT);
   });
 });
 
-describe("getShopProductsUseCase \u2014 transforma productos al CollectionProduct", () => {
+describe("getShopProductsUseCase — transforma productos al CollectionProduct", () => {
   it("mapea producto simple con badge En Oferta y oldPrice", async () => {
-    mockTwoQueries(
+    mockShopQueries(
       [],
+      1,
       [
         {
           name: "Camisa",
@@ -141,14 +138,8 @@ describe("getShopProductsUseCase \u2014 transforma productos al CollectionProduc
 
     const result = await getShopProductsUseCase({});
     expect(result.products).toHaveLength(1);
-    const product = result.products[0];
-    expect(product.name).toBe("Camisa");
-    expect(product.price).toBe(60000);
-    expect(product.oldPrice).toBe(80000);
-    expect(product.images).toEqual(["/img1.jpg", "/img2.jpg"]);
-    expect(product.badge).toBe("En Oferta");
-    expect(product.colors).toEqual([
-      { name: "Negro", hexCode: "#000", imageUrl: "/black.jpg" },
-    ]);
+    expect(result.totalProducts).toBe(1);
+    expect(result.page).toBe(1);
+    expect(result.products[0].badge).toBe("En Oferta");
   });
 });

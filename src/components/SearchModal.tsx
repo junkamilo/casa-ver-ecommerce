@@ -27,6 +27,10 @@ interface SearchModalProps {
 const RECENT_KEY = "cv_recent_products";
 const MAX_RECENT = 6;
 
+function formatPrice(price: number): string {
+  return `$${price.toLocaleString("es-CO")}`;
+}
+
 function getRecentProducts(): SearchProduct[] {
   try {
     return JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]");

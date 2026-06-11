@@ -8,12 +8,7 @@
 
 import { getFeaturedProductsUseCase } from "@/modules/collections/application/get-featured-products.use-case";
 import type { CollectionProduct } from "@/components/shared/ProductCollection/types";
-import {
-  transformProduct,
-  type CollectionRawProduct,
-} from "@/app/collections/utils/fetchCollectionProducts";
 
 export async function fetchFeaturedProducts(): Promise<CollectionProduct[]> {
   return getFeaturedProductsUseCase();
 }
-
