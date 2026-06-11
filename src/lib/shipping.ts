@@ -36,6 +36,10 @@ export const ISLAND_SHIPPING_CITIES = new Set([
   "Providencia y Santa Catalina",
 ]);
 
+function normalizeValue(value: string): string {
+  return value.trim().toLowerCase();
+}
+
 /**
  * Calcula el costo de envío según ciudad y departamento.
  * Comparación case-insensitive para robustez.

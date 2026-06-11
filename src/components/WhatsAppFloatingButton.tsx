@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { X, Send } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useLaunchLockGate } from "@/hooks/use-launch-lock-gate";
 
 const WA_NUMBER = "573022457432";
 const AGENT_NAME = "Casa Verde";
@@ -17,6 +18,7 @@ const WhatsAppIcon = () => (
 
 export default function WhatsAppFloatingButton() {
   const pathname = usePathname();
+  const { shouldHideGlobalWidgets } = useLaunchLockGate();
   const isAdminPath = pathname?.startsWith("/admin");
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState(DEFAULT_MESSAGE);
@@ -41,7 +43,7 @@ export default function WhatsAppFloatingButton() {
     }
   };
 
-  if (isAdminPath) {
+  if (isAdminPath || shouldHideGlobalWidgets) {
     return null;
   }
 

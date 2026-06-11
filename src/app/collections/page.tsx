@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { prisma } from "@/lib/prisma";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/Footer";
@@ -7,6 +6,7 @@ import CollectionHero from "@/app/collections/[slug]/components/CollectionHero";
 import CategoriesClient from "@/app/collections/components/CategoriesClient";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
 import BackButton from "@/components/ui/BackButton";
+import { listActiveCategoriesUseCase } from "@/modules/collections/application/list-active-categories.use-case";
 
 export const revalidate = 3600;
 
@@ -22,11 +22,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CollectionsPage() {
-  const collections = await prisma.category.findMany({
-    where: { isActive: true, parentId: null },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true, slug: true, image: true },
-  });
+  const collections = await listActiveCategoriesUseCase({ rootOnly: true });
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFA] selection:bg-[#C19A6B]/20 relative overflow-hidden">

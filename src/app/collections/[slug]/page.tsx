@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 export const dynamic = "force-dynamic";
 
-import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import { SITE_NAME } from "@/lib/seo";
 import Footer from "@/components/Footer";
 import AnnouncementBar from "@/components/AnnouncementBar";
@@ -10,92 +8,8 @@ import Header from "@/components/layout/Header";
 import CollectionHero from "./components/CollectionHero";
 import CollectionClient from "./components/CollectionClient";
 import BackButton from "@/components/ui/BackButton";
-import type { CollectionProduct, FilterOptions } from "./types";
-import {
-  COLLECTION_PRODUCT_GRID_SELECT,
-  transformProduct,
-  type CollectionRawProduct,
-} from "../utils/fetchCollectionProducts";
-
-const PRODUCT_SELECT = {
-  ...COLLECTION_PRODUCT_GRID_SELECT,
-  isFeatured: true,
-  isNew: true,
-};
-
-// ── Data fetcher ──────────────────────────────────────────────────────────────
-async function getCollectionData(
-  slug: string,
-  tipoSlug?: string,
-): Promise<{
-  category: { name: string } | null;
-  garmentTypeName?: string;
-  products: CollectionProduct[];
-  filterOptions: FilterOptions;
-}> {
-  const empty = { category: null, products: [], filterOptions: { availableColors: [], maxPriceDb: 0 } };
-
-  try {
-    const category = await prisma.category.findUnique({
-      where: { slug, isActive: true },
-      select: { name: true },
-    });
-
-    if (!category) return empty;
-
-    // Si viene ?tipo=slug, buscamos el id y nombre del garmentType para filtrar
-    let garmentTypeId: string | undefined;
-    let garmentTypeName: string | undefined;
-    if (tipoSlug) {
-      const gt = await prisma.garmentType.findUnique({
-        where: { slug: tipoSlug },
-        select: { id: true, name: true },
-      });
-      garmentTypeId = gt?.id;
-      garmentTypeName = gt?.name;
-    }
-
-    const where: Prisma.ProductWhereInput = {
-      category: { slug },
-      status: "ACTIVE",
-      ...(garmentTypeId
-        ? {
-            garmentTypes: {
-              some: { garmentTypeId },
-            },
-          }
-        : {}),
-    };
-
-    // Fetch all active products (filtering happens client-side)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const raw = await (prisma as any).product.findMany({
-      where,
-      select: PRODUCT_SELECT,
-      orderBy: { createdAt: "desc" },
-    });
-
-    // Build filterOptions from the full product set
-    const colorMap = new Map<string, string>();
-    let maxPriceDb = 0;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    for (const p of raw as any[]) {
-      const price = Number(p.basePrice);
-      if (price > maxPriceDb) maxPriceDb = price;
-      for (const c of p.colors) {
-        colorMap.set(c.hexCode, c.name);
-      }
-    }
-
-    const availableColors = Array.from(colorMap.entries()).map(([hexCode, name]) => ({ hexCode, name }));
-
-    const products = (raw as CollectionRawProduct[]).map(transformProduct);
-
-    return { category, garmentTypeName, products, filterOptions: { availableColors, maxPriceDb } };
-  } catch {
-    return empty;
-  }
-}
+import { getCollectionProductsUseCase } from "@/modules/collections/application/get-collection-products.use-case";
+import { getCategoryBySlugUseCase } from "@/modules/collections/application/get-category-by-slug.use-case";
 
 // ── SEO dinámico ─────────────────────────────────────────────────────────────
 
@@ -106,16 +20,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
 
-  const category = await prisma.category.findUnique({
-    where: { slug, isActive: true },
-    select: {
-      name: true,
-      description: true,
-      metaTitle: true,
-      metaDescription: true,
-      image: true,
-    },
-  });
+  const category = await getCategoryBySlugUseCase(slug);
 
   if (!category) return { title: "Colección no encontrada" };
 
@@ -155,8 +60,13 @@ export default async function CollectionPage({
 }) {
   const { slug } = await params;
   const { tipo } = await searchParams;
-  const { category, garmentTypeName, products, filterOptions } = await getCollectionData(slug, tipo);
-  const title = (garmentTypeName ?? category?.name ?? slug.replace(/-/g, " ")).toUpperCase();
+  const { category, garmentTypeName, products, filterOptions } =
+    await getCollectionProductsUseCase(slug, tipo);
+  const title = (
+    garmentTypeName ??
+    category?.name ??
+    slug.replace(/-/g, " ")
+  ).toUpperCase();
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFA] selection:bg-[#C19A6B]/20 relative overflow-hidden">

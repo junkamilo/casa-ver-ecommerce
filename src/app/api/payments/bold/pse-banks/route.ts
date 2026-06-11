@@ -1,35 +1,26 @@
 import { NextResponse } from "next/server";
+import { listPseBanksUseCase } from "@/modules/payments/bold/application/list-pse-banks.use-case";
+import { toErrorResponse } from "@/server/http/error-response";
 
 // ---------------------------------------------------------------------------
 // GET /api/payments/bold/pse-banks
-// Proxy → GET https://api.online.payments.bold.co/v1/payment/pse/banks
-// Cachea 1 hora (la lista de bancos no cambia frecuentemente).
+// Proxy a Bold PSE banks. Cachea 1 hora vía revalidate del cliente HTTP.
+//
+// NOTA: Hoy ningún archivo del frontend consume este endpoint
+// (verificado con búsqueda). Se conserva por compatibilidad y se marca como
+// candidato a unificar con /api/payments/pse-banks en otra PR futura.
 // ---------------------------------------------------------------------------
 export async function GET() {
-  // BOLD_IDENTITY_KEY es server-side únicamente — NUNCA usar NEXT_PUBLIC_ en rutas API
-  const apiKey = process.env.BOLD_IDENTITY_KEY;
-
-  if (!apiKey) {
-    return NextResponse.json({ error: "Pasarela no configurada" }, { status: 500 });
-  }
-
-  const res = await fetch(
-    "https://api.online.payments.bold.co/v1/payment/pse/banks",
-    {
-      headers: { Authorization: `x-api-key ${apiKey}` },
-      next: { revalidate: 3600 },
-    }
-  );
-
-  if (!res.ok) {
-    console.error("[BOLD PSE banks] Error:", res.status);
+  try {
+    const banks = await listPseBanksUseCase({ apiKey: process.env.BOLD_IDENTITY_KEY });
+    // Shape original: array directo
+    return NextResponse.json(banks);
+  } catch (error) {
+    const errorRes = toErrorResponse(error);
+    const payload = await errorRes.json();
     return NextResponse.json(
-      { error: "Error obteniendo lista de bancos PSE" },
-      { status: 502 }
+      { error: payload.message ?? "Error" },
+      { status: errorRes.status }
     );
   }
-
-  const data = await res.json();
-  // La respuesta de Bold viene en { payload: { banks: [...] } }
-  return NextResponse.json(data?.payload?.banks ?? data?.banks ?? []);
 }

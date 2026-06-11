@@ -22,7 +22,6 @@ import { useProductClient } from "../hooks/useProductClient";
 export default function ProductClient({
   product,
   recommended,
-  initialSetItemKey,
   existingReview,
   isAuthenticated,
   reviews,

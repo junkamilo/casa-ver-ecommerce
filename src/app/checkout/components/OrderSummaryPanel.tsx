@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Sparkles } from "lucide-react";
 import { LOCALE } from "../constants";
-import { EARLY_BIRD_DISCOUNT_PCT } from "@/lib/earlybird.constants";
+import { calcLineItemDisplayTotals } from "@/modules/checkout/presentation/calculators/line-item-totals";
 import type { CheckoutItem } from "../types";
 import OrderTotals from "./shared/OrderTotals";
 
@@ -44,10 +44,7 @@ const OrderSummaryPanel = ({
         {/* Productos */}
         <div className="space-y-6 mb-10 max-h-[45vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent pr-4">
           {items.map((item) => {
-            const originalTotal = item.price * item.quantity;
-            const discountedTotal = earlyBirdActive
-              ? Math.round(originalTotal * (1 - EARLY_BIRD_DISCOUNT_PCT / 100))
-              : originalTotal;
+            const { originalTotal, discountedTotal } = calcLineItemDisplayTotals(item, earlyBirdActive);
             return (
               <div
                 key={item.id}

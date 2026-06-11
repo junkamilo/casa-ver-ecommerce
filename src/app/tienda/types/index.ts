@@ -1,7 +1,2 @@
-export interface TiendaFilters {
-  minPrice?: string;
-  maxPrice?: string;
-  color?: string;
-  /** Número de página (1-based). */
-  page?: string;
-}
+// Thin re-export desde `modules/catalog/shop/contracts/shop.dto`.
+export type { TiendaFilters } from "@/modules/catalog/shop/contracts/shop.dto";

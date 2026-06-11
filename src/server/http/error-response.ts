@@ -22,12 +22,27 @@ function getErrorDetails(error: unknown): unknown {
   return undefined;
 }
 
+function getExplicitStatus(error: unknown): number | undefined {
+  if (typeof error === "object" && error !== null && "status" in error) {
+    const value = (error as { status?: unknown }).status;
+    if (typeof value === "number" && value >= 400 && value < 600) {
+      return value;
+    }
+  }
+  return undefined;
+}
+
 function mapStatus(error: unknown): number {
   if (error instanceof UnauthenticatedError) return 401;
   if (error instanceof ForbiddenError) return 403;
 
+  // Errores que declaran su propio HTTP status (ej. BoldGatewayError: 502/504).
+  const explicit = getExplicitStatus(error);
+  if (explicit !== undefined) return explicit;
+
   const name = getErrorName(error);
   if (name.endsWith("ValidationError")) return 400;
+  if (name.endsWith("ForbiddenError")) return 403;
   if (name.endsWith("NotFoundError")) return 404;
   if (name.endsWith("ConflictError")) return 409;
 

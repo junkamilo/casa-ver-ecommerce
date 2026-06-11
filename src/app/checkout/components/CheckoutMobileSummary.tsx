@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { ShoppingBag, ChevronUp, X, Sparkles } from "lucide-react";
 import { LOCALE } from "../constants";
-import { EARLY_BIRD_DISCOUNT_PCT } from "@/lib/earlybird.constants";
+import { calcLineItemDisplayTotals } from "@/modules/checkout/presentation/calculators/line-item-totals";
 import type { CheckoutItem } from "../types";
 import OrderTotals from "./shared/OrderTotals";
 
@@ -69,10 +69,7 @@ export default function CheckoutMobileSummary({
             {/* Items */}
             <div className="space-y-3">
               {items.map((item) => {
-                const originalTotal = item.price * item.quantity;
-                const discountedTotal = earlyBirdActive
-                  ? Math.round(originalTotal * (1 - EARLY_BIRD_DISCOUNT_PCT / 100))
-                  : originalTotal;
+                const { originalTotal, discountedTotal } = calcLineItemDisplayTotals(item, earlyBirdActive);
                 return (
                   <div
                     key={item.id}

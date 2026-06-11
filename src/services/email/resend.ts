@@ -2,7 +2,16 @@ import { Resend } from "resend";
 import { FROM_EMAIL, FROM_NAME, REPLY_TO } from "./constants";
 import type { EmailResult } from "./types";
 
-export const resend = new Resend(process.env.RESEND_API_KEY);
+let resendClient: Resend | null = null;
+
+function getResendClient(): Resend | null {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return null;
+  if (!resendClient) {
+    resendClient = new Resend(apiKey);
+  }
+  return resendClient;
+}
 
 interface SendEmailOptions {
   to: string;
@@ -11,13 +20,14 @@ interface SendEmailOptions {
 }
 
 export async function sendEmail({ to, subject, html }: SendEmailOptions): Promise<EmailResult> {
-  if (!process.env.RESEND_API_KEY) {
+  const resend = getResendClient();
+  if (!resend) {
     return { success: false, error: "Email service not configured" };
   }
 
   try {
     const response = await resend.emails.send({
-      from:    `${FROM_NAME} <${FROM_EMAIL}>`,
+      from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to,
       subject,
       html,
