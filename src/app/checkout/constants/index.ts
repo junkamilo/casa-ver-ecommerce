@@ -1,7 +1,9 @@
 // ---------------------------------------------------------------------------
-// Negocio
+// Locale
 // ---------------------------------------------------------------------------
-export const SHIPPING_COST = 0;
+// El cálculo del costo de envío vive en `getShippingCost(city, dept)` de
+// `src/lib/shipping.ts` (server-side). La constante legacy `SHIPPING_COST=0`
+// fue eliminada porque no representaba la regla real de negocio.
 export const LOCALE = "es-CO";
 
 // ---------------------------------------------------------------------------

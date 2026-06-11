@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import SocialProofWrapper from "@/components/SocialProofWrapper";
+import LaunchLockWrapper from "@/components/LaunchLock/LaunchLockWrapper";
 import { Providers } from "@/components/Providers";
 import WhatsAppFloatingButton from "@/components/WhatsAppFloatingButton";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -28,6 +29,7 @@ export default function RootLayout({
         <Providers>
           <CartProvider>
             {children}
+            <LaunchLockWrapper />
             <SocialProofWrapper />
             <WhatsAppFloatingButton />
           </CartProvider>

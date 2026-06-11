@@ -48,4 +48,7 @@ export interface SavedAddress {
 // ---------------------------------------------------------------------------
 // UI
 // ---------------------------------------------------------------------------
-export type PaymentMethodUI = "BOLD";
+// Métodos de pago disponibles en el formulario. Debe coincidir con el enum
+// `paymentMethod` del schema Zod (BOLD | ADDI). Antes era solo "BOLD" — bug
+// pre-existente que ahora queda alineado.
+export type PaymentMethodUI = "BOLD" | "ADDI";
