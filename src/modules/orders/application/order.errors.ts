@@ -1,6 +1,8 @@
-export class OrderNotFoundError extends Error {
-  constructor(message: string) {
+export class OrderPaymentGraceExpiredError extends Error {
+  constructor(
+    message = "El tiempo para completar el pago de esta orden ha expirado"
+  ) {
     super(message);
-    this.name = "OrderNotFoundError";
+    this.name = "OrderPaymentGraceExpiredError";
   }
 }

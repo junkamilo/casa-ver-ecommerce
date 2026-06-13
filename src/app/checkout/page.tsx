@@ -38,6 +38,7 @@ export default function CheckoutPage() {
     total,
     coupon,
     couponDiscount,
+    lineItemDiscountPercentage,
     handleApplyCoupon,
     handleRemoveCoupon,
     showCouponCelebration,
@@ -58,6 +59,8 @@ export default function CheckoutPage() {
         open={showCouponCelebration}
         onClose={dismissCouponCelebration}
         discountPercentage={coupon.discountPercentage}
+        discountType={coupon.discountType}
+        discountValue={coupon.discountValue}
         couponDiscount={couponDiscount}
       />
 
@@ -72,6 +75,7 @@ export default function CheckoutPage() {
           total={total}
           coupon={coupon}
           couponDiscount={couponDiscount}
+          lineItemDiscountPercentage={lineItemDiscountPercentage}
           onApplyCoupon={handleApplyCoupon}
           onRemoveCoupon={handleRemoveCoupon}
           isPending={isPending}
@@ -120,6 +124,7 @@ export default function CheckoutPage() {
           total={total}
           coupon={coupon}
           couponDiscount={couponDiscount}
+          lineItemDiscountPercentage={lineItemDiscountPercentage}
           onApplyCoupon={handleApplyCoupon}
           onRemoveCoupon={handleRemoveCoupon}
           isPending={isPending}

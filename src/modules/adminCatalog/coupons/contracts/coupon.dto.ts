@@ -73,3 +73,50 @@ export type CouponUsageDetailDTO = {
     createdAt: string;
   };
 };
+
+export type PromotionalCouponListItemDTO = {
+  id: string;
+  code: string;
+  codeSource: "RANDOM" | "CUSTOM" | null;
+  discountType: "PERCENTAGE" | "FIXED";
+  discountValue: number;
+  maxGlobalUses: number;
+  maxUsesPerUser: number;
+  currentGlobalUses: number;
+  isActive: boolean;
+  scheduleMode: "NONE" | "SINGLE_DAY" | "DATE_RANGE";
+  validFrom: string | null;
+  validTo: string | null;
+  scheduleLabel: string;
+  status: "ACTIVE" | "EXHAUSTED" | "INACTIVE" | "EXPIRED" | "SCHEDULED";
+  createdAt: string;
+};
+
+export type PromotionalCouponListResponseDTO = {
+  data: PromotionalCouponListItemDTO[];
+  pagination: CouponListPaginationDTO;
+};
+
+export type CreatePromotionalCouponInputDTO = {
+  codeSource: "RANDOM" | "CUSTOM";
+  code?: string;
+  discountType: "PERCENTAGE" | "FIXED";
+  discountValue: number;
+  maxGlobalUses: number;
+  scheduleEnabled: boolean;
+  scheduleMode?: "SINGLE_DAY" | "DATE_RANGE";
+  singleDayDate?: string;
+  startTime?: string;
+  endTime?: string;
+  fromDate?: string;
+  toDate?: string;
+};
+
+export type PromotionalCouponUsageItemDTO = {
+  id: string;
+  email: string;
+  documentId: string;
+  orderNumber: string;
+  orderStatus: string;
+  usedAt: string;
+};

@@ -16,6 +16,7 @@ interface CheckoutMobileSummaryProps {
   total: number;
   coupon: CouponState;
   couponDiscount: number;
+  lineItemDiscountPercentage?: number;
   onApplyCoupon: (code: string) => void;
   onRemoveCoupon: () => void;
   isPending?: boolean;
@@ -29,6 +30,7 @@ export default function CheckoutMobileSummary({
   total,
   coupon,
   couponDiscount,
+  lineItemDiscountPercentage = 0,
   onApplyCoupon,
   onRemoveCoupon,
   isPending = false,
@@ -36,8 +38,7 @@ export default function CheckoutMobileSummary({
 }: CheckoutMobileSummaryProps) {
   const [open, setOpen] = useState(false);
   const totalItems = items.reduce((acc, i) => acc + i.quantity, 0);
-  const discountPercentage =
-    coupon.status === "valid" ? coupon.discountPercentage : 0;
+  const discountPercentage = lineItemDiscountPercentage;
 
   return (
     <>

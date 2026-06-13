@@ -1,25 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import AdminDataTable from "@/components/ui/AdminDataTable";
 import AdminPageHeader from "@/components/ui/AdminPageHeader";
 import AdminPagination from "@/components/ui/AdminPagination";
 import CouponUsageModal from "./components/CouponUsageModal";
+import PromotionalCouponsTab from "./components/PromotionalCouponsTab";
 import type { CouponListItemDTO } from "@/modules/adminCatalog/coupons/contracts/coupon.dto";
 import { Copy, Eye, Loader2, Search, TicketPercent, Trash2 } from "lucide-react";
 import { useCouponManager } from "./hooks/useCouponManager";
-
-function Toast({ toast }: { toast: { type: "success" | "error"; message: string } | null }) {
-  if (!toast) return null;
-  return (
-    <div
-      className={`fixed top-5 right-5 z-[200] px-5 py-3.5 rounded-xl shadow-lg text-sm font-semibold transition-all ${
-        toast.type === "success" ? "bg-[#154734] text-white" : "bg-red-600 text-white"
-      }`}
-    >
-      {toast.message}
-    </div>
-  );
-}
+import AdminToast from "@/app/admin/components/AdminToast";
+import AdminConfirmModal from "@/app/admin/components/AdminConfirmModal";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("es-CO", {
@@ -38,6 +29,7 @@ function formatBatchLabel(coupon: CouponListItemDTO) {
 }
 
 export default function AdminPromocionesPage() {
+  const [activeTab, setActiveTab] = useState<"batch" | "promotional">("batch");
   const m = useCouponManager();
 
   const columns = [
@@ -173,19 +165,49 @@ export default function AdminPromocionesPage() {
 
   return (
     <div className="space-y-8 p-6 bg-gray-50 min-h-screen font-sans">
-      <Toast toast={m.toast} />
+      <AdminToast toast={m.toast} />
+      <AdminConfirmModal
+        open={!!m.confirmModal}
+        title={m.confirmModal?.title ?? ""}
+        description={m.confirmModal?.description ?? ""}
+        confirmLabel={m.confirmModal?.confirmLabel}
+        variant={m.confirmModal?.variant}
+        loading={m.confirmLoading}
+        onConfirm={m.runConfirmAction}
+        onCancel={m.closeConfirmModal}
+      />
 
       <AdminPageHeader title="Promociones" />
 
       <div className="flex items-center gap-2 border-b border-gray-200 pb-1">
         <button
           type="button"
-          className="px-4 py-2 text-sm font-semibold text-[#154734] border-b-2 border-[#154734] -mb-px"
+          onClick={() => setActiveTab("batch")}
+          className={`px-4 py-2 text-sm font-semibold -mb-px transition-colors ${
+            activeTab === "batch"
+              ? "text-[#154734] border-b-2 border-[#154734]"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
         >
           Cupones
         </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("promotional")}
+          className={`px-4 py-2 text-sm font-semibold -mb-px transition-colors ${
+            activeTab === "promotional"
+              ? "text-[#154734] border-b-2 border-[#154734]"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Código promocional
+        </button>
       </div>
 
+      {activeTab === "promotional" ? (
+        <PromotionalCouponsTab />
+      ) : (
+        <>
       <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
         <h2 className="text-base font-bold text-gray-900">Generar cupones</h2>
         <div className="flex flex-col sm:flex-row gap-4 sm:items-end">
@@ -273,6 +295,8 @@ export default function AdminPromocionesPage() {
         detail={m.usageDetail}
         onClose={m.closeUsageDetail}
       />
+        </>
+      )}
     </div>
   );
 }

@@ -26,6 +26,8 @@ export interface CouponState {
   code: string;
   status: "idle" | "validating" | "valid" | "invalid";
   discountPercentage: number;
+  discountType?: "PERCENTAGE" | "FIXED";
+  discountValue?: number;
   couponId?: string;
   errorMessage?: string;
 }

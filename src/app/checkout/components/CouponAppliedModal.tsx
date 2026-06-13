@@ -8,6 +8,8 @@ interface CouponAppliedModalProps {
   open: boolean;
   onClose: () => void;
   discountPercentage: number;
+  discountType?: "PERCENTAGE" | "FIXED";
+  discountValue?: number;
   couponDiscount: number;
 }
 
@@ -43,6 +45,8 @@ export default function CouponAppliedModal({
   open,
   onClose,
   discountPercentage,
+  discountType = "PERCENTAGE",
+  discountValue,
   couponDiscount,
 }: CouponAppliedModalProps) {
   useEffect(() => {
@@ -132,8 +136,12 @@ export default function CouponAppliedModal({
           </h2>
           <p className="mt-2 text-sm text-white/70">
             Obtuviste un{" "}
-            <span className="font-bold text-[#C19A6B]">{discountPercentage}%</span> de descuento
-            en tu pedido
+            <span className="font-bold text-[#C19A6B]">
+              {discountType === "FIXED" && discountValue
+                ? `$${discountValue.toLocaleString(LOCALE)}`
+                : `${discountPercentage}%`}
+            </span>{" "}
+            de descuento en tu pedido
           </p>
         </div>
 
