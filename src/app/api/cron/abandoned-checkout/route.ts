@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { PEDIDOS_PATH } from "@/app/perfil/constants/pedidos-route";
 import { sendAbandonedCheckoutEmail } from "@/services/email/client";
 
 // Órdenes PENDING sin pagar por más de 1 hora
@@ -46,7 +47,7 @@ export async function GET(request: Request) {
     // URL de pago: usar boldLinkId si existe, si no la página de pedidos
     const paymentUrl = order.boldLinkId
       ? `${baseUrl}/checkout/pago?linkId=${order.boldLinkId}`
-      : `${baseUrl}/perfil/pedidos`;
+      : `${baseUrl}${PEDIDOS_PATH}`;
 
     const result = await sendAbandonedCheckoutEmail({
       customerEmail: order.user.email,

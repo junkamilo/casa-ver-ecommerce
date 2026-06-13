@@ -2,6 +2,7 @@ import { emailLayout } from "./components/layout";
 import { emailHeader } from "./components/header";
 import { emailFooter } from "./components/footer";
 import { contactCard } from "./components/contact-card";
+import { PEDIDOS_PATH } from "@/app/perfil/constants/pedidos-route";
 import { BASE_URL, WHATSAPP_URL, WHATSAPP_NUMBER, BRAND_GOLD } from "../constants";
 import type { OrderItemEmailData } from "../types";
 
@@ -101,7 +102,7 @@ export function orderConfirmationTemplate(data: OrderConfirmationData): string {
       </div>
 
       <div style="text-align:center;margin-bottom:24px;">
-        <a href="${BASE_URL}/perfil/pedidos" style="display:inline-block;padding:14px 40px;background-color:#154734;color:white;font-size:15px;font-weight:600;border-radius:6px;text-decoration:none;">
+        <a href="${BASE_URL}${PEDIDOS_PATH}" style="display:inline-block;padding:14px 40px;background-color:#154734;color:white;font-size:15px;font-weight:600;border-radius:6px;text-decoration:none;">
           Ver estado de mi pedido
         </a>
       </div>

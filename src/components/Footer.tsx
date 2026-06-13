@@ -135,6 +135,9 @@ const Footer = () => {
               <Link href="/terminos-del-servicio" className="hover:text-[#C19A6B] transition-colors p-1 touch-target active:scale-95">Términos del Servicio</Link>
             </div>
           </div>
+          <p className="max-w-7xl 2xl:max-w-6xl mx-auto mt-3 sm:mt-4 text-center text-[10px] sm:text-xs text-white/35 font-light tracking-[0.2em] uppercase">
+            Tecnología de <span className="text-[#C19A6B]/70 font-medium tracking-[0.15em]">ROA Producciones</span>
+          </p>
         </div>
       </div>
 
