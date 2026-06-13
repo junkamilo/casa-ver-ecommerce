@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 import { useFormContext, useController } from "react-hook-form";
-import { DEPARTAMENTOS, MUNICIPIOS } from "@/lib/constants/colombia";
+import { getDepartamentos, getMunicipiosForDepartment } from "@/lib/constants/colombia";
 import { INPUT_CLS, LABEL_CLS } from "../constants";
 import type { CheckoutFormData } from "../types/schema";
 import CustomSelect from "./CustomSelect";
@@ -42,7 +42,9 @@ export function DeliveryFormFields() {
     prevDeptRef.current = selectedDepartment;
   }, [selectedDepartment, setValue]);
 
-  const municipios = selectedDepartment ? (MUNICIPIOS[selectedDepartment] ?? []) : [];
+  const municipios = selectedDepartment
+    ? getMunicipiosForDepartment(selectedDepartment)
+    : [];
 
   return (
     <div className="space-y-4 sm:space-y-5">
@@ -150,7 +152,7 @@ export function DeliveryFormFields() {
           label="Departamento"
           value={deptField.value ?? ""}
           onChange={(val) => deptField.onChange(val)}
-          options={[...DEPARTAMENTOS]}
+          options={getDepartamentos()}
           placeholder="Seleccionar"
           searchable
           error={errors.department?.message}
