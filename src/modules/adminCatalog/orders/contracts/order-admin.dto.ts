@@ -2,6 +2,11 @@ export interface OrderItemDTO {
   name: string;
   qty: number;
   price: number;
+  colorName: string;
+  size: string;
+  sku: string;
+  imageUrl?: string;
+  lineTotal?: number;
 }
 
 export interface AdminOrderDTO {

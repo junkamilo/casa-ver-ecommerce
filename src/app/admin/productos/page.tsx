@@ -60,7 +60,7 @@ export default function AdminProductos() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const missingRequired = !form.name || !form.categoryId || (!form.isSet && !form.basePrice);
+    const missingRequired = !form.name || form.categoryIds.length === 0 || (!form.isSet && !form.basePrice);
     if (missingRequired) {
       showToast("error", form.isSet ? "Completa nombre y categoría" : "Completa nombre, precio y categoría");
       return;

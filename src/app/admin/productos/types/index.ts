@@ -39,7 +39,7 @@ export type ToastState = { type: "success" | "error"; message: string } | null;
 
 export type ProductFormErrors = Partial<
   Record<
-    "name" | "description" | "basePrice" | "comparePrice" | "stock" | "categoryId" | "videoUrl",
+    "name" | "description" | "basePrice" | "comparePrice" | "stock" | "categoryIds" | "videoUrl",
     string
   >
 >;
@@ -77,7 +77,7 @@ export interface ProductModalProps {
   basePrice: string; setBasePrice: (v: string) => void;
   comparePrice: string; setComparePrice: (v: string) => void;
   stock: string; setStock: (v: string) => void;
-  categoryId: string; setCategoryId: (v: string) => void;
+  categoryIds: string[]; setCategoryIds: (v: string[]) => void;
   status: string; setStatus: (v: string) => void;
   isFeatured: boolean; setIsFeatured: (v: boolean) => void;
   isNew: boolean; setIsNew: (v: boolean) => void;
@@ -146,7 +146,7 @@ export interface LabelToggleProps {
 export interface GeneralInfoSectionProps {
   name: string; onName: (v: string) => void;
   description: string; onDescription: (v: string) => void;
-  categoryId: string; onCategory: (v: string) => void;
+  categoryIds: string[]; onCategories: (v: string[]) => void;
   status: string; onStatus: (v: string) => void;
   isFeatured: boolean; onFeatured: (v: boolean) => void;
   isNew: boolean; onNew: (v: boolean) => void;

@@ -48,7 +48,9 @@ export type AdminProductDetailDTO = {
   basePrice?: number | null;
   comparePrice?: number | null;
   stock?: number | null;
-  categoryId: string;
+  categoryIds: string[];
+  /** @deprecated usar categoryIds */
+  categoryId?: string;
   status: string;
   isFeatured?: boolean;
   isNew?: boolean;
@@ -79,7 +81,9 @@ export type ProductFormInitialValues = {
   basePrice: string;
   comparePrice: string;
   stock: string;
-  categoryId: string;
+  categoryIds: string[];
+  /** @deprecated usar categoryIds */
+  categoryId?: string;
   status: string;
   isFeatured: boolean;
   isNew: boolean;
@@ -133,7 +137,7 @@ export function mapAdminProductDetailToFormInitialValues(
     basePrice: product.basePrice?.toString() || "",
     comparePrice: product.comparePrice?.toString() || "",
     stock: product.stock?.toString() || "",
-    categoryId: product.categoryId,
+    categoryIds: product.categoryIds,
     status: product.status,
     isFeatured: product.isFeatured || false,
     isNew: product.isNew || false,
@@ -169,7 +173,9 @@ export function mapProductFormToCreatePayload(input: {
   basePrice: string;
   comparePrice: string;
   stock: string;
-  categoryId: string;
+  categoryIds: string[];
+  /** @deprecated usar categoryIds */
+  categoryId?: string;
   status: string;
   isFeatured: boolean;
   isNew: boolean;
@@ -202,7 +208,7 @@ export function mapProductFormToCreatePayload(input: {
     basePrice: input.basePrice ? parseFloat(input.basePrice) : 0,
     comparePrice: input.comparePrice ? parseFloat(input.comparePrice) : null,
     stock: calcEffectiveStock(input.selectedColors, input.stock),
-    categoryId: input.categoryId,
+    categoryIds: input.categoryIds,
     status: input.status === "INACTIVE" ? "INACTIVE" : "ACTIVE",
     isFeatured: input.isFeatured,
     isNew: input.isNew,

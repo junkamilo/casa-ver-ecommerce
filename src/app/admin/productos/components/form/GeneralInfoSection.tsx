@@ -10,7 +10,7 @@ import LabelToggle from "./LabelToggle";
 export default function GeneralInfoSection({
   name, onName,
   description, onDescription,
-  categoryId, onCategory,
+  categoryIds, onCategories,
   status, onStatus,
   isFeatured, onFeatured,
   isNew, onNew,
@@ -25,8 +25,17 @@ export default function GeneralInfoSection({
   const est = useDropdown();
   const gt = useDropdown();
 
-  const selectedCat = categories.find((c) => c.id === categoryId);
+  const selectedCategoryNames = categories
+    .filter((c) => categoryIds.includes(c.id))
+    .map((c) => c.name);
   const selectedStatus = STATUS_OPTIONS.find((s) => s.value === status) ?? STATUS_OPTIONS[0];
+
+  const toggleCategory = (id: string) => {
+    const next = categoryIds.includes(id)
+      ? categoryIds.filter((value) => value !== id)
+      : [...categoryIds, id];
+    onCategories(next);
+  };
 
   const handleProductNewToggle = () => {
     const next = !isProductNew;
@@ -83,23 +92,27 @@ export default function GeneralInfoSection({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* ── Categoría ── */}
+        {/* ── Categorías ── */}
         <div className="space-y-1.5">
           <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
-            Categoría *
+            Categorías *
           </label>
           <div className="relative" ref={cat.ref}>
             <button
               type="button"
               onClick={() => cat.setOpen((v) => !v)}
               className={`w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg border text-sm transition-colors bg-white ${
-                errors.categoryId
+                errors.categoryIds
                   ? "border-red-400"
                   : "border-gray-200 hover:border-[#C19A6B]"
               }`}
             >
-              <span className={selectedCat ? "text-gray-800" : "text-gray-400"}>
-                {selectedCat ? selectedCat.name : "Seleccionar categoría…"}
+              <span className={selectedCategoryNames.length > 0 ? "text-gray-800 font-medium truncate" : "text-gray-400"}>
+                {selectedCategoryNames.length > 0
+                  ? selectedCategoryNames.length === 1
+                    ? selectedCategoryNames[0]
+                    : `${selectedCategoryNames.length} categorías seleccionadas`
+                  : "Seleccionar categorías…"}
               </span>
               {cat.open
                 ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" />
@@ -108,19 +121,28 @@ export default function GeneralInfoSection({
 
             {cat.open && (
               <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                <div className="px-4 py-2.5 border-b border-gray-100 bg-[#154734]/5">
+                <div className="px-4 py-2.5 border-b border-gray-100 bg-[#154734]/5 flex items-center justify-between">
                   <p className="text-[11px] font-bold text-[#154734] uppercase tracking-widest">
                     Categorías
                   </p>
+                  {categoryIds.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => onCategories([])}
+                      className="text-[11px] text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      Limpiar
+                    </button>
+                  )}
                 </div>
                 <div className="overflow-y-auto max-h-52 p-1.5 space-y-0.5">
                   {categories.map((c) => {
-                    const active = c.id === categoryId;
+                    const active = categoryIds.includes(c.id);
                     return (
                       <button
                         key={c.id}
                         type="button"
-                        onClick={() => { onCategory(c.id); cat.setOpen(false); }}
+                        onClick={() => toggleCategory(c.id)}
                         className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                           active
                             ? "bg-[#154734] text-white"
@@ -133,10 +155,17 @@ export default function GeneralInfoSection({
                     );
                   })}
                 </div>
+                {selectedCategoryNames.length > 0 && (
+                  <div className="px-4 py-2 border-t border-gray-100 bg-gray-50">
+                    <p className="text-[11px] text-gray-500">
+                      {selectedCategoryNames.join(", ")}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
-          <FieldError msg={errors.categoryId} />
+          <FieldError msg={errors.categoryIds} />
         </div>
 
         {/* ── Estado ── */}
@@ -197,7 +226,12 @@ export default function GeneralInfoSection({
 
       {/* ── Tipos de Prenda (multi-select) ── */}
       {(() => {
-        const catGarmentTypes = categories.find((c) => c.id === categoryId)?.garmentTypes ?? [];
+        const catGarmentTypes = categories
+          .filter((c) => categoryIds.includes(c.id))
+          .flatMap((c) => c.garmentTypes)
+          .filter((garmentType, index, list) =>
+            list.findIndex((item) => item.id === garmentType.id) === index
+          );
         const toggle = (id: string) => {
           const next = garmentTypes.includes(id)
             ? garmentTypes.filter((x) => x !== id)
@@ -214,15 +248,15 @@ export default function GeneralInfoSection({
               Tipos de Prenda
               <span className="font-normal text-gray-400 normal-case tracking-normal">(para filtros del menú)</span>
             </label>
-            {!categoryId ? (
+            {!categoryIds.length ? (
               <p className="text-[11px] text-gray-400 px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-100">
-                Selecciona una categoría para ver los tipos disponibles.
+                Selecciona al menos una categoría para ver los tipos disponibles.
               </p>
             ) : catGarmentTypes.length === 0 ? (
               <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-100 rounded-lg">
                 <Tag className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                 <p className="text-[11px] text-amber-700">
-                  Esta categoría no tiene tipos de prenda asignados.
+                  Esta categoría no tiene tipos de prenda asignados en las categorías seleccionadas.
                   <a href="/admin/categorias" className="font-bold underline ml-1" target="_blank">Asignar →</a>
                 </p>
               </div>

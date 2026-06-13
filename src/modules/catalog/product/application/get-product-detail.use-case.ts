@@ -76,7 +76,8 @@ export async function getProductDetailUseCase(
   const buyerOrders = await repository.getBuyerOrders(product.id);
   const socialProof = mapSocialProof(buyerOrders);
 
-  const recommended = (product.category?.products ?? []).map(transformProduct);
+  const recommendedRaw = await repository.getRecommendedProducts(product.id, product.slug);
+  const recommended = recommendedRaw.map(transformProduct);
   const reviews = mapProductReviews(product.reviews);
 
   return {

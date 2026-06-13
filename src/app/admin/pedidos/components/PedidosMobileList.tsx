@@ -3,6 +3,7 @@
 import { ChevronDown, ChevronUp, CreditCard, MapPin } from "lucide-react";
 import { getStatusStyles, formatPrice } from "../constants";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
+import { AdminOrderItemRow } from "./AdminOrderItemRow";
 import type { PedidosMobileListProps } from "../types/types";
 
 export function PedidosMobileList({
@@ -66,12 +67,11 @@ export function PedidosMobileList({
 
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Items</p>
-                {order.items.map((item, i) => (
-                  <div key={i} className="flex justify-between text-sm">
-                    <span className="text-gray-700">{item.qty}x {item.name}</span>
-                    <span className="font-medium text-gray-900">{formatPrice(item.price)}</span>
-                  </div>
-                ))}
+                <div className="divide-y divide-gray-100 bg-white rounded-lg border border-gray-100 px-2">
+                  {order.items.map((item, i) => (
+                    <AdminOrderItemRow key={i} item={item} compact />
+                  ))}
+                </div>
               </div>
 
               <button

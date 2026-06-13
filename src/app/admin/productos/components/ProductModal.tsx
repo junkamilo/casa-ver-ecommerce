@@ -31,7 +31,7 @@ export default function ProductModal({
   basePrice, setBasePrice,
   comparePrice, setComparePrice,
   stock, setStock,
-  categoryId, setCategoryId,
+  categoryIds, setCategoryIds,
   status, setStatus,
   isFeatured, setIsFeatured,
   isNew, setIsNew,
@@ -89,7 +89,7 @@ export default function ProductModal({
       basePrice: basePrice || undefined,
       comparePrice: comparePrice || undefined,
       stock: shouldShowStockTable ? "0" : (stock || undefined),
-      categoryId,
+      categoryIds,
       videoUrl: videoUrl || undefined,
     });
 
@@ -232,7 +232,7 @@ export default function ProductModal({
                 <GeneralInfoSection
                   name={name} onName={setName}
                   description={description} onDescription={setDescription}
-                  categoryId={categoryId} onCategory={setCategoryId}
+                  categoryIds={categoryIds} onCategories={setCategoryIds}
                   status={status} onStatus={setStatus}
                   isFeatured={isFeatured} onFeatured={setIsFeatured}
                   isNew={isNew} onNew={setIsNew}

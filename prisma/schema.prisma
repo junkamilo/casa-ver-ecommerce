@@ -108,6 +108,18 @@ model ProductGarmentType {
   @@map("product_garment_types")
 }
 
+model ProductCategory {
+  productId  String
+  categoryId String
+
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, categoryId])
+  @@index([categoryId])
+  @@map("product_categories")
+}
+
 // ============================================================
 // AUTENTICACIÓN & USUARIOS (NextAuth + Perfil Cliente)
 // ============================================================
@@ -257,7 +269,7 @@ model Category {
   parent          Category?  @relation("CategoryToSubcategory", fields: [parentId], references: [id])
   subcategories   Category[] @relation("CategoryToSubcategory")
 
-  products        Product[]
+  products        ProductCategory[]
   garmentTypes    CategoryGarmentType[]
 
   createdAt       DateTime   @default(now())
@@ -276,9 +288,6 @@ model Product {
   description     String         @db.Text
   basePrice       Decimal        @db.Decimal(10, 2)
   comparePrice    Decimal?       @db.Decimal(10, 2) // Precio tachado (oferta)
-
-  categoryId      String
-  category        Category       @relation(fields: [categoryId], references: [id])
 
   status          ProductStatus  @default(DRAFT)
   isFeatured      Boolean        @default(false)
@@ -304,6 +313,9 @@ model Product {
   // Tipos de prenda (para filtros del menú — relación muchos-a-muchos)
   garmentTypes    ProductGarmentType[]
 
+  // Categorías (relación muchos-a-muchos)
+  categories      ProductCategory[]
+
   // Conjunto (Set) de piezas
   isSet           Boolean        @default(false)
 
@@ -317,7 +329,6 @@ model Product {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
-  @@index([categoryId])
   @@index([status])
   @@index([slug])
   @@map("products")
