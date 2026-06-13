@@ -72,3 +72,19 @@ export interface SendReviewRequestEmailInput {
   orderNumber: string;
   reviewUrl: string; // URL con token mágico
 }
+
+export interface SendNewOrderAdminEmailInput {
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  shippingAddress: string;
+  shippingCity: string;
+  shippingDepartment: string;
+  paymentMethod: string;
+  items: OrderItemEmailData[];
+  subtotal: number;
+  shippingCost: number;
+  discount: number;
+  total: number;
+}

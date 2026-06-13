@@ -14,8 +14,11 @@ interface SaleItem {
   slug: string;
 }
 
-const DISPLAY_DURATION = 5000;
-const INTERVAL_DURATION = 12000;
+const DISPLAY_DURATION_MS = 5_000;
+/** Tiempo oculto entre una notificación y la siguiente. */
+const GAP_BETWEEN_MS = 55_000;
+/** Espera antes de mostrar la primera notificación tras cargar la página. */
+const INITIAL_DELAY_MS = 12_000;
 
 const SocialProofPopup = () => {
   const [sales, setSales] = useState<SaleItem[]>([]);
@@ -37,7 +40,11 @@ const SocialProofPopup = () => {
 
     let hideTimer: ReturnType<typeof setTimeout>;
     let indexTimer: ReturnType<typeof setTimeout>;
-    let intervalId: ReturnType<typeof setInterval>;
+    let nextCycleTimer: ReturnType<typeof setTimeout>;
+
+    const scheduleNextCycle = () => {
+      nextCycleTimer = setTimeout(runCycle, GAP_BETWEEN_MS);
+    };
 
     const runCycle = () => {
       setIsVisible(true);
@@ -45,20 +52,18 @@ const SocialProofPopup = () => {
         setIsVisible(false);
         indexTimer = setTimeout(() => {
           setCurrentIndex((prev) => (prev + 1) % sales.length);
+          scheduleNextCycle();
         }, 500);
-      }, DISPLAY_DURATION);
+      }, DISPLAY_DURATION_MS);
     };
 
-    const initialTimeout = setTimeout(() => {
-      runCycle();
-      intervalId = setInterval(runCycle, INTERVAL_DURATION);
-    }, 4000);
+    const initialTimeout = setTimeout(runCycle, INITIAL_DELAY_MS);
 
     return () => {
       clearTimeout(initialTimeout);
       clearTimeout(hideTimer);
       clearTimeout(indexTimer);
-      clearInterval(intervalId);
+      clearTimeout(nextCycleTimer);
       setIsVisible(false);
     };
   }, [isPermanentlyClosed, sales]);
@@ -71,9 +76,10 @@ const SocialProofPopup = () => {
     <div
       className={`
         fixed z-40
-        left-3 sm:left-4
-        bottom-4 sm:bottom-6 md:bottom-8
-        w-[calc(100vw-24px)] sm:w-[calc(100vw-32px)] md:max-w-sm lg:max-w-md
+        left-3 right-3
+        bottom-24
+        sm:left-4 sm:right-auto sm:bottom-6 md:bottom-8
+        sm:w-[calc(100vw-32px)] md:max-w-sm lg:max-w-md
         bg-white
         border-l-[4px] sm:border-l-[6px] border-[#154734]
         shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)]
@@ -90,7 +96,7 @@ const SocialProofPopup = () => {
           e.stopPropagation();
           setIsPermanentlyClosed(true);
         }}
-        className="absolute top-2 right-2 sm:top-1 sm:right-1 p-1.5 sm:p-1 text-gray-300 hover:text-gray-500 hover:bg-gray-100 rounded-full transition-colors z-20 touch-target active:scale-90"
+        className="absolute top-2 right-2 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors z-20 touch-target active:scale-90"
         aria-label="Cerrar"
       >
         <X className="w-4 h-4 sm:w-5 sm:h-5" />

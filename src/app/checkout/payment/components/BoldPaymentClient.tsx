@@ -7,7 +7,16 @@ import { useSession } from "next-auth/react";
 import { getPedidosHref } from "@/app/perfil/constants/pedidos-route";
 import type { BoldPaymentClientProps } from "../types";
 
-export default function BoldPaymentClient({ orderRef, amount, integrity, orderId }: BoldPaymentClientProps) {
+export default function BoldPaymentClient({
+  orderRef,
+  amount,
+  integrity,
+  orderId,
+  customerEmail,
+  customerName,
+  customerPhone,
+  customerDocument,
+}: BoldPaymentClientProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [paymentInitiated, setPaymentInitiated] = useState(false);
   const { status } = useSession();
@@ -50,6 +59,21 @@ export default function BoldPaymentClient({ orderRef, amount, integrity, orderId
     script.setAttribute("data-description",    "Pedido Casa Verde");
     script.setAttribute("data-redirection-url", redirectionUrl);
 
+    if (customerEmail || customerName || customerPhone || customerDocument) {
+      const customerData: Record<string, string> = {};
+      if (customerEmail) customerData.email = customerEmail;
+      if (customerName) customerData.fullName = customerName;
+      if (customerPhone) {
+        customerData.phone = customerPhone.replace(/\D/g, "").slice(-10);
+        customerData.dialCode = "+57";
+      }
+      if (customerDocument) {
+        customerData.documentNumber = customerDocument;
+        customerData.documentType = "CC";
+      }
+      script.setAttribute("data-customer-data", JSON.stringify(customerData));
+    }
+
     const container = containerRef.current;
     container.appendChild(script);
 
@@ -83,7 +107,7 @@ export default function BoldPaymentClient({ orderRef, amount, integrity, orderId
       observer.disconnect();
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [orderRef, amount, integrity, orderId, identityKey, appUrl, paymentInitiated]);
+  }, [orderRef, amount, integrity, orderId, identityKey, appUrl, paymentInitiated, customerEmail, customerName, customerPhone, customerDocument]);
 
   if (!orderRef || !amount || !integrity || !orderId) {
     return (

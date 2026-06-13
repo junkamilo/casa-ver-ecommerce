@@ -56,6 +56,9 @@ export function orderConfirmationTemplate(data: OrderConfirmationData): string {
         ¡Gracias por elegir Casa Verde! Tu pedido ya está confirmado y comenzaremos a prepararlo muy pronto.
         Recuerda que la mayoría de nuestras prendas se elaboran bajo confección, por lo que el tiempo de despacho es de 2 a 5 días hábiles 🪡🧵📦
       </p>
+      <p style="margin:0 0 12px 0;font-size:14px;line-height:1.7;color:#6B7280;background:#F9FAFB;padding:12px 16px;border-radius:6px;border:1px solid #E5E7EB;">
+        También recibirás un <strong>comprobante de pago de Bold</strong> en este mismo correo. Revisa tu bandeja de entrada y spam si no lo ves en unos minutos.
+      </p>
       <p style="margin:0 0 24px 0;font-size:15px;line-height:1.7;color:#374151;">
         Si tienes alguna duda o necesitas asesoría, puedes escribirnos por
         <a href="${WHATSAPP_URL}" style="color:#154734;font-weight:600;text-decoration:none;">WhatsApp al ${WHATSAPP_NUMBER}</a> 💬

@@ -3,4 +3,8 @@ export interface BoldPaymentClientProps {
   amount: string;
   integrity: string;
   orderId: string;
+  customerEmail?: string;
+  customerName?: string;
+  customerPhone?: string;
+  customerDocument?: string;
 }

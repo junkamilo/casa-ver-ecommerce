@@ -21,7 +21,10 @@ const BOLD_PAYMENT_API_BASE = "https://api.online.payments.bold.co";
 export interface CreateBoldLinkInput {
   reference: string;
   totalAmount: number;
-  payerEmail?: string;
+  /** Obligatorio — Bold usa este correo para enviar el comprobante de pago al cliente. */
+  payerEmail: string;
+  payerName?: string;
+  payerPhone?: string;
   callbackUrl: string;
   identityKey: string;
 }
@@ -52,7 +55,7 @@ export interface BoldLinkStatusRaw {
 export class BoldPaymentClient {
   // POST /online/link/v1 → crea el link de pago.
   async createLink(input: CreateBoldLinkInput): Promise<CreateBoldLinkResponse | CreateBoldLinkError> {
-    const boldBody = {
+    const boldBody: Record<string, unknown> = {
       amount_type: "CLOSE",
       amount: {
         currency: "COP",
@@ -62,8 +65,11 @@ export class BoldPaymentClient {
       reference: input.reference,
       description: "Compra en Casa Verde",
       callback_url: input.callbackUrl,
-      ...(input.payerEmail ? { payer_email: input.payerEmail } : {}),
+      payer_email: input.payerEmail,
     };
+
+    if (input.payerName) boldBody.payer_name = input.payerName;
+    if (input.payerPhone) boldBody.payer_phone = input.payerPhone;
 
     const response = await fetch(BOLD_LINK_API, {
       method: "POST",
