@@ -13,10 +13,6 @@
       "schedule": "0 4 * * *"
     },
     {
-      "path": "/api/cron/retry-order-emails",
-      "schedule": "*/15 * * * *"
-    },
-    {
       "path": "/api/cron/payment-audit",
       "schedule": "0 9 * * 1"
     }
