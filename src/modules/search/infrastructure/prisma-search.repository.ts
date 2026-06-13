@@ -84,7 +84,9 @@ export class PrismaSearchRepository {
       select: PRODUCT_SELECT,
     });
 
-    const orderById = new Map(matchedIds.map((id: string, index: number) => [id, index]));
+    const orderById = new Map<string, number>(
+      matchedIds.map((id: string, index: number) => [id, index])
+    );
     return products.sort(
       (a: { id: string }, b: { id: string }) =>
         (orderById.get(a.id) ?? 0) - (orderById.get(b.id) ?? 0)
