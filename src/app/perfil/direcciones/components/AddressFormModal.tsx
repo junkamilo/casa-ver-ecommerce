@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { X, Loader2, ChevronDown, Truck, AlertCircle } from "lucide-react";
-import { DEPARTAMENTOS } from "@/lib/constants/colombia";
+import { getDepartamentos } from "@/lib/constants/colombia";
 import { SHIPPING_SANTANDER, SHIPPING_NATIONAL, SHIPPING_ISLANDS } from "@/lib/shipping";
 import { AddressFormModalProps, AddressFormValues } from "../types";
 import { FORM_STYLES } from "../constants";
@@ -114,7 +114,7 @@ export function AddressFormModal({ open, editing, submitting, onSave, onClose }:
                 className={FORM_STYLES.select}
               >
                 <option value="">Seleccionar</option>
-                {DEPARTAMENTOS.map((d) => (
+                {getDepartamentos().map((d) => (
                   <option key={d} value={d}>{d}</option>
                 ))}
               </select>

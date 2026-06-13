@@ -328,3 +328,21 @@ export const MUNICIPIOS: Record<string, string[]> = {
   // ⚠️ TEMPORAL — solo para pruebas de pago. Eliminar cuando ya no se necesite.
   "Prueba": ["Prueba"],
 };
+
+export const TEST_SHIPPING_DEPARTMENT = "Prueba";
+
+/** Tarifa de envío de prueba ($1.000): solo disponible en desarrollo local. */
+export function isTestShippingEnabled(): boolean {
+  return process.env.NODE_ENV === "development";
+}
+
+export function getDepartamentos(): string[] {
+  if (isTestShippingEnabled()) return [...DEPARTAMENTOS];
+  return DEPARTAMENTOS.filter((department) => department !== TEST_SHIPPING_DEPARTMENT);
+}
+
+export function getMunicipiosForDepartment(department: string): string[] {
+  const municipios = MUNICIPIOS[department] ?? [];
+  if (isTestShippingEnabled()) return municipios;
+  return municipios.filter((municipio) => municipio !== TEST_SHIPPING_DEPARTMENT);
+}

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useForm, useController } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { DEPARTAMENTOS, MUNICIPIOS } from "@/lib/constants/colombia";
+import { getDepartamentos, getMunicipiosForDepartment } from "@/lib/constants/colombia";
 import { getShippingCost } from "@/lib/shipping";
 import { AddressFormValues, UseAddressFormOptions, UseAddressFormResult } from "../types";
 import { addressSchema, ADDRESS_FORM_DEFAULTS } from "../constants";
@@ -31,7 +31,9 @@ export function useAddressForm({ open, editing }: UseAddressFormOptions): UseAdd
 
   const selectedDepartment = deptField.value;
   const selectedCity = cityField.value;
-  const municipios = selectedDepartment ? (MUNICIPIOS[selectedDepartment] ?? []) : [];
+  const municipios = selectedDepartment
+    ? getMunicipiosForDepartment(selectedDepartment)
+    : [];
   const shippingCost =
     selectedDepartment && selectedCity
       ? getShippingCost(selectedCity, selectedDepartment)

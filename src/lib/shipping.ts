@@ -6,6 +6,8 @@
  * Resto del país: $18.000
  */
 
+import { isTestShippingEnabled } from "./constants/colombia";
+
 export const SHIPPING_SANTANDER = 11_000;
 export const SHIPPING_NATIONAL = 18_000;
 export const SHIPPING_ISLANDS = 30_000;
@@ -48,8 +50,8 @@ export function getShippingCost(city: string, department: string): number {
   const cityNorm = normalizeValue(city);
   const deptNorm = normalizeValue(department);
 
-  // ⚠️ TEMPORAL — tarifa de prueba $1.000. Eliminar cuando ya no se necesite.
-  if (deptNorm === "prueba") return 1_000;
+  // ⚠️ TEMPORAL — tarifa de prueba $1.000. Solo en desarrollo local.
+  if (isTestShippingEnabled() && deptNorm === "prueba") return 1_000;
 
   for (const islandCity of ISLAND_SHIPPING_CITIES) {
     if (islandCity.toLowerCase() === cityNorm) return SHIPPING_ISLANDS;
