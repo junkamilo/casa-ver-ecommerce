@@ -30,7 +30,9 @@ export type ProductPayload = {
   basePrice: number;
   comparePrice?: number | null;
   stock?: number;
-  categoryId: string;
+  categoryIds: string[];
+  /** @deprecated usar categoryIds */
+  categoryId?: string;
   status?: string;
   isFeatured?: boolean;
   isNew?: boolean;
@@ -55,8 +57,23 @@ const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
 
 // ── Shared validation ────────────────────────────────────────────────────────
 
+function parseCategoryIds(payload: ProductPayload): string[] {
+  const raw =
+    Array.isArray(payload.categoryIds) && payload.categoryIds.length > 0
+      ? payload.categoryIds
+      : payload.categoryId
+        ? [payload.categoryId]
+        : [];
+  const normalized = raw
+    .filter((id): id is string => typeof id === "string")
+    .map((id) => id.trim())
+    .filter(Boolean);
+  return [...new Set(normalized)];
+}
+
 function validatePayload(payload: ProductPayload, isCreate: boolean): string | null {
-  const { name, categoryId, basePrice, isSet, status, sizes, colors } = payload;
+  const { name, basePrice, isSet, status, sizes, colors } = payload;
+  const resolvedCategoryIds = parseCategoryIds(payload);
 
   if (!name || typeof name !== "string" || name.trim().length < 3) {
     return "El nombre debe tener al menos 3 caracteres";
@@ -64,8 +81,11 @@ function validatePayload(payload: ProductPayload, isCreate: boolean): string | n
   if (name.trim().length > 200) {
     return "El nombre no puede superar 200 caracteres";
   }
-  if (!categoryId || typeof categoryId !== "string") {
-    return "La categoría es requerida";
+  if (resolvedCategoryIds.length === 0) {
+    return "Selecciona al menos una categoría";
+  }
+  if (resolvedCategoryIds.length > 10) {
+    return "Demasiadas categorías (máximo 10)";
   }
   if (!isSet) {
     const price = Number(basePrice);
@@ -115,8 +135,8 @@ function parseGarmentTypeIds(payload: ProductPayload): string[] {
   return [...new Set(normalized)];
 }
 
-async function assertGarmentTypesValidForCategory(
-  categoryId: string,
+async function assertGarmentTypesValidForCategories(
+  categoryIds: string[],
   ids: string[],
 ): Promise<string | null> {
   if (ids.length === 0) return null;
@@ -125,7 +145,7 @@ async function assertGarmentTypesValidForCategory(
     where: {
       id: { in: ids },
       isActive: true,
-      categories: { some: { categoryId } },
+      categories: { some: { categoryId: { in: categoryIds } } },
     },
     select: { id: true },
   });
@@ -302,16 +322,17 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
   const validationError = validatePayload(payload, true);
   if (validationError) return { success: false, error: validationError };
 
+  const resolvedCategoryIds = parseCategoryIds(payload);
   const resolvedGarmentTypeIds = parseGarmentTypeIds(payload);
-  const garmentTypesError = await assertGarmentTypesValidForCategory(
-    payload.categoryId.trim(),
+  const garmentTypesError = await assertGarmentTypesValidForCategories(
+    resolvedCategoryIds,
     resolvedGarmentTypeIds,
   );
   if (garmentTypesError) return { success: false, error: garmentTypesError };
 
   try {
     const {
-      name, description, categoryId, status, isFeatured, isNew,
+      name, description, status, isFeatured, isNew,
       isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
       videoUrl, isSet, colors, sizes, items,
     } = payload;
@@ -339,7 +360,6 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
           description: description || "",
           basePrice,
           comparePrice,
-          categoryId,
           status: status || "ACTIVE",
           isFeatured: isFeatured || false,
           isNew: isNew || false,
@@ -348,6 +368,9 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
           isOnSale: isOnSale || false,
           isOnSaleAt: resolvedOnSaleAt,
           videoUrl: videoUrl || null,
+          categories: {
+            create: resolvedCategoryIds.map((categoryId) => ({ categoryId })),
+          },
           garmentTypes: resolvedGarmentTypeIds.length
             ? {
                 create: resolvedGarmentTypeIds.map((garmentTypeId) => ({ garmentTypeId })),
@@ -384,16 +407,17 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
   const validationError = validatePayload(payload, false);
   if (validationError) return { success: false, error: validationError };
 
+  const resolvedCategoryIds = parseCategoryIds(payload);
   const resolvedGarmentTypeIds = parseGarmentTypeIds(payload);
-  const garmentTypesError = await assertGarmentTypesValidForCategory(
-    payload.categoryId.trim(),
+  const garmentTypesError = await assertGarmentTypesValidForCategories(
+    resolvedCategoryIds,
     resolvedGarmentTypeIds,
   );
   if (garmentTypesError) return { success: false, error: garmentTypesError };
 
   try {
     const {
-      name, description, categoryId, status, isFeatured, isNew,
+      name, description, status, isFeatured, isNew,
       isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
       videoUrl, isSet, colors, sizes, items,
     } = payload;
@@ -444,7 +468,6 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
           description,
           basePrice,
           comparePrice,
-          categoryId,
           status,
           isFeatured,
           isNew,
@@ -453,6 +476,10 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
           isOnSale: isOnSale ?? false,
           isOnSaleAt: resolvedOnSaleAt,
           videoUrl: videoUrl !== undefined ? (videoUrl || null) : undefined,
+          categories: {
+            deleteMany: {},
+            create: resolvedCategoryIds.map((categoryId) => ({ categoryId })),
+          },
           garmentTypes: {
             deleteMany: {},
             create: resolvedGarmentTypeIds.map((garmentTypeId) => ({ garmentTypeId })),

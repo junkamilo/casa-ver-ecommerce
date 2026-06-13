@@ -195,7 +195,11 @@ export class PrismaCollectionRepository {
     garmentTypeId?: string,
   ): Promise<RawCollectionProduct[]> {
     const where: Prisma.ProductWhereInput = {
-      category: { slug: categorySlug },
+      categories: {
+        some: {
+          category: { slug: categorySlug, isActive: true },
+        },
+      },
       status: "ACTIVE",
       ...(garmentTypeId
         ? {

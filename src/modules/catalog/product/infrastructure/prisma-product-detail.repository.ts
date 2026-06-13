@@ -77,59 +77,72 @@ export class PrismaProductDetailRepository {
             user: { select: { name: true } },
           },
         },
-        category: {
-          include: {
-            products: {
-              where: { status: "ACTIVE", slug: { not: slug } },
-              take: 4,
+      },
+    });
+  }
+
+  async getRecommendedProducts(productId: string, slug: string, take = 4) {
+    const links = await this.db.productCategory.findMany({
+      where: { productId },
+      select: { categoryId: true },
+    });
+    const categoryIds = links.map(
+      (link: { categoryId: string }) => link.categoryId
+    );
+    if (categoryIds.length === 0) return [];
+
+    return this.db.product.findMany({
+      where: {
+        status: "ACTIVE",
+        slug: { not: slug },
+        categories: { some: { categoryId: { in: categoryIds } } },
+      },
+      take,
+      orderBy: { createdAt: "desc" },
+      select: {
+        name: true,
+        slug: true,
+        basePrice: true,
+        comparePrice: true,
+        isSet: true,
+        isProductNew: true,
+        isProductNewAt: true,
+        isOnSale: true,
+        images: {
+          orderBy: { order: "asc" },
+          take: 8,
+          select: { url: true },
+        },
+        items: {
+          orderBy: { order: "asc" },
+          select: {
+            price: true,
+            comparePrice: true,
+            colors: {
               select: {
                 name: true,
-                slug: true,
-                basePrice: true,
-                comparePrice: true,
-                isSet: true,
-                isProductNew: true,
-                isProductNewAt: true,
-                isOnSale: true,
+                hexCode: true,
                 images: {
                   orderBy: { order: "asc" },
                   take: 8,
                   select: { url: true },
                 },
-                items: {
-                  orderBy: { order: "asc" },
-                  select: {
-                    price: true,
-                    comparePrice: true,
-                    colors: {
-                      select: {
-                        name: true,
-                        hexCode: true,
-                        images: {
-                          orderBy: { order: "asc" },
-                          take: 8,
-                          select: { url: true },
-                        },
-                      },
-                    },
-                  },
-                },
-                colors: {
-                  select: {
-                    name: true,
-                    hexCode: true,
-                    images: {
-                      orderBy: { order: "asc" },
-                      take: 1,
-                      select: { url: true },
-                    },
-                    variants: { select: { stock: true } },
-                  },
-                  orderBy: { id: "asc" },
-                },
               },
             },
           },
+        },
+        colors: {
+          select: {
+            name: true,
+            hexCode: true,
+            images: {
+              orderBy: { order: "asc" },
+              take: 1,
+              select: { url: true },
+            },
+            variants: { select: { stock: true } },
+          },
+          orderBy: { id: "asc" },
         },
       },
     });

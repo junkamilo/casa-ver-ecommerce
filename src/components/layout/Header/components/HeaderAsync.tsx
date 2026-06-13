@@ -16,9 +16,11 @@ async function getNavCategories(): Promise<NavCategory[]> {
           select: { id: true, name: true, slug: true },
         },
         products: {
-          where: { status: "ACTIVE" },
-          orderBy: { name: "asc" },
-          select: { id: true, name: true, slug: true },
+          where: { product: { status: "ACTIVE" } },
+          orderBy: { product: { name: "asc" } },
+          select: {
+            product: { select: { id: true, name: true, slug: true } },
+          },
           take: 20,
         },
         garmentTypes: {
@@ -33,7 +35,10 @@ async function getNavCategories(): Promise<NavCategory[]> {
       name: cat.name,
       slug: cat.slug,
       subcategories: cat.subcategories,
-      products: cat.products,
+      products: (cat.products ?? []).map(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (link: any) => link.product
+      ),
       garmentTypes: (cat.garmentTypes ?? [])
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .filter((cgt: any) => cgt.garmentType?.isActive)

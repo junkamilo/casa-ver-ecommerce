@@ -48,8 +48,13 @@ export class PrismaCategoryRepository {
     return categories.map(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (cat: any): CategoryListItemDTO => ({
-        ...cat,
-        // Aplana la relación pivote para mantener el contrato actual del endpoint.
+        id: cat.id,
+        name: cat.name,
+        slug: cat.slug,
+        image: cat.image,
+        isActive: cat.isActive,
+        order: cat.order,
+        _count: { products: cat._count?.products ?? 0 },
         garmentTypes: (cat.garmentTypes ?? []).map(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (cgt: any) => cgt.garmentType
@@ -67,10 +72,12 @@ export class PrismaCategoryRepository {
   }
 
   async findById(id: string) {
-    return this.db.category.findUnique({
+    const category = await this.db.category.findUnique({
       where: { id },
       include: { _count: { select: { products: true } } },
     });
+    if (!category) return null;
+    return category;
   }
 
   async findCategoryBaseById(id: string) {
@@ -133,7 +140,10 @@ export class PrismaCategoryRepository {
 
   async countActiveProductsByCategory(id: string): Promise<number> {
     return this.db.product.count({
-      where: { categoryId: id, status: "ACTIVE" },
+      where: {
+        status: "ACTIVE",
+        categories: { some: { categoryId: id } },
+      },
     });
   }
 

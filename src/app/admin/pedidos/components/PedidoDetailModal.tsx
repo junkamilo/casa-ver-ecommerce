@@ -10,6 +10,7 @@ import {
 } from "../constants";
 import { printOrder, printCustomer } from "@/lib/print/printOrder";
 import { usePedidoDetail } from "../hooks/usePedidoDetail";
+import { AdminOrderItemRow } from "./AdminOrderItemRow";
 import type { PedidoDetailModalProps } from "../types/types";
 
 export function PedidoDetailModal({ order, onClose, onStatusUpdated }: PedidoDetailModalProps) {
@@ -29,7 +30,14 @@ export function PedidoDetailModal({ order, onClose, onStatusUpdated }: PedidoDet
       customer:     { name: order.customer, email: order.email, phone: order.phone, cedula: order.cedula },
       shipping:     { address: order.address },
       payment:      { method: order.paymentMethod },
-      items:        order.items.map((i) => ({ name: i.name, qty: i.qty, unitPrice: i.price })),
+      items: order.items.map((i) => ({
+        name: i.name,
+        qty: i.qty,
+        unitPrice: i.price,
+        colorName: i.colorName,
+        size: i.size,
+        sku: i.sku,
+      })),
       subtotal:     order.subtotal     ?? order.total,
       shippingCost: order.shippingCost ?? 0,
       discount:     order.discount     ?? 0,
@@ -238,19 +246,33 @@ export function PedidoDetailModal({ order, onClose, onStatusUpdated }: PedidoDet
             <h3 className="text-sm font-bold text-gray-900 border-b border-gray-50 pb-2 mb-2">
               Resumen de Compra
             </h3>
-            <div className="space-y-3">
+            <div className="divide-y divide-gray-100">
               {order.items.map((item, i) => (
-                <div key={i} className="flex justify-between items-center text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded bg-gray-100 text-xs font-bold flex items-center justify-center text-gray-600">
-                      {item.qty}
-                    </span>
-                    <span className="text-gray-700">{item.name}</span>
-                  </div>
-                  <span className="font-medium text-gray-900">{formatPrice(item.price * item.qty)}</span>
-                </div>
+                <AdminOrderItemRow key={i} item={item} />
               ))}
             </div>
+            {(order.subtotal != null || order.shippingCost != null || (order.discount ?? 0) > 0) && (
+              <div className="border-t border-gray-100 mt-3 pt-3 space-y-1.5 text-sm">
+                {order.subtotal != null && (
+                  <div className="flex justify-between text-gray-600">
+                    <span>Subtotal</span>
+                    <span>{formatPrice(order.subtotal)}</span>
+                  </div>
+                )}
+                {order.shippingCost != null && (
+                  <div className="flex justify-between text-gray-600">
+                    <span>Envío</span>
+                    <span>{order.shippingCost === 0 ? "Gratis" : formatPrice(order.shippingCost)}</span>
+                  </div>
+                )}
+                {(order.discount ?? 0) > 0 && (
+                  <div className="flex justify-between text-[#C19A6B]">
+                    <span>Descuento</span>
+                    <span>−{formatPrice(order.discount!)}</span>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="border-t border-gray-100 mt-4 pt-3 flex justify-between items-center">
               <span className="font-bold text-gray-900">Total</span>
               <span className="font-bold text-lg text-[#154734]">{formatPrice(order.total)}</span>

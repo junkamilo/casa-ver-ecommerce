@@ -30,6 +30,21 @@ export function parseSafeDate(v: unknown): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
+export function parseCategoryIds(body: Record<string, unknown>): string[] {
+  const raw = Array.isArray(body.categoryIds)
+    ? body.categoryIds
+    : body.categoryId
+      ? [body.categoryId]
+      : [];
+
+  const normalized = raw
+    .filter((id): id is string => typeof id === "string")
+    .map((id) => id.trim())
+    .filter(Boolean);
+
+  return [...new Set(normalized)];
+}
+
 export function parseGarmentTypeIds(body: Record<string, unknown>): string[] {
   const raw = Array.isArray(body.garmentTypes)
     ? body.garmentTypes
@@ -48,19 +63,29 @@ export function parseGarmentTypeIds(body: Record<string, unknown>): string[] {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function validateProductCreateBody(body: any): string | null {
   const {
-    name, categoryId, description, basePrice, comparePrice,
+    name, categoryIds, categoryId, description, basePrice, comparePrice,
     stock, status, sizes, colors, items, videoUrl, isSet, garmentTypes,
-  } = body as ProductCreateInputDTO;
+  } = body as ProductCreateInputDTO & { categoryId?: string };
+
+  const resolvedCategoryIds = parseCategoryIds(body as Record<string, unknown>);
 
   if (!name || typeof name !== "string" || name.trim().length < 3)
     return "El nombre debe tener al menos 3 caracteres";
   if (name.trim().length > 200)
     return "El nombre no puede superar 200 caracteres";
 
-  if (!categoryId || typeof categoryId !== "string" || !categoryId.trim())
+  if (resolvedCategoryIds.length === 0)
+    return "Selecciona al menos una categoría";
+  if (resolvedCategoryIds.length > 10)
+    return "Demasiadas categorías (máximo 10)";
+  for (const id of resolvedCategoryIds) {
+    if (id.length > 50) return "ID de categoría inválido";
+  }
+
+  if (categoryIds !== undefined && !Array.isArray(categoryIds))
+    return "Las categorías deben enviarse como lista";
+  if (categoryId !== undefined && typeof categoryId !== "string" && !Array.isArray(categoryIds))
     return "La categoría es requerida";
-  if (categoryId.trim().length > 50)
-    return "ID de categoría inválido";
 
   if (!isSet) {
     if (!description || typeof description !== "string" || description.trim().length < 10)

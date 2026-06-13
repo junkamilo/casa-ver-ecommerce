@@ -38,7 +38,7 @@ export function useProductForm() {
   const [basePrice, setBasePrice] = useState("");
   const [comparePrice, setComparePrice] = useState("");
   const [stock, setStock] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [categoryIds, setCategoryIds] = useState<string[]>([]);
   const [status, setStatus] = useState("ACTIVE");
   const [isFeatured, setIsFeatured] = useState(false);
   const [isNew, setIsNew] = useState(false);
@@ -65,7 +65,7 @@ export function useProductForm() {
     setBasePrice("");
     setComparePrice("");
     setStock("");
-    setCategoryId("");
+    setCategoryIds([]);
     setStatus("ACTIVE");
     setIsFeatured(false);
     setIsNew(false);
@@ -97,7 +97,7 @@ export function useProductForm() {
     setBasePrice(mapped.basePrice);
     setComparePrice(mapped.comparePrice);
     setStock(mapped.stock);
-    setCategoryId(mapped.categoryId);
+    setCategoryIds(mapped.categoryIds);
     setStatus(mapped.status);
     setIsFeatured(mapped.isFeatured);
     setIsNew(mapped.isNew);
@@ -173,7 +173,7 @@ export function useProductForm() {
       basePrice,
       comparePrice,
       stock,
-      categoryId,
+      categoryIds,
       status,
       isFeatured,
       isNew,
@@ -322,7 +322,7 @@ export function useProductForm() {
     basePrice, setBasePrice,
     comparePrice, setComparePrice,
     stock, setStock,
-    categoryId, setCategoryId,
+    categoryIds, setCategoryIds,
     status, setStatus,
     isFeatured, setIsFeatured,
     isNew, setIsNew,

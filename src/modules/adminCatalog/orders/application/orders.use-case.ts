@@ -69,6 +69,11 @@ export async function getAdminOrdersUseCase(): Promise<AdminOrderDTO[]> {
       name: item.name,
       qty: item.quantity,
       price: Number(item.price),
+      colorName: item.colorName,
+      size: item.size,
+      sku: item.sku,
+      imageUrl: item.imageUrl ?? undefined,
+      lineTotal: Number(item.total),
     })),
   }));
 }

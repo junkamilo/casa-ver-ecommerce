@@ -6,7 +6,9 @@ export type ProductCreateInputDTO = {
   basePrice: number;
   comparePrice?: number | null;
   stock?: number;
-  categoryId: string;
+  categoryIds: string[];
+  /** @deprecated usar categoryIds */
+  categoryId?: string;
   status?: "ACTIVE" | "INACTIVE";
   isFeatured?: boolean;
   isNew?: boolean;

@@ -27,7 +27,11 @@ export class PrismaProductRepository {
       take: query.limit,
       skip,
       include: {
-        category: { select: { id: true, name: true } },
+        categories: {
+          include: {
+            category: { select: { id: true, name: true } },
+          },
+        },
         images: { where: { colorId: null }, orderBy: [{ isCover: "desc" }, { order: "asc" }], take: 1, select: { url: true } },
         colors: { take: 1, include: { images: { orderBy: [{ isCover: "desc" }, { order: "asc" }], take: 1, select: { url: true } } } },
         variants: { select: { stock: true } },
@@ -83,8 +87,9 @@ export class PrismaProductRepository {
           id: p.id,
           name: p.name,
           description: p.description,
-          categoryId: p.categoryId,
-          category: p.category,
+          categories: (p.categories ?? []).map(
+            (relation: { category: { id: string; name: string } }) => relation.category
+          ),
           images: generalImg
             ? [{ url: generalImg }]
             : colorImg
@@ -116,11 +121,36 @@ export class PrismaProductRepository {
     };
   }
 
+  async findCategoriesByIds(
+    categoryIds: string[]
+  ): Promise<Array<{ id: string; isActive: boolean; name: string }>> {
+    if (categoryIds.length === 0) return [];
+    return this.db.category.findMany({
+      where: { id: { in: categoryIds } },
+      select: { id: true, isActive: true, name: true },
+    });
+  }
+
   async findCategoryById(categoryId: string) {
     return this.db.category.findUnique({
       where: { id: categoryId },
       select: { id: true, isActive: true, name: true },
     });
+  }
+
+  async countValidGarmentTypesForCategories(
+    garmentTypeIds: string[],
+    categoryIds: string[]
+  ): Promise<number> {
+    const rows = await this.db.garmentType.findMany({
+      where: {
+        id: { in: garmentTypeIds },
+        isActive: true,
+        categories: { some: { categoryId: { in: categoryIds } } },
+      },
+      select: { id: true },
+    });
+    return rows.length;
   }
 
   async countValidGarmentTypesForCategory(garmentTypeIds: string[], categoryId: string): Promise<number> {
@@ -138,12 +168,12 @@ export class PrismaProductRepository {
   async createProductWithRelations(input: {
     dto: ProductCreateInputDTO;
     slug: string;
-    categoryId: string;
+    resolvedCategoryIds: string[];
     resolvedGarmentTypeIds: string[];
     resolvedProductNewAt: Date | null;
     resolvedOnSaleAt: Date | null;
   }) {
-    const { dto, slug, categoryId, resolvedGarmentTypeIds, resolvedProductNewAt, resolvedOnSaleAt } = input;
+    const { dto, slug, resolvedCategoryIds, resolvedGarmentTypeIds, resolvedProductNewAt, resolvedOnSaleAt } = input;
     return prisma.$transaction(async (tx) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const txDb = tx as any;
@@ -155,7 +185,6 @@ export class PrismaProductRepository {
           description: dto.description ? dto.description.trim() : "",
           basePrice: dto.basePrice,
           comparePrice: dto.comparePrice || null,
-          categoryId,
           status: dto.status || "ACTIVE",
           isFeatured: dto.isFeatured || false,
           isNew: dto.isNew || false,
@@ -164,6 +193,9 @@ export class PrismaProductRepository {
           isOnSale: dto.isOnSale || false,
           isOnSaleAt: resolvedOnSaleAt,
           videoUrl: dto.videoUrl || null,
+          categories: {
+            create: resolvedCategoryIds.map((categoryId) => ({ categoryId })),
+          },
           garmentTypes: resolvedGarmentTypeIds.length
             ? {
                 create: resolvedGarmentTypeIds.map((garmentTypeId) => ({ garmentTypeId })),
@@ -216,12 +248,12 @@ export class PrismaProductRepository {
   async updateProductWithRelations(input: {
     id: string;
     dto: ProductCreateInputDTO;
-    categoryId: string;
+    resolvedCategoryIds: string[];
     resolvedGarmentTypeIds: string[];
     resolvedProductNewAt: Date | null;
     resolvedOnSaleAt: Date | null;
   }): Promise<{ product: unknown; previousAssetUrls: string[] }> {
-    const { id, dto, categoryId, resolvedGarmentTypeIds, resolvedProductNewAt, resolvedOnSaleAt } = input;
+    const { id, dto, resolvedCategoryIds, resolvedGarmentTypeIds, resolvedProductNewAt, resolvedOnSaleAt } = input;
     return prisma.$transaction(async (tx) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const txDb = tx as any;
@@ -267,7 +299,6 @@ export class PrismaProductRepository {
           description: dto.description ? dto.description.trim() : "",
           basePrice: dto.basePrice != null ? dto.basePrice : undefined,
           comparePrice: dto.comparePrice != null ? dto.comparePrice : undefined,
-          categoryId,
           status: dto.status,
           isFeatured: dto.isFeatured,
           isNew: dto.isNew,
@@ -276,6 +307,10 @@ export class PrismaProductRepository {
           isOnSale: dto.isOnSale ?? false,
           isOnSaleAt: resolvedOnSaleAt,
           videoUrl: dto.videoUrl !== undefined ? (dto.videoUrl || null) : undefined,
+          categories: {
+            deleteMany: {},
+            create: resolvedCategoryIds.map((categoryId) => ({ categoryId })),
+          },
           garmentTypes: {
             deleteMany: {},
             create: resolvedGarmentTypeIds.map((garmentTypeId) => ({ garmentTypeId })),
@@ -375,7 +410,11 @@ export class PrismaProductRepository {
     const product = await this.db.product.findUnique({
       where: { id },
       include: {
-        category: { select: { id: true, name: true } },
+        categories: {
+          include: {
+            category: { select: { id: true, name: true } },
+          },
+        },
         images: { orderBy: { order: "asc" } },
         colors: { include: { images: { orderBy: { order: "asc" } }, variants: true } },
         garmentTypes: {
@@ -414,7 +453,9 @@ export class PrismaProductRepository {
       basePrice: Number(product.basePrice),
       comparePrice: product.comparePrice ? Number(product.comparePrice) : null,
       stock: totalStock,
-      categoryId: product.categoryId,
+      categoryIds: product.categories.map(
+        (relation: { category: { id: string } }) => relation.category.id
+      ),
       status: product.status,
       isFeatured: product.isFeatured,
       isNew: product.isNew,

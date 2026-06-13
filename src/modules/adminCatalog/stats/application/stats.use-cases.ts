@@ -162,31 +162,61 @@ export async function getCategorySalesByPeriod(period: Period): Promise<Category
   const totalRevenue = currentItems.reduce((sum, i) => sum + Number(i.total), 0);
   if (totalRevenue === 0) return [];
   const allProductIds = [...new Set([...currentItems.map((i) => i.productId), ...prevItems.map((i) => i.productId)])];
-  const products = await prisma.product.findMany({ where: { id: { in: allProductIds } }, select: { id: true, categoryId: true, category: { select: { name: true } } } });
-  const productCatMap = new Map(products.map((p) => [p.id, { id: p.categoryId, name: p.category.name }]));
-  const categoryIds = [...new Set(currentItems.map((i) => productCatMap.get(i.productId)?.id).filter(Boolean) as string[])];
-  const activeCountsRaw = await prisma.product.groupBy({ by: ["categoryId"], where: { categoryId: { in: categoryIds }, status: "ACTIVE" }, _count: { id: true } });
-  const activeMap = new Map(activeCountsRaw.map((r) => [r.categoryId, r._count.id]));
+  const products = await prisma.product.findMany({
+    where: { id: { in: allProductIds } },
+    select: {
+      id: true,
+      categories: {
+        select: {
+          category: { select: { id: true, name: true } },
+        },
+      },
+    },
+  });
+  const productCatMap = new Map(
+    products.map((p) => [
+      p.id,
+      p.categories.map((link) => ({ id: link.category.id, name: link.category.name })),
+    ])
+  );
+  const categoryIds = [
+    ...new Set(
+      currentItems.flatMap((item) =>
+        (productCatMap.get(item.productId) ?? []).map((category) => category.id)
+      )
+    ),
+  ];
+  const activeCountsRaw = await prisma.productCategory.groupBy({
+    by: ["categoryId"],
+    where: {
+      categoryId: { in: categoryIds },
+      product: { status: "ACTIVE" },
+    },
+    _count: { productId: true },
+  });
+  const activeMap = new Map(activeCountsRaw.map((r) => [r.categoryId, r._count.productId]));
   const prevRevMap = new Map<string, number>();
   for (const item of prevItems) {
-    const cat = productCatMap.get(item.productId);
-    if (!cat) continue;
-    prevRevMap.set(cat.id, (prevRevMap.get(cat.id) ?? 0) + Number(item.total));
+    for (const cat of productCatMap.get(item.productId) ?? []) {
+      prevRevMap.set(cat.id, (prevRevMap.get(cat.id) ?? 0) + Number(item.total));
+    }
   }
 
   type CatAgg = { name: string; revenue: number; units: number; orderIds: Set<string>; productUnits: Map<string, { name: string; units: number }> };
   const catMap = new Map<string, CatAgg>();
   for (const item of currentItems) {
-    const cat = productCatMap.get(item.productId);
-    if (!cat) continue;
-    const entry: CatAgg = catMap.get(cat.id) ?? { name: cat.name, revenue: 0, units: 0, orderIds: new Set(), productUnits: new Map() };
-    entry.revenue += Number(item.total);
-    entry.units += item.quantity;
-    entry.orderIds.add(item.orderId);
-    const prod = entry.productUnits.get(item.productId) ?? { name: item.name, units: 0 };
-    prod.units += item.quantity;
-    entry.productUnits.set(item.productId, prod);
-    catMap.set(cat.id, entry);
+    const productCategories = productCatMap.get(item.productId) ?? [];
+    if (productCategories.length === 0) continue;
+    for (const cat of productCategories) {
+      const entry: CatAgg = catMap.get(cat.id) ?? { name: cat.name, revenue: 0, units: 0, orderIds: new Set(), productUnits: new Map() };
+      entry.revenue += Number(item.total);
+      entry.units += item.quantity;
+      entry.orderIds.add(item.orderId);
+      const prod = entry.productUnits.get(item.productId) ?? { name: item.name, units: 0 };
+      prod.units += item.quantity;
+      entry.productUnits.set(item.productId, prod);
+      catMap.set(cat.id, entry);
+    }
   }
 
   return Array.from(catMap.entries())

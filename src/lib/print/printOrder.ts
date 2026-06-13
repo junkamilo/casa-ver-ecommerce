@@ -15,6 +15,9 @@ export interface PrintableOrderItem {
   name: string;
   qty: number;
   unitPrice: number;
+  colorName?: string;
+  size?: string;
+  sku?: string;
 }
 
 export interface PrintableOrder {
@@ -63,16 +66,31 @@ function formatCOP(amount: number): string {
   }).format(amount);
 }
 
+function buildItemDetailLine(item: PrintableOrderItem): string {
+  const parts = [
+    item.colorName ? `Color: ${item.colorName}` : null,
+    item.size ? `Talla: ${item.size}` : null,
+    item.sku ? `SKU: ${item.sku}` : null,
+  ].filter(Boolean);
+  return parts.join(" · ");
+}
+
 function buildItemRows(items: PrintableOrderItem[]): string {
   return items
     .map(
-      (item) => `
+      (item) => {
+        const detail = buildItemDetailLine(item);
+        return `
         <tr>
-          <td class="cell">${item.name}</td>
+          <td class="cell">
+            <div>${item.name}</div>
+            ${detail ? `<div class="item-detail">${detail}</div>` : ""}
+          </td>
           <td class="cell center">${item.qty}</td>
           <td class="cell right">${formatCOP(item.unitPrice)}</td>
           <td class="cell right bold">${formatCOP(item.unitPrice * item.qty)}</td>
-        </tr>`
+        </tr>`;
+      }
     )
     .join("");
 }
@@ -171,6 +189,7 @@ function buildDocument(order: PrintableOrder): string {
     thead th:nth-child(4) { text-align: right; }
 
     .cell { padding: 10px 14px; font-size: 12px; border-bottom: 1px solid #eee; }
+    .item-detail { font-size: 10px; color: #888; margin-top: 3px; }
     .center { text-align: center; }
     .right  { text-align: right; }
     .bold   { font-weight: 600; }

@@ -25,7 +25,7 @@ export const productFormSchema = z.object({
     .number()
     .int("Debe ser un número entero")
     .min(0, "Stock mínimo 0"),
-  categoryId: z.string().min(1, "Selecciona una categoría"),
+  categoryIds: z.array(z.string().min(1)).min(1, "Selecciona al menos una categoría"),
   videoUrl: z
     .string()
     .optional()
@@ -52,7 +52,7 @@ export const setProductFormSchema = z.object({
     .min(0, "Stock mínimo 0")
     .optional()
     .or(z.literal("").transform(() => undefined)),
-  categoryId: z.string().min(1, "Selecciona una categoría"),
+  categoryIds: z.array(z.string().min(1)).min(1, "Selecciona al menos una categoría"),
   videoUrl: z
     .string()
     .optional()

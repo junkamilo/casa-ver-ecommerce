@@ -104,7 +104,9 @@ export function useProductList() {
         p.name.toLowerCase().includes(search.toLowerCase())
       );
     if (filterCategory !== "Todos")
-      result = result.filter((p) => p.category?.name === filterCategory);
+      result = result.filter((p) =>
+        p.categories.some((category) => category.name === filterCategory)
+      );
     setFilteredProducts(result);
   }, [search, filterCategory, products]);
 

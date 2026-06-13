@@ -148,9 +148,14 @@ export async function getOrders(): Promise<Order[]> {
       ? o.deliveredAt.toLocaleString("es-CO", { timeZone: "America/Bogota" })
       : undefined,
     items: o.items.map((item) => ({
-      name:  item.name,
-      qty:   item.quantity,
+      name: item.name,
+      qty: item.quantity,
       price: Number(item.price),
+      colorName: item.colorName,
+      size: item.size,
+      sku: item.sku,
+      imageUrl: item.imageUrl ?? undefined,
+      lineTotal: Number(item.total),
     })),
   }));
 }

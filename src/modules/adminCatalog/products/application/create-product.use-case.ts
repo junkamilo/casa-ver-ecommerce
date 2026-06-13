@@ -2,6 +2,7 @@ import type { ProductCreateInputDTO } from "../contracts/product-create.dto";
 import { PrismaProductRepository } from "../infrastructure/prisma-product.repository";
 import { ProductValidationError } from "./product.errors";
 import {
+  parseCategoryIds,
   parseGarmentTypeIds,
   parseSafeDate,
   validateProductCreateBody,
@@ -21,24 +22,25 @@ export async function createProductUseCase(input: unknown) {
   }
 
   const dto = body as ProductCreateInputDTO;
-  const categoryId = String(dto.categoryId).trim();
-  const category = await productRepository.findCategoryById(categoryId);
-  if (!category) {
-    throw new ProductValidationError("La categoría seleccionada no existe");
+  const resolvedCategoryIds = parseCategoryIds(body);
+  const categories = await productRepository.findCategoriesByIds(resolvedCategoryIds);
+  if (categories.length !== resolvedCategoryIds.length) {
+    throw new ProductValidationError("Una o más categorías seleccionadas no existen");
   }
-  if (!category.isActive) {
-    throw new ProductValidationError(`La categoría "${category.name}" está inactiva`);
+  const inactive = categories.find((category) => !category.isActive);
+  if (inactive) {
+    throw new ProductValidationError(`La categoría "${inactive.name}" está inactiva`);
   }
 
   const resolvedGarmentTypeIds = parseGarmentTypeIds(body);
   if (resolvedGarmentTypeIds.length > 0) {
-    const validCount = await productRepository.countValidGarmentTypesForCategory(
+    const validCount = await productRepository.countValidGarmentTypesForCategories(
       resolvedGarmentTypeIds,
-      category.id
+      resolvedCategoryIds
     );
     if (validCount !== resolvedGarmentTypeIds.length) {
       throw new ProductValidationError(
-        "Uno o más tipos de prenda no existen, están inactivos o no pertenecen a la categoría seleccionada"
+        "Uno o más tipos de prenda no existen, están inactivos o no pertenecen a las categorías seleccionadas"
       );
     }
   }
@@ -54,7 +56,7 @@ export async function createProductUseCase(input: unknown) {
   return productRepository.createProductWithRelations({
     dto,
     slug,
-    categoryId,
+    resolvedCategoryIds,
     resolvedGarmentTypeIds,
     resolvedProductNewAt,
     resolvedOnSaleAt,

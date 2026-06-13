@@ -7,8 +7,7 @@ export type AdminProductListItemDTO = {
   id: string;
   name: string;
   description: string;
-  categoryId: string;
-  category: { id: string; name: string } | null;
+  categories: Array<{ id: string; name: string }>;
   images: Array<{ url: string }>;
   videoUrl: string | null;
   price: number;
