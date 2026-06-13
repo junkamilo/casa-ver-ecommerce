@@ -1,9 +1,7 @@
 /**
- * Email Queue — usa Upstash QStash en producción para desacoplar
- * el envío de emails del ciclo de vida de la request HTTP.
- *
- * Si QSTASH_TOKEN no está configurado (desarrollo), hace el envío
- * de forma síncrona como fallback.
+ * Email Queue — confirmación de pedido se envía de forma síncrona
+ * (Resend) para garantizar entrega. QStash queda como respaldo opcional
+ * si EMAIL_USE_QSTASH=true.
  */
 
 import { Client } from "@upstash/qstash";
@@ -48,8 +46,8 @@ export async function processEmailJob(job: EmailJob): Promise<void> {
 
 // ── Publisher ─────────────────────────────────────────────────────────────────
 
-function hasQStash() {
-  return !!process.env.QSTASH_TOKEN;
+function shouldUseQStash() {
+  return process.env.EMAIL_USE_QSTASH === "true" && !!process.env.QSTASH_TOKEN;
 }
 
 export async function enqueueOrderConfirmationEmail(
@@ -58,18 +56,24 @@ export async function enqueueOrderConfirmationEmail(
 ): Promise<void> {
   const job: OrderConfirmationJob = { type: "order-confirmation", orderId, payload };
 
-  if (!hasQStash()) {
-    // Fallback síncrono para desarrollo sin QStash
-    await processEmailJob(job);
-    return;
+  // Envío síncrono — crítico para confirmación de compra.
+  await processEmailJob(job);
+
+  if (!shouldUseQStash()) return;
+
+  // Respaldo asíncrono vía QStash (idempotente: processEmailJob no reenvía).
+  try {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://casaverdeoficial.com";
+    const client = new Client({ token: process.env.QSTASH_TOKEN! });
+    await client.publishJSON({
+      url: `${appUrl}/api/queue/email`,
+      body: job,
+      retries: 3,
+    });
+  } catch (err) {
+    console.warn(
+      "[EmailQueue] QStash backup falló (email ya enviado síncronamente):",
+      err instanceof Error ? err.message : err
+    );
   }
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://casaverdeoficial.com";
-  const client = new Client({ token: process.env.QSTASH_TOKEN! });
-
-  await client.publishJSON({
-    url: `${appUrl}/api/queue/email`,
-    body: job,
-    retries: 3,
-  });
 }

@@ -3,7 +3,6 @@ import { isApproved, isRejected, isRefunded } from "../domain/bold-status.entity
 import { verifyBoldSignature } from "../infrastructure/bold-signature.verifier";
 import { PrismaBoldOrderRepository } from "../infrastructure/prisma-bold-order.repository";
 import { WebhookLogRepository } from "@/modules/payments/shared/infrastructure/webhook-log.repository";
-import { notifyOrderConfirmation } from "@/modules/payments/shared/infrastructure/order-confirmation.notifier";
 import { markOrderPaidUseCase } from "@/modules/orders/application/mark-order-paid.use-case";
 import { releaseOrderStockUseCase } from "@/modules/orders/application/release-order-stock.use-case";
 import type { BoldWebhookFieldsDTO } from "../contracts/bold.dto";
@@ -124,13 +123,8 @@ export async function processBoldWebhookAsync(fields: BoldWebhookFieldsDTO): Pro
   }
 
   try {
-    const order = await markOrderPaidUseCase(reference, boldPaymentId);
+    await markOrderPaidUseCase(reference, boldPaymentId);
     console.info("[BOLD WEBHOOK] ✓ Orden marcada como pagada. transactionId:", reference);
-
-    // Email "best effort" — si falla NO revertimos el PAID.
-    await notifyOrderConfirmation(order);
-    console.info(`[BOLD WEBHOOK] ✓ Email encolado para orden ${order.orderNumber}`);
-
     updateLog(200);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Error desconocido";

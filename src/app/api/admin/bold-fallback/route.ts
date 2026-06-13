@@ -1,5 +1,6 @@
 import { BoldFallbackUnauthorizedError, BoldFallbackConfigError } from "@/modules/adminCatalog/boldFallback/application/bold-fallback.errors";
 import { runBoldFallbackUseCase } from "@/modules/adminCatalog/boldFallback/application/run-bold-fallback.use-case";
+import { retryPendingOrderConfirmationEmails } from "@/modules/payments/shared/application/retry-order-confirmation-emails";
 import { NextRequest, NextResponse } from "next/server";
 import { toErrorResponse } from "@/server/http/error-response";
 
@@ -14,7 +15,11 @@ export async function GET(req: NextRequest) {
       boldApiKey: process.env.BOLD_IDENTITY_KEY,
     });
 
-    return NextResponse.json(result);
+    // Respaldo diario: reintentar emails de órdenes PAID sin confirmación
+    // (compatible con plan Hobby de Vercel — 1 cron/día).
+    const emailRetry = await retryPendingOrderConfirmationEmails();
+
+    return NextResponse.json({ ...result, emailRetry });
 
   } catch (error) {
     if (error instanceof BoldFallbackUnauthorizedError) {

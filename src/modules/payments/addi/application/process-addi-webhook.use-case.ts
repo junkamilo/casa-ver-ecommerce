@@ -4,7 +4,6 @@ import { PrismaAddiOrderRepository } from "../infrastructure/prisma-addi-order.r
 import { isWebhookApproved, isWebhookRejected } from "../domain/addi-status.entity";
 import { AddiUnauthorizedError } from "./addi.errors";
 import { WebhookLogRepository } from "@/modules/payments/shared/infrastructure/webhook-log.repository";
-import { notifyOrderConfirmation } from "@/modules/payments/shared/infrastructure/order-confirmation.notifier";
 import { markOrderPaidUseCase } from "@/modules/orders/application/mark-order-paid.use-case";
 import { releaseOrderStockUseCase } from "@/modules/orders/application/release-order-stock.use-case";
 import type { AddiWebhookInputDTO } from "../contracts/addi.dto";
@@ -68,11 +67,8 @@ export async function processAddiWebhookUseCase(input: AddiWebhookInputDTO): Pro
   // Procesar pago aprobado
   if (approved && orderId && addiPaymentId) {
     try {
-      const order = await markOrderPaidUseCase(orderId, addiPaymentId);
+      await markOrderPaidUseCase(orderId, addiPaymentId);
       console.info(`[Addi Webhook] Orden aprobada: ${orderId}`);
-
-      await notifyOrderConfirmation(order);
-      console.info("[Addi Webhook] Email encolado para orden:", order.orderNumber);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Error desconocido";
       console.error("[Addi Webhook] Error al marcar orden como pagada:", err);
