@@ -154,6 +154,7 @@ model User {
   passwordResetTokens   PasswordResetToken[]
   cart                  Cart?
   couponBatches         CouponBatch[]
+  couponUsages          CouponUsage[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -509,6 +510,7 @@ model Order {
   transactionId      String?       @unique // UUID idempotente enviado a pasarela
   boldLinkId         String?       // LNK_* retornado por Bold al crear el link de pago
   paymentId          String?       // transaction_id retornado por Bold en el webhook al aprobar
+  paymentExpiresAt   DateTime?     // UTC — ventana de gracia para completar pago (snapshot cupón)
 
   // Logística
   trackingNumber     String?
@@ -518,6 +520,10 @@ model Order {
   webhookLogs        WebhookLog[]
   notifications      AdminNotification[]
   reviews            Review[]
+  couponUsages       CouponUsage[]
+
+  appliedCouponId    String?
+  appliedCoupon      Coupon?       @relation(fields: [appliedCouponId], references: [id], onDelete: SetNull)
 
   paidAt             DateTime?
   shippedAt          DateTime?
@@ -639,6 +645,28 @@ model Review {
 // CUPONES DE DESCUENTO
 // ============================================================
 
+enum CouponKind {
+  BATCH_SINGLE
+  EMAIL_SINGLE
+  PROMOTIONAL
+}
+
+enum CouponDiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+enum CouponCodeSource {
+  RANDOM
+  CUSTOM
+}
+
+enum CouponScheduleMode {
+  NONE
+  SINGLE_DAY
+  DATE_RANGE
+}
+
 model CouponBatch {
   id                 String   @id @default(cuid())
   discountPercentage Int
@@ -652,23 +680,57 @@ model CouponBatch {
 }
 
 model Coupon {
-  id                 String       @id @default(cuid())
-  code               String       @unique
-  discountPercentage Int          @default(10)
-  assignedEmail      String?      // null = cupón masivo admin (requiere usuario registrado)
-  isUsed             Boolean      @default(false)
+  id                 String             @id @default(cuid())
+  code               String             @unique
+  kind               CouponKind         @default(BATCH_SINGLE)
+  discountType       CouponDiscountType @default(PERCENTAGE)
+  discountValue      Int                @default(10)
+  discountPercentage Int                @default(10)
+  assignedEmail      String?            // null = cupón masivo admin (requiere usuario registrado)
+  isUsed             Boolean            @default(false)
   usedAt             DateTime?
   usedByOrderId      String?
   batchId            String?
-  batch              CouponBatch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  batch              CouponBatch?       @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  maxGlobalUses      Int?
+  maxUsesPerUser     Int                @default(1)
+  currentGlobalUses  Int                @default(0)
+  expiresAt          DateTime?          // legacy; solo fallback si scheduleMode=NONE
+  scheduleMode       CouponScheduleMode @default(NONE) // capa admin (NONE | SINGLE_DAY | DATE_RANGE)
+  validFrom          DateTime?          // inicio ventana temporal — almacenado en UTC
+  validTo            DateTime?          // fin ventana temporal (equiv. validUntil) — almacenado en UTC
+  isActive           Boolean            @default(true)
+  codeSource         CouponCodeSource?
+  label              String?
+  usages             CouponUsage[]
+  orders             Order[]
 
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
   @@index([code])
   @@index([assignedEmail])
   @@index([batchId])
+  @@index([kind])
   @@map("coupons")
+}
+
+model CouponUsage {
+  id         String   @id @default(cuid())
+  couponId   String
+  coupon     Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  orderId    String   @unique
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email      String
+  documentId String
+  usedAt     DateTime @default(now())
+
+  @@index([couponId, email])
+  @@index([couponId, documentId])
+  @@index([couponId, userId])
+  @@map("coupon_usages")
 }
 
 // ============================================================

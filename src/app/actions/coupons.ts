@@ -2,6 +2,15 @@
 
 import { prisma } from "@/lib/prisma";
 import { randomBytes } from "crypto";
+import {
+  calculateCouponDiscountAmount,
+  isCouponEligibleForEmail,
+  isCouponGloballyAvailable,
+  isPromotionalCoupon,
+  type CouponDiscountType,
+  type CouponKind,
+} from "@/modules/checkout/domain/coupon.entity";
+import { validateCouponTimeWindow } from "@/modules/checkout/domain/validate-coupon-time-window";
 
 // ---------------------------------------------------------------------------
 // generateFirstPurchaseCoupon
@@ -16,24 +25,26 @@ export async function generateFirstPurchaseCoupon(email: string): Promise<{ succ
   const normalizedEmail = email.toLowerCase().trim();
 
   try {
-    // Idempotencia: si ya tiene un cupón sin usar para este email, lo devolvemos.
     const existing = await prisma.coupon.findFirst({
-      where: { assignedEmail: normalizedEmail, isUsed: false },
+      where: { assignedEmail: normalizedEmail, isUsed: false, kind: "EMAIL_SINGLE" },
     });
 
     if (existing) {
       return { success: true, code: existing.code };
     }
 
-    // Generar código único: CV-XXXXXXXXXX (uppercase, hex)
     const code = `CV-${randomBytes(5).toString("hex").toUpperCase()}`;
 
     const coupon = await prisma.coupon.create({
       data: {
         code,
+        kind: "EMAIL_SINGLE",
+        discountType: "PERCENTAGE",
+        discountValue: 10,
         discountPercentage: 10,
         assignedEmail: normalizedEmail,
         isUsed: false,
+        maxGlobalUses: 1,
       },
     });
 
@@ -44,21 +55,28 @@ export async function generateFirstPurchaseCoupon(email: string): Promise<{ succ
   }
 }
 
+export type ValidateCouponResult = {
+  valid: boolean;
+  discountPercentage?: number;
+  discountType?: CouponDiscountType;
+  discountValue?: number;
+  couponId?: string;
+  kind?: CouponKind;
+  error?: string;
+};
+
 // ---------------------------------------------------------------------------
-// validateCoupon
-// Verifica que el cupón exista, no esté usado y pertenezca al email del formulario.
-// Devuelve el porcentaje de descuento si es válido.
+// validateCoupon — Fase 1 (aplicar código en checkout)
 // ---------------------------------------------------------------------------
 export async function validateCoupon(
   code: string,
-  email: string
-): Promise<{ valid: boolean; discountPercentage?: number; couponId?: string; error?: string }> {
-  if (!code || !email) {
-    return { valid: false, error: "Código y email son requeridos" };
+  email?: string
+): Promise<ValidateCouponResult> {
+  if (!code) {
+    return { valid: false, error: "Código requerido" };
   }
 
   const normalizedCode = code.toUpperCase().trim();
-  const normalizedEmail = email.toLowerCase().trim();
 
   try {
     const coupon = await prisma.coupon.findUnique({
@@ -69,8 +87,43 @@ export async function validateCoupon(
       return { valid: false, error: "El cupón no existe" };
     }
 
+    if (isPromotionalCoupon(coupon.kind)) {
+      if (coupon.isActive === false) {
+        return { valid: false, error: "El cupón no está activo" };
+      }
+      try {
+        validateCouponTimeWindow(coupon);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Cupón no válido";
+        return { valid: false, error: message };
+      }
+      if (!isCouponGloballyAvailable(coupon)) {
+        return { valid: false, error: "El cupón ya no tiene usos disponibles" };
+      }
+
+      return {
+        valid: true,
+        discountType: coupon.discountType as CouponDiscountType,
+        discountValue: coupon.discountValue,
+        discountPercentage:
+          coupon.discountType === "PERCENTAGE" ? coupon.discountValue : undefined,
+        couponId: coupon.id,
+        kind: coupon.kind as CouponKind,
+      };
+    }
+
+    if (!email) {
+      return { valid: false, error: "Correo requerido para validar este cupón" };
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
     if (coupon.isUsed) {
       return { valid: false, error: "El cupón ya fue utilizado" };
+    }
+
+    if (!isCouponEligibleForEmail(coupon, normalizedEmail)) {
+      return { valid: false, error: "El cupón no pertenece a este correo" };
     }
 
     if (coupon.assignedEmail) {
@@ -89,11 +142,16 @@ export async function validateCoupon(
 
     return {
       valid: true,
+      discountType: "PERCENTAGE",
+      discountValue: coupon.discountValue ?? coupon.discountPercentage,
       discountPercentage: coupon.discountPercentage,
       couponId: coupon.id,
+      kind: (coupon.kind ?? "BATCH_SINGLE") as CouponKind,
     };
   } catch (err) {
     console.error("[validateCoupon] Error:", err);
     return { valid: false, error: "Error al validar el cupón" };
   }
 }
+
+export { calculateCouponDiscountAmount };

@@ -1,4 +1,10 @@
-import type { CouponListItemDTO, CouponUsageDetailDTO } from "../contracts/coupon.dto";
+import type {
+  CouponListItemDTO,
+  CouponUsageDetailDTO,
+  PromotionalCouponListItemDTO,
+  PromotionalCouponUsageItemDTO,
+} from "../contracts/coupon.dto";
+import { getPromotionalCouponStatus, formatCouponScheduleLabel } from "@/modules/checkout/domain/coupon.entity";
 
 const STATUS_MAP: Record<string, string> = {
   PENDING: "Pendiente",
@@ -98,5 +104,65 @@ export function mapCouponUsageToDetail(
       total: Number(order.total),
       createdAt: order.createdAt.toISOString(),
     },
+  };
+}
+
+type PromotionalCouponRow = {
+  id: string;
+  code: string;
+  codeSource: string | null;
+  discountType: string;
+  discountValue: number;
+  maxGlobalUses: number | null;
+  maxUsesPerUser: number;
+  currentGlobalUses: number;
+  isActive: boolean;
+  scheduleMode: string;
+  validFrom: Date | null;
+  validTo: Date | null;
+  expiresAt: Date | null;
+  createdAt: Date;
+};
+
+export function mapPromotionalCouponToListItem(
+  coupon: PromotionalCouponRow
+): PromotionalCouponListItemDTO {
+  return {
+    id: coupon.id,
+    code: coupon.code,
+    codeSource: (coupon.codeSource as "RANDOM" | "CUSTOM" | null) ?? null,
+    discountType: coupon.discountType as "PERCENTAGE" | "FIXED",
+    discountValue: coupon.discountValue,
+    maxGlobalUses: coupon.maxGlobalUses ?? 0,
+    maxUsesPerUser: coupon.maxUsesPerUser,
+    currentGlobalUses: coupon.currentGlobalUses,
+    isActive: coupon.isActive,
+    scheduleMode: (coupon.scheduleMode as "NONE" | "SINGLE_DAY" | "DATE_RANGE") ?? "NONE",
+    validFrom: coupon.validFrom?.toISOString() ?? null,
+    validTo: coupon.validTo?.toISOString() ?? null,
+    scheduleLabel: formatCouponScheduleLabel(coupon),
+    status: getPromotionalCouponStatus(coupon),
+    createdAt: coupon.createdAt.toISOString(),
+  };
+}
+
+type PromotionalUsageRow = {
+  id: string;
+  email: string;
+  documentId: string;
+  usedAt: Date;
+  order: { orderNumber: string; status: string };
+};
+
+export function mapPromotionalUsageToItem(
+  usage: PromotionalUsageRow
+): PromotionalCouponUsageItemDTO {
+  return {
+    id: usage.id,
+    email: usage.email,
+    documentId: usage.documentId,
+    orderNumber: usage.order.orderNumber,
+    orderStatus: STATUS_MAP[usage.order.status] ?? usage.order.status,
+    usedAt: usage.usedAt.toISOString(),
   };
 }

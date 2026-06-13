@@ -15,6 +15,7 @@ interface OrderSummaryPanelProps {
   total: number;
   coupon: CouponState;
   couponDiscount: number;
+  lineItemDiscountPercentage?: number;
   onApplyCoupon: (code: string) => void;
   onRemoveCoupon: () => void;
   isPending?: boolean;
@@ -27,12 +28,12 @@ const OrderSummaryPanel = ({
   total,
   coupon,
   couponDiscount,
+  lineItemDiscountPercentage = 0,
   onApplyCoupon,
   onRemoveCoupon,
   isPending = false,
 }: OrderSummaryPanelProps) => {
-  const discountPercentage =
-    coupon.status === "valid" ? coupon.discountPercentage : 0;
+  const discountPercentage = lineItemDiscountPercentage;
 
   return (
     <div className="hidden lg:flex lg:w-[45%] lg:h-dvh lg:sticky lg:top-0 bg-[#154734] px-8 xl:px-16 justify-center items-center relative overflow-hidden isolate shadow-2xl">

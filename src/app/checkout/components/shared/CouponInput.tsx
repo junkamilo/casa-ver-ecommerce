@@ -55,7 +55,9 @@ export default function CouponInput({
               <p className="text-sm font-bold text-[#154734] truncate">{coupon.code}</p>
             </div>
             <span className="shrink-0 text-[10px] font-black bg-[#154734] text-white px-2 py-0.5 rounded-full">
-              −{coupon.discountPercentage}%
+              {coupon.discountType === "FIXED" && coupon.discountValue
+                ? `−$${coupon.discountValue.toLocaleString("es-CO")}`
+                : `−${coupon.discountPercentage}%`}
             </span>
           </div>
           <button

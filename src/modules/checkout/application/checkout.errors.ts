@@ -49,3 +49,38 @@ export class InvalidAddressError extends Error {
     this.name = "InvalidAddressError";
   }
 }
+
+export class CouponNotYetValidError extends Error {
+  constructor(message = "El cupón aún no está disponible") {
+    super(message);
+    this.name = "CouponNotYetValidError";
+  }
+}
+
+export class CouponExpiredError extends Error {
+  constructor(message = "El cupón ha expirado") {
+    super(message);
+    this.name = "CouponExpiredError";
+  }
+}
+
+export class CouponExhaustedError extends Error {
+  constructor(message = "El cupón ya no tiene usos disponibles") {
+    super(message);
+    this.name = "CouponExhaustedError";
+  }
+}
+
+export class CouponInactiveError extends Error {
+  constructor(message = "El cupón no está activo") {
+    super(message);
+    this.name = "CouponInactiveError";
+  }
+}
+
+export class CouponAlreadyUsedError extends Error {
+  constructor(message = "Este cupón ya fue utilizado por ti") {
+    super(message);
+    this.name = "CouponAlreadyUsedError";
+  }
+}

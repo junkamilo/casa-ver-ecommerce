@@ -5,6 +5,7 @@
 
 import {
   calculateCouponDiscount,
+  calculateCouponDiscountAmount,
   isCouponEligibleForEmail,
 } from "@/modules/checkout/domain/coupon.entity";
 import { createOrderInputSchema } from "@/modules/checkout/contracts/create-order.schema";
@@ -49,6 +50,11 @@ describe("Checkout — coupon domain", () => {
     expect(calculateCouponDiscount(33333, 10)).toBe(3333);
     expect(calculateCouponDiscount(12345, 15)).toBe(1852);
     expect(calculateCouponDiscount(100000, 0)).toBe(0);
+  });
+
+  it("calculateCouponDiscountAmount soporta monto fijo", () => {
+    expect(calculateCouponDiscountAmount(80000, "FIXED", 25000)).toBe(25000);
+    expect(calculateCouponDiscountAmount(10000, "FIXED", 25000)).toBe(10000);
   });
 });
 

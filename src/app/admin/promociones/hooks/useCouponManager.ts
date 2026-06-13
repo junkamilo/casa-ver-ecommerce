@@ -34,6 +34,31 @@ export function useCouponManager() {
   const [usageDetail, setUsageDetail] = useState<CouponUsageDetailDTO | null>(null);
   const [usageLoading, setUsageLoading] = useState(false);
 
+  const [confirmModal, setConfirmModal] = useState<{
+    title: string;
+    description: string;
+    confirmLabel: string;
+    variant: "danger" | "warning";
+    action: () => Promise<void>;
+  } | null>(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+
+  const closeConfirmModal = useCallback(() => {
+    if (confirmLoading) return;
+    setConfirmModal(null);
+  }, [confirmLoading]);
+
+  const runConfirmAction = useCallback(async () => {
+    if (!confirmModal) return;
+    setConfirmLoading(true);
+    try {
+      await confirmModal.action();
+      setConfirmModal(null);
+    } finally {
+      setConfirmLoading(false);
+    }
+  }, [confirmModal]);
+
   const showToast = useCallback((type: "success" | "error", message: string) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 3500);
@@ -97,21 +122,27 @@ export function useCouponManager() {
     }
   };
 
-  const handleDelete = async (coupon: CouponListItemDTO) => {
+  const handleDelete = (coupon: CouponListItemDTO) => {
     if (coupon.isUsed) return;
-    if (!confirm(`¿Eliminar el cupón ${coupon.code}?`)) return;
-
-    setDeletingId(coupon.id);
-    try {
-      await deleteAdminCoupon(coupon.id);
-      showToast("success", "Cupón eliminado");
-      await loadCoupons();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Error al eliminar cupón";
-      showToast("error", message);
-    } finally {
-      setDeletingId(null);
-    }
+    setConfirmModal({
+      title: "Eliminar cupón",
+      description: `¿Eliminar el cupón ${coupon.code}? Esta acción no se puede deshacer.`,
+      confirmLabel: "Eliminar",
+      variant: "danger",
+      action: async () => {
+        setDeletingId(coupon.id);
+        try {
+          await deleteAdminCoupon(coupon.id);
+          showToast("success", "Cupón eliminado");
+          await loadCoupons();
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Error al eliminar cupón";
+          showToast("error", message);
+        } finally {
+          setDeletingId(null);
+        }
+      },
+    });
   };
 
   const copyCode = async (code: string) => {
@@ -175,5 +206,9 @@ export function useCouponManager() {
     openUsageDetail,
     closeUsageDetail,
     usedRowClass,
+    confirmModal,
+    confirmLoading,
+    closeConfirmModal,
+    runConfirmAction,
   };
 }

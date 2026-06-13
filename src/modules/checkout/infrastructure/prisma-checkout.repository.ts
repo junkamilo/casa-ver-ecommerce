@@ -3,9 +3,20 @@ import { prisma } from "@/lib/prisma";
 import { getShippingCost } from "@/lib/shipping";
 import {
   calculateCouponDiscount,
+  calculateCouponDiscountAmount,
+  hasUserExceededCouponLimit,
   isCouponEligibleForEmail,
+  isCouponGloballyAvailable,
+  isPromotionalCoupon,
+  PROMOTIONAL_MAX_USES_PER_USER,
+  type CouponDiscountType,
 } from "../domain/coupon.entity";
+import { computeOrderPaymentExpiresAt } from "../domain/order-payment-grace";
+import { validateCouponTimeWindow } from "../domain/validate-coupon-time-window";
 import {
+  CouponAlreadyUsedError,
+  CouponExhaustedError,
+  CouponInactiveError,
   InvalidAddressError,
   OutOfStockError,
   ProductUnavailableError,
@@ -141,29 +152,91 @@ export class PrismaCheckoutRepository {
 
         const realShippingCost = getShippingCost(input.city, input.department);
 
-        // 3. Re-validar el cupón contra la BD
+        // 3. Re-validar el cupón contra la BD (Fase 2)
         let couponDiscountAmount = 0;
+        let appliedCouponId: string | undefined;
+
         if (input.couponId) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const coupon = await (tx as any).coupon.findUnique({
             where: { id: input.couponId },
-            select: { discountPercentage: true, isUsed: true, assignedEmail: true },
+            select: {
+              id: true,
+              kind: true,
+              discountType: true,
+              discountValue: true,
+              discountPercentage: true,
+              isUsed: true,
+              assignedEmail: true,
+              isActive: true,
+              scheduleMode: true,
+              validFrom: true,
+              validTo: true,
+              expiresAt: true,
+              maxGlobalUses: true,
+              currentGlobalUses: true,
+              maxUsesPerUser: true,
+            },
           });
-          if (isCouponEligibleForEmail(coupon, input.email)) {
+
+          if (!coupon) {
+            throw new CouponExhaustedError("El cupón no existe");
+          }
+
+          if (isPromotionalCoupon(coupon.kind)) {
+            if (coupon.isActive === false) {
+              throw new CouponInactiveError();
+            }
+            validateCouponTimeWindow(coupon);
+            if (!isCouponGloballyAvailable(coupon)) {
+              throw new CouponExhaustedError();
+            }
+
+            const normalizedEmail = input.email.toLowerCase().trim();
+            const normalizedDocumentId = input.cedula.trim();
+
+            const previousUsageCount = await (tx as any).couponUsage.count({
+              where: {
+                couponId: coupon.id,
+                OR: [
+                  { email: normalizedEmail },
+                  { documentId: normalizedDocumentId },
+                  ...(user.id ? [{ userId: user.id }] : []),
+                ],
+              },
+            });
+
+            if (
+              hasUserExceededCouponLimit(
+                previousUsageCount,
+                PROMOTIONAL_MAX_USES_PER_USER
+              )
+            ) {
+              throw new CouponAlreadyUsedError();
+            }
+
+            couponDiscountAmount = calculateCouponDiscountAmount(
+              realSubtotal,
+              coupon.discountType as CouponDiscountType,
+              coupon.discountValue
+            );
+            appliedCouponId = coupon.id;
+          } else if (isCouponEligibleForEmail(coupon, input.email)) {
             let canRedeem = true;
             if (coupon && !coupon.assignedEmail) {
               const normalizedEmail = input.email.toLowerCase().trim();
-              const user = await tx.user.findUnique({
+              const registeredUser = await tx.user.findUnique({
                 where: { email: normalizedEmail },
                 select: { id: true },
               });
-              canRedeem = !!user;
+              canRedeem = !!registeredUser;
             }
             if (canRedeem) {
               couponDiscountAmount = calculateCouponDiscount(
                 realSubtotal,
                 coupon.discountPercentage
               );
+              appliedCouponId = coupon.id;
             }
           }
         }
@@ -173,6 +246,7 @@ export class PrismaCheckoutRepository {
 
         const orderNumber = generateOrderNumber();
         const transactionId = randomUUID();
+        const paymentExpiresAt = computeOrderPaymentExpiresAt();
 
         if (input.savedAddressId) {
           const addrOwner = await tx.address.findUnique({
@@ -201,6 +275,8 @@ export class PrismaCheckoutRepository {
             total: realTotal,
             status: "PENDING",
             paymentMethod: input.paymentMethod,
+            paymentExpiresAt,
+            ...(appliedCouponId ? { appliedCouponId } : {}),
             items: {
               create: input.items.map((item) => {
                 const realPrice = realPriceMap.get(item.variantId) ?? item.price;
@@ -231,14 +307,22 @@ export class PrismaCheckoutRepository {
 
         if (input.couponId && couponDiscountAmount > 0) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (tx as any).coupon.update({
+          const coupon = await (tx as any).coupon.findUnique({
             where: { id: input.couponId },
-            data: {
-              isUsed: true,
-              usedAt: new Date(),
-              usedByOrderId: order.id,
-            },
+            select: { kind: true },
           });
+
+          if (coupon && !isPromotionalCoupon(coupon.kind)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (tx as any).coupon.update({
+              where: { id: input.couponId },
+              data: {
+                isUsed: true,
+                usedAt: new Date(),
+                usedByOrderId: order.id,
+              },
+            });
+          }
         }
 
         void variantTypeMap;

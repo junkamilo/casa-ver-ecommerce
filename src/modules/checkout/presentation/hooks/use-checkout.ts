@@ -8,7 +8,7 @@ import { useCart } from "@/context/CartContext";
 import { validateCoupon } from "@/app/actions/coupons";
 import { createOrder } from "@/app/actions/checkout";
 import { getShippingCost } from "@/lib/shipping";
-import { calculateCouponDiscount } from "@/modules/checkout/domain/coupon.entity";
+import { calculateCouponDiscountAmount } from "@/modules/checkout/domain/coupon.entity";
 import { checkoutSchema } from "@/app/checkout/types/schema";
 import type { CheckoutFormData } from "@/app/checkout/types/schema";
 import type { CouponState } from "@/app/checkout/types";
@@ -49,31 +49,59 @@ export function useCheckout(options?: UseCheckoutOptions) {
 
   const couponDiscount =
     coupon.status === "valid"
-      ? calculateCouponDiscount(subtotal, coupon.discountPercentage)
+      ? calculateCouponDiscountAmount(
+          subtotal,
+          coupon.discountType ?? "PERCENTAGE",
+          coupon.discountType === "FIXED"
+            ? (coupon.discountValue ?? 0)
+            : coupon.discountPercentage
+        )
+      : 0;
+
+  const lineItemDiscountPercentage =
+    coupon.status === "valid"
+      ? coupon.discountType === "FIXED" && subtotal > 0
+        ? Math.round((couponDiscount / subtotal) * 100)
+        : coupon.discountPercentage
       : 0;
   const discount = couponDiscount;
   const total = subtotal + shippingCost - discount;
 
   const handleApplyCoupon = useCallback(
     async (code: string) => {
-      const email = form.getValues("email");
+      const email = form.getValues("email")?.trim();
+      const hasValidEmail = email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setCoupon((prev) => ({ ...prev, code, status: "validating" }));
+
+      const result = await validateCoupon(code, hasValidEmail ? email : undefined);
+
+      if (
+        !result.valid &&
+        result.error === "Correo requerido para validar este cupón"
+      ) {
         form.setError("email", {
-          message: "Ingresa un correo válido antes de aplicar el cupón",
+          message: "Ingresa un correo válido antes de aplicar este cupón",
+        });
+        setCoupon({
+          code,
+          status: "invalid",
+          discountPercentage: 0,
+          errorMessage: result.error,
         });
         return;
       }
 
-      setCoupon((prev) => ({ ...prev, code, status: "validating" }));
-
-      const result = await validateCoupon(code, email);
-
       if (result.valid) {
+        const discountType = result.discountType ?? "PERCENTAGE";
+        const discountValue = result.discountValue ?? result.discountPercentage ?? 0;
         setCoupon({
           code,
           status: "valid",
-          discountPercentage: result.discountPercentage!,
+          discountType,
+          discountValue,
+          discountPercentage:
+            discountType === "PERCENTAGE" ? discountValue : 0,
           couponId: result.couponId,
         });
         setShowCouponCelebration(true);
@@ -238,6 +266,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
     couponDiscount,
     total,
     coupon,
+    lineItemDiscountPercentage,
     handleApplyCoupon,
     handleRemoveCoupon,
     showCouponCelebration,

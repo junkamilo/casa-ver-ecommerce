@@ -1,4 +1,11 @@
 import { prisma } from "@/lib/prisma";
+import {
+  hasUserExceededCouponLimit,
+  isPromotionalCoupon,
+  PROMOTIONAL_MAX_USES_PER_USER,
+} from "@/modules/checkout/domain/coupon.entity";
+import { isOrderWithinPaymentGrace } from "@/modules/checkout/domain/order-payment-grace";
+import { OrderPaymentGraceExpiredError } from "../application/order.errors";
 import type { PaidOrderDTO, ReleaseOrderTargetStatus } from "../contracts/order-payment.dto";
 
 // Encapsula las dos transacciones atómicas críticas del dominio de órdenes:
@@ -31,7 +38,15 @@ export class PrismaOrderRepository {
         throw new Error(`Orden no encontrada: ${transactionId}`);
       }
       if (order.status === "PAID") {
+        await this.consolidatePromotionalCouponUsage(tx, order);
         return order as PaidOrderDTO;
+      }
+
+      if (
+        order.status === "PENDING" &&
+        !isOrderWithinPaymentGrace(order.paymentExpiresAt)
+      ) {
+        throw new OrderPaymentGraceExpiredError();
       }
 
       const updatedOrder = await tx.order.update({
@@ -71,7 +86,96 @@ export class PrismaOrderRepository {
         },
       });
 
+      await this.consolidatePromotionalCouponUsage(tx, updatedOrder);
+
       return updatedOrder as PaidOrderDTO;
+    });
+  }
+
+  private async consolidatePromotionalCouponUsage(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tx: any,
+    order: {
+      id: string;
+      appliedCouponId: string | null;
+      userId: string;
+      user: { email: string | null } | null;
+      shippingCedula: string | null;
+    }
+  ): Promise<void> {
+    // Flash Sale grace: NO revalidar validFrom/validTo del cupón aquí.
+    // La ventana temporal se congela al crear la orden; el webhook honra el
+    // snapshot aunque validTo ya haya pasado mientras la orden esté en grace.
+    if (!order.appliedCouponId) return;
+
+    const coupon = await tx.coupon.findUnique({
+      where: { id: order.appliedCouponId },
+      select: {
+        id: true,
+        kind: true,
+        maxUsesPerUser: true,
+        maxGlobalUses: true,
+      },
+    });
+
+    if (!coupon || !isPromotionalCoupon(coupon.kind)) return;
+
+    const existingUsage = await tx.couponUsage.findUnique({
+      where: { orderId: order.id },
+    });
+    if (existingUsage) return;
+
+    const email = (order.user?.email ?? "").toLowerCase().trim();
+    const documentId = (order.shippingCedula ?? "").trim();
+    if (!email || !documentId) {
+      console.warn(
+        `[markPaid] Orden ${order.id} con cupón promocional sin email/cédula — omitiendo consolidación`
+      );
+      return;
+    }
+
+    const previousUsageCount = await tx.couponUsage.count({
+      where: {
+        couponId: coupon.id,
+        OR: [
+          { email },
+          { documentId },
+          { userId: order.userId },
+        ],
+      },
+    });
+
+    if (
+      hasUserExceededCouponLimit(previousUsageCount, PROMOTIONAL_MAX_USES_PER_USER)
+    ) {
+      console.warn(
+        `[markPaid] Cupón ${coupon.id} ya usado por usuario de orden ${order.id} — omitiendo consolidación`
+      );
+      return;
+    }
+
+    const incremented = await tx.$executeRaw`
+      UPDATE "coupons"
+      SET "currentGlobalUses" = "currentGlobalUses" + 1
+      WHERE "id" = ${coupon.id}
+        AND "currentGlobalUses" < ${coupon.maxGlobalUses ?? 0}
+    `;
+
+    if (Number(incremented) === 0) {
+      console.warn(
+        `[markPaid] Cupón ${coupon.id} agotado al consolidar orden ${order.id}`
+      );
+      return;
+    }
+
+    await tx.couponUsage.create({
+      data: {
+        couponId: coupon.id,
+        orderId: order.id,
+        userId: order.userId,
+        email,
+        documentId,
+      },
     });
   }
 
