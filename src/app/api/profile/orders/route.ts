@@ -11,9 +11,12 @@ export async function GET() {
       return NextResponse.json({ message: "No autorizado" }, { status: 401 });
     }
 
-    const userId = (session.user as { id: string }).id;
+    const userId = (session.user as { id?: string }).id;
     if (!userId) {
-      return NextResponse.json({ message: "No autorizado" }, { status: 401 });
+      return NextResponse.json(
+        { message: "Sesión inválida. Cierra sesión e ingresa de nuevo." },
+        { status: 401 }
+      );
     }
 
     const orders = await prisma.order.findMany({

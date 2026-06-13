@@ -5,16 +5,20 @@ import Image from "next/image";
 import { ShoppingBag, ChevronUp, X, Sparkles } from "lucide-react";
 import { LOCALE } from "../constants";
 import { calcLineItemDisplayTotals } from "@/modules/checkout/presentation/calculators/line-item-totals";
-import type { CheckoutItem } from "../types";
+import type { CheckoutItem, CouponState } from "../types";
+import CouponInput from "./shared/CouponInput";
 import OrderTotals from "./shared/OrderTotals";
 
 interface CheckoutMobileSummaryProps {
   items: CheckoutItem[];
   subtotal: number;
   shippingCost: number;
-  earlyBirdDiscount: number;
-  earlyBirdActive: boolean;
   total: number;
+  coupon: CouponState;
+  couponDiscount: number;
+  onApplyCoupon: (code: string) => void;
+  onRemoveCoupon: () => void;
+  isPending?: boolean;
   hidden?: boolean;
 }
 
@@ -22,13 +26,18 @@ export default function CheckoutMobileSummary({
   items,
   subtotal,
   shippingCost,
-  earlyBirdDiscount,
-  earlyBirdActive,
   total,
+  coupon,
+  couponDiscount,
+  onApplyCoupon,
+  onRemoveCoupon,
+  isPending = false,
   hidden = false,
 }: CheckoutMobileSummaryProps) {
   const [open, setOpen] = useState(false);
   const totalItems = items.reduce((acc, i) => acc + i.quantity, 0);
+  const discountPercentage =
+    coupon.status === "valid" ? coupon.discountPercentage : 0;
 
   return (
     <>
@@ -69,7 +78,8 @@ export default function CheckoutMobileSummary({
             {/* Items */}
             <div className="space-y-3">
               {items.map((item) => {
-                const { originalTotal, discountedTotal } = calcLineItemDisplayTotals(item, earlyBirdActive);
+                const { originalTotal, discountedTotal, showsDiscount } =
+                  calcLineItemDisplayTotals(item, discountPercentage);
                 return (
                   <div
                     key={item.id}
@@ -90,15 +100,15 @@ export default function CheckoutMobileSummary({
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
-                      {earlyBirdActive ? (
-                        <>
-                          <p className="text-[10px] text-gray-400 line-through leading-none">
+                      {showsDiscount ? (
+                        <div className="flex flex-col items-end gap-0.5">
+                          <span className="text-[9px] text-gray-400 line-through">
                             ${originalTotal.toLocaleString(LOCALE)}
-                          </p>
-                          <p className="text-xs font-bold text-amber-600 leading-snug">
+                          </span>
+                          <span className="text-xs font-bold text-emerald-700">
                             ${discountedTotal.toLocaleString(LOCALE)}
-                          </p>
-                        </>
+                          </span>
+                        </div>
                       ) : (
                         <span className="text-xs font-bold text-[#154734]">
                           ${originalTotal.toLocaleString(LOCALE)}
@@ -110,10 +120,19 @@ export default function CheckoutMobileSummary({
               })}
             </div>
 
+            <CouponInput
+              coupon={coupon}
+              onApply={onApplyCoupon}
+              onRemove={onRemoveCoupon}
+              disabled={isPending}
+            />
+
             <OrderTotals
               subtotal={subtotal}
               shippingCost={shippingCost}
-              earlyBirdDiscount={earlyBirdDiscount}
+              couponDiscount={couponDiscount}
+              discountPercentage={discountPercentage > 0 ? discountPercentage : undefined}
+              couponCode={coupon.status === "valid" ? coupon.code : undefined}
               compact
             />
 

@@ -17,8 +17,7 @@ import {
   mapAdminProductsResponseToUi,
   mapPresetColorsToUi,
 } from "@/modules/adminCatalog/products/presentation/mappers";
-
-const PAGE_SIZE = 8;
+import { DEFAULT_ADMIN_PAGE_SIZE } from "@/components/ui/AdminPagination";
 
 export function useProductList() {
   const [products, setProducts] = useState<ProductListItem[]>([]);
@@ -30,6 +29,12 @@ export function useProductList() {
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("Todos");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSizeState] = useState(DEFAULT_ADMIN_PAGE_SIZE);
+
+  const setPageSize = useCallback((size: number) => {
+    setPageSizeState(size);
+    setPage(1);
+  }, []);
 
   const fetchProducts = useCallback(async () => {
     setFetchError(null);
@@ -129,10 +134,10 @@ export function useProductList() {
     }
   };
 
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
   const paginatedProducts = filteredProducts.slice(
-    (page - 1) * PAGE_SIZE,
-    page * PAGE_SIZE
+    (page - 1) * pageSize,
+    page * pageSize
   );
 
   return {
@@ -153,6 +158,7 @@ export function useProductList() {
     page,
     setPage,
     totalPages,
-    pageSize: PAGE_SIZE,
+    pageSize,
+    setPageSize,
   };
 }

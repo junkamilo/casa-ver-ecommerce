@@ -15,6 +15,7 @@ import BillingSection from "./components/BillingSection";
 import CheckoutSubmitButton from "./components/CheckoutSubmitButton";
 import OrderSummaryPanel from "./components/OrderSummaryPanel";
 import GuestCheckoutModal from "./components/GuestCheckoutModal";
+import CouponAppliedModal from "./components/CouponAppliedModal";
 
 export default function CheckoutPage() {
   const { status: authStatus } = useSession();
@@ -34,9 +35,13 @@ export default function CheckoutPage() {
     items,
     subtotal,
     shippingCost,
-    earlyBirdDiscount,
-    earlyBird,
     total,
+    coupon,
+    couponDiscount,
+    handleApplyCoupon,
+    handleRemoveCoupon,
+    showCouponCelebration,
+    dismissCouponCelebration,
     isPending,
     submitError,
     onSubmit,
@@ -49,6 +54,13 @@ export default function CheckoutPage() {
         <GuestCheckoutModal onContinueAsGuest={() => setGuestMode(true)} />
       )}
 
+      <CouponAppliedModal
+        open={showCouponCelebration}
+        onClose={dismissCouponCelebration}
+        discountPercentage={coupon.discountPercentage}
+        couponDiscount={couponDiscount}
+      />
+
       <form
         onSubmit={onSubmit}
         className="min-h-screen lg:h-dvh bg-[#FAFAFA] flex flex-col lg:flex-row font-sans selection:bg-[#C19A6B]/20"
@@ -57,9 +69,12 @@ export default function CheckoutPage() {
           items={items}
           subtotal={subtotal}
           shippingCost={shippingCost}
-          earlyBirdDiscount={earlyBirdDiscount}
-          earlyBirdActive={earlyBird.hasDiscount}
           total={total}
+          coupon={coupon}
+          couponDiscount={couponDiscount}
+          onApplyCoupon={handleApplyCoupon}
+          onRemoveCoupon={handleRemoveCoupon}
+          isPending={isPending}
           hidden={showModal}
         />
 
@@ -102,9 +117,12 @@ export default function CheckoutPage() {
           items={items}
           subtotal={subtotal}
           shippingCost={shippingCost}
-          earlyBirdDiscount={earlyBirdDiscount}
-          earlyBirdActive={earlyBird.hasDiscount}
           total={total}
+          coupon={coupon}
+          couponDiscount={couponDiscount}
+          onApplyCoupon={handleApplyCoupon}
+          onRemoveCoupon={handleRemoveCoupon}
+          isPending={isPending}
         />
       </form>
     </FormProvider>

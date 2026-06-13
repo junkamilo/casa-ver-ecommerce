@@ -10,6 +10,12 @@ import {
 } from "../../contracts/product-detail.dto";
 import { isVideoUrl } from "../../domain/video-url.entity";
 
+export type GalleryMediaItem = {
+  url: string;
+  color: UIColor | null;
+  isVideo: boolean;
+};
+
 /**
  * Hook UI del PDP. Encapsula el estado de selección de vista (set vs main),
  * color, talla, cantidad, accordeon y galería maestra. Provee handlers
@@ -43,7 +49,6 @@ export function useProductClient(
     initialItem ? initialItem.id : "main",
   );
 
-  // ─── Datos activos según la vista seleccionada ──────────────────────────
   const activeItem: UIProductItem | null =
     activeView === "main"
       ? null
@@ -63,24 +68,24 @@ export function useProductClient(
     : product.description;
   const activeGeneralImages = activeItem ? [] : product.generalImages;
 
-  // ─── Galería maestra ─────────────────────────────────────────────────────
-  const masterGallery = useMemo(() => {
-    const items: { url: string; color: UIColor | null }[] = [];
-    activeGeneralImages
-      .filter((url) => !isVideoUrl(url))
-      .forEach((url) => items.push({ url, color: null }));
-    activeColors.forEach((color) => {
-      color.images
-        .filter((url) => !isVideoUrl(url))
-        .forEach((url) => items.push({ url, color }));
+  // Galería maestra: incluye imágenes Y videos por color (y generales).
+  const masterGallery = useMemo((): GalleryMediaItem[] => {
+    const items: GalleryMediaItem[] = [];
+
+    activeGeneralImages.forEach((url) => {
+      items.push({ url, color: null, isVideo: isVideoUrl(url) });
     });
+
+    activeColors.forEach((color) => {
+      color.images.forEach((url) => {
+        items.push({ url, color, isVideo: isVideoUrl(url) });
+      });
+    });
+
     return items;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeGeneralImages, activeColors]);
 
   const galleryUrls = masterGallery.map((item) => item.url);
-
-  // ─── Handlers ────────────────────────────────────────────────────────────
 
   const handleViewSelect = (view: string) => {
     setActiveView(view);
@@ -106,7 +111,7 @@ export function useProductClient(
 
   const handleImageSelect = (index: number) => {
     setSelectedImage(index);
-    const associatedColor = masterGallery[index].color;
+    const associatedColor = masterGallery[index]?.color;
     if (associatedColor && associatedColor.id !== selectedColor?.id) {
       setSelectedColor(associatedColor);
       setSelectedSize(null);
@@ -120,6 +125,8 @@ export function useProductClient(
       product.isSet && activeItem
         ? `${product.name} — ${activeItem.name}`
         : product.name;
+    const firstImage =
+      galleryUrls.find((url) => !isVideoUrl(url)) ?? galleryUrls[0] ?? "";
     return {
       id: product.id,
       variantId: variant?.variantId ?? "",
@@ -127,7 +134,7 @@ export function useProductClient(
       name: cartName,
       price: activePrice,
       gallery: galleryUrls,
-      image: galleryUrls[0] ?? "",
+      image: firstImage,
     };
   };
 

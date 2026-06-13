@@ -24,7 +24,8 @@ export default async function AdminDashboard() {
       </div>
     );
   } catch (error) {
-    console.error("❌ Error cargando metricas del dashboard:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("❌ Error cargando metricas del dashboard:", message, error);
     return <DashboardError />;
   }
 }

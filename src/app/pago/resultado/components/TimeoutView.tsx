@@ -1,10 +1,16 @@
+"use client";
+
 import { CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { getPedidosHref } from "@/app/perfil/constants/pedidos-route";
 import { BRAND_GREEN, BG_COLOR, FONT_SERIF, ROUTES } from "../constants";
 
 export function TimeoutView() {
   const router = useRouter();
+  const { status } = useSession();
+  const pedidosHref = getPedidosHref(status === "authenticated");
 
   return (
     <div
@@ -23,7 +29,7 @@ export function TimeoutView() {
       </div>
       <div className="flex flex-col gap-3 w-full max-w-xs">
         <Link
-          href="/perfil?section=pedidos"
+          href={pedidosHref}
           className="w-full px-8 py-3 text-white rounded-full text-sm font-semibold text-center"
           style={{ backgroundColor: BRAND_GREEN }}
         >

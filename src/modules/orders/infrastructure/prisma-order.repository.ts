@@ -78,9 +78,9 @@ export class PrismaOrderRepository {
   // -------------------------------------------------------------------------
   // releaseStockByTransactionId
   //
-  // Libera reservas de stock + cupón + early bird cuando el pago falla, se
-  // cancela o se reembolsa. Idempotente: si la orden no existe o ya está en
-  // estado terminal (no PENDING/PROCESSING), no hace nada.
+  // Libera reservas de stock + cupón cuando el pago falla, se cancela o se
+  // reembolsa. Idempotente: si la orden no existe o ya está en estado terminal
+  // (no PENDING/PROCESSING), no hace nada.
   //
   // Pasos dentro de la transacción:
   //   1. Buscar orden + items.
@@ -89,7 +89,6 @@ export class PrismaOrderRepository {
   //   4. Por cada item: ProductVariant → decrement reserved (clamp);
   //      ProductItemVariant → increment stock (re-poner lo descontado al crear).
   //   5. Liberar cupón si la orden lo tenía reservado.
-  //   6. Restaurar earlyBirdDiscount sólo si el usuario no tiene otra orden PAID con descuento.
   // -------------------------------------------------------------------------
   async releaseStockByTransactionId(
     transactionId: string,
@@ -163,34 +162,8 @@ export class PrismaOrderRepository {
           },
         });
 
-        // Restaurar Early Bird solo si el usuario no ha completado otra
-        // compra con el descuento aplicado (evita que un webhook tardío
-        // re-active el flag después de un pago exitoso).
-        if (order.earlyBirdDiscountApplied) {
-          const alreadyUsedSuccessfully = await tx.order.findFirst({
-            where: {
-              userId: order.userId,
-              earlyBirdDiscountApplied: true,
-              status: "PAID",
-              id: { not: order.id },
-            },
-            select: { id: true },
-          });
-
-          if (!alreadyUsedSuccessfully) {
-            await tx.user.update({
-              where: { id: order.userId },
-              data: { earlyBirdDiscount: true },
-            });
-          } else {
-            console.info(
-              `[releaseOrderStock] Early Bird NO restaurado — usuario ${order.userId} ya tiene orden PAID con descuento`
-            );
-          }
-        }
-
         console.log(
-          `[releaseOrderStock] ✓ Stock, cupón y early bird liberados — orden ${order.orderNumber} → ${newStatus}`
+          `[releaseOrderStock] ✓ Stock y cupón liberados — orden ${order.orderNumber} → ${newStatus}`
         );
       });
     } catch (err) {

@@ -19,7 +19,7 @@ export default function AdminAdministradores() {
   const currentUserId = (session?.user as { id?: string })?.id;
 
   const {
-    admins, filteredAdmins, pagedAdmins, page, setPage, totalPages, loading,
+    admins, filteredAdmins, pagedAdmins, page, setPage, totalPages, pageSize, setPageSize, loading,
     searchTerm, setSearchTerm,
     showModal, setShowModal,
     submitting, name, setName, email, setEmail,
@@ -82,7 +82,8 @@ export default function AdminAdministradores() {
               totalPages={totalPages}
               onPageChange={setPage}
               total={filteredAdmins.length}
-              pageSize={10}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
               itemLabel="administradores"
             />
           </div>

@@ -3,7 +3,7 @@ import type { ReleaseOrderTargetStatus } from "../contracts/order-payment.dto";
 
 const orderRepository = new PrismaOrderRepository();
 
-// releaseOrderStockUseCase — Libera reservas de stock, cupón y early bird.
+// releaseOrderStockUseCase — Libera reservas de stock y cupón.
 //
 // Se llama desde los webhooks de Bold/Addi cuando la transacción es
 // rechazada, cancelada o reembolsada. Es idempotente: si la orden ya está

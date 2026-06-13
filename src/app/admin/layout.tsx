@@ -70,7 +70,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           breadcrumbCurrent={getPageLabel(pathname)}
           rightSlot={<NotificationsBell />}
         />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-gray-50 scrollbar-hide">
+        <main className="relative z-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-gray-50 scrollbar-hide">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

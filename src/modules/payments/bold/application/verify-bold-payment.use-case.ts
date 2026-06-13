@@ -6,7 +6,12 @@ import {
   BoldOrderNotFoundError,
   BoldValidationError,
 } from "./bold.errors";
-import { mapBoldStatusToUiStatus, shouldMarkAsFailed } from "../domain/bold-status.entity";
+import {
+  extractBoldLinkStatus,
+  isApproved,
+  mapBoldStatusToUiStatus,
+  shouldMarkAsFailed,
+} from "../domain/bold-status.entity";
 import { markOrderPaidUseCase } from "@/modules/orders/application/mark-order-paid.use-case";
 import { notifyOrderConfirmation } from "@/modules/payments/shared/infrastructure/order-confirmation.notifier";
 import type {
@@ -17,14 +22,26 @@ import type {
 const repository = new PrismaBoldOrderRepository();
 const client = new BoldPaymentClient();
 
+async function tryMarkOrderPaid(
+  transactionId: string,
+  boldPaymentId: string
+): Promise<void> {
+  try {
+    const paidOrder = await markOrderPaidUseCase(transactionId, boldPaymentId);
+    await notifyOrderConfirmation(paidOrder, { skipIfAlreadySent: true });
+  } catch (e) {
+    console.warn("[BOLD CALLBACK] markOrderPaid (posiblemente idempotente):", e);
+  }
+}
+
 // verifyBoldPaymentUseCase — Polling/redirect de Bold.
 //
 // Bold redirige al cliente a /pago/resultado?reference_id={transactionId}.
 // La página llama a este use case que:
-//   1. Si la orden ya está PAID → status APPROVED (webhook llegó antes)
+//   1. Si la orden ya está PAID → status APPROVED (webhook adelantado)
 //   2. Si la orden no tiene boldLinkId (Bold Botón de Pagos) → RUNNING (esperar webhook)
 //   3. Caso normal: consultar el link en Bold y reaccionar:
-//      - PAID → markOrderPaid + notificar email
+//      - PAID/APPROVED → markOrderPaid + notificar email
 //      - REJECTED/CANCELLED/EXPIRED → marcar orden FAILED (si seguía PENDING)
 export async function verifyBoldPaymentUseCase(
   input: VerifyBoldPaymentInputDTO
@@ -42,18 +59,21 @@ export async function verifyBoldPaymentUseCase(
 
   const order = await repository.findOrderForVerify(input.referenceId);
   if (!order) {
-    console.error("[BOLD CALLBACK] Orden no encontrada para transactionId:", input.referenceId);
+    console.error("[BOLD CALLBACK] Orden no encontrada para referencia:", input.referenceId);
     throw new BoldOrderNotFoundError("Orden no encontrada");
   }
 
-  // Webhook adelantado: si ya está PAID, devolver APPROVED directo.
+  const transactionId = order.transactionId ?? input.referenceId;
+
   if (order.status === "PAID") {
     console.log("[BOLD CALLBACK] Orden ya marcada como PAID (webhook adelantado)");
+    const paidOrder = await repository.findPaidOrderForNotify(transactionId);
+    if (paidOrder) {
+      await notifyOrderConfirmation(paidOrder, { skipIfAlreadySent: true });
+    }
     return { status: "APPROVED", orderId: order.id };
   }
 
-  // Órdenes de Bold Botón de Pagos no tienen boldLinkId — el webhook se
-  // encarga; aquí solo devolvemos RUNNING para que el polling siga esperando.
   if (!order.boldLinkId) {
     console.log(
       "[BOLD CALLBACK] Orden sin boldLinkId (Bold Botón de Pagos) — esperando webhook, devolviendo RUNNING"
@@ -65,41 +85,38 @@ export async function verifyBoldPaymentUseCase(
 
   const result = await client.getLinkStatus(order.boldLinkId, apiKey);
   if (!result.ok) {
-    console.error(
-      "[BOLD CALLBACK] Error Bold API:",
-      result.status,
-      (result.body ?? "").slice(0, 200)
-    );
+    const bodyPreview = (result.body ?? "").slice(0, 200);
+    console.error("[BOLD CALLBACK] Error Bold API:", result.status, bodyPreview);
+
+    if (result.status === 404) {
+      throw new BoldGatewayError(
+        "No se encontró el link de pago en Bold. Si estás en modo pruebas, verifica que BOLD_IDENTITY_KEY sea la llave de sandbox en este entorno.",
+        502
+      );
+    }
+
     throw new BoldGatewayError(`Bold API ${result.status}`, 502);
   }
 
-  console.log("[BOLD CALLBACK] Estado del link recibido:", {
-    status: result.data?.status ?? result.data?.payload?.status,
-  });
+  const boldStatus = extractBoldLinkStatus(result.data as Record<string, unknown>);
+  console.log("[BOLD CALLBACK] Estado del link recibido:", boldStatus);
 
-  const boldStatus = ((result.data.status ?? result.data.payload?.status ?? "UNKNOWN") as string).toUpperCase();
   const uiStatus = mapBoldStatusToUiStatus(boldStatus);
 
-  if (boldStatus === "PAID") {
-    try {
-      // payment_id / transaction_id = ID real (preferido); id = LNK_* (último recurso)
-      const boldPaymentId =
-        (result.data.payment_id as string | undefined) ??
-        (result.data.transaction_id as string | undefined) ??
-        (result.data.id as string | undefined) ??
-        order.boldLinkId ??
-        `bold-verify-${input.referenceId}`;
+  if (isApproved(undefined, boldStatus)) {
+    const linkData = result.data as Record<string, unknown>;
+    const boldPaymentId =
+      (linkData.transaction_id as string | undefined) ??
+      (linkData.payment_id as string | undefined) ??
+      (linkData.id as string | undefined) ??
+      order.boldLinkId ??
+      `bold-verify-${transactionId}`;
 
-      const paidOrder = await markOrderPaidUseCase(input.referenceId, boldPaymentId);
-
-      // Si el correo aún no fue enviado, encolarlo (puede llegar antes que el webhook).
-      await notifyOrderConfirmation(paidOrder, { skipIfAlreadySent: true });
-    } catch (e) {
-      // Idempotente: si ya está pagado no es un error real.
-      console.warn("[BOLD CALLBACK] markOrderPaid (posiblemente idempotente):", e);
-    }
+    await tryMarkOrderPaid(transactionId, boldPaymentId);
   } else if (shouldMarkAsFailed(boldStatus)) {
-    await repository.markPendingAsFailedByTransactionId(input.referenceId);
+    await repository.markPendingAsFailedByTransactionId(transactionId);
+  } else if (boldStatus === "PROCESSING" || boldStatus === "ACTIVE") {
+    return { status: "RUNNING", orderId: order.id };
   }
 
   return { status: uiStatus, orderId: order.id };

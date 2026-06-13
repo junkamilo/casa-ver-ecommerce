@@ -76,12 +76,19 @@ export class BoldPaymentClient {
 
     if (!response.ok) {
       let errorCode: string | undefined;
+      let errorBody: string | undefined;
       try {
         const errBody = await response.json();
         errorCode = errBody?.code ?? errBody?.message ?? undefined;
+        errorBody = JSON.stringify(errBody);
       } catch {
-        /* sin body JSON */
+        try {
+          errorBody = await response.text();
+        } catch {
+          /* sin body */
+        }
       }
+      console.error("[BOLD] createLink failed:", response.status, errorCode ?? errorBody);
       return { ok: false, status: response.status, errorCode };
     }
 

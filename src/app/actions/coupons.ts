@@ -73,8 +73,18 @@ export async function validateCoupon(
       return { valid: false, error: "El cupón ya fue utilizado" };
     }
 
-    if (coupon.assignedEmail !== normalizedEmail) {
-      return { valid: false, error: "El cupón no pertenece a este correo" };
+    if (coupon.assignedEmail) {
+      if (coupon.assignedEmail !== normalizedEmail) {
+        return { valid: false, error: "El cupón no pertenece a este correo" };
+      }
+    } else {
+      const user = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+        select: { id: true },
+      });
+      if (!user) {
+        return { valid: false, error: "Debes registrarte para usar este cupón" };
+      }
     }
 
     return {

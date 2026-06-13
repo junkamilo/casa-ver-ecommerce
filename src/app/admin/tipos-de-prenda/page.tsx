@@ -58,6 +58,7 @@ export default function AdminTiposDePrenda() {
         onPageChange={m.setPage}
         total={m.filteredGarmentTypes.length}
         pageSize={m.pageSize}
+        onPageSizeChange={m.setPageSize}
         itemLabel="tipos de prenda"
       />
 

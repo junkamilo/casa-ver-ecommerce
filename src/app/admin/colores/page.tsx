@@ -57,6 +57,7 @@ export default function AdminColores() {
         onPageChange={m.setPage}
         total={m.filteredColors.length}
         pageSize={m.pageSize}
+        onPageSizeChange={m.setPageSize}
         itemLabel="colores"
       />
 

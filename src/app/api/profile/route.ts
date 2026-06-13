@@ -5,17 +5,28 @@ import { hash, compare } from "bcryptjs";
 import { passwordSchema } from "@/lib/auth/validation";
 import type { NextRequest } from "next/server";
 
+function resolveSessionUserId(session: { user?: unknown }): string | null {
+  const user = session.user as { id?: string } | undefined;
+  return typeof user?.id === "string" && user.id.length > 0 ? user.id : null;
+}
+
 export async function GET() {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ message: "No autorizado" }, { status: 401 });
     }
-    const userId = (session.user as any).id as string;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = prisma as any;
-    const user = await db.user.findUnique({
+    const userId = resolveSessionUserId(session);
+    if (!userId) {
+      console.error("[GET /api/profile] Sesión sin userId — el token JWT puede estar desactualizado");
+      return NextResponse.json(
+        { message: "Sesión inválida. Cierra sesión e ingresa de nuevo." },
+        { status: 401 }
+      );
+    }
+
+    const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -27,7 +38,6 @@ export async function GET() {
         phone: true,
         cedula: true,
         recoveryEmail: true,
-        earlyBirdDiscount: true,
         createdAt: true,
         accounts: { select: { provider: true } },
       },
@@ -37,12 +47,13 @@ export async function GET() {
       return NextResponse.json({ message: "Usuario no encontrado" }, { status: 404 });
     }
 
-    const { password, accounts, ...userData } = user;
+    const { password, accounts, createdAt, ...userData } = user;
 
     return NextResponse.json({
       ...userData,
+      createdAt: createdAt.toISOString(),
       hasPassword: !!password,
-      linkedProviders: (accounts as { provider: string }[]).map((a) => a.provider),
+      linkedProviders: accounts.map((a) => a.provider),
     });
   } catch (err) {
     console.error("[GET /api/profile]", err);
@@ -56,14 +67,19 @@ export async function PUT(req: NextRequest) {
     if (!session?.user) {
       return NextResponse.json({ message: "No autorizado" }, { status: 401 });
     }
-    const userId = (session.user as any).id as string;
+
+    const userId = resolveSessionUserId(session);
+    if (!userId) {
+      return NextResponse.json(
+        { message: "Sesión inválida. Cierra sesión e ingresa de nuevo." },
+        { status: 401 }
+      );
+    }
 
     const body = await req.json();
     const { name, phone, cedula, recoveryEmail, currentPassword, newPassword } = body;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = prisma as any;
-    const user = await db.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
     });
 
@@ -127,7 +143,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ message: "No hay cambios para guardar" }, { status: 400 });
     }
 
-    const updated = await db.user.update({
+    const updated = await prisma.user.update({
       where: { id: user.id },
       data: updateData,
       select: {
@@ -139,19 +155,19 @@ export async function PUT(req: NextRequest) {
         phone: true,
         cedula: true,
         recoveryEmail: true,
-        earlyBirdDiscount: true,
         createdAt: true,
         password: true,
         accounts: { select: { provider: true } },
       },
     });
 
-    const { password: pw, accounts, ...updatedData } = updated;
+    const { password: pw, accounts, createdAt, ...updatedData } = updated;
 
     return NextResponse.json({
       ...updatedData,
+      createdAt: createdAt.toISOString(),
       hasPassword: !!pw,
-      linkedProviders: (accounts as { provider: string }[]).map((a) => a.provider),
+      linkedProviders: accounts.map((a) => a.provider),
     });
   } catch (err) {
     console.error("[PUT /api/profile]", err);

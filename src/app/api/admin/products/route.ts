@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import type { NextRequest } from "next/server";
 import { rateLimit, getClientIP, RATE_LIMIT_CONFIGS } from "@/lib/ratelimit";
+import { revalidateProductListings } from "@/lib/revalidate-product-pages";
 import { listProductsUseCase } from "@/modules/adminCatalog/products/application/list-products.use-case";
 import { createProductUseCase } from "@/modules/adminCatalog/products/application/create-product.use-case";
 import { runAdminRoute } from "@/server/http/admin-route";
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     try {
       const body = await req.json();
       const result = await createProductUseCase(body);
-      revalidatePath("/");
+      revalidateProductListings();
       return NextResponse.json(result);
     } catch (error) {
       return toErrorResponse(error);

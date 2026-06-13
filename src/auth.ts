@@ -73,8 +73,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ account, profile }) {
       // Para Google: rechazar si el correo no está verificado por Google.
-      // Toda la lógica de earlyBird/emailVerified se maneja en el callback jwt
-      // porque ahí el adapter ya garantiza user.id y user.email correctos.
+      // emailVerified se maneja en el callback jwt porque ahí el adapter
+      // ya garantiza user.id y user.email correctos.
       if (account?.provider !== "google") return true;
       const emailVerified = (profile as any)?.email_verified;
       if (!emailVerified) return false;
@@ -82,68 +82,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
 
     async jwt({ token, user, account }) {
-      if (!user) return token; // solo corre en el login inicial
+      if (user) {
+        token.id = user.id;
+        token.role = (user as { role?: string }).role;
+      }
 
-      token.id   = user.id;
-      token.role = (user as any).role;
+      // Sesiones JWT antiguas pueden no tener id — NextAuth lo guarda en sub
+      if (!token.id && token.sub) {
+        token.id = token.sub;
+      }
 
-      // El email del usuario viene del adapter (fuente confiable para todos los proveedores)
-      const email = user.email;
+      const email = user?.email ?? (token.email as string | undefined);
 
       if (account?.provider === "google" && email) {
-        // 1. Marcar emailVerified (el PrismaAdapter no siempre lo hace en v5 beta)
         await prisma.user.updateMany({
           where: { email },
           data: { emailVerified: new Date() },
         });
-
-        // 2. Early Bird: nuevos usuarios de Google (ventana 5 min)
-        const dbUser = await prisma.user.findUnique({
-          where: { email },
-          select: { id: true, createdAt: true, earlyBirdDiscount: true },
-        });
-
-        if (dbUser && !dbUser.earlyBirdDiscount) {
-          const isNewUser = Date.now() - dbUser.createdAt.getTime() < 5 * 60_000;
-
-          if (isNewUser) {
-            const PROMO_ID = "early-bird-2026";
-            const claimed: number = await prisma.$executeRaw`
-              UPDATE "promotions"
-              SET   "currentUses" = "currentUses" + 1,
-                    "updatedAt"   = NOW()
-              WHERE "id"          = ${PROMO_ID}
-                AND "isActive"    = true
-                AND "currentUses" < "maxUses"
-                AND ("startDate" IS NULL OR "startDate" <= NOW())
-                AND ("endDate"   IS NULL OR "endDate"   >= NOW())
-            `;
-
-            if (claimed > 0) {
-              await prisma.user.update({
-                where: { id: dbUser.id },
-                data: { earlyBirdDiscount: true, earlyBirdDiscountAt: new Date() },
-              });
-              token.earlyBirdDiscount = true;
-            }
-          }
-        }
-
-        // 3. Leer el valor final (puede haber sido true ya antes)
-        if (!token.earlyBirdDiscount) {
-          const updated = await prisma.user.findUnique({
-            where: { id: user.id as string },
-            select: { earlyBirdDiscount: true },
-          });
-          token.earlyBirdDiscount = updated?.earlyBirdDiscount ?? false;
-        }
-      } else {
-        // Credentials y otros proveedores
-        const dbUser = await prisma.user.findUnique({
-          where: { id: user.id as string },
-          select: { earlyBirdDiscount: true },
-        });
-        token.earlyBirdDiscount = dbUser?.earlyBirdDiscount ?? false;
       }
 
       return token;
@@ -151,9 +106,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).role = token.role;
-        (session.user as any).earlyBirdDiscount = token.earlyBirdDiscount ?? false;
+        const userId = (token.id ?? token.sub) as string | undefined;
+        (session.user as { id?: string }).id = userId;
+        (session.user as { role?: string }).role = token.role as string | undefined;
       }
       return session;
     },

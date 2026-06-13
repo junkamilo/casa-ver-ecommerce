@@ -3,11 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { getPedidosHref } from "@/app/perfil/constants/pedidos-route";
 import type { BoldPaymentClientProps } from "../types";
 
 export default function BoldPaymentClient({ orderRef, amount, integrity, orderId }: BoldPaymentClientProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [paymentInitiated, setPaymentInitiated] = useState(false);
+  const { status } = useSession();
+  const pedidosHref = getPedidosHref(status === "authenticated");
 
   const identityKey = process.env.NEXT_PUBLIC_BOLD_IDENTITY_KEY;
   const appUrl      = process.env.NEXT_PUBLIC_APP_URL;
@@ -117,7 +121,7 @@ export default function BoldPaymentClient({ orderRef, amount, integrity, orderId
             Verificar estado del pago
           </Link>
           <Link
-            href="/perfil?section=pedidos"
+            href={pedidosHref}
             className="w-full px-8 py-3 border border-[#154734] text-[#154734] rounded-full text-sm font-semibold text-center"
           >
             Ver mis pedidos

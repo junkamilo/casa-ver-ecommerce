@@ -1,6 +1,6 @@
-export const FROM_EMAIL      = "noreply@talentocasaverde@gmail.com";
+export const FROM_EMAIL      = "noreply@casaverdeoficial.com";
 export const FROM_NAME       = "Casa Verde";
-export const REPLY_TO        = "contacto@talentocasaverde@gmail.com";
+export const REPLY_TO        = "talentocasaverde@gmail.com";
 export const WHATSAPP_URL    = "https://wa.me/573022457432";
 export const WHATSAPP_NUMBER = "302 245 7432";
 export const CONTACT_EMAIL   = "talentocasaverde@gmail.com";

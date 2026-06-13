@@ -7,8 +7,7 @@ import {
   fetchAdminOrders,
 } from "@/modules/adminCatalog/orders/presentation/api-client";
 import { mapAdminOrderListDtoToUi } from "@/modules/adminCatalog/orders/presentation/mappers";
-
-const PAGE_SIZE = 5;
+import { DEFAULT_ADMIN_PAGE_SIZE } from "@/components/ui/AdminPagination";
 
 export function usePedidosList(): UsePedidosListReturn {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -18,6 +17,12 @@ export function usePedidosList(): UsePedidosListReturn {
   const [methodFilter, setMethodFilter] = useState("Todos");
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSizeState] = useState(DEFAULT_ADMIN_PAGE_SIZE);
+
+  const setPageSize = useCallback((size: number) => {
+    setPageSizeState(size);
+    setPage(1);
+  }, []);
 
   const refreshOrders = useCallback(() => {
     fetchAdminOrders()
@@ -69,10 +74,10 @@ export function usePedidosList(): UsePedidosListReturn {
     setPage(1);
   }, [search, statusFilter, methodFilter]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
   const paginatedOrders = filteredOrders.slice(
-    (page - 1) * PAGE_SIZE,
-    page * PAGE_SIZE
+    (page - 1) * pageSize,
+    page * pageSize
   );
 
   return {
@@ -84,12 +89,14 @@ export function usePedidosList(): UsePedidosListReturn {
     setMethodFilter,
     expandedOrder,
     setExpandedOrder,
+    orders,
     filteredOrders,
     paginatedOrders,
     page,
     setPage,
     totalPages,
-    pageSize: PAGE_SIZE,
+    pageSize,
+    setPageSize,
     loading,
   };
 }

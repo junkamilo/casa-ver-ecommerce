@@ -51,7 +51,7 @@ export const config = {
     "/api/admin/:path*",
     "/admin/:path*",
     "/perfil/:path*",
-    "/checkout/:path*", // necesario para leer la sesión (earlyBird, etc.)
+    "/checkout/:path*",
     "/login",
     "/registro",
   ],

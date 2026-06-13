@@ -1,83 +1,40 @@
 "use client";
 
-import { useState, useTransition, useCallback, useEffect, useRef } from "react";
+import { useState, useTransition, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import type { Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSession } from "next-auth/react";
 import { useCart } from "@/context/CartContext";
 import { validateCoupon } from "@/app/actions/coupons";
 import { createOrder } from "@/app/actions/checkout";
-import { checkEarlyBirdStatus } from "@/app/actions/earlybird";
-import { EARLY_BIRD_DISCOUNT_PCT } from "@/lib/earlybird.constants";
 import { getShippingCost } from "@/lib/shipping";
+import { calculateCouponDiscount } from "@/modules/checkout/domain/coupon.entity";
 import { checkoutSchema } from "@/app/checkout/types/schema";
 import type { CheckoutFormData } from "@/app/checkout/types/schema";
 import type { CouponState } from "@/app/checkout/types";
 
 export type { CheckoutFormData };
 
-// ---------------------------------------------------------------------------
-// Opciones del hook
-// ---------------------------------------------------------------------------
 interface UseCheckoutOptions {
-  /**
-   * Callback ejecutado DESPUÉS de crear la orden pero ANTES de redirigir a Bold.
-   * Úsalo para auto-guardar la dirección en el perfil del usuario.
-   * Los errores en este callback se ignoran — nunca bloquean el pago.
-   */
   onBeforePayment?: (data: CheckoutFormData) => Promise<void>;
 }
 
-// ---------------------------------------------------------------------------
-// Hook principal del checkout
-// ---------------------------------------------------------------------------
 export function useCheckout(options?: UseCheckoutOptions) {
   const { items, closeCart, clearCart, buyNowItem, clearBuyNow } = useCart();
-  const { data: session, status: authStatus } = useSession();
 
-  // Si hay un buyNowItem el checkout opera solo con ese ítem (no toca el carrito)
   const checkoutItems = buyNowItem ? [buyNowItem] : items;
   const subtotal = checkoutItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const [isPending, startTransition] = useTransition();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Early Bird
-  const [earlyBird, setEarlyBird] = useState<{ hasDiscount: boolean; checked: boolean }>({
-    hasDiscount: false,
-    checked: false,
-  });
-  const lastCheckedEmail = useRef<string>("");
-
-  // Para usuarios autenticados: verificar early bird directamente por email.
-  // No dependemos del JWT (que puede estar desactualizado en la misma sesión).
-  useEffect(() => {
-    if (authStatus !== "authenticated") return;
-    const email = session?.user?.email;
-    if (!email) return;
-
-    // Si la sesión ya lo tiene confirmado, aplicarlo inmediatamente
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((session?.user as any)?.earlyBirdDiscount === true) {
-      setEarlyBird({ hasDiscount: true, checked: true });
-      return;
-    }
-
-    // Verificar desde la BD (cubre el caso donde el JWT aún no fue renovado)
-    checkEarlyBirdStatus(email).then((status) => {
-      setEarlyBird({ hasDiscount: status.hasDiscount, checked: true });
-    });
-  }, [authStatus, session]);
-
-  // Cupón
   const [coupon, setCoupon] = useState<CouponState>({
     code: "",
     status: "idle",
     discountPercentage: 0,
   });
+  const [showCouponCelebration, setShowCouponCelebration] = useState(false);
 
-  // Formulario
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema) as Resolver<CheckoutFormData>,
     defaultValues: {
@@ -85,51 +42,18 @@ export function useCheckout(options?: UseCheckoutOptions) {
     },
   });
 
-  // Costo de envío reactivo — se recalcula cuando el usuario elige ciudad/departamento
   const cityValue = form.watch("city");
   const departmentValue = form.watch("department");
   const shippingCost =
     cityValue && departmentValue ? getShippingCost(cityValue, departmentValue) : 0;
 
-  // Cálculos derivados
-  const earlyBirdDiscount = earlyBird.hasDiscount
-    ? Math.round((subtotal * EARLY_BIRD_DISCOUNT_PCT) / 100)
-    : 0;
   const couponDiscount =
     coupon.status === "valid"
-      ? Math.round((subtotal * coupon.discountPercentage) / 100)
+      ? calculateCouponDiscount(subtotal, coupon.discountPercentage)
       : 0;
-  const discount = couponDiscount + earlyBirdDiscount;
+  const discount = couponDiscount;
   const total = subtotal + shippingCost - discount;
 
-  // ---------------------------------------------------------------------------
-  // Verificar estado Early Bird cuando el email cambia (debounce 800ms)
-  // ---------------------------------------------------------------------------
-  const emailValue = form.watch("email");
-
-  useEffect(() => {
-    // Para usuarios autenticados la sesión ya resuelve el early bird arriba
-    if (authStatus === "authenticated") return;
-
-    if (!emailValue || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
-      setEarlyBird({ hasDiscount: false, checked: false });
-      lastCheckedEmail.current = "";
-      return;
-    }
-    if (emailValue === lastCheckedEmail.current) return;
-
-    const timer = setTimeout(async () => {
-      lastCheckedEmail.current = emailValue;
-      const status = await checkEarlyBirdStatus(emailValue);
-      setEarlyBird({ hasDiscount: status.hasDiscount, checked: true });
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, [emailValue, authStatus]);
-
-  // ---------------------------------------------------------------------------
-  // Validar cupón
-  // ---------------------------------------------------------------------------
   const handleApplyCoupon = useCallback(
     async (code: string) => {
       const email = form.getValues("email");
@@ -152,6 +76,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
           discountPercentage: result.discountPercentage!,
           couponId: result.couponId,
         });
+        setShowCouponCelebration(true);
       } else {
         setCoupon({
           code,
@@ -166,11 +91,13 @@ export function useCheckout(options?: UseCheckoutOptions) {
 
   const handleRemoveCoupon = useCallback(() => {
     setCoupon({ code: "", status: "idle", discountPercentage: 0 });
+    setShowCouponCelebration(false);
   }, []);
 
-  // ---------------------------------------------------------------------------
-  // Submit: crear orden → crear link Bold → redirigir a checkout.bold.co
-  // ---------------------------------------------------------------------------
+  const dismissCouponCelebration = useCallback(() => {
+    setShowCouponCelebration(false);
+  }, []);
+
   const handleSubmit = useCallback(
     (data: CheckoutFormData) => {
       if (!checkoutItems.length) {
@@ -183,7 +110,6 @@ export function useCheckout(options?: UseCheckoutOptions) {
       setSubmitError(null);
 
       startTransition(async () => {
-        // PASO 1: Crear orden en DB (server action con validación completa)
         const orderResult = await createOrder({
           email: data.email,
           firstName: data.firstName,
@@ -209,7 +135,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
           })),
           subtotal,
           shippingCost,
-          discount: couponDiscount, // El servidor re-calcula el early bird; aquí solo va el cupón
+          discount: couponDiscount,
           couponId: coupon.couponId,
           couponCode: coupon.status === "valid" ? coupon.code : undefined,
         });
@@ -219,7 +145,6 @@ export function useCheckout(options?: UseCheckoutOptions) {
           return;
         }
 
-        // PASO 1.5: Hook post-orden (ej. auto-guardar dirección) — fallo silencioso
         if (options?.onBeforePayment) {
           try {
             await options.onBeforePayment(data);
@@ -228,9 +153,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
           }
         }
 
-        // PASO 2: Crear link de pago según método seleccionado y redirigir
         if (data.paymentMethod === "ADDI") {
-          // ── Addi ──────────────────────────────────────────────────────────
           const addiAbort = new AbortController();
           const addiAbortTimer = setTimeout(() => addiAbort.abort(), 20_000);
 
@@ -262,7 +185,6 @@ export function useCheckout(options?: UseCheckoutOptions) {
             return;
           }
 
-          // Limpiar carrito completo antes de salir (evita que se vea en sessionStorage al volver)
           closeCart();
           clearCart();
           clearBuyNow();
@@ -274,7 +196,6 @@ export function useCheckout(options?: UseCheckoutOptions) {
 
           setSubmitError("No se recibió URL de Addi. Intenta de nuevo.");
         } else {
-          // ── Bold ───────────────────────────────────────────────────────────
           const boldRes = await fetch("/api/payments/bold", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -288,12 +209,14 @@ export function useCheckout(options?: UseCheckoutOptions) {
             return;
           }
 
-          // Limpiar carrito completo antes de salir
           closeCart();
           clearCart();
           clearBuyNow();
 
           if (boldData.redirectUrl) {
+            if (orderResult.transactionId) {
+              sessionStorage.setItem("bold_pending_reference_id", orderResult.transactionId);
+            }
             window.location.href = boldData.redirectUrl;
             return;
           }
@@ -313,12 +236,12 @@ export function useCheckout(options?: UseCheckoutOptions) {
     shippingCost,
     discount,
     couponDiscount,
-    earlyBirdDiscount,
-    earlyBird,
     total,
     coupon,
     handleApplyCoupon,
     handleRemoveCoupon,
+    showCouponCelebration,
+    dismissCouponCelebration,
     isPending,
     submitError,
     onSubmit: form.handleSubmit(handleSubmit),

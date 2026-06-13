@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { CheckCircle2, Package, ArrowRight } from "lucide-react";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getPedidosHref } from "@/app/perfil/constants/pedidos-route";
 import SuccessOrderCard from "./components/SuccessOrderCard";
 
 interface SuccessPageProps {
@@ -9,6 +11,8 @@ interface SuccessPageProps {
 
 export default async function CheckoutSuccessPage({ searchParams }: SuccessPageProps) {
   const { orderId } = await searchParams;
+  const session = await auth();
+  const pedidosHref = getPedidosHref(!!session?.user);
 
   const order = orderId
     ? await prisma.order.findUnique({
@@ -49,7 +53,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
             Seguir comprando
           </Link>
           <Link
-            href="/perfil?section=pedidos"
+            href={pedidosHref}
             className="w-full border border-gray-200 text-[#154734] text-sm font-bold uppercase tracking-[0.15em] py-4 rounded-xl hover:border-[#154734] transition-colors duration-300 flex items-center justify-center gap-2"
           >
             Mis pedidos

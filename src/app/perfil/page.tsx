@@ -16,7 +16,7 @@ import { BREADCRUMB_LABELS, PERFIL_NAV } from "./constants";
 import type { ProfileSection } from "./sidebar/types";
 
 function PerfilContent() {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
 
   const {
     profile,
@@ -32,9 +32,14 @@ function PerfilContent() {
   } = useProfile();
 
   const { activeSection, setActiveSection } = useProfileNav();
+  const needsProfileData = activeSection === "perfil";
+
+  const displayName = profile?.name ?? session?.user?.name ?? session?.user?.email ?? "Usuario";
+  const displayInitial = displayName.charAt(0).toUpperCase();
+  const isAdmin = profile?.role === "ADMIN";
 
   /* ── Loading ── */
-  if (status === "loading" || loading) {
+  if (status === "loading" || (needsProfileData && loading)) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50">
         <Loader2 className="w-10 h-10 animate-spin text-[#154734]" />
@@ -42,8 +47,8 @@ function PerfilContent() {
     );
   }
 
-  /* ── Error ── */
-  if (fetchError || (!loading && !profile)) {
+  /* ── Error solo bloquea la sección "perfil" ── */
+  if (needsProfileData && (fetchError || !profile)) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50 px-4">
         <div className="text-center max-w-sm">
@@ -101,12 +106,12 @@ function PerfilContent() {
           onClick: () => setActiveSection(item.id as ProfileSection),
         }))}
         brandSubtitle="Mi Cuenta"
-        userName={profile?.name}
-        userInitial={profile?.name?.charAt(0).toUpperCase() ?? "U"}
-        userRole={profile?.role === "ADMIN" ? "Administrador" : "Cliente"}
+        userName={displayName}
+        userInitial={displayInitial}
+        userRole={isAdmin ? "Administrador" : "Cliente"}
         backLink={{ href: "/", label: "Volver a la tienda" }}
         extraLink={
-          profile?.role === "ADMIN"
+          isAdmin
             ? { href: "/admin", label: "Panel Admin" }
             : undefined
         }
@@ -125,6 +130,12 @@ function PerfilContent() {
         {/* Main content */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-5 bg-gray-50 scrollbar-hide">
           <div className="w-full">
+            {fetchError && activeSection !== "perfil" && (
+              <div className="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
+                No pudimos cargar todos los datos de tu cuenta, pero puedes ver tus pedidos normalmente.
+              </div>
+            )}
+
             {activeSection === "perfil" && profile && (
               <ProfileInfoSection
                 profile={profile}
