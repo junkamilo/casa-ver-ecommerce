@@ -49,6 +49,6 @@ export interface CreateOrderResultDTO {
   success: boolean;
   orderId?: string;
   orderNumber?: string;
-  earlyBirdApplied?: boolean;
+  transactionId?: string;
   error?: string;
 }

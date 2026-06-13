@@ -11,6 +11,7 @@ import {
   isApproved as isBoldApproved,
   isRejected as isBoldRejected,
   isRefunded as isBoldRefunded,
+  extractBoldLinkStatus,
   mapBoldStatusToUiStatus,
   shouldMarkAsFailed,
 } from "@/modules/payments/bold/domain/bold-status.entity";
@@ -62,6 +63,11 @@ describe("Bold — bold-status predicados puros", () => {
     expect(isBoldRefunded(undefined, "REFUNDED")).toBe(true);
     expect(isBoldRefunded(undefined, "refunded")).toBe(true);
     expect(isBoldRefunded("SALE_APPROVED")).toBe(false);
+  });
+
+  it("extractBoldLinkStatus lee status en raíz o payload", () => {
+    expect(extractBoldLinkStatus({ status: "paid" })).toBe("PAID");
+    expect(extractBoldLinkStatus({ payload: { status: "PROCESSING" } })).toBe("PROCESSING");
   });
 
   it("mapBoldStatusToUiStatus convierte PAID → APPROVED y deja el resto", () => {

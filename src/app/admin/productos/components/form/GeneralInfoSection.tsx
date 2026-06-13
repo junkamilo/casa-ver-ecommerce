@@ -66,12 +66,19 @@ export default function GeneralInfoSection({
             : <span className="text-red-500">*</span>}
         </label>
         <textarea
-          rows={3}
+          rows={5}
           value={description}
           onChange={(e) => onDescription(e.target.value)}
-          placeholder={isSet ? "Descripción general del conjunto (opcional)..." : "Describe el producto..."}
-          className={`${inputCls(!!errors.description)} resize-none`}
+          placeholder={
+            isSet
+              ? "Descripción general del conjunto (opcional). Cada línea se mostrará como viñeta en la tienda."
+              : "Describe el producto. Cada salto de línea se mostrará como viñeta en la ficha del producto."
+          }
+          className={`${inputCls(!!errors.description)} resize-y min-h-[120px]`}
         />
+        <p className="text-[11px] text-gray-400">
+          Tip: escribe cada característica en una línea nueva para que aparezca con viñeta dorada.
+        </p>
         <FieldError msg={errors.description} />
       </div>
 

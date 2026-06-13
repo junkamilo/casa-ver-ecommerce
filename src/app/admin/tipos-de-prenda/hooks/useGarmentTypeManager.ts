@@ -12,8 +12,7 @@ import {
   updateGarmentType,
 } from "@/modules/adminCatalog/garmentTypes/presentation/api-client";
 import { mapGarmentTypeListDtoToUi } from "@/modules/adminCatalog/garmentTypes/presentation/mappers";
-
-const PAGE_SIZE = 10;
+import { DEFAULT_ADMIN_PAGE_SIZE } from "@/components/ui/AdminPagination";
 
 export function useGarmentTypeManager() {
   const [garmentTypes, setGarmentTypes] = useState<GarmentType[]>([]);
@@ -23,6 +22,12 @@ export function useGarmentTypeManager() {
   // ── Búsqueda + paginación ─────────────────────────────────────────────────
   const [search, setSearchRaw] = useState("");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSizeState] = useState(DEFAULT_ADMIN_PAGE_SIZE);
+
+  const setPageSize = useCallback((size: number) => {
+    setPageSizeState(size);
+    setPage(1);
+  }, []);
 
   const setSearch = useCallback((v: string) => {
     setSearchRaw(v);
@@ -37,10 +42,10 @@ export function useGarmentTypeManager() {
     );
   }, [garmentTypes, search]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredGarmentTypes.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(filteredGarmentTypes.length / pageSize));
   const paginatedGarmentTypes = filteredGarmentTypes.slice(
-    (page - 1) * PAGE_SIZE,
-    page * PAGE_SIZE
+    (page - 1) * pageSize,
+    page * pageSize
   );
 
   // ── Modal Crear ───────────────────────────────────────────────────────────
@@ -170,7 +175,7 @@ export function useGarmentTypeManager() {
     // Búsqueda + paginación
     search, setSearch,
     page, setPage,
-    pageSize: PAGE_SIZE,
+    pageSize, setPageSize,
     filteredGarmentTypes,
     paginatedGarmentTypes,
     totalPages,

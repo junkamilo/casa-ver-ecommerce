@@ -142,6 +142,7 @@ export default function AdminProductos() {
         onPageChange={list.setPage}
         total={list.filteredProducts.length}
         pageSize={list.pageSize}
+        onPageSizeChange={list.setPageSize}
         itemLabel="productos"
       />
 

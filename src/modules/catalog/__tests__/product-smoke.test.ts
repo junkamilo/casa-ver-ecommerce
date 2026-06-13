@@ -22,13 +22,41 @@ import {
   isVideoUrl,
   normalizeVideoUrl,
 } from "@/modules/catalog/product/domain/video-url.entity";
+import { parseDescriptionBullets } from "@/app/product/[slug]/utils/description";
+
+// ── parseDescriptionBullets ───────────────────────────────────────────────────
+
+describe("parseDescriptionBullets", () => {
+  it("divide por saltos de línea y quita guiones iniciales", () => {
+    const result = parseDescriptionBullets(
+      "- Cuello Mao\n- Manga corta\nDiseñado en licra"
+    );
+    expect(result).toEqual(["Cuello Mao", "Manga corta", "Diseñado en licra"]);
+  });
+
+  it("soporta texto legacy en una sola línea con ' - '", () => {
+    const result = parseDescriptionBullets(
+      "-Cuello Mao con abertura. - Manga corta tipo casquillo. - Diseñado en licra"
+    );
+    expect(result).toHaveLength(3);
+    expect(result[0]).toMatch(/^Cuello Mao/);
+  });
+
+  it("devuelve un solo párrafo si no hay separadores", () => {
+    expect(parseDescriptionBullets("Prenda cómoda de licra premium.")).toEqual([
+      "Prenda cómoda de licra premium.",
+    ]);
+  });
+});
 
 // ── video-url helpers ────────────────────────────────────────────────────────
 
 describe("video-url helpers", () => {
-  it("isVideoUrl detecta extensiones de video", () => {
+  it("isVideoUrl detecta extensiones de video y rutas Cloudinary", () => {
     expect(isVideoUrl("https://x.com/video.mp4")).toBe(true);
     expect(isVideoUrl("https://x.com/clip.MOV")).toBe(true);
+    expect(isVideoUrl("https://res.cloudinary.com/demo/video/upload/v1/sample.mp4")).toBe(true);
+    expect(isVideoUrl("https://res.cloudinary.com/demo/video/upload/f_auto/sample")).toBe(true);
     expect(isVideoUrl("https://x.com/img.jpg")).toBe(false);
     expect(isVideoUrl("https://x.com/img.png")).toBe(false);
     expect(isVideoUrl("")).toBe(false);
@@ -81,7 +109,7 @@ describe("mapUIColor", () => {
 
     expect(color.availableSizes).toEqual(["XS", "S", "L"]);
     expect(color.variants.map((v) => v.variantId)).toEqual(["v4", "v2", "v1"]);
-    expect(color.images).toEqual(["/a.jpg"]);
+    expect(color.images).toEqual(["/a.jpg", "/v.mp4"]);
     expect(color.isOutOfStock).toBe(false);
   });
 

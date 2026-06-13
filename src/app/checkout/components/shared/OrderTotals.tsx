@@ -1,23 +1,26 @@
-import { Truck } from "lucide-react";
+import { Truck, TicketPercent } from "lucide-react";
 import { LOCALE } from "../../constants";
 
 interface OrderTotalsProps {
   subtotal: number;
-  earlyBirdDiscount: number;
   shippingCost: number;
+  couponDiscount?: number;
+  discountPercentage?: number;
+  couponCode?: string;
   /** compact=true → estilos reducidos para el panel mobile */
   compact?: boolean;
 }
 
-/**
- * Desglose de totales reutilizable para desktop y mobile summary panels.
- */
 export default function OrderTotals({
   subtotal,
-  earlyBirdDiscount,
   shippingCost,
+  couponDiscount = 0,
+  discountPercentage,
+  couponCode,
   compact = false,
 }: OrderTotalsProps) {
+  const hasDiscount = couponDiscount > 0;
+
   return (
     <div
       className={`text-sm text-gray-500 font-medium ${
@@ -31,10 +34,20 @@ export default function OrderTotals({
         <span className="text-[#154734] font-bold">${subtotal.toLocaleString(LOCALE)}</span>
       </div>
 
-      {earlyBirdDiscount > 0 && (
-        <div className="flex justify-between items-center text-[#154734]">
-          <span>Descuento (10%)</span>
-          <span className="font-bold text-[#C19A6B]">-${earlyBirdDiscount.toLocaleString(LOCALE)}</span>
+      {hasDiscount && (
+        <div className="flex justify-between items-center">
+          <span className="flex items-center gap-1.5">
+            <TicketPercent className="w-3 h-3 text-emerald-600" />
+            Descuento cupón
+            {discountPercentage != null && (
+              <span className="text-[9px] font-black bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">
+                −{discountPercentage}%
+              </span>
+            )}
+          </span>
+          <span className="text-emerald-700 font-bold">
+            −${couponDiscount.toLocaleString(LOCALE)}
+          </span>
         </div>
       )}
 
@@ -51,6 +64,12 @@ export default function OrderTotals({
           <span className="text-gray-400 italic text-xs">por calcular</span>
         )}
       </div>
+
+      {hasDiscount && couponCode && !compact && (
+        <p className="text-[10px] text-emerald-600/80 font-medium text-right -mt-2">
+          Cupón {couponCode} aplicado
+        </p>
+      )}
     </div>
   );
 }

@@ -5,13 +5,26 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Play, ChevronLeft, ChevronRight } from "lucide-react";
+import { getProductBadgeClassName } from "@/lib/productBadge";
+import {
+  isVideoUrl,
+  normalizeVideoUrl,
+} from "@/modules/catalog/product/domain/video-url.entity";
 import type { CollectionProduct } from "@/components/shared/ProductCollection/types";
 
-const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".ogg"];
-
-function isVideo(url: string): boolean {
-  const clean = url.split("?")[0].toLowerCase();
-  return VIDEO_EXTENSIONS.some((ext) => clean.endsWith(ext));
+function CardVideo({ src, className }: { src: string; className?: string }) {
+  return (
+    <video
+      key={src}
+      src={normalizeVideoUrl(src)}
+      muted
+      loop
+      playsInline
+      autoPlay
+      preload="auto"
+      className={className}
+    />
+  );
 }
 
 type ActiveColor = { name: string; hexCode: string; imageUrl?: string | null } | null;
@@ -48,7 +61,7 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
 
   const currentImage = activeColor?.imageUrl ?? (hasImages ? images[currentIndex] : null);
 
-  const canHoverSwap = !activeColor && currentIndex === 0 && images.length > 1 && currentImage && !isVideo(currentImage) && !isVideo(images[1]);
+  const canHoverSwap = !activeColor && currentIndex === 0 && images.length > 1 && currentImage && !isVideoUrl(currentImage) && !isVideoUrl(images[1]);
   const showHover = isHovered && canHoverSwap;
 
   const showArrows = !activeColor && images.length > 1;
@@ -101,12 +114,10 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
       >
         <div className="relative w-28 sm:w-48 shrink-0 aspect-3/4 overflow-hidden rounded-xl bg-[#FAFAFA] border border-gray-50">
           {currentImage ? (
-            isVideo(currentImage) ? (
+            isVideoUrl(currentImage) ? (
               <>
-                <video
+                <CardVideo
                   src={currentImage}
-                  muted loop playsInline autoPlay
-                  preload="none"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
                 <div className="absolute top-3 left-3 z-20 flex items-center justify-center w-7 h-7 rounded-full bg-white/30 backdrop-blur-md pointer-events-none">
@@ -158,9 +169,7 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
           )}
 
           {item.badge && (
-            <span className={`absolute top-2 right-2 z-20 text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-[0.2em] shadow-md ${
-              item.badge === "Oferta" ? "bg-[#C19A6B]" : item.badge === "Nuevo" ? "bg-[#154734]" : item.badge === "Agotado" ? "bg-red-600" : "bg-gray-900"
-            }`}>
+            <span className={`absolute top-2 right-2 z-30 ${getProductBadgeClassName(item.badge, { compact: true })}`}>
               {item.badge}
             </span>
           )}
@@ -201,11 +210,9 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
         {/* ── MÓVIL: carrusel táctil con scroll-snap ── */}
         <div className="md:hidden absolute inset-0 flex overflow-x-auto snap-x snap-mandatory scrollbar-hide">
           {activeColor?.imageUrl ? (
-            isVideo(activeColor.imageUrl) ? (
-              <video
+            isVideoUrl(activeColor.imageUrl) ? (
+              <CardVideo
                 src={activeColor.imageUrl}
-                muted loop playsInline autoPlay
-                preload="none"
                 className="shrink-0 w-full h-full object-cover snap-center"
               />
             ) : (
@@ -223,12 +230,10 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
             )
           ) : hasImages ? (
             images.map((img, i) =>
-              isVideo(img) ? (
-                <video
-                  key={i}
+              isVideoUrl(img) ? (
+                <CardVideo
+                  key={img}
                   src={img}
-                  muted loop playsInline autoPlay
-                  preload="none"
                   className="shrink-0 w-full h-full object-cover snap-center"
                 />
               ) : (
@@ -256,12 +261,10 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
         {/* ── DESKTOP: imagen única + hover swap ── */}
         <div className="hidden md:block absolute inset-0">
           {currentImage ? (
-            isVideo(currentImage) ? (
+            isVideoUrl(currentImage) ? (
               <>
-                <video
+                <CardVideo
                   src={currentImage}
-                  muted loop playsInline autoPlay
-                  preload="none"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
                 <div className="absolute top-4 left-4 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-white/30 backdrop-blur-md pointer-events-none">
@@ -337,9 +340,7 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
         )}
 
         {item.badge && (
-          <span className={`absolute top-3 right-3 z-20 text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-md ${
-            item.badge === "Oferta" ? "bg-[#C19A6B]" : item.badge === "Nuevo" ? "bg-[#154734]" : item.badge === "Agotado" ? "bg-red-600" : "bg-gray-900"
-          }`}>
+          <span className={`absolute top-3 right-3 z-30 ${getProductBadgeClassName(item.badge)}`}>
             {item.badge}
           </span>
         )}

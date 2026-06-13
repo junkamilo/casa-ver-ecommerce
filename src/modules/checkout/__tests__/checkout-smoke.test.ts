@@ -1,14 +1,8 @@
 /** @jest-environment node */
 
 // Smoke tests del módulo checkout — cubren lógica pura (domain, schema Zod,
-// calculators de UI). NO ejecuta llamadas a DB ni HTTP. Para un test
-// end-to-end con la transacción Prisma completa (stock atómico, cupón,
-// early bird) usar el checklist de QA manual del plan.
+// calculators de UI). NO ejecuta llamadas a DB ni HTTP.
 
-import {
-  calculateEarlyBirdDiscount,
-  isUserEligibleForEarlyBird,
-} from "@/modules/checkout/domain/early-bird.entity";
 import {
   calculateCouponDiscount,
   isCouponEligibleForEmail,
@@ -19,29 +13,13 @@ import {
   calcCheckoutTotals,
 } from "@/modules/checkout/presentation/calculators/line-item-totals";
 
-describe("Checkout — early-bird domain", () => {
-  it("isUserEligibleForEarlyBird detecta el flag estrictamente", () => {
-    expect(isUserEligibleForEarlyBird({ earlyBirdDiscount: true })).toBe(true);
-    expect(isUserEligibleForEarlyBird({ earlyBirdDiscount: false })).toBe(false);
-    expect(isUserEligibleForEarlyBird({ earlyBirdDiscount: null })).toBe(false);
-    expect(isUserEligibleForEarlyBird({ earlyBirdDiscount: undefined })).toBe(false);
-  });
-
-  it("calculateEarlyBirdDiscount devuelve 10% redondeado o 0 si no elegible", () => {
-    expect(calculateEarlyBirdDiscount(100000, true)).toBe(10000);
-    expect(calculateEarlyBirdDiscount(100000, false)).toBe(0);
-    // Redondeo: 12345 * 10 / 100 = 1234.5 → 1235
-    expect(calculateEarlyBirdDiscount(12345, true)).toBe(1235);
-    expect(calculateEarlyBirdDiscount(0, true)).toBe(0);
-  });
-});
-
 describe("Checkout — coupon domain", () => {
-  const validCoupon = { isUsed: false, assignedEmail: "Test@Example.com" };
+  const legacyCoupon = { isUsed: false, assignedEmail: "Test@Example.com" };
+  const openCoupon = { isUsed: false, assignedEmail: null };
 
-  it("isCouponEligibleForEmail acepta email case-insensitive", () => {
-    expect(isCouponEligibleForEmail(validCoupon, "test@example.com")).toBe(true);
-    expect(isCouponEligibleForEmail(validCoupon, "TEST@example.com")).toBe(true);
+  it("isCouponEligibleForEmail acepta email case-insensitive (legacy)", () => {
+    expect(isCouponEligibleForEmail(legacyCoupon, "test@example.com")).toBe(true);
+    expect(isCouponEligibleForEmail(legacyCoupon, "TEST@example.com")).toBe(true);
   });
 
   it("isCouponEligibleForEmail rechaza si está usado", () => {
@@ -49,8 +27,16 @@ describe("Checkout — coupon domain", () => {
     expect(isCouponEligibleForEmail(used, "test@example.com")).toBe(false);
   });
 
-  it("isCouponEligibleForEmail rechaza si el email no coincide", () => {
-    expect(isCouponEligibleForEmail(validCoupon, "other@example.com")).toBe(false);
+  it("isCouponEligibleForEmail rechaza legacy si el email no coincide", () => {
+    expect(isCouponEligibleForEmail(legacyCoupon, "other@example.com")).toBe(false);
+  });
+
+  it("isCouponEligibleForEmail acepta cupón abierto si no está usado", () => {
+    expect(isCouponEligibleForEmail(openCoupon, "any@example.com")).toBe(true);
+  });
+
+  it("isCouponEligibleForEmail rechaza cupón abierto usado", () => {
+    expect(isCouponEligibleForEmail({ isUsed: true, assignedEmail: null }, "any@example.com")).toBe(false);
   });
 
   it("isCouponEligibleForEmail rechaza coupons null/undefined", () => {
@@ -61,7 +47,6 @@ describe("Checkout — coupon domain", () => {
   it("calculateCouponDiscount aplica porcentaje y redondea", () => {
     expect(calculateCouponDiscount(100000, 15)).toBe(15000);
     expect(calculateCouponDiscount(33333, 10)).toBe(3333);
-    // Redondeo: 12345 * 15 / 100 = 1851.75 → 1852
     expect(calculateCouponDiscount(12345, 15)).toBe(1852);
     expect(calculateCouponDiscount(100000, 0)).toBe(0);
   });
@@ -180,32 +165,25 @@ describe("Checkout — createOrderInputSchema (Zod)", () => {
 });
 
 describe("Checkout — line-item totals calculator", () => {
-  it("calcLineItemDisplayTotals sin earlyBird devuelve original=descontado", () => {
-    const r = calcLineItemDisplayTotals({ price: 50000, quantity: 2 }, false);
+  it("calcLineItemDisplayTotals devuelve original=descontado sin cupón", () => {
+    const r = calcLineItemDisplayTotals({ price: 50000, quantity: 2 });
     expect(r.originalTotal).toBe(100000);
     expect(r.discountedTotal).toBe(100000);
     expect(r.showsDiscount).toBe(false);
   });
 
-  it("calcLineItemDisplayTotals con earlyBird aplica 10% redondeado", () => {
-    const r = calcLineItemDisplayTotals({ price: 50000, quantity: 2 }, true);
-    expect(r.originalTotal).toBe(100000);
-    expect(r.discountedTotal).toBe(90000);
+  it("calcLineItemDisplayTotals prorratea descuento por ítem", () => {
+    const r = calcLineItemDisplayTotals({ price: 1000, quantity: 1 }, 10);
+    expect(r.originalTotal).toBe(1000);
+    expect(r.discountedTotal).toBe(900);
     expect(r.showsDiscount).toBe(true);
-  });
-
-  it("calcLineItemDisplayTotals redondea descuento (1234.5 → 1235)", () => {
-    const r = calcLineItemDisplayTotals({ price: 12345, quantity: 1 }, true);
-    expect(r.originalTotal).toBe(12345);
-    // 12345 * 0.9 = 11110.5 → Math.round → 11111
-    expect(r.discountedTotal).toBe(11111);
   });
 });
 
 describe("Checkout — checkout totals calculator", () => {
   const items = [
-    { price: 50000, quantity: 2 }, // 100k
-    { price: 25000, quantity: 1 }, //  25k
+    { price: 50000, quantity: 2 },
+    { price: 25000, quantity: 1 },
   ];
 
   it("calcCheckoutTotals sin descuentos: subtotal + shipping", () => {
@@ -213,38 +191,21 @@ describe("Checkout — checkout totals calculator", () => {
       items,
       shippingCost: 18000,
       couponDiscount: 0,
-      earlyBirdActive: false,
     });
     expect(r.subtotal).toBe(125000);
-    expect(r.earlyBirdDiscount).toBe(0);
     expect(r.couponDiscount).toBe(0);
     expect(r.discount).toBe(0);
     expect(r.total).toBe(143000);
   });
 
-  it("calcCheckoutTotals con earlyBird aplica 10% al subtotal", () => {
-    const r = calcCheckoutTotals({
-      items,
-      shippingCost: 18000,
-      couponDiscount: 0,
-      earlyBirdActive: true,
-    });
-    expect(r.subtotal).toBe(125000);
-    expect(r.earlyBirdDiscount).toBe(12500);
-    expect(r.discount).toBe(12500);
-    expect(r.total).toBe(125000 + 18000 - 12500);
-  });
-
-  it("calcCheckoutTotals combina cupón + earlyBird", () => {
+  it("calcCheckoutTotals con cupón aplica descuento al total", () => {
     const r = calcCheckoutTotals({
       items,
       shippingCost: 18000,
       couponDiscount: 20000,
-      earlyBirdActive: true,
     });
     expect(r.couponDiscount).toBe(20000);
-    expect(r.earlyBirdDiscount).toBe(12500);
-    expect(r.discount).toBe(32500);
-    expect(r.total).toBe(125000 + 18000 - 32500);
+    expect(r.discount).toBe(20000);
+    expect(r.total).toBe(125000 + 18000 - 20000);
   });
 });

@@ -49,7 +49,7 @@ export interface CreateOrderResult {
   success: boolean;
   orderId?: string;
   orderNumber?: string;
-  earlyBirdApplied?: boolean;
+  transactionId?: string;
   error?: string;
 }
 

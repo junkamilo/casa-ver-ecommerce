@@ -26,6 +26,7 @@ export default function AdminPedidos() {
     setPage,
     totalPages,
     pageSize,
+    setPageSize,
     loading,
     handleStatusUpdated,
   } = usePedidos();
@@ -62,6 +63,7 @@ export default function AdminPedidos() {
         onPageChange={setPage}
         total={filteredOrders.length}
         pageSize={pageSize}
+        onPageSizeChange={setPageSize}
         itemLabel="pedidos"
       />
       {detailOrder && (

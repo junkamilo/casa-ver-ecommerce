@@ -40,9 +40,13 @@ const nextConfig: NextConfig = {
           ? ["casaverdeoficial.com", "www.casaverdeoficial.com"]
           : ["localhost:3000"],
     },
-    staleTimes: {
-      dynamic: 0,
-    },
+    // Persiste compilaciones de Turbopack entre reinicios de `next dev`.
+    turbopackFileSystemCacheForDev: true,
+    // Solo en producción: datos siempre frescos al navegar en el cliente.
+    // En dev, el default de Next evita re-fetch en cada clic (menos "Compiling…").
+    ...(process.env.NODE_ENV === "production"
+      ? { staleTimes: { dynamic: 0 } }
+      : {}),
   },
 };
 

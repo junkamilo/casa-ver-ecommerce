@@ -36,7 +36,7 @@ export async function createOrderUseCase(
       success: true,
       orderId: result.order.id,
       orderNumber: result.order.orderNumber,
-      earlyBirdApplied: result.earlyBirdApplied,
+      transactionId: result.order.transactionId,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error interno al crear la orden";

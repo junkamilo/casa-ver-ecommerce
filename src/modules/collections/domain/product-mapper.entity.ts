@@ -1,4 +1,5 @@
 import { computeProductBadge } from "@/lib/productBadge";
+import { getColorCoverUrl } from "@/modules/catalog/product/domain/video-url.entity";
 import type {
   CollectionProduct,
   FilterOptions,
@@ -116,20 +117,26 @@ export function transformProduct(p: RawCollectionProduct): CollectionProduct {
   // Para sets: si el padre no tiene colores, usar los de la primera subcategoría.
   const parentColors =
     p.colors.length > 0
-      ? p.colors.map((c) => ({
-          name: c.name,
-          hexCode: c.hexCode,
-          imageUrl: c.images[0]?.url ?? null,
-        }))
+      ? p.colors.map((c) => {
+          const urls = c.images.map((i) => i.url);
+          return {
+            name: c.name,
+            hexCode: c.hexCode,
+            imageUrl: getColorCoverUrl(urls),
+          };
+        })
       : undefined;
 
   const firstItemColors =
     p.isSet && !parentColors && (p.items?.[0]?.colors?.length ?? 0) > 0
-      ? p.items[0].colors.map((c) => ({
-          name: c.name,
-          hexCode: c.hexCode,
-          imageUrl: c.images[0]?.url ?? null,
-        }))
+      ? p.items[0].colors.map((c) => {
+          const urls = c.images.map((i) => i.url);
+          return {
+            name: c.name,
+            hexCode: c.hexCode,
+            imageUrl: getColorCoverUrl(urls),
+          };
+        })
       : undefined;
 
   return {

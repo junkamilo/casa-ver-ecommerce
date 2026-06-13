@@ -17,6 +17,34 @@ import type {
 const repository = new PrismaBoldOrderRepository();
 const client = new BoldPaymentClient();
 
+function resolveBoldCallbackUrl(appUrl: string, transactionId: string): string {
+  const explicit = process.env.BOLD_CALLBACK_URL?.trim();
+  const base = explicit
+    ? explicit.replace(/\/$/, "")
+    : `${appUrl.replace(/\/$/, "")}/pago/resultado`;
+
+  const url = new URL(base);
+  url.searchParams.set("reference_id", transactionId);
+  return url.toString();
+}
+
+function boldLinkErrorMessage(status: number, errorCode: string | undefined, callbackUrl: string): string {
+  if (status === 403 && /localhost|127\.0\.0\.1/i.test(callbackUrl)) {
+    return (
+      "Bold no acepta callback en localhost. En .env.local define " +
+      "BOLD_CALLBACK_URL con una URL HTTPS pública (ej. https://casaverdeoficial.com/pago/resultado " +
+      "o un túnel ngrok) y reinicia el servidor."
+    );
+  }
+  if (status === 403) {
+    return "Bold rechazó la solicitud (403). Verifica que BOLD_IDENTITY_KEY sea la llave de pruebas del panel Bold.";
+  }
+  if (errorCode) {
+    return `Error al crear el link de pago: ${errorCode}`;
+  }
+  return "Error al crear el link de pago. Intenta de nuevo.";
+}
+
 // createBoldPaymentLinkUseCase — crea un Link de Pagos en Bold y persiste
 // el LNK_* devuelto (necesario para /api/payments/bold/verify).
 //
@@ -70,20 +98,28 @@ export async function createBoldPaymentLinkUseCase(
   const reference = order.transactionId;
   const totalAmount = Math.round(Number(order.total));
   const payerEmail = order.user?.email ?? undefined;
+  const callbackUrl = resolveBoldCallbackUrl(appUrl, reference);
 
-  console.log("[BOLD] Creando link | reference:", reference, "| amount:", totalAmount);
+  if (/localhost|127\.0\.0\.1/i.test(callbackUrl) && !process.env.BOLD_CALLBACK_URL) {
+    console.warn(
+      "[BOLD] callback_url apunta a localhost — Bold devuelve 403. " +
+        "Define BOLD_CALLBACK_URL en .env.local con una URL HTTPS pública."
+    );
+  }
+
+  console.log("[BOLD] Creando link | reference:", reference, "| amount:", totalAmount, "| callback:", callbackUrl);
 
   const result = await client.createLink({
     reference,
     totalAmount,
     payerEmail,
-    callbackUrl: `${appUrl}/pago/resultado`,
+    callbackUrl,
     identityKey,
   });
 
   if (!result.ok) {
-    console.error("[BOLD] Error creando link:", result.status, result.errorCode);
-    throw new BoldGatewayError("Error al crear el link de pago. Intenta de nuevo.", 502);
+    console.error("[BOLD] Error creando link:", result.status, result.errorCode, "| callback:", callbackUrl);
+    throw new BoldGatewayError(boldLinkErrorMessage(result.status, result.errorCode, callbackUrl), 502);
   }
 
   // Persistir LNK_* — CRÍTICO: verify lo necesita para consultar Bold

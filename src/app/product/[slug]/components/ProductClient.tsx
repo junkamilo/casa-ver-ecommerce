@@ -2,12 +2,14 @@
 
 import Image from "next/image";
 import LogoAddi from "@/assets/LogoAddi2.png";
+import { getProductBadgeClassName } from "@/lib/productBadge";
 
 import ProductGallery from "./ProductGallery";
 import ColorSelector from "./ColorSelector";
 import SizeSelector from "./SizeSelector";
 import QuantityPicker from "./QuantityPicker";
 import ProductAccordion from "./ProductAccordion";
+import ProductDescriptionContent from "./ProductDescriptionContent";
 import ReviewsSection from "./ReviewsSection";
 import RecommendedProducts from "./RecommendedProducts";
 import ProductVideo from "./ProductVideo";
@@ -70,7 +72,6 @@ export default function ProductClient({
           <div className="self-start lg:sticky lg:top-24 xl:top-28">
             <ProductGallery
               gallery={galleryUrls}
-              videoUrl={activeVideoUrl}
               selectedImage={selectedImage}
               productName={product.name}
               onSelect={handleImageSelect}
@@ -85,15 +86,7 @@ export default function ProductClient({
             {/* Nombre y Precio */}
             <div className="mb-4 sm:mb-5">
               {product.badge && (
-                <span className={`inline-block mb-3 text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-sm text-white ${
-                  product.badge === "Nuevo Producto"
-                    ? "bg-red-600"
-                    : product.badge === "En Oferta"
-                    ? "bg-[#C19A6B]"
-                    : product.badge === "Nuevo y en Oferta"
-                    ? "bg-[#154734]"
-                    : "bg-[#8B1A1A]"
-                }`}>
+                <span className={`inline-block mb-3 shadow-sm ${getProductBadgeClassName(product.badge)}`}>
                   {product.badge}
                 </span>
               )}
@@ -346,9 +339,12 @@ export default function ProductClient({
               </h2>
 
               {activeDescription && (
-                <p className="hidden sm:block text-gray-300 font-light leading-relaxed max-w-md text-sm sm:text-base border-l-2 border-[#C19A6B]/50 pl-4">
-                  {activeDescription}
-                </p>
+                <div className="hidden sm:block max-w-md text-sm sm:text-base border-l-2 border-[#C19A6B]/50 pl-4">
+                  <ProductDescriptionContent
+                    description={activeDescription}
+                    className="text-gray-300 font-light"
+                  />
+                </div>
               )}
             </div>
 

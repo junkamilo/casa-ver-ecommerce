@@ -144,10 +144,6 @@ model User {
   phone         String?
   cedula        String?
   recoveryEmail String?
-  
-  // Programa Early Bird: primeros 10 registros obtienen 10% de descuento permanente
-  earlyBirdDiscount     Boolean   @default(false)
-  earlyBirdDiscountAt   DateTime?
 
   // Relaciones
   accounts              Account[]
@@ -157,6 +153,7 @@ model User {
   verificationTokens    EmailVerificationToken[]
   passwordResetTokens   PasswordResetToken[]
   cart                  Cart?
+  couponBatches         CouponBatch[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -501,15 +498,8 @@ model Order {
   // Montos
   subtotal                  Decimal       @db.Decimal(10, 2)                          // Suma de ítems a precios reales de BD
   shippingCost              Decimal       @db.Decimal(10, 2) @default(0)              // Calculado server-side: $11.000 Santander / $18.000 resto
-  discount                  Decimal       @db.Decimal(10, 2) @default(0)              // earlyBirdDiscount + couponDiscount (ambos sumados)
+  discount                  Decimal       @db.Decimal(10, 2) @default(0)              // couponDiscount
   total                     Decimal       @db.Decimal(10, 2)                          // subtotal + shippingCost - discount
-
-  // Descuento Early Bird
-  earlyBirdDiscountApplied  Boolean       @default(false)
-
-  // Promoción aplicada (FK genérica — null si no aplica ninguna campaña)
-  appliedPromotionId        String?
-  appliedPromotion          Promotion?    @relation(fields: [appliedPromotionId], references: [id], onDelete: SetNull)
 
   // Estado y Pago
   status             OrderStatus   @default(PENDING)
@@ -646,45 +636,38 @@ model Review {
 }
 
 // ============================================================
-// PROMOCIONES / CAMPAÑAS (Genérico y reutilizable)
-// ============================================================
-
-model Promotion {
-  id                 String    @id @default(cuid())
-  name               String                          // Ej: "Early Bird — Primeros 10 clientes"
-  discountPercentage Int       @default(10)          // Porcentaje (10 = 10%)
-  maxUses            Int       @default(10)          // Tope máximo de usos
-  currentUses        Int       @default(0)           // Contador actual (incremento atómico)
-  isActive           Boolean   @default(true)
-  startDate          DateTime?                       // null = sin límite de inicio
-  endDate            DateTime?                       // null = sin límite de fin
-
-  orders             Order[]
-
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-
-  @@index([isActive])
-  @@map("promotions")
-}
-
-// ============================================================
 // CUPONES DE DESCUENTO
 // ============================================================
 
-model Coupon {
-  id                 String    @id @default(cuid())
-  code               String    @unique
-  discountPercentage Int       @default(10) // Porcentaje de descuento (ej: 10 = 10%)
-  assignedEmail      String    // Email al que está vinculado el cupón
-  isUsed             Boolean   @default(false)
-  usedAt             DateTime?
-  usedByOrderId      String?   // ID de la orden que lo redimió
+model CouponBatch {
+  id                 String   @id @default(cuid())
+  discountPercentage Int
+  quantity           Int
+  createdById        String?
+  createdBy          User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  coupons            Coupon[]
+  createdAt          DateTime @default(now())
 
-  createdAt          DateTime  @default(now())
+  @@map("coupon_batches")
+}
+
+model Coupon {
+  id                 String       @id @default(cuid())
+  code               String       @unique
+  discountPercentage Int          @default(10)
+  assignedEmail      String?      // null = cupón masivo admin (requiere usuario registrado)
+  isUsed             Boolean      @default(false)
+  usedAt             DateTime?
+  usedByOrderId      String?
+  batchId            String?
+  batch              CouponBatch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
+
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
 
   @@index([code])
   @@index([assignedEmail])
+  @@index([batchId])
   @@map("coupons")
 }
 

@@ -1,14 +1,13 @@
 // Predicados puros del dominio Cupón en el contexto del checkout.
 //
-// Reglas extraídas byte-a-byte del bloque de cupón en `createOrder`:
-//   - El cupón es válido si: existe + no está usado + el assignedEmail coincide
-//     (case-insensitive) con el email del comprador.
-//   - El descuento se calcula como porcentaje del subtotal real (server-side)
-//     y se redondea con Math.round.
+// Reglas:
+//   - Cupón legacy (assignedEmail != null): debe coincidir con el email del comprador.
+//   - Cupón abierto (assignedEmail == null): elegible si no está usado;
+//     la verificación de usuario registrado se hace fuera (validateCoupon / createOrder).
 
 export interface CouponEligibilityInput {
   isUsed: boolean;
-  assignedEmail: string;
+  assignedEmail: string | null;
 }
 
 export function isCouponEligibleForEmail(
@@ -17,7 +16,12 @@ export function isCouponEligibleForEmail(
 ): boolean {
   if (!coupon) return false;
   if (coupon.isUsed) return false;
-  return coupon.assignedEmail.toLowerCase() === email.toLowerCase();
+
+  if (coupon.assignedEmail) {
+    return coupon.assignedEmail.toLowerCase() === email.toLowerCase();
+  }
+
+  return true;
 }
 
 export function calculateCouponDiscount(subtotal: number, percentage: number): number {

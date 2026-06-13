@@ -13,7 +13,6 @@ export interface UserProfile {
   phone: string | null;
   cedula: string | null;
   recoveryEmail: string | null;
-  earlyBirdDiscount: boolean;
   hasPassword: boolean;
   linkedProviders: string[];
 }

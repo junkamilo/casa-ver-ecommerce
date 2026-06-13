@@ -72,60 +72,26 @@ export async function POST(request: Request) {
       }
 
       // ── Código correcto → crear usuario y eliminar registro pendiente ────────
-      // Estrategia anti-race-condition para Early Bird:
-      //   1. Intentamos reclamar el cupo con UPDATE atómico (currentUses < maxUses).
-      //   2. Si rowsAffected > 0, el cupo quedó reservado para este usuario.
-      //   3. El usuario se crea dentro de la misma transacción DB.
-      // No usamos SELECT + UPDATE porque entre ambas consultas otro proceso
-      // podría haber reclamado el último cupo.
-      const EARLY_BIRD_DISCOUNT_PCT = 10;
-      const EARLY_BIRD_PROMOTION_ID = "early-bird-2026";
-
       await prisma.$transaction(async (tx) => {
-        // Intentar reclamar cupo atómicamente en la tabla promotions
-        const claimed: number = await tx.$executeRaw`
-          UPDATE "promotions"
-          SET "currentUses" = "currentUses" + 1,
-              "updatedAt"   = NOW()
-          WHERE "id"        = ${EARLY_BIRD_PROMOTION_ID}
-            AND "isActive"  = true
-            AND "currentUses" < "maxUses"
-            AND ("startDate" IS NULL OR "startDate" <= NOW())
-            AND ("endDate"   IS NULL OR "endDate"   >= NOW())
-        `;
-
-        const isEarlyBird = claimed > 0;
-
         await tx.user.create({
           data: {
-            name:                pending.name,
-            email:               pending.email,
-            password:            pending.passwordHash,
-            role:                "USER",
-            phone:               pending.phone,
-            recoveryEmail:       pending.recoveryEmail,
-            emailVerified:       new Date(),
-            earlyBirdDiscount:   isEarlyBird,
-            earlyBirdDiscountAt: isEarlyBird ? new Date() : undefined,
+            name:          pending.name,
+            email:         pending.email,
+            password:      pending.passwordHash,
+            role:          "USER",
+            phone:         pending.phone,
+            recoveryEmail: pending.recoveryEmail,
+            emailVerified: new Date(),
           },
         });
         await (tx as any).pendingRegistration.delete({ where: { id: tokenId } });
-      });
-
-      const createdUser = await prisma.user.findUnique({
-        where: { email: pending.email },
-        select: { earlyBirdDiscount: true },
       });
 
       sendWelcomeEmail({ customerEmail: pending.email, customerName: pending.name || pending.email }).catch(
         (err) => console.error("[Email] Error enviando bienvenida:", err)
       );
 
-      return NextResponse.json({
-        success: true,
-        earlyBirdDiscount: createdUser?.earlyBirdDiscount ?? false,
-        earlyBirdDiscountPct: createdUser?.earlyBirdDiscount ? EARLY_BIRD_DISCOUNT_PCT : 0,
-      });
+      return NextResponse.json({ success: true });
     }
 
     // ── Fallback: buscar en EmailVerificationToken (usuarios ya existentes) ───

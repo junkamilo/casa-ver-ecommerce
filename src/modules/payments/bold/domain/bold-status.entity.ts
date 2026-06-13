@@ -43,6 +43,13 @@ export function isRefunded(eventType?: string, boldStatus?: string): boolean {
   );
 }
 
+// Extrae el status de la respuesta GET /online/link/v1/{LNK_*}
+export function extractBoldLinkStatus(data: Record<string, unknown>): string {
+  const payload = data.payload as Record<string, unknown> | undefined;
+  const raw = (data.status ?? payload?.status ?? "UNKNOWN") as string;
+  return raw.toUpperCase();
+}
+
 // Mapea un boldStatus crudo (PAID, REJECTED, EXPIRED…) al status de UI
 // que la página /pago/resultado espera.
 export function mapBoldStatusToUiStatus(boldStatus: string): string {

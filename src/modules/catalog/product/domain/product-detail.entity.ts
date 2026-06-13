@@ -112,7 +112,7 @@ export function mapUIColor(color: RawColor): UIColor {
     id: color.id,
     name: color.name,
     hex: color.hexCode,
-    images: color.images.map((img) => img.url).filter((u) => !isVideoUrl(u)),
+    images: color.images.map((img) => img.url),
     availableSizes: activeVariants.map((v) => normalizeSize(v.size)),
     variants: activeVariants.map((v) => ({
       size: normalizeSize(v.size),

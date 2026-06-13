@@ -1,21 +1,21 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { isVideoUrl } from "../../domain/video-url.entity";
 
 /**
- * Hook UI para la galería de imágenes del PDP. Maneja:
+ * Hook UI para la galería de medios del PDP. Maneja:
  *   - Navegación circular (`goTo`) con wrap-around.
  *   - Soporte de gestos táctiles (swipe horizontal con umbral 50px).
- *   - Apertura del lightbox/zoom (con bloqueo de scroll del body).
+ *   - Apertura del lightbox/zoom (solo imágenes, no videos).
  *   - Sync bidireccional con el `selectedImage` controlado por el padre.
  */
 export function useProductGallery(
   gallery: string[],
-  videoUrl: string | null | undefined,
   selectedImage: number,
   onSelect: (index: number) => void,
 ) {
-  const media = [...gallery, ...(videoUrl ? [videoUrl] : [])];
+  const media = gallery;
   const [currentIndex, setCurrentIndex] = useState(selectedImage);
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const touchStartX = useRef<number | null>(null);
@@ -39,12 +39,12 @@ export function useProductGallery(
   const goTo = (index: number) => {
     const next = (index + media.length) % media.length;
     setCurrentIndex(next);
-    if (next < gallery.length) onSelect(next);
+    onSelect(next);
   };
 
   const handleThumbnail = (i: number) => {
     setCurrentIndex(i);
-    if (i < gallery.length) onSelect(i);
+    onSelect(i);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -67,14 +67,20 @@ export function useProductGallery(
     touchStartY.current = null;
   };
 
+  const currentMedia = media[currentIndex] ?? "";
+  const isCurrentVideo = isVideoUrl(currentMedia);
+
   return {
     media,
     currentIndex,
+    currentMedia,
+    isCurrentVideo,
     isZoomOpen,
     setIsZoomOpen,
     goTo,
     handleThumbnail,
     handleTouchStart,
     handleTouchEnd,
+    isVideoUrl,
   };
 }

@@ -10,6 +10,7 @@ import {
   ImageIcon,
   Palette,
   MessageSquare,
+  TicketPercent,
 } from "lucide-react";
 import type { NavItem, AdminNavItem } from "../types";
 
@@ -20,6 +21,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { label: "Categorías",      href: "/admin/categorias",        icon: Tag },
   { label: "Tipos de Prenda", href: "/admin/tipos-de-prenda",  icon: Layers },
   { label: "Colores",         href: "/admin/colores",           icon: Palette },
+  { label: "Promociones",     href: "/admin/promociones",       icon: TicketPercent },
   { label: "Pedidos",    href: "/admin/pedidos",           icon: ClipboardList },
   { label: "Reseñas",   href: "/admin/resenas",           icon: MessageSquare },
   { label: "Reportes",   href: "/admin/estadisticas",      icon: BarChart3 },

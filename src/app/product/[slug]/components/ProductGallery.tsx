@@ -9,7 +9,6 @@ import { normalizeVideoUrl } from "../utils";
 
 interface Props {
   gallery: string[];
-  videoUrl?: string | null;
   selectedImage: number;
   productName: string;
   onSelect: (index: number) => void;
@@ -19,7 +18,6 @@ interface Props {
 
 export default function ProductGallery({
   gallery,
-  videoUrl,
   selectedImage,
   productName,
   onSelect,
@@ -29,18 +27,18 @@ export default function ProductGallery({
   const {
     media,
     currentIndex,
+    currentMedia,
+    isCurrentVideo,
     isZoomOpen,
     setIsZoomOpen,
     goTo,
     handleThumbnail,
     handleTouchStart,
     handleTouchEnd,
-  } = useProductGallery(gallery, videoUrl, selectedImage, onSelect);
+    isVideoUrl,
+  } = useProductGallery(gallery, selectedImage, onSelect);
 
   if (!media.length) return null;
-
-  const currentMedia = media[currentIndex];
-  const isCurrentVideo = !!(videoUrl && currentMedia === videoUrl);
 
   return (
     <>
@@ -50,10 +48,10 @@ export default function ProductGallery({
         <div className="flex lg:flex-col gap-2 sm:gap-3 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden py-2 lg:py-0 scrollbar-hide lg:w-20 xl:w-24 shrink-0 lg:max-h-175 xl:max-h-200 snap-x snap-mandatory lg:snap-none">
           {media.map((url, i) => {
             const isSelected = currentIndex === i;
-            const isVideo = !!(videoUrl && url === videoUrl);
+            const isVideo = isVideoUrl(url);
             return (
               <button
-                key={i}
+                key={`${url}-${i}`}
                 onClick={() => handleThumbnail(i)}
                 aria-label={isVideo ? `Ver video de ${productName}` : `Ver imagen ${i + 1} de ${productName}`}
                 className={`relative w-14 h-16 sm:w-20 sm:h-28 lg:w-full lg:h-28 xl:h-32 shrink-0 snap-center lg:snap-none rounded-lg sm:rounded-xl overflow-hidden transition-all duration-500 ease-out focus:outline-none touch-target active:scale-90 ${
@@ -65,6 +63,7 @@ export default function ProductGallery({
                 {isVideo ? (
                   <>
                     <video
+                      key={url}
                       src={normalizeVideoUrl(url)}
                       muted
                       playsInline
@@ -91,7 +90,7 @@ export default function ProductGallery({
           })}
         </div>
 
-        {/* Imagen principal */}
+        {/* Medio principal */}
         <div
           className={`relative w-full aspect-4/5 sm:aspect-3/4 bg-[#FAFAFA] rounded-xl sm:rounded-2xl overflow-hidden shadow-sm border border-gray-100 group touch-target ${
             isCurrentVideo ? "cursor-default" : "cursor-zoom-in"
@@ -104,7 +103,6 @@ export default function ProductGallery({
           onClick={() => { if (!isCurrentVideo) setIsZoomOpen(true); }}
         >
 
-          {/* Tira de medios — deslizamiento con CSS */}
           <div
             className="absolute inset-0 flex"
             style={{
@@ -115,22 +113,23 @@ export default function ProductGallery({
             }}
           >
             {media.map((url, i) => {
-              const isItemVideo = !!(videoUrl && url === videoUrl);
+              const isItemVideo = isVideoUrl(url);
               const isCurrent = i === currentIndex;
               return (
                 <div
-                  key={url}
+                  key={`${url}-${i}`}
                   className="relative h-full shrink-0 overflow-hidden"
                   style={{ width: `${100 / media.length}%` }}
                 >
                   {isItemVideo ? (
                     <video
+                      key={`${url}-${isCurrent ? "active" : "idle"}`}
                       src={normalizeVideoUrl(url)}
                       autoPlay={isCurrent}
                       loop
                       muted
                       playsInline
-                      controls
+                      controls={isCurrent}
                       preload={isCurrent ? "auto" : "metadata"}
                       className="absolute inset-0 w-full h-full object-cover z-10"
                     />
@@ -151,7 +150,6 @@ export default function ProductGallery({
             })}
           </div>
 
-          {/* Badge agotado */}
           {isColorOutOfStock && (
             <div className="absolute inset-0 z-30 pointer-events-none flex items-center justify-center">
               <span className="bg-black/55 backdrop-blur-sm text-white text-[11px] sm:text-xs font-black uppercase tracking-[0.25em] px-4 py-2 rounded-full shadow-lg">
@@ -205,7 +203,7 @@ export default function ProductGallery({
         </div>
       </div>
 
-      {isZoomOpen && createPortal(
+      {isZoomOpen && !isCurrentVideo && createPortal(
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm p-4"
           onClick={() => setIsZoomOpen(false)}

@@ -16,12 +16,14 @@ export interface UsePedidosListReturn {
   setMethodFilter: (s: string) => void;
   expandedOrder: string | null;
   setExpandedOrder: (id: string | null) => void;
+  orders: Order[];
   filteredOrders: Order[];
   paginatedOrders: Order[];
   page: number;
   setPage: (p: number) => void;
   totalPages: number;
   pageSize: number;
+  setPageSize: (size: number) => void;
   loading: boolean;
 }
 

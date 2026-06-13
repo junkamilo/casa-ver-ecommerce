@@ -12,8 +12,7 @@ import {
   updateAdminColor,
 } from "@/modules/adminCatalog/colors/presentation/api-client";
 import { mapColorListDtoToUi } from "@/modules/adminCatalog/colors/presentation/mappers";
-
-const PAGE_SIZE = 12;
+import { DEFAULT_ADMIN_PAGE_SIZE } from "@/components/ui/AdminPagination";
 
 export function useColorManager() {
   const [colors, setColors] = useState<Color[]>([]);
@@ -22,6 +21,12 @@ export function useColorManager() {
 
   const [search, setSearchRaw] = useState("");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSizeState] = useState(DEFAULT_ADMIN_PAGE_SIZE);
+
+  const setPageSize = useCallback((size: number) => {
+    setPageSizeState(size);
+    setPage(1);
+  }, []);
 
   const setSearch = useCallback((v: string) => {
     setSearchRaw(v);
@@ -34,8 +39,8 @@ export function useColorManager() {
     return colors.filter((c) => c.name.toLowerCase().includes(q) || c.hexCode.toLowerCase().includes(q));
   }, [colors, search]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredColors.length / PAGE_SIZE));
-  const paginatedColors = filteredColors.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(filteredColors.length / pageSize));
+  const paginatedColors = filteredColors.slice((page - 1) * pageSize, page * pageSize);
 
   // ── Modal Crear ───────────────────────────────────────────────────────────
   const [showModal, setShowModal] = useState(false);
@@ -160,7 +165,7 @@ export function useColorManager() {
     toast,
     search, setSearch,
     page, setPage,
-    pageSize: PAGE_SIZE,
+    pageSize, setPageSize,
     filteredColors,
     paginatedColors,
     totalPages,

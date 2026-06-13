@@ -2,6 +2,7 @@
 
 import { ChevronDown, Shirt, FileText, Clock } from "lucide-react";
 import { CARE_INSTRUCTIONS, PRODUCTION_TIME_CONTENT } from "../constants";
+import ProductDescriptionContent from "./ProductDescriptionContent";
 
 interface Props {
   openKey: string | null;
@@ -15,11 +16,7 @@ export default function ProductAccordion({ openKey, onToggle, description }: Pro
       key: "descripcion",
       icon: <FileText className="w-4.5 h-4.5" strokeWidth={1.5} />,
       title: "Descripción del Producto",
-      content: description ? (
-        <p className="leading-relaxed">{description}</p>
-      ) : (
-        <p className="leading-relaxed text-gray-400 italic">Sin descripción disponible.</p>
-      ),
+      content: <ProductDescriptionContent description={description} />,
     },
     {
       key: "confeccion",
@@ -91,7 +88,7 @@ export default function ProductAccordion({ openKey, onToggle, description }: Pro
 
             <div
               className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                isOpen ? "max-h-96 opacity-100 mb-6" : "max-h-0 opacity-0 mb-0"
+                isOpen ? "max-h-[min(80vh,1200px)] opacity-100 mb-6" : "max-h-0 opacity-0 mb-0"
               }`}
             >
               <div className="pl-13 pr-4 text-sm font-light text-gray-500">

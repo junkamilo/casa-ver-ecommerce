@@ -14,7 +14,6 @@ import {
   ShieldCheck,
   Phone,
   MailCheck,
-  Star,
   Chrome,
   CreditCard,
 } from "lucide-react";
@@ -153,11 +152,6 @@ export function ProfileInfoSection({ profile, onProfileUpdate, onToast }: Profil
                   <><User className="w-3 h-3" /> Cliente</>
                 )}
               </span>
-              {profile.earlyBirdDiscount && (
-                <span className="inline-flex items-center gap-1.5 text-xs bg-[#C19A6B]/80 text-white px-3 py-1 rounded-full font-medium">
-                  <Star className="w-3 h-3 fill-white" /> Early Bird
-                </span>
-              )}
               {profile.linkedProviders.map((p) => (
                 <span
                   key={p}

@@ -4,3 +4,4 @@ export {
   isVideoUrl,
   normalizeVideoUrl,
 } from "@/modules/catalog/product/domain/video-url.entity";
+export { parseDescriptionBullets } from "./description";

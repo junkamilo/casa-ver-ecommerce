@@ -26,18 +26,14 @@ export function DiscountImpactCard({ data }: Props) {
             <span className="text-sm text-gray-500 mb-1">en descuentos ({data.percentageOfRevenue} del ingreso bruto)</span>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-gray-50 rounded-lg p-2.5 text-center">
-              <p className="text-xl font-black text-gray-800">{data.earlyBirdOrders}</p>
-              <p className="text-[10px] text-gray-500 font-medium mt-0.5">Early Bird</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-2.5 text-center">
-              <p className="text-xl font-black text-gray-800">{data.promotionOrders}</p>
-              <p className="text-[10px] text-gray-500 font-medium mt-0.5">Promociones</p>
-            </div>
+          <div className="grid grid-cols-2 gap-2">
             <div className="bg-gray-50 rounded-lg p-2.5 text-center">
               <p className="text-xl font-black text-gray-800">{data.couponsUsed}</p>
               <p className="text-[10px] text-gray-500 font-medium mt-0.5">Cupones</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-2.5 text-center">
+              <p className="text-xl font-black text-gray-800">{data.discountedOrders}</p>
+              <p className="text-[10px] text-gray-500 font-medium mt-0.5">Pedidos con descuento</p>
             </div>
           </div>
 

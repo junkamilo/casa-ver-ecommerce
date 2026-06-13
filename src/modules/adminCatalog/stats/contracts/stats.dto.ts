@@ -79,8 +79,6 @@ export interface RetentionData {
 export interface DiscountData {
   totalDiscount: string;
   discountedOrders: number;
-  earlyBirdOrders: number;
-  promotionOrders: number;
   couponsUsed: number;
   percentageOfRevenue: string;
 }

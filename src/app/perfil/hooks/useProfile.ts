@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { UserProfile, ToastState, UseProfileResult } from "../types";
 
 export function useProfile(): UseProfileResult {
   const { status } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -15,10 +17,16 @@ export function useProfile(): UseProfileResult {
   const [toast, setToast] = useState<ToastState | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
+  const redirectToLogin = useCallback(() => {
+    const query = searchParams.toString();
+    const returnTo = query ? `${pathname}?${query}` : pathname;
+    router.replace(`/login?returnTo=${encodeURIComponent(returnTo)}`);
+  }, [pathname, router, searchParams]);
+
   // Redirect unauthenticated users
   useEffect(() => {
-    if (status === "unauthenticated") router.replace("/login");
-  }, [status, router]);
+    if (status === "unauthenticated") redirectToLogin();
+  }, [status, redirectToLogin]);
 
   // Collapse sidebar on mobile by default
   useEffect(() => {
@@ -32,6 +40,10 @@ export function useProfile(): UseProfileResult {
     setFetchError(null);
     fetch("/api/profile")
       .then(async (res) => {
+        if (res.status === 401) {
+          redirectToLogin();
+          throw new Error("Sesión expirada");
+        }
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
           throw new Error(data.message || `Error ${res.status}`);
@@ -40,11 +52,12 @@ export function useProfile(): UseProfileResult {
       })
       .then((data: UserProfile) => setProfile(data))
       .catch((err: unknown) => {
+        if (err instanceof Error && err.message === "Sesión expirada") return;
         const msg = err instanceof Error ? err.message : "Error al cargar el perfil";
         setFetchError(msg);
       })
       .finally(() => setLoading(false));
-  }, [status]);
+  }, [status, redirectToLogin]);
 
   const showToast = useCallback((type: "success" | "error", message: string) => {
     setToast({ type, message });

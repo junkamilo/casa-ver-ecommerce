@@ -29,10 +29,25 @@ export class PrismaBoldOrderRepository {
   }
 
   // Para GET /api/payments/bold/verify?reference_id=...
-  async findOrderForVerify(transactionId: string) {
+  // reference puede ser transactionId (UUID) o boldLinkId (LNK_*)
+  async findOrderForVerify(reference: string) {
+    const byTransaction = await prisma.order.findUnique({
+      where: { transactionId: reference },
+      select: { id: true, boldLinkId: true, status: true, transactionId: true },
+    });
+    if (byTransaction) return byTransaction;
+
+    return prisma.order.findFirst({
+      where: { boldLinkId: reference },
+      select: { id: true, boldLinkId: true, status: true, transactionId: true },
+    });
+  }
+
+  // Para reenviar confirmación si la orden ya está PAID pero el email no se encoló.
+  async findPaidOrderForNotify(transactionId: string) {
     return prisma.order.findUnique({
       where: { transactionId },
-      select: { id: true, boldLinkId: true, status: true },
+      include: { items: true, user: true },
     });
   }
 

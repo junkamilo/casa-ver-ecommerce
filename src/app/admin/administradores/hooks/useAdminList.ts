@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { PAGE_SIZE } from "../constants/constants";
 import type { Admin } from "../types/types";
+import { DEFAULT_ADMIN_PAGE_SIZE } from "@/components/ui/AdminPagination";
 import {
   AdminUsersApiError,
   fetchAdminUsers,
@@ -20,6 +20,12 @@ export function useAdminList({ showToast }: UseAdminListOptions) {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSizeState] = useState(DEFAULT_ADMIN_PAGE_SIZE);
+
+  const setPageSize = useCallback((size: number) => {
+    setPageSizeState(size);
+    setPage(1);
+  }, []);
 
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -60,8 +66,8 @@ export function useAdminList({ showToast }: UseAdminListOptions) {
     setFilteredAdmins(results);
   }, [searchTerm, admins]);
 
-  const totalPages = Math.ceil(filteredAdmins.length / PAGE_SIZE);
-  const pagedAdmins = filteredAdmins.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(filteredAdmins.length / pageSize));
+  const pagedAdmins = filteredAdmins.slice((page - 1) * pageSize, page * pageSize);
 
   const handleDelete = useCallback(
     async (id: string) => {
@@ -91,6 +97,8 @@ export function useAdminList({ showToast }: UseAdminListOptions) {
     page,
     setPage,
     totalPages,
+    pageSize,
+    setPageSize,
     loading,
     searchTerm,
     setSearchTerm,

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import type { NextRequest } from "next/server";
+import { revalidateProductListings } from "@/lib/revalidate-product-pages";
 import { updateProductUseCase } from "@/modules/adminCatalog/products/application/update-product.use-case";
 import { deleteProductUseCase } from "@/modules/adminCatalog/products/application/delete-product.use-case";
 import { getProductByIdUseCase } from "@/modules/adminCatalog/products/application/get-product-by-id.use-case";
@@ -35,7 +35,7 @@ export async function PATCH(
       const { id } = await params;
       const body = await req.json();
       const result = await updateProductUseCase({ id, body });
-      revalidatePath("/");
+      revalidateProductListings();
       return NextResponse.json(result);
     } catch (error) {
       return toErrorResponse(error);
@@ -53,6 +53,7 @@ export async function DELETE(
     try {
       const { id } = await params;
       const result = await deleteProductUseCase({ id });
+      revalidateProductListings();
       return NextResponse.json(result);
     } catch (error) {
       return toErrorResponse(error);

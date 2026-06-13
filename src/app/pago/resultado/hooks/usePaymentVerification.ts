@@ -11,6 +11,21 @@ import {
   ROUTES,
 } from "../constants";
 
+const PENDING_REF_KEY = "bold_pending_reference_id";
+
+function resolveReferenceId(params: URLSearchParams): string | null {
+  const fromUrl =
+    params.get(QUERY_PARAMS.boldOrderId) ??
+    params.get(QUERY_PARAMS.referenceId) ??
+    params.get(QUERY_PARAMS.reference) ??
+    params.get(QUERY_PARAMS.ref);
+
+  if (fromUrl) return fromUrl;
+
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem(PENDING_REF_KEY);
+}
+
 async function fetchVerifyPayment(referenceId: string): Promise<VerifyResult> {
   try {
     const res = await fetch(
@@ -37,12 +52,7 @@ export function usePaymentVerification(): UsePaymentVerificationReturn {
   const router = useRouter();
 
   // Bold Botón de Pagos envía: ?bold-order-id=...&bold-tx-status=...
-  const referenceId =
-    params.get(QUERY_PARAMS.boldOrderId) ??
-    params.get(QUERY_PARAMS.referenceId) ??
-    params.get(QUERY_PARAMS.reference) ??
-    params.get(QUERY_PARAMS.ref) ??
-    null;
+  const referenceId = resolveReferenceId(params);
 
   const boldTxStatus = params.get(QUERY_PARAMS.boldTxStatus);
 
@@ -83,7 +93,10 @@ export function usePaymentVerification(): UsePaymentVerificationReturn {
       if (result.orderId) setOrderId(result.orderId);
       setPollCount((c) => c + 1);
       if (result.status === "APPROVED" && result.orderId) {
-        if (referenceId) sessionStorage.removeItem(`bold_initiated_${referenceId}`);
+        if (referenceId) {
+          sessionStorage.removeItem(`bold_initiated_${referenceId}`);
+          sessionStorage.removeItem(PENDING_REF_KEY);
+        }
         router.replace(ROUTES.success(result.orderId));
       }
     }, POLL_INTERVAL_MS);

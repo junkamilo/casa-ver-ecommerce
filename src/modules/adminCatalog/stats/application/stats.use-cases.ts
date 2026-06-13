@@ -306,14 +306,12 @@ export async function getRetentionByPeriod(period: Period): Promise<RetentionDat
 export async function getDiscountImpactByPeriod(period: Period): Promise<DiscountData> {
   const { start, end } = getPeriodDateRange(period);
   const [orders, couponsUsed] = await Promise.all([
-    prisma.order.findMany({ where: { createdAt: { gte: start, lte: end }, discount: { gt: 0 } }, select: { discount: true, total: true, earlyBirdDiscountApplied: true, appliedPromotionId: true } }),
+    prisma.order.findMany({ where: { createdAt: { gte: start, lte: end }, discount: { gt: 0 } }, select: { discount: true, total: true } }),
     prisma.coupon.count({ where: { isUsed: true, usedAt: { gte: start, lte: end } } }),
   ]);
   const totalDiscount = orders.reduce((sum, o) => sum + Number(o.discount), 0);
   const grossRevenue = orders.reduce((sum, o) => sum + Number(o.total) + Number(o.discount), 0);
-  const earlyBirdOrders = orders.filter((o) => o.earlyBirdDiscountApplied).length;
-  const promotionOrders = orders.filter((o) => o.appliedPromotionId !== null).length;
-  return { totalDiscount: formatPrice(totalDiscount), discountedOrders: orders.length, earlyBirdOrders, promotionOrders, couponsUsed, percentageOfRevenue: grossRevenue > 0 ? `${Math.round((totalDiscount / grossRevenue) * 100)}%` : "0%" };
+  return { totalDiscount: formatPrice(totalDiscount), discountedOrders: orders.length, couponsUsed, percentageOfRevenue: grossRevenue > 0 ? `${Math.round((totalDiscount / grossRevenue) * 100)}%` : "0%" };
 }
 
 export async function getCancellationRateByPeriod(period: Period): Promise<CancellationData> {
