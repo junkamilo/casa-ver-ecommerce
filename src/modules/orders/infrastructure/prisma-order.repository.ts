@@ -8,6 +8,11 @@ import { isOrderWithinPaymentGrace } from "@/modules/checkout/domain/order-payme
 import { OrderPaymentGraceExpiredError } from "../application/order.errors";
 import type { PaidOrderDTO, ReleaseOrderTargetStatus } from "../contracts/order-payment.dto";
 
+export type MarkPaidResult = {
+  order: PaidOrderDTO;
+  newlyPaid: boolean;
+};
+
 // Encapsula las dos transacciones atómicas críticas del dominio de órdenes:
 // markPaid y releaseStock. Mantiene la misma estructura y comportamiento que
 // la implementación original en src/app/actions/checkout.ts — incluida la
@@ -27,7 +32,10 @@ export class PrismaOrderRepository {
   //      (ProductItemVariant ya descontó stock al crear la orden — no se toca)
   //   5. Crear notificación de admin "Pedido pagado".
   // -------------------------------------------------------------------------
-  async markPaidByTransactionId(transactionId: string, paymentId: string): Promise<PaidOrderDTO> {
+  async markPaidByTransactionId(
+    transactionId: string,
+    paymentId: string
+  ): Promise<MarkPaidResult> {
     return prisma.$transaction(async (tx) => {
       const order = await tx.order.findUnique({
         where: { transactionId },
@@ -39,7 +47,7 @@ export class PrismaOrderRepository {
       }
       if (order.status === "PAID") {
         await this.consolidatePromotionalCouponUsage(tx, order);
-        return order as PaidOrderDTO;
+        return { order: order as PaidOrderDTO, newlyPaid: false };
       }
 
       if (
@@ -88,7 +96,7 @@ export class PrismaOrderRepository {
 
       await this.consolidatePromotionalCouponUsage(tx, updatedOrder);
 
-      return updatedOrder as PaidOrderDTO;
+      return { order: updatedOrder as PaidOrderDTO, newlyPaid: true };
     });
   }
 

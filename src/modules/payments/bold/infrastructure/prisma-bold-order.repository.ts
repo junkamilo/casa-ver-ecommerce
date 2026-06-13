@@ -14,6 +14,8 @@ export class PrismaBoldOrderRepository {
         status: true,
         paymentMethod: true,
         userId: true,
+        shippingName: true,
+        shippingPhone: true,
         user: { select: { email: true } },
       },
     });

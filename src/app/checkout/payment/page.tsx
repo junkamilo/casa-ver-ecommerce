@@ -20,11 +20,33 @@ export default async function BoldPaymentPage({ searchParams }: PageProps) {
   if (params.orderId) {
     const order = await prisma.order.findUnique({
       where: { id: params.orderId },
-      select: { id: true, status: true },
+      select: {
+        id: true,
+        status: true,
+        shippingName: true,
+        shippingPhone: true,
+        shippingCedula: true,
+        user: { select: { email: true } },
+      },
     });
     if (order?.status === "PAID") {
       redirect(`/checkout/success?orderId=${order.id}`);
     }
+
+    return (
+      <Suspense>
+        <BoldPaymentClient
+          orderRef={params.ref ?? ""}
+          amount={params.amount ?? ""}
+          integrity={params.integrity ?? ""}
+          orderId={params.orderId ?? ""}
+          customerEmail={order?.user?.email ?? undefined}
+          customerName={order?.shippingName}
+          customerPhone={order?.shippingPhone}
+          customerDocument={order?.shippingCedula ?? undefined}
+        />
+      </Suspense>
+    );
   }
 
   return (

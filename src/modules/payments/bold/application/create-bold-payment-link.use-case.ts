@@ -97,7 +97,15 @@ export async function createBoldPaymentLinkUseCase(
 
   const reference = order.transactionId;
   const totalAmount = Math.round(Number(order.total));
-  const payerEmail = order.user?.email ?? undefined;
+  const payerEmail = order.user?.email?.trim().toLowerCase();
+
+  if (!payerEmail) {
+    console.error("[BOLD] Orden sin email de cliente — Bold no podrá enviar comprobante:", order.id);
+    throw new BoldValidationError(
+      "Falta el correo del cliente. Bold necesita el email para enviar el comprobante de pago."
+    );
+  }
+
   const callbackUrl = resolveBoldCallbackUrl(appUrl, reference);
 
   if (/localhost|127\.0\.0\.1/i.test(callbackUrl) && !process.env.BOLD_CALLBACK_URL) {
@@ -107,12 +115,23 @@ export async function createBoldPaymentLinkUseCase(
     );
   }
 
-  console.log("[BOLD] Creando link | reference:", reference, "| amount:", totalAmount, "| callback:", callbackUrl);
+  console.log(
+    "[BOLD] Creando link | reference:",
+    reference,
+    "| amount:",
+    totalAmount,
+    "| payer_email:",
+    payerEmail,
+    "| callback:",
+    callbackUrl
+  );
 
   const result = await client.createLink({
     reference,
     totalAmount,
     payerEmail,
+    payerName: order.shippingName,
+    payerPhone: order.shippingPhone,
     callbackUrl,
     identityKey,
   });

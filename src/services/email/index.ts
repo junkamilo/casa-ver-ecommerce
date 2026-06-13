@@ -3,6 +3,7 @@ import { welcomeTemplate } from "./templates/welcome";
 import { verificationTemplate } from "./templates/verification";
 import { passwordResetTemplate } from "./templates/password-reset";
 import { orderConfirmationTemplate } from "./templates/order-confirmation";
+import { newOrderAdminTemplate } from "./templates/new-order-admin";
 import { abandonedCartTemplate } from "./templates/abandoned-cart";
 import { abandonedCheckoutTemplate } from "./templates/abandoned-checkout";
 import { reviewRequestTemplate } from "./templates/review-request";
@@ -18,6 +19,7 @@ export type {
   SendAbandonedCartEmailInput,
   SendAbandonedCheckoutEmailInput,
   SendReviewRequestEmailInput,
+  SendNewOrderAdminEmailInput,
 } from "./types";
 
 import type {
@@ -29,6 +31,7 @@ import type {
   SendAbandonedCartEmailInput,
   SendAbandonedCheckoutEmailInput,
   SendReviewRequestEmailInput,
+  SendNewOrderAdminEmailInput,
 } from "./types";
 
 // ── Bienvenida ────────────────────────────────────────────────────────────────
@@ -90,6 +93,41 @@ export async function sendOrderConfirmationEmail(
     console.log(`[Email] ✓ Confirmación enviada para orden ${input.orderNumber} (messageId: ${result.messageId})`);
   } else {
     console.error(`[Email] Error enviando confirmación orden ${input.orderNumber}:`, result.error);
+  }
+
+  return result;
+}
+
+// ── Aviso de nueva venta (admin) ─────────────────────────────────────────────
+
+function resolveAdminOrderEmail(): string {
+  return (
+    process.env.ADMIN_ORDER_EMAIL?.trim() ||
+    process.env.AUDIT_ADMIN_EMAIL?.trim() ||
+    "talentocasaverde@gmail.com"
+  );
+}
+
+export async function sendNewOrderAdminEmail(
+  input: SendNewOrderAdminEmailInput
+): Promise<EmailResult> {
+  if (!input.orderNumber) {
+    return { success: false, error: "Número de orden requerido" };
+  }
+
+  const adminEmail = resolveAdminOrderEmail();
+  console.log(`[Email] Aviso admin nueva venta #${input.orderNumber} → ${adminEmail}`);
+
+  const result = await sendEmail({
+    to: adminEmail,
+    subject: `Nueva venta 💚 #${input.orderNumber}`,
+    html: newOrderAdminTemplate(input),
+  });
+
+  if (result.success) {
+    console.log(`[Email] ✓ Aviso admin enviado para orden ${input.orderNumber}`);
+  } else {
+    console.error(`[Email] Error aviso admin orden ${input.orderNumber}:`, result.error);
   }
 
   return result;
