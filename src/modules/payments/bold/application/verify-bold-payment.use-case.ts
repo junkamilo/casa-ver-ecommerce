@@ -27,8 +27,7 @@ async function tryMarkOrderPaid(
   boldPaymentId: string
 ): Promise<void> {
   try {
-    const paidOrder = await markOrderPaidUseCase(transactionId, boldPaymentId);
-    await notifyOrderConfirmation(paidOrder, { skipIfAlreadySent: true });
+    await markOrderPaidUseCase(transactionId, boldPaymentId);
   } catch (e) {
     console.warn("[BOLD CALLBACK] markOrderPaid (posiblemente idempotente):", e);
   }

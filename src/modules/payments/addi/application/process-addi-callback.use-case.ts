@@ -8,7 +8,6 @@ import {
 import { mapCallbackStatusToOrderStatus } from "../domain/addi-status.entity";
 import { AddiUnauthorizedError, AddiValidationError } from "./addi.errors";
 import { WebhookLogRepository } from "@/modules/payments/shared/infrastructure/webhook-log.repository";
-import { notifyOrderConfirmation } from "@/modules/payments/shared/infrastructure/order-confirmation.notifier";
 import { markOrderPaidUseCase } from "@/modules/orders/application/mark-order-paid.use-case";
 import { releaseOrderStockUseCase } from "@/modules/orders/application/release-order-stock.use-case";
 import type { AddiCallbackInputDTO, AddiCallbackResultDTO } from "../contracts/addi.dto";
@@ -138,11 +137,8 @@ export async function processAddiCallbackUseCase(
     }
 
     try {
-      const order = await markOrderPaidUseCase(externalOrderId, (applicationId as string).trim());
-      console.info("[Addi Callback] Orden marcada como pagada:", order.orderNumber);
-
-      // Email "best effort" — el consumer es idempotente.
-      await notifyOrderConfirmation(order);
+      await markOrderPaidUseCase(externalOrderId, (applicationId as string).trim());
+      console.info("[Addi Callback] Orden marcada como pagada:", externalOrderId);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Error desconocido";
       console.error("[Addi Callback] Error al marcar orden como pagada:", errorMessage);

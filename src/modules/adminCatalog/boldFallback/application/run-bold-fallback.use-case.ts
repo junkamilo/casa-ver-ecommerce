@@ -4,7 +4,6 @@ import { BOLD_PENDING_THRESHOLD_MS, determineOrderActionFromBoldStatus } from ".
 import { BoldFallbackUnauthorizedError, BoldFallbackConfigError } from "./bold-fallback.errors";
 import type { BoldFallbackResponseDTO, RunBoldFallbackInputDTO } from "../contracts/bold-fallback.dto";
 
-import { enqueueOrderConfirmationEmail } from "@/lib/email-queue";
 import { markOrderPaidUseCase } from "@/modules/adminCatalog/orders/application/mark-order-paid.use-case";
 
 const fallbackRepository = new PrismaOrderFallbackRepository();
@@ -58,37 +57,11 @@ export async function runBoldFallbackUseCase(input: RunBoldFallbackInputDTO): Pr
     if (decision === "MARK_PAID") {
       try {
         const resolvedPaymentId = boldPaymentId ?? `bold-fallback-${order.transactionId}`;
-        const paidOrder = await markOrderPaidUseCase(order.transactionId, resolvedPaymentId);
-        
+        await markOrderPaidUseCase(order.transactionId, resolvedPaymentId);
+
         results.updated++;
         results.details.push({ orderId: order.id, orderNumber: order.orderNumber, boldStatus: status, action: "marked_paid" });
         console.log(`[BOLD FALLBACK] Orden ${order.orderNumber} marcada como PAID`);
-
-        // Notificación email "best effort"
-        if (!paidOrder.confirmationEmailSentAt && paidOrder.user?.email) {
-          try {
-            await enqueueOrderConfirmationEmail(paidOrder.id, {
-              customerEmail: paidOrder.user.email,
-              customerName: paidOrder.shippingName,
-              orderNumber: paidOrder.orderNumber,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              items: paidOrder.items.map((item: any) => ({
-                name: item.name,
-                quantity: item.quantity,
-                price: Number(item.price),
-                color: item.colorName,
-                size: item.size,
-                imageUrl: item.imageUrl ?? undefined,
-              })),
-              subtotal: Number(paidOrder.subtotal),
-              shippingCost: Number(paidOrder.shippingCost),
-              discount: Number(paidOrder.discount),
-              total: Number(paidOrder.total),
-            });
-          } catch (emailErr) {
-            console.error("[BOLD FALLBACK] Error encolando email:", emailErr);
-          }
-        }
       } catch (err) {
         results.errors++;
         const msg = err instanceof Error ? err.message : "Error desconocido";

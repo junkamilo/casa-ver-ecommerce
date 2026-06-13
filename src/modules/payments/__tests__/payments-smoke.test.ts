@@ -107,14 +107,14 @@ describe("Bold — verifyBoldSignature HMAC-SHA256", () => {
     process.env.BOLD_WEBHOOK_SECRET = SECRET;
     const signature = expectedSignature(RAW_BODY, SECRET);
     const result = verifyBoldSignature(RAW_BODY, signature);
-    expect(result).toEqual({ skip: false, valid: true });
+    expect(result).toEqual({ skip: false, valid: true, method: "base64" });
   });
 
   it("acepta el prefijo sha256= en la firma", () => {
     process.env.BOLD_WEBHOOK_SECRET = SECRET;
     const signature = `sha256=${expectedSignature(RAW_BODY, SECRET)}`;
     const result = verifyBoldSignature(RAW_BODY, signature);
-    expect(result).toEqual({ skip: false, valid: true });
+    expect(result).toEqual({ skip: false, valid: true, method: "base64" });
   });
 
   it("rechaza firma alterada", () => {
@@ -122,6 +122,13 @@ describe("Bold — verifyBoldSignature HMAC-SHA256", () => {
     const wrong = expectedSignature("{}", SECRET);
     const result = verifyBoldSignature(RAW_BODY, wrong);
     expect(result).toEqual({ skip: false, valid: false });
+  });
+
+  it("acepta firma con algoritmo raw-body (fallback)", () => {
+    process.env.BOLD_WEBHOOK_SECRET = SECRET;
+    const rawSig = createHmac("sha256", SECRET).update(RAW_BODY, "utf8").digest("hex");
+    const result = verifyBoldSignature(RAW_BODY, rawSig);
+    expect(result).toEqual({ skip: false, valid: true, method: "raw" });
   });
 
   it("salta verificación si no hay header de firma (Bold Link de Pagos)", () => {
