@@ -10,6 +10,8 @@ interface CouponInputProps {
   onApply: (code: string) => void;
   onRemove: () => void;
   disabled?: boolean;
+  /** Oculta el label interno cuando el padre ya muestra título de sección */
+  compact?: boolean;
 }
 
 export default function CouponInput({
@@ -17,6 +19,7 @@ export default function CouponInput({
   onApply,
   onRemove,
   disabled = false,
+  compact = false,
 }: CouponInputProps) {
   const [inputValue, setInputValue] = useState(coupon.code);
 
@@ -40,9 +43,11 @@ export default function CouponInput({
 
   const needsRegistration = isInvalid && coupon.errorMessage?.includes("registrarte");
 
+  const wrapperCls = compact ? "mb-0 px-0" : "mb-6 px-1";
+
   if (isValid) {
     return (
-      <div className="mb-6 px-1">
+      <div className={wrapperCls}>
         <div className="flex items-center justify-between gap-3 bg-emerald-50 border border-emerald-200/80 rounded-2xl px-4 py-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="shrink-0 w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -75,11 +80,13 @@ export default function CouponInput({
   }
 
   return (
-    <div className="mb-6 px-1">
-      <label className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 mb-2.5 flex items-center gap-1.5">
-        <TicketPercent className="w-3.5 h-3.5 text-[#C19A6B]" />
-        Código de cupón
-      </label>
+    <div className={wrapperCls}>
+      {!compact && (
+        <label className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 mb-2.5 flex items-center gap-1.5">
+          <TicketPercent className="w-3.5 h-3.5 text-[#C19A6B]" />
+          Código de cupón
+        </label>
+      )}
 
       <div className="flex gap-2">
         <input

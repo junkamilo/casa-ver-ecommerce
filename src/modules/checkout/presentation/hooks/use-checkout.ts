@@ -1,13 +1,17 @@
 "use client";
 
-import { useState, useTransition, useCallback } from "react";
+import { useState, useTransition, useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import type { Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCart } from "@/context/CartContext";
+import {
+  useCart,
+  CHECKOUT_MODE_KEY,
+  CHECKOUT_MODE_BUY_NOW,
+} from "@/context/CartContext";
 import { validateCoupon } from "@/app/actions/coupons";
 import { createOrder } from "@/app/actions/checkout";
-import { getShippingCost } from "@/lib/shipping";
+import { resolveShippingQuote } from "@/lib/shipping";
 import { calculateCouponDiscountAmount } from "@/modules/checkout/domain/coupon.entity";
 import { checkoutSchema } from "@/app/checkout/types/schema";
 import type { CheckoutFormData } from "@/app/checkout/types/schema";
@@ -21,8 +25,35 @@ interface UseCheckoutOptions {
 
 export function useCheckout(options?: UseCheckoutOptions) {
   const { items, closeCart, clearCart, buyNowItem, clearBuyNow } = useCart();
+  const [preferBuyNow, setPreferBuyNow] = useState(false);
 
-  const checkoutItems = buyNowItem ? [buyNowItem] : items;
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(CHECKOUT_MODE_KEY) === CHECKOUT_MODE_BUY_NOW) {
+        setPreferBuyNow(true);
+        sessionStorage.removeItem(CHECKOUT_MODE_KEY);
+      }
+    } catch {
+      // sessionStorage no disponible
+    }
+  }, []);
+
+  // Limpia buy-now obsoleto en localStorage cuando el carrito tiene productos.
+  useEffect(() => {
+    if (!preferBuyNow && items.length > 0 && buyNowItem) {
+      clearBuyNow();
+    }
+  }, [preferBuyNow, items.length, buyNowItem, clearBuyNow]);
+
+  const checkoutItems =
+    preferBuyNow && buyNowItem
+      ? [buyNowItem]
+      : items.length > 0
+        ? items
+        : buyNowItem
+          ? [buyNowItem]
+          : [];
+
   const subtotal = checkoutItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const [isPending, startTransition] = useTransition();
@@ -34,6 +65,8 @@ export function useCheckout(options?: UseCheckoutOptions) {
     discountPercentage: 0,
   });
   const [showCouponCelebration, setShowCouponCelebration] = useState(false);
+  const [showFreeShippingCelebration, setShowFreeShippingCelebration] = useState(false);
+  const freeShippingModalShownRef = useRef(false);
 
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema) as Resolver<CheckoutFormData>,
@@ -44,8 +77,6 @@ export function useCheckout(options?: UseCheckoutOptions) {
 
   const cityValue = form.watch("city");
   const departmentValue = form.watch("department");
-  const shippingCost =
-    cityValue && departmentValue ? getShippingCost(cityValue, departmentValue) : 0;
 
   const couponDiscount =
     coupon.status === "valid"
@@ -57,6 +88,27 @@ export function useCheckout(options?: UseCheckoutOptions) {
             : coupon.discountPercentage
         )
       : 0;
+
+  const netSubtotal = subtotal - couponDiscount;
+  const shippingQuote = resolveShippingQuote({
+    netSubtotal,
+    city: cityValue,
+    department: departmentValue,
+  });
+  const shippingCost = shippingQuote.cost;
+
+  // Modal de celebración al entrar a checkout con envío gratis (una vez por visita).
+  useEffect(() => {
+    if (
+      freeShippingModalShownRef.current ||
+      checkoutItems.length === 0 ||
+      !shippingQuote.isFreeByThreshold
+    ) {
+      return;
+    }
+    freeShippingModalShownRef.current = true;
+    setShowFreeShippingCelebration(true);
+  }, [checkoutItems.length, shippingQuote.isFreeByThreshold]);
 
   const lineItemDiscountPercentage =
     coupon.status === "valid"
@@ -124,6 +176,10 @@ export function useCheckout(options?: UseCheckoutOptions) {
 
   const dismissCouponCelebration = useCallback(() => {
     setShowCouponCelebration(false);
+  }, []);
+
+  const dismissFreeShippingCelebration = useCallback(() => {
+    setShowFreeShippingCelebration(false);
   }, []);
 
   const handleSubmit = useCallback(
@@ -261,7 +317,9 @@ export function useCheckout(options?: UseCheckoutOptions) {
     form,
     items: checkoutItems,
     subtotal,
+    netSubtotal,
     shippingCost,
+    shippingQuote,
     discount,
     couponDiscount,
     total,
@@ -271,6 +329,8 @@ export function useCheckout(options?: UseCheckoutOptions) {
     handleRemoveCoupon,
     showCouponCelebration,
     dismissCouponCelebration,
+    showFreeShippingCelebration,
+    dismissFreeShippingCelebration,
     isPending,
     submitError,
     onSubmit: form.handleSubmit(handleSubmit),

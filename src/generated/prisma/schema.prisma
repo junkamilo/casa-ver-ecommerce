@@ -1,0 +1,860 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // Pooler de Neon (puerto 6543)
+  directUrl = env("DIRECT_URL") // Conexión directa para migrations (puerto 5432)
+
+  // PRODUCCIÓN: DATABASE_URL debe incluir estos parámetros para soportar 50+ usuarios simultáneos:
+  //   ?pgbouncer=true&connection_limit=1
+  // Ejemplo: postgresql://user:pass@ep-xxx.neon.tech:6543/neondb?pgbouncer=true&connection_limit=1
+  // Sin estos parámetros, Neon agota las conexiones bajo carga y las transacciones fallan.
+}
+
+// ============================================================
+// ENUMS (Configuración Global)
+// ============================================================
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ProductStatus {
+  ACTIVE // Visible en la tienda
+  INACTIVE // Oculto
+  DRAFT // Borrador
+}
+
+enum Size {
+  XS
+  S
+  M
+  L
+  XL
+  XXL
+  ONESIZE
+}
+
+enum OrderStatus {
+  PENDING // Creada, esperando pago
+  PROCESSING // Webhook recibido, validando
+  PAID // Pago confirmado
+  SHIPPED // En camino
+  DELIVERED // Entregado
+  CANCELLED // Cancelada
+  FAILED // Pago fallido
+  REFUNDED // Reembolsado por Bold (VOID_APPROVED)
+}
+
+enum PaymentMethod {
+  BOLD
+  ADDI
+  NEQUI
+  BANCOLOMBIA
+  DAVIPLATA
+}
+
+enum ReviewStatus {
+  PENDING // Esperando moderación del admin
+  APPROVED // Visible en la tienda
+  REJECTED // Rechazada por el admin
+}
+
+// ============================================================
+// TIPOS DE PRENDA (Tabla dinámica — reemplaza enum estático)
+// ============================================================
+
+model GarmentType {
+  id       String  @id @default(cuid())
+  name     String // Ej: "Pantalón", "Short", "Blusa"
+  slug     String  @unique // Ej: "pantalon", "short"
+  order    Int     @default(0)
+  isActive Boolean @default(true)
+
+  categories CategoryGarmentType[]
+  products   ProductGarmentType[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([order])
+  @@map("garment_types")
+}
+
+model CategoryGarmentType {
+  categoryId    String
+  garmentTypeId String
+
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  garmentType GarmentType @relation(fields: [garmentTypeId], references: [id], onDelete: Cascade)
+
+  @@id([categoryId, garmentTypeId])
+  @@map("category_garment_types")
+}
+
+model ProductGarmentType {
+  productId     String
+  garmentTypeId String
+
+  product     Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  garmentType GarmentType @relation(fields: [garmentTypeId], references: [id], onDelete: Cascade)
+
+  @@id([productId, garmentTypeId])
+  @@map("product_garment_types")
+}
+
+model ProductCategory {
+  productId  String
+  categoryId String
+
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, categoryId])
+  @@index([categoryId])
+  @@map("product_categories")
+}
+
+// ============================================================
+// AUTENTICACIÓN & USUARIOS (NextAuth + Perfil Cliente)
+// ============================================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          Role      @default(USER)
+  phone         String?
+  cedula        String?
+  recoveryEmail String?
+
+  // Relaciones
+  accounts            Account[]
+  addresses           Address[]
+  orders              Order[]
+  reviews             Review[]
+  verificationTokens  EmailVerificationToken[]
+  passwordResetTokens PasswordResetToken[]
+  cart                Cart?
+  couponBatches       CouponBatch[]
+  couponUsages        CouponUsage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model EmailVerificationToken {
+  id       String   @id @default(cuid())
+  userId   String   @unique
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash String
+  expires  DateTime
+  attempts Int      @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([expires])
+  @@map("email_verification_tokens")
+}
+
+model PasswordResetToken {
+  id       String   @id @default(cuid())
+  userId   String   @unique
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash String
+  expires  DateTime
+  attempts Int      @default(0)
+  verified Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([expires])
+  @@map("password_reset_tokens")
+}
+
+// Registro pendiente de verificación — el usuario NO existe en `users` todavía.
+// Se crea al solicitar registro y se elimina al verificar el correo exitosamente.
+model PendingRegistration {
+  id            String   @id @default(cuid())
+  name          String?
+  email         String   @unique
+  passwordHash  String
+  phone         String?
+  recoveryEmail String?
+  codeHash      String
+  expires       DateTime
+  attempts      Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  @@index([expires])
+  @@map("pending_registrations")
+}
+
+model Address {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName      String
+  cedula        String?
+  phone         String
+  department    String
+  city          String
+  address       String
+  addressDetail String?
+  zipCode       String?
+  isDefault     Boolean @default(false)
+
+  orders Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+// ============================================================
+// CATÁLOGO DE PRODUCTOS
+// ============================================================
+
+model Category {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String? @db.Text // Descripción visible en la página de colección
+  image       String? // URL Cloudinary de portada
+  order       Int     @default(0) // Orden de aparición en menú y listados
+  isActive    Boolean @default(true)
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  // Subcategorías (árbol recursivo)
+  // parentId = null  →  categoría raíz (Ej: "Conjuntos", "Camisetas")
+  // parentId = <id>  →  subcategoría   (Ej: "Conjuntos Mujer" hija de "Conjuntos")
+  parentId      String?
+  parent        Category?  @relation("CategoryToSubcategory", fields: [parentId], references: [id])
+  subcategories Category[] @relation("CategoryToSubcategory")
+
+  products     ProductCategory[]
+  garmentTypes CategoryGarmentType[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentId]) // Búsqueda rápida de subcategorías y categorías raíz
+  @@index([isActive]) // Filtrar solo activas sin full-scan
+  @@index([order]) // Ordenamiento eficiente en menú
+  @@map("categories")
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  description  String   @db.Text
+  basePrice    Decimal  @db.Decimal(10, 2)
+  comparePrice Decimal? @db.Decimal(10, 2) // Precio tachado (oferta)
+
+  status     ProductStatus @default(DRAFT)
+  isFeatured Boolean       @default(false)
+  isNew      Boolean       @default(false)
+
+  // Etiquetas de Producto (con control de tiempo)
+  isProductNew   Boolean   @default(false)
+  isProductNewAt DateTime? // Timestamp cuando se activó — expira automáticamente a los 7 días
+  isOnSale       Boolean   @default(false)
+  isOnSaleAt     DateTime? // Timestamp cuando se activó la oferta
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  // Datos Adicionales
+  videoUrl String?
+
+  // Calificaciones
+  rating     Float @default(0)
+  numReviews Int   @default(0)
+
+  // Tipos de prenda (para filtros del menú — relación muchos-a-muchos)
+  garmentTypes ProductGarmentType[]
+
+  // Categorías (relación muchos-a-muchos)
+  categories ProductCategory[]
+
+  // Conjunto (Set) de piezas
+  isSet Boolean @default(false)
+
+  // Relaciones Clave
+  images   ProductImage[] // Imágenes generales o por defecto
+  colors   ProductColor[] // Definición de colores disponibles
+  variants ProductVariant[] // Inventario real (SKUs)
+  items    ProductItem[] // Solo cuando isSet=true
+  reviews  Review[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([slug])
+  @@map("products")
+}
+
+// ============================================================
+// VARIANTES & IMÁGENES (Lógica de Colores)
+// ============================================================
+
+model ProductColor {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  name    String // Ej: "Verde Militar"
+  hexCode String // Ej: "#4B5320"
+
+  // Las imágenes se atan al color. Si selecciono "Verde", cargo estas fotos.
+  images   ProductImage[]
+  variants ProductVariant[]
+
+  @@unique([productId, name])
+  @@map("product_colors")
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  url     String
+  altText String?
+  order   Int     @default(0)
+  isCover Boolean @default(false) // true = portada del producto para este color
+
+  // Relación opcional: Si es null, es imagen general. Si tiene colorId, es específica.
+  colorId String?
+  color   ProductColor? @relation(fields: [colorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@index([colorId, isCover])
+  @@map("product_images")
+}
+
+model ProductVariant {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  colorId String
+  color   ProductColor @relation(fields: [colorId], references: [id], onDelete: Cascade)
+
+  size          Size
+  sku           String   @unique // Identificador único de inventario
+  priceOverride Decimal? @db.Decimal(10, 2) // Opcional: Si la XXL vale más
+
+  // Gestión de Inventario
+  stock    Int @default(0)
+  minStock Int @default(2) // Alerta de stock bajo
+  reserved Int @default(0) // Stock temporalmente en carritos
+
+  isActive Boolean @default(true)
+
+  reservations StockReservation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, colorId, size]) // Evita duplicados de la misma combinación
+  @@map("product_variants")
+}
+
+// ============================================================
+// CONJUNTOS (Sets) — Piezas de un producto compuesto
+// ============================================================
+
+model ProductItem {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  name         String // Ej: "Short", "Pantalón"
+  description  String?  @db.Text
+  price        Decimal? @db.Decimal(10, 2) // Precio propio (opcional)
+  comparePrice Decimal? @db.Decimal(10, 2) // Precio tachado (oferta)
+  videoUrl     String?
+  order        Int      @default(0)
+
+  colors ProductItemColor[]
+
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@map("product_items")
+}
+
+model ProductItemColor {
+  id     String      @id @default(cuid())
+  itemId String
+  item   ProductItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  name    String // Ej: "Verde Militar"
+  hexCode String // Ej: "#4B5320"
+
+  images   ProductItemImage[]
+  variants ProductItemVariant[]
+
+  @@unique([itemId, name])
+  @@map("product_item_colors")
+}
+
+model ProductItemImage {
+  id      String           @id @default(cuid())
+  colorId String
+  color   ProductItemColor @relation(fields: [colorId], references: [id], onDelete: Cascade)
+
+  url     String
+  altText String?
+  order   Int     @default(0)
+  isCover Boolean @default(false) // true = portada de esta subcategoría para este color
+
+  @@index([colorId])
+  @@index([colorId, isCover])
+  @@map("product_item_images")
+}
+
+model ProductItemVariant {
+  id      String           @id @default(cuid())
+  colorId String
+  color   ProductItemColor @relation(fields: [colorId], references: [id], onDelete: Cascade)
+
+  size     Size
+  sku      String  @unique
+  stock    Int     @default(0)
+  isActive Boolean @default(true)
+
+  @@unique([colorId, size])
+  @@map("product_item_variants")
+}
+
+// ============================================================
+// SISTEMA DE RESERVAS & PAGOS
+// ============================================================
+
+model StockReservation {
+  id        String         @id @default(cuid())
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  quantity  Int
+  expiresAt DateTime // Se libera automáticamente después de 15 min
+  released  Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+  @@map("stock_reservations")
+}
+
+model Order {
+  id          String @id @default(cuid())
+  orderNumber String @unique // Secuencial amigable "ORD-001"
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Snapshot de Dirección (Para que no cambie si el usuario edita su perfil)
+  addressId          String?
+  address            Address? @relation(fields: [addressId], references: [id])
+  shippingName       String
+  shippingAddress    String
+  shippingCity       String
+  shippingDepartment String
+  shippingPhone      String
+  shippingCedula     String?
+
+  // Montos
+  subtotal     Decimal @db.Decimal(10, 2) // Suma de ítems a precios reales de BD
+  shippingCost Decimal @default(0) @db.Decimal(10, 2) // Calculado server-side: $11.000 Santander / $18.000 resto
+  discount     Decimal @default(0) @db.Decimal(10, 2) // couponDiscount
+  total        Decimal @db.Decimal(10, 2) // subtotal + shippingCost - discount
+
+  // Estado y Pago
+  status        OrderStatus   @default(PENDING)
+  paymentMethod PaymentMethod
+
+  // Bold / Addi Integración
+  transactionId    String?   @unique // UUID idempotente enviado a pasarela
+  boldLinkId       String? // LNK_* retornado por Bold al crear el link de pago
+  paymentId        String? // transaction_id retornado por Bold en el webhook al aprobar
+  paymentExpiresAt DateTime? // UTC — ventana de gracia para completar pago (snapshot cupón)
+
+  // Logística
+  trackingNumber String?
+  trackingUrl    String?
+
+  items         OrderItem[]
+  webhookLogs   WebhookLog[]
+  notifications AdminNotification[]
+  reviews       Review[]
+  couponUsages  CouponUsage[]
+
+  appliedCouponId String?
+  appliedCoupon   Coupon? @relation(fields: [appliedCouponId], references: [id], onDelete: SetNull)
+
+  paidAt      DateTime?
+  shippedAt   DateTime?
+  deliveredAt DateTime?
+  cancelledAt DateTime?
+
+  // Email tracking
+  confirmationEmailSentAt      DateTime?
+  confirmationEmailFailedAt    DateTime?
+  confirmationEmailError       String?
+  abandonedCheckoutEmailSentAt DateTime?
+  reviewRequestEmailSentAt     DateTime? // Solicitud de reseña (7 días post-entrega)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String // Referencia al producto (sin FK para soportar sets)
+  variantId String // ProductVariant.id o ProductItemVariant.id
+
+  // Snapshot del ítem (Nombre, precio, etc. congelados al momento de compra)
+  name      String
+  sku       String
+  colorName String
+  size      Size
+  price     Decimal @db.Decimal(10, 2)
+  quantity  Int
+  total     Decimal @db.Decimal(10, 2)
+  imageUrl  String? // Foto principal de la variante
+
+  @@map("order_items")
+}
+
+// ============================================================
+// CARRITO (Server-side para usuarios autenticados)
+// ============================================================
+
+model Cart {
+  id                   String     @id @default(cuid())
+  userId               String     @unique
+  user                 User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items                CartItem[]
+  abandonedEmailSentAt DateTime?
+  updatedAt            DateTime   @updatedAt
+  createdAt            DateTime   @default(now())
+
+  @@map("carts")
+}
+
+model CartItem {
+  id     String @id @default(cuid())
+  cartId String
+  cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  productId String
+  variantId String
+  sku       String
+  name      String
+  price     Decimal @db.Decimal(10, 2)
+  imageUrl  String?
+  color     String
+  size      String
+  quantity  Int
+
+  @@unique([cartId, variantId])
+  @@map("cart_items")
+}
+
+// ============================================================
+// RESEÑAS & CALIFICACIONES
+// ============================================================
+
+model Review {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // Usuario registrado (null si es invitado)
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Invitado (null si es usuario registrado)
+  guestName String?
+
+  // Compra verificada: obligatorio para enviar reseña
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  rating  Int // 1-5
+  comment String @db.Text
+
+  // Moderación
+  status ReviewStatus @default(PENDING)
+
+  // Token de enlace mágico (enviado por email post-entrega)
+  reviewToken          String?   @unique
+  reviewTokenUsed      Boolean   @default(false)
+  reviewTokenExpiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([orderId, productId]) // Una reseña por producto por orden
+  @@index([productId])
+  @@index([status])
+  @@map("reviews")
+}
+
+// ============================================================
+// CUPONES DE DESCUENTO
+// ============================================================
+
+enum CouponKind {
+  BATCH_SINGLE
+  EMAIL_SINGLE
+  PROMOTIONAL
+}
+
+enum CouponDiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+enum CouponCodeSource {
+  RANDOM
+  CUSTOM
+}
+
+enum CouponScheduleMode {
+  NONE
+  SINGLE_DAY
+  DATE_RANGE
+}
+
+model CouponBatch {
+  id                 String   @id @default(cuid())
+  discountPercentage Int
+  quantity           Int
+  createdById        String?
+  createdBy          User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  coupons            Coupon[]
+  createdAt          DateTime @default(now())
+
+  @@map("coupon_batches")
+}
+
+model Coupon {
+  id                 String             @id @default(cuid())
+  code               String             @unique
+  kind               CouponKind         @default(BATCH_SINGLE)
+  discountType       CouponDiscountType @default(PERCENTAGE)
+  discountValue      Int                @default(10)
+  discountPercentage Int                @default(10)
+  assignedEmail      String? // null = cupón masivo admin (requiere usuario registrado)
+  isUsed             Boolean            @default(false)
+  usedAt             DateTime?
+  usedByOrderId      String?
+  batchId            String?
+  batch              CouponBatch?       @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  maxGlobalUses      Int?
+  maxUsesPerUser     Int                @default(1)
+  currentGlobalUses  Int                @default(0)
+  expiresAt          DateTime? // legacy; solo fallback si scheduleMode=NONE
+  scheduleMode       CouponScheduleMode @default(NONE) // capa admin (NONE | SINGLE_DAY | DATE_RANGE)
+  validFrom          DateTime? // inicio ventana temporal — almacenado en UTC
+  validTo            DateTime? // fin ventana temporal (equiv. validUntil) — almacenado en UTC
+  isActive           Boolean            @default(true)
+  codeSource         CouponCodeSource?
+  label              String?
+  usages             CouponUsage[]
+  orders             Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+  @@index([assignedEmail])
+  @@index([batchId])
+  @@index([kind])
+  @@map("coupons")
+}
+
+model CouponUsage {
+  id         String   @id @default(cuid())
+  couponId   String
+  coupon     Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  orderId    String   @unique
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email      String
+  documentId String
+  usedAt     DateTime @default(now())
+
+  @@index([couponId, email])
+  @@index([couponId, documentId])
+  @@index([couponId, userId])
+  @@map("coupon_usages")
+}
+
+// ============================================================
+// PUBLICIDAD — POPUPS PROMOCIONALES
+// ============================================================
+
+enum PromoPopupPlacement {
+  HOME
+  PRODUCT
+  CHECKOUT
+}
+
+model PromoPopup {
+  id        String              @id @default(cuid())
+  name      String
+  placement PromoPopupPlacement
+  isActive  Boolean             @default(false)
+
+  headline   String
+  subtitle   String
+  couponCode String
+  disclaimer String
+  ctaText    String
+  ctaUrl     String @default("/tienda")
+
+  delaySeconds Int                @default(3)
+  scheduleMode CouponScheduleMode @default(NONE)
+  validFrom    DateTime?
+  validTo      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([placement, isActive])
+  @@map("promo_popups")
+}
+
+// ============================================================
+// LOGS Y SEGURIDAD (Webhooks)
+// ============================================================
+
+model WebhookLog {
+  id      String  @id @default(cuid())
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id])
+
+  provider  String // "BOLD", "ADDI"
+  eventType String? // "payment.approved", etc.
+  payload   Json // Respuesta completa JSON
+  signature String? // Para validar seguridad
+
+  status       Int // Código HTTP respuesta (200, 400, etc)
+  errorMessage String?
+  attempt      Int     @default(1)
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([createdAt])
+  @@map("webhook_logs")
+}
+
+// ============================================================
+// NOTIFICACIONES ADMIN
+// ============================================================
+
+model AdminNotification {
+  id      String  @id @default(cuid())
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  title  String
+  body   String
+  isRead Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("admin_notifications")
+}
+
+// ============================================================
+// CATÁLOGO GLOBAL DE COLORES (Administrable por el admin)
+// ============================================================
+
+model Color {
+  id       String  @id @default(cuid())
+  name     String  @unique // Ej: "Verde Militar"
+  hexCode  String // Ej: "#4B5320"
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("colors")
+}
+
+// ============================================================
+// HERO / BANNER PRINCIPAL
+// ============================================================
+
+model HeroSlide {
+  id          String   @id @default(cuid())
+  position    Int      @unique // orden de aparición en el slider
+  mediaUrl    String   @default("") // URL de Cloudinary (imagen o video)
+  mediaType   String   @default("image") // "image" | "video"
+  headline    String? // Texto principal (opcional)
+  subheadline String? // Subtítulo (opcional)
+  isActive    Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+
+  @@index([position])
+  @@map("hero_slides")
+}

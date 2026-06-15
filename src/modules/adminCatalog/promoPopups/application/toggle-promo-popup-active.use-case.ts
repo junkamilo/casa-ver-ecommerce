@@ -1,0 +1,13 @@
+import { togglePromoPopupSchema } from "../contracts/promo-popup.schema";
+import { PrismaPromoPopupRepository } from "../infrastructure/prisma-promo-popup.repository";
+import { PromoPopupValidationError } from "./promo-popup.errors";
+
+const repository = new PrismaPromoPopupRepository();
+
+export async function togglePromoPopupActiveUseCase(input: unknown) {
+  const parsed = togglePromoPopupSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new PromoPopupValidationError(parsed.error.issues[0]?.message ?? "Datos inválidos");
+  }
+  return repository.toggleActive(parsed.data.id, parsed.data.isActive);
+}

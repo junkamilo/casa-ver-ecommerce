@@ -5,13 +5,16 @@ import { Sparkles } from "lucide-react";
 import { LOCALE } from "../constants";
 import { calcLineItemDisplayTotals } from "@/modules/checkout/presentation/calculators/line-item-totals";
 import type { CheckoutItem, CouponState } from "../types";
+import type { ShippingQuote } from "@/lib/shipping";
 import CouponInput from "./shared/CouponInput";
+import FreeShippingBanner from "./shared/FreeShippingBanner";
 import OrderTotals from "./shared/OrderTotals";
 
 interface OrderSummaryPanelProps {
   items: CheckoutItem[];
   subtotal: number;
   shippingCost: number;
+  shippingQuote: ShippingQuote;
   total: number;
   coupon: CouponState;
   couponDiscount: number;
@@ -25,6 +28,7 @@ const OrderSummaryPanel = ({
   items,
   subtotal,
   shippingCost,
+  shippingQuote,
   total,
   coupon,
   couponDiscount,
@@ -109,9 +113,16 @@ const OrderSummaryPanel = ({
           disabled={isPending}
         />
 
+        {shippingQuote.isFreeByThreshold && (
+          <div className="mb-4">
+            <FreeShippingBanner />
+          </div>
+        )}
+
         <OrderTotals
           subtotal={subtotal}
           shippingCost={shippingCost}
+          shippingQuote={shippingQuote}
           couponDiscount={couponDiscount}
           discountPercentage={discountPercentage > 0 ? discountPercentage : undefined}
           couponCode={coupon.status === "valid" ? coupon.code : undefined}

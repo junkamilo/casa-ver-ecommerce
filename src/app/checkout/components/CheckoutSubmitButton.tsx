@@ -1,26 +1,34 @@
 import { ShieldCheck, Loader2 } from "lucide-react";
+import { LOCALE } from "../constants";
 
 interface CheckoutSubmitButtonProps {
   isPending: boolean;
+  total: number;
 }
 
-const CheckoutSubmitButton = ({ isPending }: CheckoutSubmitButtonProps) => (
+const CheckoutSubmitButton = ({ isPending, total }: CheckoutSubmitButtonProps) => (
   <button
     type="submit"
     disabled={isPending}
-    className="w-full bg-[#154734] text-white text-sm sm:text-base font-bold uppercase tracking-[0.2em] py-6 rounded-2xl hover:bg-[#C19A6B] shadow-[0_15px_30px_-10px_rgba(21,71,52,0.5)] hover:shadow-[0_20px_40px_-10px_rgba(193,154,107,0.6)] transition-all duration-500 active:scale-[0.98] mb-10 relative overflow-hidden group disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-[#154734]"
+    className="w-full bg-[#154734] text-white text-xs sm:text-sm font-bold uppercase tracking-[0.12em] sm:tracking-[0.15em] py-3.5 sm:py-4 rounded-xl sm:rounded-2xl hover:bg-[#103a2a] shadow-md hover:shadow-lg transition-all duration-300 active:scale-[0.99] mb-6 lg:mb-10 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-[#154734]"
   >
-    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-    <span className="relative z-10 flex items-center justify-center gap-3">
+    <span className="flex flex-row items-center justify-center gap-2 sm:gap-3">
       {isPending ? (
         <>
-          <Loader2 className="w-5 h-5 animate-spin" />
+          <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
           Procesando...
         </>
       ) : (
         <>
-          <ShieldCheck className="w-5 h-5" />
-          Pagar Pedido
+          <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+          <span>Pagar pedido</span>
+          <span className="opacity-40 font-normal">·</span>
+          <span
+            className="text-sm sm:text-base font-semibold normal-case tracking-normal"
+            style={{ fontFamily: "Georgia, serif" }}
+          >
+            ${total.toLocaleString(LOCALE)}
+          </span>
         </>
       )}
     </span>
