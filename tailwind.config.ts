@@ -142,6 +142,20 @@ export default {
           '0%':   { opacity: '0', transform: 'translateY(20px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        'coupon-pop': {
+          '0%':   { opacity: '0', transform: 'translateY(12px) scale(0.96)' },
+          '45%':  { opacity: '1', transform: 'translateY(-6px) scale(1.02)' },
+          '70%':  { transform: 'translateY(2px) scale(0.99)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        'order-bar-slide-up': {
+          '0%':   { opacity: '0', transform: 'translateY(-100%)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'order-bar-hint': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%':       { transform: 'translateY(-4px)' },
+        },
       },
       animation: {
         // 80s = scroll ultra-elegante, marca premium
@@ -156,6 +170,9 @@ export default {
         'scroll-line':     'scroll-line 2s ease-in-out infinite',
         'progress-fill':   'progress-fill 5s linear infinite',
         'hero-in':         'hero-in 0.8s ease-out forwards',
+        'coupon-pop':      'coupon-pop 0.65s cubic-bezier(0.34, 1.4, 0.64, 1) 3',
+        'order-bar-slide-up': 'order-bar-slide-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'order-bar-hint':     'order-bar-hint 2s ease-in-out infinite',
       },
     },
   },

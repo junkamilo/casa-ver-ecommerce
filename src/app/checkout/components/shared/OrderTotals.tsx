@@ -1,9 +1,11 @@
 import { Truck, TicketPercent } from "lucide-react";
+import type { ShippingQuote } from "@/lib/shipping";
 import { LOCALE } from "../../constants";
 
 interface OrderTotalsProps {
   subtotal: number;
   shippingCost: number;
+  shippingQuote?: ShippingQuote;
   couponDiscount?: number;
   discountPercentage?: number;
   couponCode?: string;
@@ -14,12 +16,16 @@ interface OrderTotalsProps {
 export default function OrderTotals({
   subtotal,
   shippingCost,
+  shippingQuote,
   couponDiscount = 0,
   discountPercentage,
   couponCode,
   compact = false,
 }: OrderTotalsProps) {
   const hasDiscount = couponDiscount > 0;
+  const isFreeByThreshold = shippingQuote?.isFreeByThreshold ?? false;
+  const isPendingAddress = shippingQuote?.isPendingAddress ?? shippingCost === 0;
+  const baseShippingCost = shippingQuote?.baseCost;
 
   return (
     <div
@@ -56,12 +62,21 @@ export default function OrderTotals({
           <Truck className="w-3 h-3 text-[#C19A6B]" />
           Envío
         </span>
-        {shippingCost > 0 ? (
+        {isFreeByThreshold ? (
+          <span className="flex items-center gap-2">
+            {baseShippingCost != null && baseShippingCost > 0 && (
+              <span className="text-gray-400 line-through text-xs">
+                +${baseShippingCost.toLocaleString(LOCALE)}
+              </span>
+            )}
+            <span className="text-[#154734] font-bold">Gratis</span>
+          </span>
+        ) : isPendingAddress ? (
+          <span className="text-gray-400 italic text-xs">por calcular</span>
+        ) : (
           <span className="text-[#154734] font-bold">
             +${shippingCost.toLocaleString(LOCALE)}
           </span>
-        ) : (
-          <span className="text-gray-400 italic text-xs">por calcular</span>
         )}
       </div>
 

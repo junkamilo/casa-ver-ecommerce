@@ -8,7 +8,7 @@ const CartDrawer = () => {
   const {
     isCartOpen, closeCart, clearCart,
     items, removeFromCart, updateQuantity,
-    subtotal, cartCount,
+    subtotal, cartCount, goToCheckout,
   } = useCartDrawer();
 
   // Cerrar con Escape
@@ -37,7 +37,7 @@ const CartDrawer = () => {
           onClose={closeCart}
         />
 
-        {items.length > 0 && <CartFooter subtotal={subtotal} onClose={closeCart} />}
+        {items.length > 0 && <CartFooter subtotal={subtotal} onClose={goToCheckout} />}
       </div>
     </div>
   );

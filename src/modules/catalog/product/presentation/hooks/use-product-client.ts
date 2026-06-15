@@ -2,7 +2,11 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useCart } from "@/context/CartContext";
+import {
+  useCart,
+  CHECKOUT_MODE_KEY,
+  CHECKOUT_MODE_BUY_NOW,
+} from "@/context/CartContext";
 import {
   type UIProduct,
   type UIColor,
@@ -160,6 +164,11 @@ export function useProductClient(
       { name: selectedColor.name, hex: selectedColor.hex },
       selectedSize!,
     );
+    try {
+      sessionStorage.setItem(CHECKOUT_MODE_KEY, CHECKOUT_MODE_BUY_NOW);
+    } catch {
+      // sessionStorage no disponible
+    }
     router.push("/checkout");
   };
 

@@ -12,6 +12,16 @@ export const SHIPPING_SANTANDER = 11_000;
 export const SHIPPING_NATIONAL = 18_000;
 export const SHIPPING_ISLANDS = 30_000;
 
+/** Subtotal neto (productos − cupón) mínimo para envío gratis. */
+export const FREE_SHIPPING_MIN_NET_SUBTOTAL = 300_000;
+
+export interface ShippingQuote {
+  cost: number;
+  baseCost: number | null;
+  isFreeByThreshold: boolean;
+  isPendingAddress: boolean;
+}
+
 /**
  * Ciudades/municipios con tarifa especial de $11.000.
  */
@@ -76,4 +86,39 @@ export function isSantanderCity(city: string, department: string): boolean {
  */
 export function formatShippingCost(cost: number): string {
   return `$${cost.toLocaleString("es-CO")}`;
+}
+
+function hasShippingAddress(city?: string, department?: string): boolean {
+  return Boolean(city?.trim() && department?.trim());
+}
+
+/**
+ * Resuelve el costo de envío según subtotal neto (después de cupón) y ubicación.
+ * Fuente de verdad compartida entre checkout (cliente) y creación de orden (servidor).
+ */
+export function resolveShippingQuote(input: {
+  netSubtotal: number;
+  city?: string;
+  department?: string;
+}): ShippingQuote {
+  const hasAddress = hasShippingAddress(input.city, input.department);
+  const baseCost = hasAddress
+    ? getShippingCost(input.city!.trim(), input.department!.trim())
+    : null;
+
+  if (input.netSubtotal >= FREE_SHIPPING_MIN_NET_SUBTOTAL) {
+    return {
+      cost: 0,
+      baseCost,
+      isFreeByThreshold: true,
+      isPendingAddress: false,
+    };
+  }
+
+  return {
+    cost: baseCost ?? 0,
+    baseCost,
+    isFreeByThreshold: false,
+    isPendingAddress: !hasAddress,
+  };
 }

@@ -8,6 +8,7 @@
     "dev:clean": "node scripts/dev-clean.mjs",
     "dev:webpack": "next dev --webpack",
     "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
     "test": "jest",

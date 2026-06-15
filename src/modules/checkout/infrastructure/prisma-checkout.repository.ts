@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
-import { getShippingCost } from "@/lib/shipping";
+import { resolveShippingQuote } from "@/lib/shipping";
 import {
   calculateCouponDiscount,
   calculateCouponDiscountAmount,
@@ -150,8 +150,6 @@ export class PrismaCheckoutRepository {
           0
         );
 
-        const realShippingCost = getShippingCost(input.city, input.department);
-
         // 3. Re-validar el cupón contra la BD (Fase 2)
         let couponDiscountAmount = 0;
         let appliedCouponId: string | undefined;
@@ -242,6 +240,13 @@ export class PrismaCheckoutRepository {
         }
 
         const finalDiscount = couponDiscountAmount;
+        const netSubtotal = realSubtotal - finalDiscount;
+        const shippingQuote = resolveShippingQuote({
+          netSubtotal,
+          city: input.city,
+          department: input.department,
+        });
+        const realShippingCost = shippingQuote.cost;
         const realTotal = realSubtotal + realShippingCost - finalDiscount;
 
         const orderNumber = generateOrderNumber();

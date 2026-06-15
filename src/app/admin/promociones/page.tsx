@@ -6,6 +6,7 @@ import AdminPageHeader from "@/components/ui/AdminPageHeader";
 import AdminPagination from "@/components/ui/AdminPagination";
 import CouponUsageModal from "./components/CouponUsageModal";
 import PromotionalCouponsTab from "./components/PromotionalCouponsTab";
+import AdvertisingTab from "./components/AdvertisingTab";
 import type { CouponListItemDTO } from "@/modules/adminCatalog/coupons/contracts/coupon.dto";
 import { Copy, Eye, Loader2, Search, TicketPercent, Trash2 } from "lucide-react";
 import { useCouponManager } from "./hooks/useCouponManager";
@@ -29,7 +30,7 @@ function formatBatchLabel(coupon: CouponListItemDTO) {
 }
 
 export default function AdminPromocionesPage() {
-  const [activeTab, setActiveTab] = useState<"batch" | "promotional">("batch");
+  const [activeTab, setActiveTab] = useState<"batch" | "promotional" | "advertising">("batch");
   const m = useCouponManager();
 
   const columns = [
@@ -202,9 +203,22 @@ export default function AdminPromocionesPage() {
         >
           Código promocional
         </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("advertising")}
+          className={`px-4 py-2 text-sm font-semibold -mb-px transition-colors ${
+            activeTab === "advertising"
+              ? "text-[#154734] border-b-2 border-[#154734]"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Publicidad
+        </button>
       </div>
 
-      {activeTab === "promotional" ? (
+      {activeTab === "advertising" ? (
+        <AdvertisingTab />
+      ) : activeTab === "promotional" ? (
         <PromotionalCouponsTab />
       ) : (
         <>

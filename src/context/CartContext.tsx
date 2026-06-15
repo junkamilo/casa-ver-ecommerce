@@ -38,6 +38,10 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 const CART_KEY     = "cv_cart";
 const BUY_NOW_KEY  = "cv_buy_now";
 
+/** sessionStorage: indica que el usuario entró a checkout vía "Comprar ahora". */
+export const CHECKOUT_MODE_KEY = "cv_checkout_mode";
+export const CHECKOUT_MODE_BUY_NOW = "buynow";
+
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -114,6 +118,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const addToCart = useCallback((product: any, qty: number, color: any, size?: string) => {
     const sizeLabel = size || "Única";
     const itemId = `${product.id ?? product.name}-${color.id ?? color.name}-${sizeLabel}`;
+
+    // Al agregar al carrito, descartar un buy-now anterior para no pisar el carrito en checkout.
+    setBuyNowItem(null);
+    try { localStorage.removeItem(BUY_NOW_KEY); } catch {}
 
     setItems((current) => {
       const existing = current.find((item) => item.id === itemId);

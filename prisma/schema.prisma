@@ -745,6 +745,41 @@ model CouponUsage {
 }
 
 // ============================================================
+// PUBLICIDAD — POPUPS PROMOCIONALES
+// ============================================================
+
+enum PromoPopupPlacement {
+  HOME
+  PRODUCT
+  CHECKOUT
+}
+
+model PromoPopup {
+  id           String              @id @default(cuid())
+  name         String
+  placement    PromoPopupPlacement
+  isActive     Boolean             @default(false)
+
+  headline     String
+  subtitle     String
+  couponCode   String
+  disclaimer   String
+  ctaText      String
+  ctaUrl       String              @default("/tienda")
+
+  delaySeconds Int                 @default(3)
+  scheduleMode CouponScheduleMode  @default(NONE)
+  validFrom    DateTime?
+  validTo      DateTime?
+
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@index([placement, isActive])
+  @@map("promo_popups")
+}
+
+// ============================================================
 // LOGS Y SEGURIDAD (Webhooks)
 // ============================================================
 
