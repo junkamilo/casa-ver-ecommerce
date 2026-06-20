@@ -26,7 +26,9 @@ export function DeliveryTimeCard({ data }: Props) {
 
       {!hasData ? (
         <div className="flex items-center justify-center h-20 text-gray-400">
-          <p className="text-sm">Sin entregas en este período</p>
+          <p className="text-sm text-center">
+            Sin entregas en este período. Esta métrica se habilita al marcar pedidos como Entregado.
+          </p>
         </div>
       ) : (
         <>

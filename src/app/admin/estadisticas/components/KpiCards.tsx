@@ -37,7 +37,7 @@ export function KpiCards({ data, retention, cancellation }: KpiCardsProps) {
         </div>
       </div>
 
-      {/* Pedidos Entregados */}
+      {/* Ventas Confirmadas */}
       <div className="bg-white rounded-xl border border-gray-100 p-3 sm:p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-20 h-20 bg-orange-50 rounded-bl-full -mr-3 -mt-3 transition-transform group-hover:scale-110" />
         <div className="relative">
@@ -46,7 +46,7 @@ export function KpiCards({ data, retention, cancellation }: KpiCardsProps) {
               <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <p className="text-xs text-gray-500 font-medium">Entregados</p>
+          <p className="text-xs text-gray-500 font-medium">Ventas Confirmadas</p>
           <h3 className="text-base sm:text-xl font-bold text-gray-900 mt-0.5">{data.orders}</h3>
         </div>
       </div>
