@@ -18,6 +18,18 @@ import type {
   StockAlert,
   TopProduct,
 } from "../contracts/stats.dto";
+import {
+  buildDeliveredOrderWhere,
+  buildRevenueOrderItemWhere,
+  buildRevenueOrderWhere,
+  REVENUE_ORDER_STATUSES,
+} from "../domain/stats-order-filters";
+import {
+  calculatePercentageChange,
+  getPeriodDateRange,
+  toColombiaDate,
+  toDayLabel,
+} from "../domain/stats-period";
 
 const CATEGORY_COLORS = ["bg-[#154734]", "bg-[#C19A6B]", "bg-[#0f2e22]", "bg-[#e5d0b1]", "bg-gray-400"] as const;
 
@@ -27,45 +39,6 @@ const formatPrice = (price: number): string =>
     currency: "COP",
     minimumFractionDigits: 0,
   }).format(price);
-
-const DAY_NAMES = ["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"] as const;
-const COLOMBIA_OFFSET_MS = 5 * 60 * 60 * 1000;
-const nowColombia = () => new Date(Date.now() - COLOMBIA_OFFSET_MS);
-const colombiaToUTC = (d: Date) => new Date(d.getTime() + COLOMBIA_OFFSET_MS);
-
-const getPeriodDateRange = (period: Period): { start: Date; end: Date; durationMs: number } => {
-  const now = nowColombia();
-  const endLocal = new Date(now);
-  endLocal.setUTCHours(23, 59, 59, 999);
-  const startLocal = new Date(now);
-  switch (period) {
-    case "day":
-      startLocal.setUTCHours(0, 0, 0, 0);
-      break;
-    case "week": {
-      const dayOfWeek = startLocal.getUTCDay();
-      const daysBack = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-      startLocal.setUTCDate(startLocal.getUTCDate() - daysBack);
-      startLocal.setUTCHours(0, 0, 0, 0);
-      break;
-    }
-    case "month":
-      startLocal.setUTCDate(1);
-      startLocal.setUTCHours(0, 0, 0, 0);
-      break;
-  }
-
-  const start = colombiaToUTC(startLocal);
-  const end = colombiaToUTC(endLocal);
-  return { start, end, durationMs: end.getTime() - start.getTime() };
-};
-
-const calculatePercentageChange = (current: number, previous: number): string => {
-  if (previous === 0 && current === 0) return "0%";
-  if (previous === 0) return "+100%";
-  const change = ((current - previous) / previous) * 100;
-  return `${change >= 0 ? "+" : ""}${Math.round(change)}%`;
-};
 
 const PAYMENT_LABELS: Record<string, string> = {
   BOLD: "Bold",
@@ -92,8 +65,11 @@ export async function getStatsByPeriod(period: Period): Promise<SalesPeriodData>
   const prevStart = new Date(start.getTime() - durationMs);
 
   const [ordersInPeriod, prevOrders, newCustomers] = await Promise.all([
-    prisma.order.findMany({ where: { status: "DELIVERED", createdAt: { gte: start, lte: end } }, select: { total: true } }),
-    prisma.order.findMany({ where: { status: "DELIVERED", createdAt: { gte: prevStart, lte: prevEnd } }, select: { total: true } }),
+    prisma.order.findMany({ where: buildRevenueOrderWhere(start, end), select: { total: true } }),
+    prisma.order.findMany({
+      where: buildRevenueOrderWhere(prevStart, prevEnd),
+      select: { total: true },
+    }),
     prisma.user.count({ where: { role: "USER", createdAt: { gte: start, lte: end } } }),
   ]);
 
@@ -110,8 +86,14 @@ export async function getTopProductsByPeriod(period: Period, limit = 8): Promise
   const prevStart = new Date(start.getTime() - durationMs);
 
   const [currentItems, prevItems] = await Promise.all([
-    prisma.orderItem.findMany({ where: { order: { status: "DELIVERED", createdAt: { gte: start, lte: end } } }, select: { productId: true, name: true, quantity: true, total: true } }),
-    prisma.orderItem.findMany({ where: { order: { status: "DELIVERED", createdAt: { gte: prevStart, lte: prevEnd } } }, select: { productId: true, quantity: true } }),
+    prisma.orderItem.findMany({
+      where: buildRevenueOrderItemWhere(start, end),
+      select: { productId: true, name: true, quantity: true, total: true },
+    }),
+    prisma.orderItem.findMany({
+      where: buildRevenueOrderItemWhere(prevStart, prevEnd),
+      select: { productId: true, quantity: true },
+    }),
   ]);
 
   const currentMap = new Map<string, { name: string; quantity: number; total: number }>();
@@ -133,18 +115,19 @@ export async function getTopProductsByPeriod(period: Period, limit = 8): Promise
 
 export async function getDailySalesByPeriod(period: Period): Promise<DailySale[]> {
   const { start, end } = getPeriodDateRange(period);
-  const orders = await prisma.order.findMany({ where: { status: "DELIVERED", createdAt: { gte: start, lte: end } }, select: { total: true, createdAt: true } });
+  const orders = await prisma.order.findMany({
+    where: buildRevenueOrderWhere(start, end),
+    select: { total: true, createdAt: true },
+  });
   const dailyMap = new Map<string, number>();
   const cursor = new Date(start);
   while (cursor <= end) {
-    const localCursor = new Date(cursor.getTime() - COLOMBIA_OFFSET_MS);
-    const key = `${localCursor.getUTCDate()}-${DAY_NAMES[localCursor.getUTCDay()]}`;
+    const key = toDayLabel(cursor);
     dailyMap.set(key, 0);
     cursor.setUTCDate(cursor.getUTCDate() + 1);
   }
   for (const order of orders) {
-    const localDate = new Date(new Date(order.createdAt).getTime() - COLOMBIA_OFFSET_MS);
-    const key = `${localDate.getUTCDate()}-${DAY_NAMES[localDate.getUTCDay()]}`;
+    const key = toDayLabel(order.createdAt);
     dailyMap.set(key, (dailyMap.get(key) ?? 0) + Number(order.total));
   }
   return Array.from(dailyMap.entries()).map(([key, amount]) => ({ day: key.split("-")[1], amount }));
@@ -155,8 +138,14 @@ export async function getCategorySalesByPeriod(period: Period): Promise<Category
   const prevEnd = new Date(start.getTime() - 1);
   const prevStart = new Date(start.getTime() - durationMs);
   const [currentItems, prevItems] = await Promise.all([
-    prisma.orderItem.findMany({ where: { order: { status: "DELIVERED", createdAt: { gte: start, lte: end } } }, select: { total: true, productId: true, quantity: true, orderId: true, name: true } }),
-    prisma.orderItem.findMany({ where: { order: { status: "DELIVERED", createdAt: { gte: prevStart, lte: prevEnd } } }, select: { total: true, productId: true } }),
+    prisma.orderItem.findMany({
+      where: buildRevenueOrderItemWhere(start, end),
+      select: { total: true, productId: true, quantity: true, orderId: true, name: true },
+    }),
+    prisma.orderItem.findMany({
+      where: buildRevenueOrderItemWhere(prevStart, prevEnd),
+      select: { total: true, productId: true },
+    }),
   ]);
   if (currentItems.length === 0) return [];
   const totalRevenue = currentItems.reduce((sum, i) => sum + Number(i.total), 0);
@@ -245,8 +234,14 @@ export async function getSizesSalesByPeriod(period: Period): Promise<SizeSale[]>
   const prevEnd = new Date(start.getTime() - 1);
   const prevStart = new Date(start.getTime() - durationMs);
   const [currentItems, prevItems] = await Promise.all([
-    prisma.orderItem.findMany({ where: { order: { status: "DELIVERED", createdAt: { gte: start, lte: end } } }, select: { size: true, quantity: true } }),
-    prisma.orderItem.findMany({ where: { order: { status: "DELIVERED", createdAt: { gte: prevStart, lte: prevEnd } } }, select: { size: true, quantity: true } }),
+    prisma.orderItem.findMany({
+      where: buildRevenueOrderItemWhere(start, end),
+      select: { size: true, quantity: true },
+    }),
+    prisma.orderItem.findMany({
+      where: buildRevenueOrderItemWhere(prevStart, prevEnd),
+      select: { size: true, quantity: true },
+    }),
   ]);
   if (currentItems.length === 0) return [];
   const sizeMap = new Map<string, number>();
@@ -265,8 +260,14 @@ export async function getColorsSalesByPeriod(period: Period): Promise<ColorSale[
   const prevEnd = new Date(start.getTime() - 1);
   const prevStart = new Date(start.getTime() - durationMs);
   const [currentItems, prevItems] = await Promise.all([
-    prisma.orderItem.findMany({ where: { order: { status: "DELIVERED", createdAt: { gte: start, lte: end } } }, select: { colorName: true, quantity: true } }),
-    prisma.orderItem.findMany({ where: { order: { status: "DELIVERED", createdAt: { gte: prevStart, lte: prevEnd } } }, select: { colorName: true, quantity: true } }),
+    prisma.orderItem.findMany({
+      where: buildRevenueOrderItemWhere(start, end),
+      select: { colorName: true, quantity: true },
+    }),
+    prisma.orderItem.findMany({
+      where: buildRevenueOrderItemWhere(prevStart, prevEnd),
+      select: { colorName: true, quantity: true },
+    }),
   ]);
   if (currentItems.length === 0) return [];
   const colorMap = new Map<string, number>();
@@ -283,7 +284,10 @@ export async function getColorsSalesByPeriod(period: Period): Promise<ColorSale[
 
 export async function getPaymentMethodsByPeriod(period: Period): Promise<PaymentMethodSale[]> {
   const { start, end } = getPeriodDateRange(period);
-  const orders = await prisma.order.findMany({ where: { status: "DELIVERED", createdAt: { gte: start, lte: end } }, select: { paymentMethod: true, total: true } });
+  const orders = await prisma.order.findMany({
+    where: buildRevenueOrderWhere(start, end),
+    select: { paymentMethod: true, total: true },
+  });
   if (orders.length === 0) return [];
   const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total), 0);
   const methodMap = new Map<string, { orders: number; revenue: number }>();
@@ -300,7 +304,10 @@ export async function getPaymentMethodsByPeriod(period: Period): Promise<Payment
 
 export async function getGeographyByPeriod(period: Period): Promise<GeographyData> {
   const { start, end } = getPeriodDateRange(period);
-  const orders = await prisma.order.findMany({ where: { status: "DELIVERED", createdAt: { gte: start, lte: end } }, select: { shippingDepartment: true, shippingCity: true, total: true } });
+  const orders = await prisma.order.findMany({
+    where: buildRevenueOrderWhere(start, end),
+    select: { shippingDepartment: true, shippingCity: true, total: true },
+  });
   if (orders.length === 0) return { departments: [], cities: [], totalOrders: 0 };
   const deptMap = new Map<string, { orders: number; revenue: number }>();
   const cityMap = new Map<string, { orders: number; revenue: number }>();
@@ -324,10 +331,22 @@ export async function getGeographyByPeriod(period: Period): Promise<GeographyDat
 
 export async function getRetentionByPeriod(period: Period): Promise<RetentionData> {
   const { start, end } = getPeriodDateRange(period);
-  const periodOrders = await prisma.order.findMany({ where: { status: "DELIVERED", createdAt: { gte: start, lte: end } }, select: { userId: true }, distinct: ["userId"] });
+  const periodOrders = await prisma.order.findMany({
+    where: buildRevenueOrderWhere(start, end),
+    select: { userId: true },
+    distinct: ["userId"],
+  });
   if (periodOrders.length === 0) return { returning: 0, newBuyers: 0, returningPercentage: 0, totalBuyers: 0 };
   const userIds = periodOrders.map((o) => o.userId);
-  const returningUsers = await prisma.order.findMany({ where: { userId: { in: userIds }, status: "DELIVERED", createdAt: { lt: start } }, select: { userId: true }, distinct: ["userId"] });
+  const returningUsers = await prisma.order.findMany({
+    where: {
+      userId: { in: userIds },
+      status: { in: [...REVENUE_ORDER_STATUSES] },
+      createdAt: { lt: start },
+    },
+    select: { userId: true },
+    distinct: ["userId"],
+  });
   const returning = returningUsers.length;
   const total = periodOrders.length;
   return { returning, newBuyers: total - returning, returningPercentage: total > 0 ? Math.round((returning / total) * 100) : 0, totalBuyers: total };
@@ -336,7 +355,13 @@ export async function getRetentionByPeriod(period: Period): Promise<RetentionDat
 export async function getDiscountImpactByPeriod(period: Period): Promise<DiscountData> {
   const { start, end } = getPeriodDateRange(period);
   const [orders, couponsUsed] = await Promise.all([
-    prisma.order.findMany({ where: { createdAt: { gte: start, lte: end }, discount: { gt: 0 } }, select: { discount: true, total: true } }),
+    prisma.order.findMany({
+      where: {
+        ...buildRevenueOrderWhere(start, end),
+        discount: { gt: 0 },
+      },
+      select: { discount: true, total: true },
+    }),
     prisma.coupon.count({ where: { isUsed: true, usedAt: { gte: start, lte: end } } }),
   ]);
   const totalDiscount = orders.reduce((sum, o) => sum + Number(o.discount), 0);
@@ -369,7 +394,11 @@ export async function getReviewsByPeriod(period: Period): Promise<ReviewsData> {
 export async function getAvgDeliveryTime(period: Period): Promise<DeliveryTimeData> {
   const { start, end } = getPeriodDateRange(period);
   const orders = await prisma.order.findMany({
-    where: { status: "DELIVERED", createdAt: { gte: start, lte: end }, paidAt: { not: null }, deliveredAt: { not: null } },
+    where: {
+      ...buildDeliveredOrderWhere(start, end),
+      paidAt: { not: null },
+      deliveredAt: { not: null },
+    },
     select: { paidAt: true, deliveredAt: true },
   });
   if (orders.length === 0) return { avgDays: 0, minDays: 0, maxDays: 0, count: 0 };
@@ -384,12 +413,15 @@ export async function getAvgDeliveryTime(period: Period): Promise<DeliveryTimeDa
 
 export async function getPeakHoursByPeriod(period: Period): Promise<PeakHourData[]> {
   const { start, end } = getPeriodDateRange(period);
-  const orders = await prisma.order.findMany({ where: { status: "DELIVERED", createdAt: { gte: start, lte: end } }, select: { createdAt: true } });
+  const orders = await prisma.order.findMany({
+    where: buildRevenueOrderWhere(start, end),
+    select: { createdAt: true },
+  });
   if (orders.length === 0) return [];
   const hourMap = new Map<number, number>();
   for (let h = 0; h < 24; h++) hourMap.set(h, 0);
   for (const order of orders) {
-    const localDate = new Date(new Date(order.createdAt).getTime() - COLOMBIA_OFFSET_MS);
+    const localDate = toColombiaDate(order.createdAt);
     const hour = localDate.getUTCHours();
     hourMap.set(hour, (hourMap.get(hour) ?? 0) + 1);
   }

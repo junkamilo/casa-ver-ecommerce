@@ -18,7 +18,7 @@ export function SalesChart({ salesData }: SalesChartProps) {
       {isEmpty ? (
         <div className="h-48 sm:h-64 flex flex-col items-center justify-center gap-2 text-gray-400">
           <BarChart2 className="w-10 h-10 opacity-30" />
-          <p className="text-sm font-medium">Sin ventas en este período</p>
+          <p className="text-sm font-medium">Sin ventas confirmadas en este período</p>
         </div>
       ) : (
         <div className="overflow-x-auto sm:overflow-visible -mx-4 sm:mx-0 px-4 sm:px-0">
