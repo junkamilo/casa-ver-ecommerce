@@ -1,16 +1,17 @@
 import type { LucideIcon } from "lucide-react";
+import type {
+  DashboardBacklogDTO,
+  DashboardPaymentIncidentsDTO,
+  DashboardRecentOrderDTO,
+  DashboardSlaItemDTO,
+} from "@/modules/adminCatalog/dashboard/contracts/dashboard.dto";
+import type { DashboardStatItem } from "@/modules/adminCatalog/dashboard/presentation/types";
 
-export interface StatItem {
-  label: string;
-  value: string;
-  change: string;
-  icon: LucideIcon;
-  color: string;
-  bg: string;
-  border: string;
-  changeBg?: string;
-  changeColor?: string;
-}
+export type StatItem = DashboardStatItem;
+export type RecentOrder = DashboardRecentOrderDTO;
+export type DashboardSlaItem = DashboardSlaItemDTO;
+export type DashboardBacklog = DashboardBacklogDTO;
+export type DashboardPaymentIncidents = DashboardPaymentIncidentsDTO;
 
 export interface NavItem {
   label: string;
@@ -25,19 +26,13 @@ export interface NavItem {
   hoverTextColor: string;
 }
 
-export interface RecentOrder {
-  id: string;
-  orderNumber: string;
-  total: number;
-  status: string;
-  createdAt: Date;
-  paymentMethod: string | null;
-  user: { name: string | null } | null;
-}
-
 export interface DashboardData {
   stats: StatItem[];
   recentOrders: RecentOrder[];
+  slaQueue: DashboardSlaItem[];
+  paymentIncidents: DashboardPaymentIncidents;
+  backlog: DashboardBacklog;
+  serverNow: string;
 }
 
 export interface OrderStatusInfo {

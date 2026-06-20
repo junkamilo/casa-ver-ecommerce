@@ -20,7 +20,53 @@ export interface DashboardRecentOrderDTO {
   user: { name: string | null } | null;
 }
 
+export type DashboardSlaSeverity = "warning" | "critical";
+
+export interface DashboardSlaItemDTO {
+  orderId: string;
+  orderNumber: string;
+  status: string;
+  statusLabel: string;
+  waitingMinutes: number;
+  waitingLabel: string;
+  severity: DashboardSlaSeverity;
+  suggestedAction: string;
+  customerName: string | null;
+  total: number;
+}
+
+export interface DashboardIncidentItemDTO {
+  id: string;
+  provider: string;
+  eventType: string | null;
+  status: number;
+  errorMessage: string | null;
+  createdAt: Date;
+  orderId: string | null;
+}
+
+export interface DashboardPaymentIncidentsDTO {
+  windowMinutes: number;
+  totalEvents: number;
+  errorCount: number;
+  byProvider: { provider: string; total: number; errors: number }[];
+  recent: DashboardIncidentItemDTO[];
+}
+
+export interface DashboardBacklogDTO {
+  pendingReviews: number;
+  unreadNotifications: number;
+  ordersNeedingAttention: number;
+  pendingOrders: number;
+  paidAwaitingFulfillment: number;
+  processingOrders: number;
+}
+
 export interface DashboardDataDTO {
   stats: DashboardStatDTO[];
   recentOrders: DashboardRecentOrderDTO[];
+  slaQueue: DashboardSlaItemDTO[];
+  paymentIncidents: DashboardPaymentIncidentsDTO;
+  backlog: DashboardBacklogDTO;
+  serverNow: string;
 }

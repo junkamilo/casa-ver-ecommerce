@@ -1,2 +1,2 @@
 // Re-export desde la arquitectura modular
-export { default } from "./cart-drawer";
+export { default } from "./CartDrawer/index";
