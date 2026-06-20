@@ -1,4 +1,9 @@
 import type { LucideIcon } from "lucide-react";
+import type {
+  DashboardBacklogDTO,
+  DashboardPaymentIncidentsDTO,
+  DashboardSlaItemDTO,
+} from "../contracts/dashboard.dto";
 
 export interface DashboardStatItem {
   label: string;
@@ -25,4 +30,8 @@ export interface DashboardRecentOrder {
 export interface DashboardDataViewModel {
   stats: DashboardStatItem[];
   recentOrders: DashboardRecentOrder[];
+  slaQueue: DashboardSlaItemDTO[];
+  paymentIncidents: DashboardPaymentIncidentsDTO;
+  backlog: DashboardBacklogDTO;
+  serverNow: string;
 }

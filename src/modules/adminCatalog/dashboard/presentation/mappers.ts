@@ -17,5 +17,9 @@ export function mapDashboardDataDtoToUi(dto: DashboardDataDTO): DashboardDataVie
       icon: ICON_MAP[stat.icon],
     })),
     recentOrders: dto.recentOrders,
+    slaQueue: dto.slaQueue,
+    paymentIncidents: dto.paymentIncidents,
+    backlog: dto.backlog,
+    serverNow: dto.serverNow,
   };
 }

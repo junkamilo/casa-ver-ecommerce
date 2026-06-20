@@ -7,19 +7,33 @@ import StatsSection from "./components/StatsSection";
 import HorizontalNav from "./components/HorizontalNav";
 import NotificationsCard from "./components/NotificationsCard";
 import DashboardError from "./components/DashboardError";
+import OperationsCockpit from "./components/OperationsCockpit";
+import PaymentIncidentsCard from "./components/PaymentIncidentsCard";
+import { DashboardAutoRefresh } from "./components/DashboardAutoRefresh";
 
 export default async function AdminDashboard() {
   try {
-    const { stats, recentOrders } = await fetchDashboardData();
+    const { stats, recentOrders, slaQueue, paymentIncidents, backlog, serverNow } =
+      await fetchDashboardData();
 
     return (
       <div className="space-y-4 sm:space-y-6 md:space-y-8 p-4 sm:p-6 md:p-8 bg-gray-50 min-h-screen font-sans">
-        <AdminPageHeader
-          title="Panel de Control"
-          action={{ label: "Nuevo Producto", href: "/admin/productos?action=new", icon: Plus }}
-        />
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <AdminPageHeader
+            title="Panel de Control"
+            action={{ label: "Nuevo Producto", href: "/admin/productos?action=new", icon: Plus }}
+          />
+          <DashboardAutoRefresh serverNow={serverNow} />
+        </div>
+
         <StatsSection stats={stats} />
+
+        <OperationsCockpit slaQueue={slaQueue} backlog={backlog} />
+
+        <PaymentIncidentsCard incidents={paymentIncidents} />
+
         <HorizontalNav />
+
         <NotificationsCard orders={recentOrders} />
       </div>
     );
