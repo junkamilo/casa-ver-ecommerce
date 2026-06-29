@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import { matchesSearchQuery, normalizeSearchText } from "../domain/search.entity";
+import {
+  productMatchesSearch,
+  scoreSearchRelevance,
+  type SearchRelevanceFields,
+} from "../domain/search.entity";
 
 const PRODUCT_SELECT = {
   id: true,
@@ -42,6 +46,72 @@ const PRODUCT_SELECT = {
   },
 } as const;
 
+const CANDIDATE_SELECT = {
+  id: true,
+  name: true,
+  description: true,
+  slug: true,
+  metaTitle: true,
+  metaDescription: true,
+  isFeatured: true,
+  createdAt: true,
+  garmentTypes: {
+    select: {
+      garmentType: { select: { name: true } },
+    },
+  },
+  categories: {
+    select: {
+      category: { select: { name: true } },
+    },
+  },
+  items: {
+    select: { name: true },
+  },
+} as const;
+
+type SearchCandidate = {
+  id: string;
+  name: string;
+  description: string;
+  slug: string;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  isFeatured: boolean;
+  createdAt: Date;
+  garmentTypes: { garmentType: { name: string } }[];
+  categories: { category: { name: string } }[];
+  items: { name: string }[];
+};
+
+export function buildSearchableText(product: SearchCandidate): string {
+  const parts = [
+    product.name,
+    product.description,
+    product.slug,
+    product.metaTitle,
+    product.metaDescription,
+    ...product.garmentTypes.map((link) => link.garmentType.name),
+    ...product.categories.map((link) => link.category.name),
+    ...product.items.map((item) => item.name),
+  ].filter(Boolean);
+
+  return parts.join(" ");
+}
+
+function toRelevanceFields(product: SearchCandidate): SearchRelevanceFields {
+  return {
+    name: product.name,
+    slug: product.slug,
+    metaTitle: product.metaTitle,
+    metaDescription: product.metaDescription,
+    description: product.description,
+    garmentTypeNames: product.garmentTypes.map((link) => link.garmentType.name),
+    categoryNames: product.categories.map((link) => link.category.name),
+    itemNames: product.items.map((item) => item.name),
+  };
+}
+
 export class PrismaSearchRepository {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly db: any;
@@ -52,28 +122,28 @@ export class PrismaSearchRepository {
   }
 
   async searchActiveProducts(q: string, maxResults: number) {
-    const normalizedQuery = normalizeSearchText(q);
-
-    const candidates = await this.db.product.findMany({
+    const candidates: SearchCandidate[] = await this.db.product.findMany({
       where: { status: "ACTIVE" },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        isFeatured: true,
-        createdAt: true,
-      },
+      select: CANDIDATE_SELECT,
       orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
     });
 
-    const matchedIds = candidates
-      .filter(
-        (product: { name: string; description: string }) =>
-          matchesSearchQuery(product.name, normalizedQuery) ||
-          matchesSearchQuery(product.description, normalizedQuery)
-      )
-      .slice(0, maxResults)
-      .map((product: { id: string }) => product.id);
+    const ranked = candidates
+      .filter((product) => productMatchesSearch(buildSearchableText(product), q))
+      .map((product) => ({
+        product,
+        score: scoreSearchRelevance(toRelevanceFields(product), q),
+      }))
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        if (a.product.isFeatured !== b.product.isFeatured) {
+          return a.product.isFeatured ? -1 : 1;
+        }
+        return b.product.createdAt.getTime() - a.product.createdAt.getTime();
+      })
+      .slice(0, maxResults);
+
+    const matchedIds = ranked.map(({ product }) => product.id);
 
     if (matchedIds.length === 0) {
       return [];
