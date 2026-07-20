@@ -349,6 +349,7 @@ function SlideCard({
               onChange={onMediaChange}
               onRemove={() => onMediaChange([])}
               maxImages={1}
+              folder="heroes"
             />
           </div>
 

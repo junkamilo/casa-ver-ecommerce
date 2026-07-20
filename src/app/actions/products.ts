@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { deleteMediaAssetsByUrls } from "@/lib/media-admin";
+import { isValidMediaUrl } from "@/lib/media-url";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = prisma as any;
@@ -115,6 +116,28 @@ function validatePayload(payload: ProductPayload, isCreate: boolean): string | n
     if (!c.name || typeof c.name !== "string") return "Nombre de color inválido";
     if (!HEX_RE.test(c.hexCode || "")) {
       return `Código de color inválido: ${c.hexCode}`;
+    }
+    for (const url of c.images ?? []) {
+      if (!isValidMediaUrl(url)) {
+        return "URL de imagen inválida (debe provenir de Bunny CDN)";
+      }
+    }
+  }
+
+  if (payload.videoUrl && !isValidMediaUrl(payload.videoUrl)) {
+    return "URL de video inválida (debe provenir de Bunny CDN)";
+  }
+
+  for (const item of payload.items ?? []) {
+    if (item.videoUrl && !isValidMediaUrl(item.videoUrl)) {
+      return "URL de video de subcategoría inválida (debe provenir de Bunny CDN)";
+    }
+    for (const c of item.colors ?? []) {
+      for (const url of c.images ?? []) {
+        if (!isValidMediaUrl(url)) {
+          return "URL de imagen de subcategoría inválida (debe provenir de Bunny CDN)";
+        }
+      }
     }
   }
 

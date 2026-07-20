@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidMediaUrl } from "@/lib/media-url";
 
 // ---------------------------------------------------------------------------
 // Validaciones server-side del input de createOrder.
@@ -22,7 +23,11 @@ const createOrderItemSchema = z.object({
   size: z.string(),
   price: z.number().positive(),
   quantity: z.number().int().positive().max(100),
-  imageUrl: z.string().optional(),
+  // Snapshot: solo Bunny; si viene URL externa se omite (no falla el pedido)
+  imageUrl: z
+    .string()
+    .optional()
+    .transform((v) => (v && isValidMediaUrl(v) ? v : undefined)),
 });
 
 export const createOrderInputSchema = z

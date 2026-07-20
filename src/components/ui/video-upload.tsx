@@ -10,9 +10,17 @@ interface Props {
   disabled?: boolean;
   /** Notifica al padre cuando comienza o termina una subida */
   onUploadingChange?: (isUploading: boolean) => void;
+  /** Carpeta en Bunny Storage (default: products) */
+  folder?: "products" | "categories" | "heroes" | "sets";
 }
 
-export default function VideoUpload({ value, onChange, disabled, onUploadingChange }: Props) {
+export default function VideoUpload({
+  value,
+  onChange,
+  disabled,
+  onUploadingChange,
+  folder = "products",
+}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -25,7 +33,7 @@ export default function VideoUpload({ value, onChange, disabled, onUploadingChan
     setUploading(true);
     onUploadingChange?.(true);
     try {
-      const url = await uploadToBunny(file, "video");
+      const url = await uploadToBunny(file, "video", folder);
       onChange(url);
     } catch (error) {
       setUploadError(

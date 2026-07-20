@@ -1,13 +1,5 @@
 import { z } from "zod";
-
-const isValidUrl = (v: string) => {
-  try {
-    const url = new URL(v);
-    return url.protocol === "https:" || url.protocol === "http:";
-  } catch {
-    return false;
-  }
-};
+import { isValidMediaUrl } from "@/lib/media-url";
 
 // Schema para producto simple (description y basePrice requeridos)
 export const productFormSchema = z.object({
@@ -29,7 +21,7 @@ export const productFormSchema = z.object({
   videoUrl: z
     .string()
     .optional()
-    .refine((v) => !v || isValidUrl(v), "URL de video inválida"),
+    .refine((v) => !v || isValidMediaUrl(v), "URL de video inválida (debe provenir de Bunny CDN)"),
 });
 
 // Schema para conjunto (description y basePrice opcionales — los tienen las subcategorías)
@@ -56,7 +48,7 @@ export const setProductFormSchema = z.object({
   videoUrl: z
     .string()
     .optional()
-    .refine((v) => !v || isValidUrl(v), "URL de video inválida"),
+    .refine((v) => !v || isValidMediaUrl(v), "URL de video inválida (debe provenir de Bunny CDN)"),
 });
 
 export const setItemFormSchema = z.object({
@@ -72,5 +64,5 @@ export const setItemFormSchema = z.object({
   videoUrl: z
     .string()
     .optional()
-    .refine((v) => !v || isValidUrl(v), "URL de video inválida"),
+    .refine((v) => !v || isValidMediaUrl(v), "URL de video inválida (debe provenir de Bunny CDN)"),
 });

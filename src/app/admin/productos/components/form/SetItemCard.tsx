@@ -162,6 +162,7 @@ export default function SetItemCard({
               onChange={(url) => onUpdate(item.localId, { videoUrl: url })}
               disabled={disabled}
               onUploadingChange={onUploadingChange}
+              folder="sets"
             />
             <FieldError msg={errors.videoUrl} />
           </div>
@@ -278,6 +279,7 @@ export default function SetItemCard({
                               colorInfo={{ name: color.name, hexCode: color.hexCode }}
                               scrollContainer={scrollContainer}
                               onUploadingChange={onUploadingChange}
+                              folder="sets"
                             />
                           </div>
                         )}

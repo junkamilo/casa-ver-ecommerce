@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { rateLimit, getClientIP, RATE_LIMIT_CONFIGS } from "@/lib/ratelimit";
+import { isValidMediaUrl } from "@/lib/media-url";
 
 const cartItemSchema = z.object({
   variantId: z.string().min(1),
@@ -11,7 +12,12 @@ const cartItemSchema = z.object({
   sku:       z.string().min(1),
   name:      z.string().min(1),
   price:     z.number().positive(),
-  imageUrl:  z.string().optional().nullable(),
+  // Solo persistir URLs Bunny; cualquier otra se descarta (null)
+  imageUrl:  z
+    .string()
+    .optional()
+    .nullable()
+    .transform((v) => (v && isValidMediaUrl(v) ? v : null)),
   color:     z.string(),
   size:      z.string(),
   quantity:  z.number().int().positive(),
