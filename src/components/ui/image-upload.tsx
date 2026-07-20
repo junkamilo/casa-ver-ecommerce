@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import { Trash2, Upload, Loader2, PlayCircle, AlertCircle } from "lucide-react";
-import { uploadToCloudinary, validateFileSize } from "@/lib/cloudinary";
+import { uploadToBunny, validateFileSize } from "@/lib/bunny";
 
 const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".ogg", ".mkv"];
 
@@ -12,19 +12,22 @@ function isVideo(url: string): boolean {
 }
 
 /**
- * Convierte una URL de Cloudinary a miniatura de 200px.
- * Evita descargar y decodificar imágenes en resolución completa
- * cuando solo se necesita un thumbnail de ~96px.
- *
- * Input:  /upload/f_auto,q_auto/folder/img.jpg
- * Output: /upload/w_200,c_fill,f_auto,q_auto/folder/img.jpg
+ * Miniatura ligera para previews del admin (Bunny Optimizer: ?width=200).
  */
 function thumbUrl(url: string): string {
-  if (!url.includes("res.cloudinary.com")) return url;
-  return url.replace(
-    /\/upload\/(f_auto,q_auto\/)?/,
-    "/upload/w_200,c_fill,f_auto,q_auto/"
-  );
+  try {
+    const parsed = new URL(url);
+    if (
+      parsed.hostname === "media.casaverdeoficial.com" ||
+      parsed.hostname === "casa-verde-cdn.b-cdn.net"
+    ) {
+      parsed.searchParams.set("width", "200");
+      return parsed.toString();
+    }
+  } catch {
+    // ignore
+  }
+  return url;
 }
 
 /**
@@ -85,6 +88,8 @@ interface MediaUploadProps {
   scrollContainer?: Element | null;
   /** Notifica al padre cuando comienza o termina una subida */
   onUploadingChange?: (isUploading: boolean) => void;
+  /** Carpeta en Bunny Storage (default: products) */
+  folder?: "products" | "categories" | "heroes" | "sets";
 }
 
 export default function ImageUpload({
@@ -97,6 +102,7 @@ export default function ImageUpload({
   colorInfo,
   scrollContainer,
   onUploadingChange,
+  folder = "products",
 }: MediaUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState<{ id: string; previewUrl: string; isVideo: boolean }[]>([]);
@@ -137,7 +143,7 @@ export default function ImageUpload({
     const results = await Promise.allSettled(
       pending.map(async ({ id, file, previewUrl }) => {
         const resourceType = file.type.startsWith("video") ? "video" : "image";
-        const url = await uploadToCloudinary(file, resourceType);
+        const url = await uploadToBunny(file, resourceType, folder);
         URL.revokeObjectURL(previewUrl);
         setUploading((prev) => prev.filter((u) => u.id !== id));
         return url;

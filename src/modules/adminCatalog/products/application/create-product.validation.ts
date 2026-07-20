@@ -1,28 +1,9 @@
 import type { ProductCreateInputDTO } from "../contracts/product-create.dto";
+import { isValidMediaUrl as isValidImageUrl, isValidMediaUrl } from "@/lib/media-url";
 
 const ALLOWED_STATUSES = ["ACTIVE", "INACTIVE"] as const;
 const ALLOWED_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "ONESIZE"] as const;
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
-
-function isHttpUrl(v: unknown): boolean {
-  if (typeof v !== "string" || !v) return false;
-  try {
-    const u = new URL(v);
-    return u.protocol === "https:" || u.protocol === "http:";
-  } catch {
-    return false;
-  }
-}
-
-function isValidImageUrl(v: unknown): boolean {
-  if (typeof v !== "string" || !v.trim()) return false;
-  try {
-    const u = new URL(v);
-    return u.protocol === "https:" && u.hostname === "res.cloudinary.com";
-  } catch {
-    return false;
-  }
-}
 
 export function parseSafeDate(v: unknown): Date | null {
   if (!v || typeof v !== "string") return null;
@@ -146,13 +127,13 @@ export function validateProductCreateBody(body: any): string | null {
     if (Array.isArray(c.images)) {
       if (c.images.length > 10) return "Máximo 10 imágenes por color";
       for (const url of c.images) {
-        if (!isValidImageUrl(url)) return "URL de imagen inválida (debe provenir de Cloudinary)";
+        if (!isValidImageUrl(url)) return "URL de imagen inválida (debe provenir de Bunny CDN)";
       }
     }
   }
 
-  if (videoUrl && !isHttpUrl(videoUrl))
-    return "URL de video inválida (debe ser http/https)";
+  if (videoUrl && !isValidMediaUrl(videoUrl))
+    return "URL de video inválida (debe provenir de Bunny CDN)";
 
   if (Array.isArray(items)) {
     if (items.length > 20) return "Demasiadas subcategorías (máximo 20)";
@@ -171,8 +152,8 @@ export function validateProductCreateBody(body: any): string | null {
         if (isNaN(cp) || cp < 0) return "Precio anterior de subcategoría inválido";
         if (cp > 100_000_000) return "Precio anterior de subcategoría parece inusualmente alto";
       }
-      if (item.videoUrl && !isHttpUrl(item.videoUrl))
-        return "URL de video de subcategoría inválida";
+      if (item.videoUrl && !isValidMediaUrl(item.videoUrl))
+        return "URL de video de subcategoría inválida (debe provenir de Bunny CDN)";
       if (Array.isArray(item.colors)) {
         if (item.colors.length > 30) return "Demasiados colores en subcategoría";
         for (const c of item.colors) {
@@ -190,7 +171,7 @@ export function validateProductCreateBody(body: any): string | null {
           if (Array.isArray(c.images)) {
             if (c.images.length > 10) return "Máximo 10 imágenes por color de subcategoría";
             for (const url of c.images) {
-              if (!isValidImageUrl(url)) return "URL de imagen de subcategoría inválida (debe provenir de Cloudinary)";
+              if (!isValidImageUrl(url)) return "URL de imagen de subcategoría inválida (debe provenir de Bunny CDN)";
             }
           }
         }

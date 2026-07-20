@@ -59,7 +59,7 @@ function isVideoUrl(url: string): boolean {
   const clean = url.split("?")[0].toLowerCase();
   return (
     clean.includes("/video/upload/") ||
-    [".mp4", ".webm", ".mov", ".ogg"].some((ext) => clean.endsWith(ext))
+    [".mp4", ".webm", ".mov", ".ogg", ".mkv", ".m4v"].some((ext) => clean.endsWith(ext))
   );
 }
 

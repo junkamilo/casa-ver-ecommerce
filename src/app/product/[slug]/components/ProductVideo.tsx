@@ -2,20 +2,17 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Film } from "lucide-react";
+import { normalizeVideoUrl } from "@/modules/catalog/product/domain/video-url.entity";
 
 interface Props {
   url: string;
-}
-
-function normalizeCloudinaryVideoUrl(url: string): string {
-  return url.replace(/\.(mov|avi|webm|mkv)(\?.*)?$/, ".mp4$2");
 }
 
 export default function ProductVideo({ url }: Props) {
   const [hasError, setHasError] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const normalizedUrl = normalizeCloudinaryVideoUrl(url);
+  const normalizedUrl = normalizeVideoUrl(url);
 
   useEffect(() => {
     const el = containerRef.current;

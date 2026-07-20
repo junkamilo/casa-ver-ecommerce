@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { deleteCloudinaryAssetsByUrls } from "@/lib/cloudinary-admin";
+import { deleteMediaAssetsByUrls } from "@/lib/media-admin";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = prisma as any;
@@ -505,9 +505,9 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
     const urlsToDelete = previousAssetUrls.filter((url) => !nextAssetSet.has(url));
     if (urlsToDelete.length > 0) {
       try {
-        await deleteCloudinaryAssetsByUrls(urlsToDelete);
-      } catch (cloudinaryError) {
-        console.error("[updateProduct] Error limpiando archivos en Cloudinary", cloudinaryError);
+        await deleteMediaAssetsByUrls(urlsToDelete);
+      } catch (mediaError) {
+        console.error("[updateProduct] Error limpiando archivos en Bunny", mediaError);
       }
     }
 

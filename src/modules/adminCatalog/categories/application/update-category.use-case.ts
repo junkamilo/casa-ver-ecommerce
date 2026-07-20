@@ -7,6 +7,7 @@ import {
   CategoryNotFoundError,
   CategoryValidationError,
 } from "./category.errors";
+import { deleteMediaAssetsByUrls } from "@/lib/media-admin";
 
 const categoryRepository = new PrismaCategoryRepository();
 
@@ -58,11 +59,28 @@ async function handleEdit(dto: UpdateCategoryInputDTO) {
     throw new CategoryConflictError("Esta categoría ya existe");
   }
 
-  return categoryRepository.updateCategoryAndReplaceGarments({
-    id: dto.id,
-    name: dto.name,
-    slug,
-    image: dto.image?.trim() || null,
-    garmentTypeIds: dto.garmentTypeIds,
-  });
+  const nextImage = dto.image?.trim() || null;
+
+  const { category: updated, previousImage } =
+    await categoryRepository.updateCategoryAndReplaceGarments({
+      id: dto.id,
+      name: dto.name,
+      slug,
+      image: nextImage,
+      garmentTypeIds: dto.garmentTypeIds,
+    });
+
+  if (!updated) {
+    throw new CategoryNotFoundError("Categoría no encontrada");
+  }
+
+  if (previousImage && previousImage !== nextImage) {
+    try {
+      await deleteMediaAssetsByUrls([previousImage]);
+    } catch (mediaError) {
+      console.error("[CATEGORY_UPDATE] Error limpiando archivos en Bunny", mediaError);
+    }
+  }
+
+  return updated;
 }

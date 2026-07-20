@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Upload, Loader2, X } from "lucide-react";
-import { uploadToCloudinary } from "@/lib/cloudinary";
+import { Upload, Loader2, X, AlertCircle } from "lucide-react";
+import { uploadToBunny } from "@/lib/bunny";
 
 interface Props {
   value: string;
@@ -16,17 +16,21 @@ export default function VideoUpload({ value, onChange, disabled, onUploadingChan
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const handleFile = async (file: File) => {
+    setUploadError(null);
     const local = URL.createObjectURL(file);
     setPreviewUrl(local);
     setUploading(true);
     onUploadingChange?.(true);
     try {
-      const url = await uploadToCloudinary(file, "video");
+      const url = await uploadToBunny(file, "video");
       onChange(url);
-    } catch {
-      // silent — preview disappears, user can retry
+    } catch (error) {
+      setUploadError(
+        error instanceof Error ? error.message : "Error al subir el video"
+      );
     } finally {
       URL.revokeObjectURL(local);
       setPreviewUrl(null);
@@ -70,7 +74,7 @@ export default function VideoUpload({ value, onChange, disabled, onUploadingChan
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50 rounded-lg">
               <div className="flex flex-col items-center gap-2 text-white">
                 <Loader2 className="w-7 h-7 animate-spin" />
-                <span className="text-xs font-semibold">Subiendo y convirtiendo a MP4…</span>
+                <span className="text-xs font-semibold">Subiendo video…</span>
               </div>
             </div>
           )}
@@ -101,6 +105,13 @@ export default function VideoUpload({ value, onChange, disabled, onUploadingChan
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {uploadError && (
+        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-red-50 border border-red-200">
+          <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
+          <p className="text-xs text-red-600 leading-snug">{uploadError}</p>
         </div>
       )}
     </div>

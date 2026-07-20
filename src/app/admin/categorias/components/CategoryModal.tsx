@@ -143,6 +143,7 @@ const CategoryModal = ({
               onChange={(urls) => setImage(urls[0] ?? "")}
               onRemove={() => setImage("")}
               maxImages={1}
+              folder="categories"
             />
           </div>
 

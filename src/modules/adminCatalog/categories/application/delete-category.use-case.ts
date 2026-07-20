@@ -6,6 +6,7 @@ import {
   CategoryNotFoundError,
   CategoryValidationError,
 } from "./category.errors";
+import { deleteMediaAssetsByUrls } from "@/lib/media-admin";
 
 const categoryRepository = new PrismaCategoryRepository();
 
@@ -35,6 +36,15 @@ export async function deleteCategoryUseCase(input: unknown) {
     );
   }
 
-  await categoryRepository.deleteCategoryWithRelations(dto.id);
+  const { previousImage } = await categoryRepository.deleteCategoryWithRelations(dto.id);
+
+  if (previousImage) {
+    try {
+      await deleteMediaAssetsByUrls([previousImage]);
+    } catch (mediaError) {
+      console.error("[CATEGORY_DELETE] Error limpiando archivos en Bunny", mediaError);
+    }
+  }
+
   return { success: true, id: dto.id, name: category.name };
 }

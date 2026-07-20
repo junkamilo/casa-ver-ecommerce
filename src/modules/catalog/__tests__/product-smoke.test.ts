@@ -52,22 +52,22 @@ describe("parseDescriptionBullets", () => {
 // ── video-url helpers ────────────────────────────────────────────────────────
 
 describe("video-url helpers", () => {
-  it("isVideoUrl detecta extensiones de video y rutas Cloudinary", () => {
+  it("isVideoUrl detecta extensiones de video y rutas /video/", () => {
     expect(isVideoUrl("https://x.com/video.mp4")).toBe(true);
     expect(isVideoUrl("https://x.com/clip.MOV")).toBe(true);
-    expect(isVideoUrl("https://res.cloudinary.com/demo/video/upload/v1/sample.mp4")).toBe(true);
-    expect(isVideoUrl("https://res.cloudinary.com/demo/video/upload/f_auto/sample")).toBe(true);
+    expect(isVideoUrl("https://media.casaverdeoficial.com/casa-verde/products/sample.mp4")).toBe(true);
+    expect(isVideoUrl("https://media.casaverdeoficial.com/casa-verde/products/clip")).toBe(false);
     expect(isVideoUrl("https://x.com/img.jpg")).toBe(false);
     expect(isVideoUrl("https://x.com/img.png")).toBe(false);
     expect(isVideoUrl("")).toBe(false);
   });
 
-  it("normalizeVideoUrl convierte mov/avi/webm/mkv a mp4 preservando query string (case-sensitive como legacy)", () => {
-    expect(normalizeVideoUrl("a.mov")).toBe("a.mp4");
-    expect(normalizeVideoUrl("a.mov?v=1")).toBe("a.mp4?v=1");
-    expect(normalizeVideoUrl("a.webm")).toBe("a.mp4");
-    expect(normalizeVideoUrl("a.avi")).toBe("a.mp4");
-    expect(normalizeVideoUrl("a.mkv")).toBe("a.mp4");
+  it("normalizeVideoUrl preserva la URL original", () => {
+    expect(normalizeVideoUrl("a.mov")).toBe("a.mov");
+    expect(normalizeVideoUrl("a.mov?v=1")).toBe("a.mov?v=1");
+    expect(normalizeVideoUrl("a.webm")).toBe("a.webm");
+    expect(normalizeVideoUrl("a.avi")).toBe("a.avi");
+    expect(normalizeVideoUrl("a.mkv")).toBe("a.mkv");
     expect(normalizeVideoUrl("a.mp4")).toBe("a.mp4");
     expect(normalizeVideoUrl("a.jpg")).toBe("a.jpg");
   });

@@ -254,7 +254,7 @@ model Category {
   name            String
   slug            String     @unique
   description     String?    @db.Text     // Descripción visible en la página de colección
-  image           String?                 // URL Cloudinary de portada
+  image           String?                 // URL de portada (Bunny CDN)
   order           Int        @default(0)  // Orden de aparición en menú y listados
   isActive        Boolean    @default(true)
 
@@ -848,7 +848,7 @@ model Color {
 model HeroSlide {
   id          String   @id @default(cuid())
   position    Int      @unique          // orden de aparición en el slider
-  mediaUrl    String   @default("")     // URL de Cloudinary (imagen o video)
+  mediaUrl    String   @default("")     // URL de media en Bunny CDN (imagen o video)
   mediaType   String   @default("image") // "image" | "video"
   headline    String?                   // Texto principal (opcional)
   subheadline String?                   // Subtítulo (opcional)

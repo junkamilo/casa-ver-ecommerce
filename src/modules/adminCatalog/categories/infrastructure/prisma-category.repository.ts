@@ -83,7 +83,7 @@ export class PrismaCategoryRepository {
   async findCategoryBaseById(id: string) {
     return this.db.category.findUnique({
       where: { id },
-      select: { id: true, name: true },
+      select: { id: true, name: true, image: true },
     });
   }
 
@@ -115,13 +115,23 @@ export class PrismaCategoryRepository {
     });
   }
 
-  async updateCategoryAndReplaceGarments(data: CategoryUpdateData) {
+  async updateCategoryAndReplaceGarments(
+    data: CategoryUpdateData
+  ): Promise<{ category: unknown; previousImage: string | null }> {
     return this.db.$transaction(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       async (tx: any) => {
+        const existing = await tx.category.findUnique({
+          where: { id: data.id },
+          select: { image: true },
+        });
+        if (!existing) {
+          return { category: null, previousImage: null };
+        }
+
         await tx.categoryGarmentType.deleteMany({ where: { categoryId: data.id } });
 
-        return tx.category.update({
+        const category = await tx.category.update({
           where: { id: data.id },
           data: {
             name: data.name,
@@ -134,6 +144,8 @@ export class PrismaCategoryRepository {
               : undefined,
           },
         });
+
+        return { category, previousImage: existing.image ?? null };
       }
     );
   }
@@ -147,12 +159,20 @@ export class PrismaCategoryRepository {
     });
   }
 
-  async deleteCategoryWithRelations(id: string) {
+  async deleteCategoryWithRelations(id: string): Promise<{ previousImage: string | null }> {
     return this.db.$transaction(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       async (tx: any) => {
+        const existing = await tx.category.findUnique({
+          where: { id },
+          select: { image: true },
+        });
+        const previousImage = existing?.image ?? null;
+
         await tx.categoryGarmentType.deleteMany({ where: { categoryId: id } });
         await tx.category.delete({ where: { id } });
+
+        return { previousImage };
       }
     );
   }

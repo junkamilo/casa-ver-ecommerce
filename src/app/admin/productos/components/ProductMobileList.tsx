@@ -19,7 +19,7 @@ export default function ProductMobileList({ products, onEdit, onDelete, onToggle
         const stockStatus = getStockStatus(product.stock);
         const rawImage = product.images[0]?.url ?? null;
         const rawImageIsVideo = rawImage
-          ? rawImage.includes('/video/upload/') || /\.(mp4|webm|mov|avi)(\?|$)/i.test(rawImage)
+          ? rawImage.includes('/video/upload/') || /\.(mp4|webm|mov|avi|mkv|m4v)(\?|$)/i.test(rawImage)
           : false;
         const mainImage = rawImage && !rawImageIsVideo ? rawImage : null;
         const hasVideo = !mainImage && (!!product.videoUrl || rawImageIsVideo);

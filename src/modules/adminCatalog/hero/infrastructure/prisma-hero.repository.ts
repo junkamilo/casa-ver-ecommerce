@@ -28,6 +28,13 @@ export class PrismaHeroRepository {
     return (last?.position ?? 0) + 1;
   }
 
+  async findSlideById(id: string) {
+    return this.db.heroSlide.findUnique({
+      where: { id },
+      select: { id: true, mediaUrl: true },
+    });
+  }
+
   async createSlide(data: CreateHeroSlideInputDTO, position: number) {
     return this.db.heroSlide.create({
       data: {
@@ -40,33 +47,51 @@ export class PrismaHeroRepository {
     });
   }
 
-  async updateSlide(id: string, data: Partial<UpdateHeroSlideInputDTO>) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id: _, ...updateData } = data; // Extraemos el ID para no mandarlo en la data de actualización
+  async updateSlide(
+    id: string,
+    data: Partial<UpdateHeroSlideInputDTO>
+  ): Promise<{ slide: unknown; previousMediaUrl: string | null }> {
+    const existing = await this.db.heroSlide.findUnique({
+      where: { id },
+      select: { mediaUrl: true },
+    });
+    if (!existing) {
+      return { slide: null, previousMediaUrl: null };
+    }
 
-    return this.db.heroSlide.update({
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id: _, ...updateData } = data;
+
+    const slide = await this.db.heroSlide.update({
       where: { id },
       data: updateData,
     });
+
+    return { slide, previousMediaUrl: existing.mediaUrl ?? null };
   }
 
-  async deleteSlideAndReorder(id: string) {
+  async deleteSlideAndReorder(id: string): Promise<{ previousMediaUrl: string | null }> {
     return this.db.$transaction(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       async (tx: any) => {
-        // 1. Eliminar
+        const existing = await tx.heroSlide.findUnique({
+          where: { id },
+          select: { mediaUrl: true },
+        });
+        const previousMediaUrl = existing?.mediaUrl ?? null;
+
         await tx.heroSlide.delete({ where: { id } });
 
-        // 2. Traer restantes ordenados
         const remaining = await tx.heroSlide.findMany({ orderBy: { position: "asc" } });
 
-        // 3. Re-numerar posiciones
         await Promise.all(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           remaining.map((s: any, i: number) =>
             tx.heroSlide.update({ where: { id: s.id }, data: { position: i + 1 } })
           )
         );
+
+        return { previousMediaUrl };
       }
     );
   }
