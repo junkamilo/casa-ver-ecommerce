@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -28,6 +28,118 @@ function CardVideo({ src, className }: { src: string; className?: string }) {
 }
 
 type ActiveColor = { name: string; hexCode: string; imageUrl?: string | null } | null;
+type ColorOption = NonNullable<CollectionProduct["colors"]>[number];
+
+/** Fila de colores con scroll X + flechas/fade solo si hay overflow (móvil-friendly). */
+function ColorSwatchesRow({
+  colors,
+  activeColor,
+  onColorClick,
+}: {
+  colors: ColorOption[];
+  activeColor: ActiveColor;
+  onColorClick: (e: React.MouseEvent, color: ColorOption) => void;
+}) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollState = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    const maxScroll = scrollWidth - clientWidth;
+    const hasOverflow = maxScroll > 2;
+    setCanScrollLeft(hasOverflow && scrollLeft > 2);
+    setCanScrollRight(hasOverflow && scrollLeft < maxScroll - 2);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    updateScrollState();
+    el.addEventListener("scroll", updateScrollState, { passive: true });
+    const ro = new ResizeObserver(updateScrollState);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", updateScrollState);
+      ro.disconnect();
+    };
+  }, [colors.length, updateScrollState]);
+
+  function scrollByDir(dir: "left" | "right") {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const step = Math.max(72, Math.round(el.clientWidth * 0.55));
+    el.scrollBy({ left: dir === "left" ? -step : step, behavior: "smooth" });
+  }
+
+  return (
+    <div className="relative w-full min-w-0">
+      {canScrollLeft && (
+        <>
+          <div
+            className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-7 bg-linear-to-r from-white via-white/90 to-transparent"
+            aria-hidden
+          />
+          <button
+            type="button"
+            aria-label="Ver colores anteriores"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              scrollByDir("left");
+            }}
+            className="absolute left-0 top-1/2 z-20 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-white/95 border border-[#C19A6B]/25 shadow-sm text-[#154734] active:scale-90"
+          >
+            <ChevronLeft className="w-3 h-3" strokeWidth={2.5} />
+          </button>
+        </>
+      )}
+
+      {canScrollRight && (
+        <>
+          <div
+            className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 w-7 bg-linear-to-l from-white via-white/90 to-transparent"
+            aria-hidden
+          />
+          <button
+            type="button"
+            aria-label="Ver más colores"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              scrollByDir("right");
+            }}
+            className="absolute right-0 top-1/2 z-20 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-white/95 border border-[#C19A6B]/25 shadow-sm text-[#154734] active:scale-90"
+          >
+            <ChevronRight className="w-3 h-3" strokeWidth={2.5} />
+          </button>
+        </>
+      )}
+
+      <div
+        ref={scrollerRef}
+        className="flex gap-1.5 md:gap-2 items-center overflow-x-auto scrollbar-hide flex-nowrap w-full p-1.5 overscroll-x-contain touch-pan-x"
+      >
+        {colors.map((color) => (
+          <button
+            key={color.name}
+            type="button"
+            title={color.name}
+            onClick={(e) => onColorClick(e, color)}
+            className={`w-6 h-6 md:w-7 md:h-7 rounded-full border shadow-sm transition-all duration-200 shrink-0 active:scale-90 ${
+              activeColor?.name === color.name
+                ? "ring-2 ring-offset-2 ring-[#154734] border-[#154734]"
+                : "border-gray-200 hover:scale-110 hover:border-gray-400"
+            }`}
+            style={{ backgroundColor: color.hexCode }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 interface ProductCardProps {
   item: CollectionProduct;
@@ -77,29 +189,18 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
     setCurrentIndex(0);
   }
 
-  // Siempre alineado a la izquierda y con w-full para que overflow-x-auto funcione
+  // Siempre alineado a la izquierda; scroll + flechas solo si hay overflow
   const colorSwatches = () =>
     item.colors && item.colors.length > 0 ? (
-      <div className="flex flex-col gap-1 w-full">
+      <div className="flex flex-col gap-1 w-full min-w-0">
         <span className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">
           Color{activeColor ? <span className="text-[#154734] ml-1">{activeColor.name}</span> : null}
         </span>
-        {/* overflow-x-auto + w-full: los swatches hacen scroll sin salirse de la card */}
-        <div className="flex gap-1.5 md:gap-2 items-center overflow-x-auto scrollbar-hide flex-nowrap w-full p-1.5">
-          {item.colors.map((color) => (
-            <button
-              key={color.name}
-              title={color.name}
-              onClick={(e) => handleColorClick(e, color)}
-              className={`w-6 h-6 md:w-7 md:h-7 rounded-full border shadow-sm transition-all duration-200 shrink-0 active:scale-90 ${
-                activeColor?.name === color.name
-                  ? "ring-2 ring-offset-2 ring-[#154734] border-[#154734]"
-                  : "border-gray-200 hover:scale-110 hover:border-gray-400"
-              }`}
-              style={{ backgroundColor: color.hexCode }}
-            />
-          ))}
-        </div>
+        <ColorSwatchesRow
+          colors={item.colors}
+          activeColor={activeColor}
+          onColorClick={handleColorClick}
+        />
       </div>
     ) : null;
 

@@ -58,6 +58,8 @@ export type AdminProductDetailDTO = {
   isProductNewAt?: string | null;
   isOnSale?: boolean;
   isOnSaleAt?: string | null;
+  isSuggested?: boolean;
+  suggestedAt?: string | null;
   videoUrl?: string | null;
   garmentTypes?: string[];
   isSet?: boolean;
@@ -91,6 +93,8 @@ export type ProductFormInitialValues = {
   isProductNewAt: string | null;
   isOnSale: boolean;
   isOnSaleAt: string | null;
+  isSuggested: boolean;
+  suggestedAt: string | null;
   videoUrl: string;
   garmentTypes: string[];
   isSet: boolean;
@@ -145,6 +149,8 @@ export function mapAdminProductDetailToFormInitialValues(
     isProductNewAt: product.isProductNewAt ? new Date(product.isProductNewAt).toISOString() : null,
     isOnSale: product.isOnSale || false,
     isOnSaleAt: product.isOnSaleAt ? new Date(product.isOnSaleAt).toISOString() : null,
+    isSuggested: product.isSuggested || false,
+    suggestedAt: product.suggestedAt ? new Date(product.suggestedAt).toISOString() : null,
     videoUrl: product.videoUrl || "",
     garmentTypes: product.garmentTypes ?? [],
     isSet: product.isSet || false,
@@ -183,6 +189,8 @@ export function mapProductFormToCreatePayload(input: {
   isProductNewAt: string | null;
   isOnSale: boolean;
   isOnSaleAt: string | null;
+  isSuggested: boolean;
+  suggestedAt: string | null;
   videoUrl: string;
   garmentTypes: string[];
   isSet: boolean;
@@ -216,6 +224,8 @@ export function mapProductFormToCreatePayload(input: {
     isProductNewAt: input.isProductNewAt ?? null,
     isOnSale: input.isOnSale,
     isOnSaleAt: input.isOnSaleAt ?? null,
+    isSuggested: input.isSuggested,
+    suggestedAt: input.suggestedAt ?? null,
     videoUrl: input.videoUrl || null,
     garmentTypes: input.garmentTypes,
     isSet: input.isSet,

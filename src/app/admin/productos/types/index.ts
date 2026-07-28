@@ -85,6 +85,8 @@ export interface ProductModalProps {
   isProductNewAt: string | null; setIsProductNewAt: (v: string | null) => void;
   isOnSale: boolean; setIsOnSale: (v: boolean) => void;
   isOnSaleAt: string | null; setIsOnSaleAt: (v: string | null) => void;
+  isSuggested: boolean; setIsSuggested: (v: boolean) => void;
+  suggestedAt: string | null; setSuggestedAt: (v: string | null) => void;
   selectedColors: SelectedColor[];
   selectedSizes: string[];
   videoUrl: string; setVideoUrl: (v: string) => void;
@@ -154,6 +156,8 @@ export interface GeneralInfoSectionProps {
   isProductNewAt: string | null; onProductNewAt: (v: string | null) => void;
   isOnSale: boolean; onOnSale: (v: boolean) => void;
   isOnSaleAt: string | null; onOnSaleAt: (v: string | null) => void;
+  isSuggested: boolean; onSuggested: (v: boolean) => void;
+  suggestedAt: string | null; onSuggestedAt: (v: string | null) => void;
   garmentTypes: string[]; onGarmentType: (v: string[]) => void;
   categories: Category[];
   errors?: ProductFormErrors;

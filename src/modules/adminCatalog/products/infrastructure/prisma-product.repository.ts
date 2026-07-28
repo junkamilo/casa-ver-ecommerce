@@ -172,8 +172,17 @@ export class PrismaProductRepository {
     resolvedGarmentTypeIds: string[];
     resolvedProductNewAt: Date | null;
     resolvedOnSaleAt: Date | null;
+    resolvedSuggestedAt: Date | null;
   }) {
-    const { dto, slug, resolvedCategoryIds, resolvedGarmentTypeIds, resolvedProductNewAt, resolvedOnSaleAt } = input;
+    const {
+      dto,
+      slug,
+      resolvedCategoryIds,
+      resolvedGarmentTypeIds,
+      resolvedProductNewAt,
+      resolvedOnSaleAt,
+      resolvedSuggestedAt,
+    } = input;
     return prisma.$transaction(async (tx) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const txDb = tx as any;
@@ -192,6 +201,8 @@ export class PrismaProductRepository {
           isProductNewAt: resolvedProductNewAt,
           isOnSale: dto.isOnSale || false,
           isOnSaleAt: resolvedOnSaleAt,
+          isSuggested: dto.isSuggested || false,
+          suggestedAt: resolvedSuggestedAt,
           videoUrl: dto.videoUrl || null,
           categories: {
             create: resolvedCategoryIds.map((categoryId) => ({ categoryId })),
@@ -252,8 +263,17 @@ export class PrismaProductRepository {
     resolvedGarmentTypeIds: string[];
     resolvedProductNewAt: Date | null;
     resolvedOnSaleAt: Date | null;
+    resolvedSuggestedAt: Date | null;
   }): Promise<{ product: unknown; previousAssetUrls: string[] }> {
-    const { id, dto, resolvedCategoryIds, resolvedGarmentTypeIds, resolvedProductNewAt, resolvedOnSaleAt } = input;
+    const {
+      id,
+      dto,
+      resolvedCategoryIds,
+      resolvedGarmentTypeIds,
+      resolvedProductNewAt,
+      resolvedOnSaleAt,
+      resolvedSuggestedAt,
+    } = input;
     return prisma.$transaction(async (tx) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const txDb = tx as any;
@@ -306,6 +326,8 @@ export class PrismaProductRepository {
           isProductNewAt: resolvedProductNewAt,
           isOnSale: dto.isOnSale ?? false,
           isOnSaleAt: resolvedOnSaleAt,
+          isSuggested: dto.isSuggested ?? false,
+          suggestedAt: resolvedSuggestedAt,
           videoUrl: dto.videoUrl !== undefined ? (dto.videoUrl || null) : undefined,
           categories: {
             deleteMany: {},
@@ -464,6 +486,8 @@ export class PrismaProductRepository {
       isProductNewAt: product.isProductNewAt ?? null,
       isOnSale: product.isOnSale ?? false,
       isOnSaleAt: product.isOnSaleAt ?? null,
+      isSuggested: product.isSuggested ?? false,
+      suggestedAt: product.suggestedAt ?? null,
       metaTitle: product.metaTitle,
       metaDescription: product.metaDescription,
       videoUrl: product.videoUrl,

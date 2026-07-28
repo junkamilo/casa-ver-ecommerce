@@ -46,6 +46,8 @@ export function useProductForm() {
   const [isProductNewAt, setIsProductNewAt] = useState<string | null>(null);
   const [isOnSale, setIsOnSale] = useState(false);
   const [isOnSaleAt, setIsOnSaleAt] = useState<string | null>(null);
+  const [isSuggested, setIsSuggested] = useState(false);
+  const [suggestedAt, setSuggestedAt] = useState<string | null>(null);
   const [selectedColors, setSelectedColors] = useState<SelectedColor[]>([]);
   // Cache de imágenes por nombre de color — se conservan aunque se deseleccione el color
   const colorImageCache = useRef<Record<string, string[]>>({});
@@ -73,6 +75,8 @@ export function useProductForm() {
     setIsProductNewAt(null);
     setIsOnSale(false);
     setIsOnSaleAt(null);
+    setIsSuggested(false);
+    setSuggestedAt(null);
     setSelectedColors([]);
     setSelectedSizes([]);
     setVideoUrl("");
@@ -105,6 +109,8 @@ export function useProductForm() {
     setIsProductNewAt(mapped.isProductNewAt);
     setIsOnSale(mapped.isOnSale);
     setIsOnSaleAt(mapped.isOnSaleAt);
+    setIsSuggested(mapped.isSuggested);
+    setSuggestedAt(mapped.suggestedAt);
     setVideoUrl(mapped.videoUrl);
     setGarmentTypes(mapped.garmentTypes);
     setIsSet(mapped.isSet);
@@ -181,6 +187,8 @@ export function useProductForm() {
       isProductNewAt,
       isOnSale,
       isOnSaleAt,
+      isSuggested,
+      suggestedAt,
       videoUrl,
       garmentTypes,
       isSet,
@@ -330,6 +338,8 @@ export function useProductForm() {
     isProductNewAt, setIsProductNewAt,
     isOnSale, setIsOnSale,
     isOnSaleAt, setIsOnSaleAt,
+    isSuggested, setIsSuggested,
+    suggestedAt, setSuggestedAt,
     selectedColors,
     selectedSizes,
     videoUrl, setVideoUrl,

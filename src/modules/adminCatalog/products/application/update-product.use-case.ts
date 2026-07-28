@@ -66,6 +66,9 @@ export async function updateProductUseCase(input: { id: string; body: unknown })
   const resolvedOnSaleAt = dto.isOnSale
     ? (parseSafeDate(dto.isOnSaleAt) ?? new Date())
     : null;
+  const resolvedSuggestedAt = dto.isSuggested
+    ? (parseSafeDate(dto.suggestedAt) ?? new Date())
+    : null;
 
   const nextAssetUrls = collectBodyAssetUrls(payload);
   const { product, previousAssetUrls } = await productRepository.updateProductWithRelations({
@@ -75,6 +78,7 @@ export async function updateProductUseCase(input: { id: string; body: unknown })
     resolvedGarmentTypeIds,
     resolvedProductNewAt,
     resolvedOnSaleAt,
+    resolvedSuggestedAt,
   });
 
   if (!product) {

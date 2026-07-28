@@ -52,6 +52,9 @@ export async function createProductUseCase(input: unknown) {
   const resolvedOnSaleAt = dto.isOnSale
     ? (parseSafeDate(dto.isOnSaleAt) ?? new Date())
     : null;
+  const resolvedSuggestedAt = dto.isSuggested
+    ? (parseSafeDate(dto.suggestedAt) ?? new Date())
+    : null;
 
   return productRepository.createProductWithRelations({
     dto,
@@ -60,5 +63,6 @@ export async function createProductUseCase(input: unknown) {
     resolvedGarmentTypeIds,
     resolvedProductNewAt,
     resolvedOnSaleAt,
+    resolvedSuggestedAt,
   });
 }

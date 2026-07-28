@@ -8,4 +8,5 @@ export function revalidateProductListings(): void {
   revalidatePath("/collections/mas-vendidos");
   revalidatePath("/collections/nueva-coleccion");
   revalidatePath("/collections", "layout");
+  revalidatePath("/api/suggested-products");
 }

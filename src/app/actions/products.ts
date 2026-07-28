@@ -41,6 +41,8 @@ export type ProductPayload = {
   isProductNewAt?: string | null;
   isOnSale?: boolean;
   isOnSaleAt?: string | null;
+  isSuggested?: boolean;
+  suggestedAt?: string | null;
   videoUrl?: string | null;
   /** IDs de tipos de prenda (muchos-a-muchos) — lo que envía el formulario admin */
   garmentTypes?: string[];
@@ -357,6 +359,7 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
     const {
       name, description, status, isFeatured, isNew,
       isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
+      isSuggested, suggestedAt,
       videoUrl, isSet, colors, sizes, items,
     } = payload;
 
@@ -374,6 +377,9 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
     const resolvedOnSaleAt = isOnSale
       ? (isOnSaleAt ? new Date(isOnSaleAt) : new Date())
       : null;
+    const resolvedSuggestedAt = isSuggested
+      ? (suggestedAt ? new Date(suggestedAt) : new Date())
+      : null;
 
     await db.$transaction(async (tx: any) => {
       const product = await tx.product.create({
@@ -390,6 +396,8 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
           isProductNewAt: resolvedProductNewAt,
           isOnSale: isOnSale || false,
           isOnSaleAt: resolvedOnSaleAt,
+          isSuggested: isSuggested || false,
+          suggestedAt: resolvedSuggestedAt,
           videoUrl: videoUrl || null,
           categories: {
             create: resolvedCategoryIds.map((categoryId) => ({ categoryId })),
@@ -442,6 +450,7 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
     const {
       name, description, status, isFeatured, isNew,
       isProductNew, isProductNewAt, isOnSale, isOnSaleAt,
+      isSuggested, suggestedAt,
       videoUrl, isSet, colors, sizes, items,
     } = payload;
 
@@ -454,6 +463,9 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
       : null;
     const resolvedOnSaleAt = isOnSale
       ? (isOnSaleAt ? new Date(isOnSaleAt) : new Date())
+      : null;
+    const resolvedSuggestedAt = isSuggested
+      ? (suggestedAt ? new Date(suggestedAt) : new Date())
       : null;
 
     const nextAssetUrls = collectPayloadAssetUrls(payload);
@@ -498,6 +510,8 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
           isProductNewAt: resolvedProductNewAt,
           isOnSale: isOnSale ?? false,
           isOnSaleAt: resolvedOnSaleAt,
+          isSuggested: isSuggested ?? false,
+          suggestedAt: resolvedSuggestedAt,
           videoUrl: videoUrl !== undefined ? (videoUrl || null) : undefined,
           categories: {
             deleteMany: {},

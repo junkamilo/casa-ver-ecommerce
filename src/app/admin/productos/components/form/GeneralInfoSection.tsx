@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronUp, Check, Star, Sparkles, Percent, BadgeCheck, Tag } from "lucide-react";
+import { ChevronDown, ChevronUp, Check, Star, Sparkles, Percent, BadgeCheck, Tag, Megaphone } from "lucide-react";
 import { GeneralInfoSectionProps } from "../../types";
 import { STATUS_OPTIONS, inputCls } from "../../constants";
 import { useDropdown } from "../../hooks/useDropdown";
@@ -16,6 +16,7 @@ export default function GeneralInfoSection({
   isNew, onNew,
   isProductNew, onProductNew, onProductNewAt,
   isOnSale, onOnSale, onOnSaleAt,
+  isSuggested, onSuggested, onSuggestedAt,
   garmentTypes, onGarmentType,
   categories,
   errors = {},
@@ -47,6 +48,12 @@ export default function GeneralInfoSection({
     const next = !isOnSale;
     onOnSale(next);
     onOnSaleAt(next ? new Date().toISOString() : null);
+  };
+
+  const handleSuggestedToggle = () => {
+    const next = !isSuggested;
+    onSuggested(next);
+    onSuggestedAt(next ? new Date().toISOString() : null);
   };
 
   return (
@@ -374,6 +381,17 @@ export default function GeneralInfoSection({
             label="Producto en Oferta"
             description="Muestra etiqueta dorada de oferta"
             infoText="Etiqueta de oferta activa"
+            activeColor="text-[#C19A6B]"
+            activeBg="bg-[#C19A6B]/10"
+            activeBorder="border-[#C19A6B]"
+          />
+          <LabelToggle
+            active={isSuggested}
+            onToggle={handleSuggestedToggle}
+            icon={Megaphone}
+            label="Sugerir en popup"
+            description="Aparece en 'Te podría interesar'"
+            infoText="Sugerencia activa en popup"
             activeColor="text-[#C19A6B]"
             activeBg="bg-[#C19A6B]/10"
             activeBorder="border-[#C19A6B]"

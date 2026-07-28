@@ -16,6 +16,8 @@ export type ProductCreateInputDTO = {
   isProductNewAt?: string | null;
   isOnSale?: boolean;
   isOnSaleAt?: string | null;
+  isSuggested?: boolean;
+  suggestedAt?: string | null;
   videoUrl?: string | null;
   isSet?: boolean;
   colors: ColorInput[];
