@@ -148,7 +148,7 @@ export function useProductClient(
     addToCart(
       cartProduct,
       quantity,
-      { name: selectedColor.name, hex: selectedColor.hex },
+      { name: selectedColor.name },
       selectedSize!,
     );
     setShowAddedNotification(true);
@@ -161,7 +161,7 @@ export function useProductClient(
     setBuyNow(
       cartProduct,
       quantity,
-      { name: selectedColor.name, hex: selectedColor.hex },
+      { name: selectedColor.name },
       selectedSize!,
     );
     try {
