@@ -18,9 +18,11 @@ export function usePedidos(): UsePedidosReturn {
 
     const order = listHook.orders.find((o) => o.id === orderNumber);
     if (order) {
-      setDetailOrder(order);
       openedFromQueryRef.current = true;
-      router.replace("/admin/pedidos", { scroll: false });
+      queueMicrotask(() => {
+        setDetailOrder(order);
+        router.replace("/admin/pedidos", { scroll: false });
+      });
     }
   }, [searchParams, listHook.loading, listHook.orders, router]);
 

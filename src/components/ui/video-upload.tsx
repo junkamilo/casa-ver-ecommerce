@@ -73,7 +73,9 @@ export default function VideoUpload({
           <Upload className="w-5 h-5" />
           <span className="text-xs font-medium">
             Subir video{" "}
-            <span className="font-normal text-gray-400">(MP4, MOV, HEVC…)</span>
+            <span className="font-normal text-gray-400">
+              (MP4, MOV… · máx 500 MB)
+            </span>
           </span>
         </button>
       ) : (

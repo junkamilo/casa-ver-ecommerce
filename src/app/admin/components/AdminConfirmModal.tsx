@@ -1,9 +1,10 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { AlertTriangle, Loader2, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsClient } from "@/hooks/use-is-client";
 
 export type AdminConfirmVariant = "danger" | "warning";
 
@@ -30,11 +31,7 @@ export default function AdminConfirmModal({
   onConfirm,
   onCancel,
 }: AdminConfirmModalProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsClient();
 
   useEffect(() => {
     if (!open) return;

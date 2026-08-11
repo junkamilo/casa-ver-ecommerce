@@ -30,7 +30,7 @@ export default function ProductModal({
   description, setDescription,
   basePrice, setBasePrice,
   comparePrice, setComparePrice,
-  stock, setStock,
+  stock,
   categoryIds, setCategoryIds,
   status, setStatus,
   isFeatured, setIsFeatured,
@@ -66,9 +66,9 @@ export default function ProductModal({
   const [colorImagesError, setColorImagesError] = useState<string | null>(null);
   const [noItemsError, setNoItemsError] = useState<string | null>(null);
 
-  // Ref al área scrolleable del modal — se pasa a ImageUpload para que el
+  // Contenedor scrolleable del modal — se pasa a ImageUpload para que el
   // IntersectionObserver de videos use este contenedor como root en lugar del viewport.
-  const scrollRef = useRef<HTMLFormElement>(null);
+  const [scrollEl, setScrollEl] = useState<HTMLFormElement | null>(null);
 
   // Contador de uploads activos — bloquea el submit mientras haya archivos en curso
   const uploadingCountRef = useRef(0);
@@ -219,7 +219,7 @@ export default function ProductModal({
             <Loader2 className="w-8 h-8 animate-spin text-[#154734]" />
           </div>
         ) : (
-          <form ref={scrollRef} onSubmit={handleValidatedSubmit} className="flex-1 overflow-y-auto">
+          <form ref={setScrollEl} onSubmit={handleValidatedSubmit} className="flex-1 overflow-y-auto">
             <div className="p-6 space-y-5">
 
               {/* ╔══════════════════════════════════════╗
@@ -362,7 +362,7 @@ export default function ProductModal({
                       colorError={colorError}
                       sizeError={sizeError}
                       colorImagesError={colorImagesError}
-                      scrollContainer={scrollRef.current}
+                      scrollContainer={scrollEl}
                       onUploadingChange={handleUploadingChange}
                     />
 
@@ -424,7 +424,7 @@ export default function ProductModal({
                     onSetColorImages={setSetItemColorImages}
                     onUpdateVariantStock={updateSetItemVariantStock}
                     onUploadingChange={handleUploadingChange}
-                    scrollContainer={scrollRef.current}
+                    scrollContainer={scrollEl}
                   />
                 </div>
               )}

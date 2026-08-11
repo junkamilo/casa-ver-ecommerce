@@ -16,7 +16,7 @@ export async function PATCH(
     if (!session?.user) {
       return NextResponse.json({ message: "No autorizado" }, { status: 401 });
     }
-    const userId = (session.user as any).id as string;
+    const userId = (session.user as { id?: string }).id as string;
     const { id } = await params;
 
     if (!isValidId(id)) {

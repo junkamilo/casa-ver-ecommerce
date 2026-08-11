@@ -8,12 +8,14 @@ import { runAdminRoute } from "@/server/http/admin-route";
 import { toErrorResponse } from "@/server/http/error-response";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 /**
  * POST /api/admin/upload
  *
- * Proxy admin → Bunny Storage.
- * El AccessKey nunca se expone al cliente.
+ * Proxy admin → Bunny Storage (solo archivos pequeños, ~<3.5 MB).
+ * Videos / archivos grandes deben usar /api/admin/upload/{init,chunk,complete}
+ * porque Vercel rechaza bodies > ~4.5 MB con HTTP 413.
  *
  * Body: multipart/form-data
  *   - file: File (requerido)
@@ -25,6 +27,17 @@ export const runtime = "nodejs";
 export async function POST(request: NextRequest) {
   return runAdminRoute(async () => {
     try {
+      const contentLength = Number(request.headers.get("content-length") || "0");
+      if (contentLength > 4_200_000) {
+        return NextResponse.json(
+          {
+            error:
+              "Archivo demasiado grande para este endpoint (límite Vercel ~4.5 MB). Usa subida por partes.",
+          },
+          { status: 413 }
+        );
+      }
+
       const formData = await request.formData();
       const file = formData.get("file");
 

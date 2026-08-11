@@ -535,6 +535,7 @@ model Order {
   notifications      AdminNotification[]
   reviews            Review[]
   couponUsages       CouponUsage[]
+  accountingSaleExport AccountingSaleExport?
 
   appliedCouponId    String?
   appliedCoupon      Coupon?       @relation(fields: [appliedCouponId], references: [id], onDelete: SetNull)
@@ -557,6 +558,26 @@ model Order {
   @@index([userId])
   @@index([status])
   @@map("orders")
+}
+
+// Snapshot JSON de ventas pagadas para consumo por app de contabilidad
+model AccountingSaleExport {
+  id              String   @id @default(cuid())
+  orderId         String   @unique
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderNumber     String
+  paidAt          DateTime
+  payload         Json     // { order, items } del contrato contable
+  webhookStatus   String   @default("PENDING") // PENDING | SENT | SKIPPED | FAILED
+  webhookAttempts Int      @default(0)
+  webhookSentAt   DateTime?
+  webhookError    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([paidAt])
+  @@index([orderNumber])
+  @@map("accounting_sale_exports")
 }
 
 model OrderItem {

@@ -57,11 +57,12 @@ function ColorSwatchesRow({
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
-    updateScrollState();
+    const t = setTimeout(() => updateScrollState(), 0);
     el.addEventListener("scroll", updateScrollState, { passive: true });
     const ro = new ResizeObserver(updateScrollState);
     ro.observe(el);
     return () => {
+      clearTimeout(t);
       el.removeEventListener("scroll", updateScrollState);
       ro.disconnect();
     };

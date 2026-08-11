@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle, MessageSquareQuote, Trash2 } from "lucide-react";
 import { saveReview, deleteReview } from "../actions";
@@ -18,10 +18,13 @@ export default function ReviewForm({ productId, existing, isAuthenticated }: Pro
   const [error, setError] = useState("");
   const [toast, setToast] = useState<"saved" | "deleted" | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [prevExisting, setPrevExisting] = useState(existing);
 
-  useEffect(() => {
+  // Sync comment when the server-provided review changes (e.g. after refresh)
+  if (existing !== prevExisting) {
+    setPrevExisting(existing);
     setComment(existing?.comment ?? "");
-  }, [existing]);
+  }
 
   const showToast = (type: "saved" | "deleted") => {
     setToast(type);

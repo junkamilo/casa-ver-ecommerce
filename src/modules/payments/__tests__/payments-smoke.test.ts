@@ -97,6 +97,13 @@ describe("Bold — verifyBoldSignature HMAC-SHA256", () => {
 
   beforeEach(() => {
     process.env = { ...ORIGINAL_ENV };
+    // Casos de fallback / config inválida loguean warn a propósito — silenciar ruido en smoke.
+    jest.spyOn(console, "warn").mockImplementation(() => {});
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   afterAll(() => {
@@ -246,6 +253,12 @@ describe("Addi — verifyAddiCallbackKey (timing-safe)", () => {
 
   beforeEach(() => {
     process.env = { ...ORIGINAL_ENV };
+    jest.spyOn(console, "warn").mockImplementation(() => {});
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   afterAll(() => {
@@ -297,6 +310,12 @@ describe("Addi — verifyAddiSignature HMAC-SHA256", () => {
 
   beforeEach(() => {
     process.env = { ...ORIGINAL_ENV };
+    jest.spyOn(console, "warn").mockImplementation(() => {});
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   afterAll(() => {

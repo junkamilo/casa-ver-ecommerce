@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Search, User, Shield, ChevronRight, ChevronDown } from "lucide-react";
-import { HOVER_BRAND, TEXT_BRAND } from "../constants/constants";
+import { HOVER_BRAND } from "../constants/constants";
 import type { MobileMenuProps } from "../types";
 
 export default function MobileMenu({ isAdmin, categories, onClose, onSearchOpen }: MobileMenuProps) {

@@ -1,9 +1,9 @@
+import Image from "next/image";
 import { Quote } from "lucide-react";
 import { TestimonialItem } from "../types/types";
 
 export default function TestimonialCard({
   name,
-  rating,
   comment,
   avatarUrl,
   date
@@ -20,14 +20,14 @@ export default function TestimonialCard({
 
       {/* Comentario (Texto más pequeño y refinado) */}
       <p className="text-xs sm:text-[13px] text-gray-600 font-light leading-relaxed mb-5 flex-1 italic group-hover:text-[#154734] transition-colors duration-300 relative z-10">
-        "{comment}"
+        &ldquo;{comment}&rdquo;
       </p>
 
       {/* Usuario (Perfil más compacto) */}
       <div className="flex items-center gap-3 mt-auto pt-4 border-t border-gray-50 group-hover:border-[#C19A6B]/20 transition-colors duration-300 relative z-10">
         <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden bg-[#154734] shrink-0 border border-white group-hover:border-[#C19A6B]/50 transition-colors duration-300 flex items-center justify-center shadow-sm">
           {avatarUrl ? (
-            <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+            <Image src={avatarUrl} alt={name} width={36} height={36} className="w-full h-full object-cover" />
           ) : (
             <span className="text-[#C19A6B] font-bold text-xs" style={{ fontFamily: "Georgia, serif" }}>
               {name.charAt(0)}

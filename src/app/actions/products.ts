@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { deleteMediaAssetsByUrls } from "@/lib/media-admin";
 import { isValidMediaUrl } from "@/lib/media-url";
+import type { Prisma, ProductStatus } from "@prisma/client";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = prisma as any;
@@ -317,7 +318,7 @@ export async function updateVariantStocks(
   updates: { variantId: string; newStock: number }[]
 ): Promise<{ success: boolean; error?: string }> {
   const session = await auth();
-  if (!session?.user || (session.user as any).role !== "ADMIN") {
+  if (!session?.user || (session.user as { role?: string }).role !== "ADMIN") {
     return { success: false, error: "No autorizado" };
   }
   try {
@@ -340,7 +341,7 @@ export async function updateVariantStocks(
 
 export async function createProduct(payload: ProductPayload): Promise<{ success: boolean; error?: string }> {
   const session = await auth();
-  if (!session?.user || (session.user as any).role !== "ADMIN") {
+  if (!session?.user || (session.user as { role?: string }).role !== "ADMIN") {
     return { success: false, error: "No autorizado" };
   }
 
@@ -381,7 +382,7 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
       ? (suggestedAt ? new Date(suggestedAt) : new Date())
       : null;
 
-    await db.$transaction(async (tx: any) => {
+    await db.$transaction(async (tx: Prisma.TransactionClient) => {
       const product = await tx.product.create({
         data: {
           name,
@@ -389,7 +390,7 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
           description: description || "",
           basePrice,
           comparePrice,
-          status: status || "ACTIVE",
+          status: (status || "ACTIVE") as ProductStatus,
           isFeatured: isFeatured || false,
           isNew: isNew || false,
           isProductNew: isProductNew || false,
@@ -431,7 +432,7 @@ export async function createProduct(payload: ProductPayload): Promise<{ success:
 
 export async function updateProduct(id: string, payload: ProductPayload): Promise<{ success: boolean; error?: string; slug?: string }> {
   const session = await auth();
-  if (!session?.user || (session.user as any).role !== "ADMIN") {
+  if (!session?.user || (session.user as { role?: string }).role !== "ADMIN") {
     return { success: false, error: "No autorizado" };
   }
 
@@ -471,7 +472,7 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
     const nextAssetUrls = collectPayloadAssetUrls(payload);
     let previousAssetUrls: string[] = [];
 
-    const result = await db.$transaction(async (tx: any) => {
+    const result = await db.$transaction(async (tx: Prisma.TransactionClient) => {
       const existingProduct = await tx.product.findUnique({
         where: { id },
         select: {
@@ -503,7 +504,7 @@ export async function updateProduct(id: string, payload: ProductPayload): Promis
           description,
           basePrice,
           comparePrice,
-          status,
+          status: status as ProductStatus | undefined,
           isFeatured,
           isNew,
           isProductNew: isProductNew ?? false,

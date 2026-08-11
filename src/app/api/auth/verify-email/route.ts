@@ -29,14 +29,14 @@ export async function POST(request: Request) {
     const { tokenId, code } = parsed.data;
 
     // ── Buscar en registros pendientes (flujo de nuevo registro) ──────────────
-    const pending = await (prisma as any).pendingRegistration.findUnique({
+    const pending = await prisma.pendingRegistration.findUnique({
       where: { id: tokenId },
     });
 
     if (pending) {
       // ── Expiración ──────────────────────────────────────────────────────────
       if (new Date() > new Date(pending.expires)) {
-        await (prisma as any).pendingRegistration.delete({ where: { id: tokenId } });
+        await prisma.pendingRegistration.delete({ where: { id: tokenId } });
         return NextResponse.json(
           { message: "El código ha expirado. Solicita uno nuevo." },
           { status: 400 }
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       const isValid = await compare(code, pending.codeHash);
 
       if (!isValid) {
-        await (prisma as any).pendingRegistration.update({
+        await prisma.pendingRegistration.update({
           where: { id: tokenId },
           data:  { attempts: pending.attempts + 1 },
         });
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
             emailVerified: new Date(),
           },
         });
-        await (tx as any).pendingRegistration.delete({ where: { id: tokenId } });
+        await tx.pendingRegistration.delete({ where: { id: tokenId } });
       });
 
       sendWelcomeEmail({ customerEmail: pending.email, customerName: pending.name || pending.email }).catch(
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
     }
 
     // ── Fallback: buscar en EmailVerificationToken (usuarios ya existentes) ───
-    const record = await (prisma as any).emailVerificationToken.findUnique({
+    const record = await prisma.emailVerificationToken.findUnique({
       where: { id: tokenId },
     });
 
@@ -108,7 +108,7 @@ export async function POST(request: Request) {
 
     // ── Expiración ────────────────────────────────────────────────────────────
     if (new Date() > new Date(record.expires)) {
-      await (prisma as any).emailVerificationToken.delete({ where: { id: tokenId } });
+      await prisma.emailVerificationToken.delete({ where: { id: tokenId } });
       return NextResponse.json(
         { message: "El código ha expirado. Solicita uno nuevo." },
         { status: 400 }
@@ -127,7 +127,7 @@ export async function POST(request: Request) {
     const isValid = await compare(code, record.codeHash);
 
     if (!isValid) {
-      await (prisma as any).emailVerificationToken.update({
+      await prisma.emailVerificationToken.update({
         where: { id: tokenId },
         data:  { attempts: record.attempts + 1 },
       });
@@ -149,7 +149,7 @@ export async function POST(request: Request) {
         where: { id: record.userId },
         data:  { emailVerified: new Date() },
       }),
-      (prisma as any).emailVerificationToken.delete({ where: { id: tokenId } }),
+      prisma.emailVerificationToken.delete({ where: { id: tokenId } }),
     ]);
 
     return NextResponse.json({ success: true });

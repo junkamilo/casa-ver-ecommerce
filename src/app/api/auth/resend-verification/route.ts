@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     const { tokenId } = parsed.data;
 
     // ── Buscar en registros pendientes (flujo de nuevo registro) ──────────────
-    const pending = await (prisma as any).pendingRegistration.findUnique({
+    const pending = await prisma.pendingRegistration.findUnique({
       where: { id: tokenId },
     });
 
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       const codeHash = await hash(code, 10);
       const expires = new Date(Date.now() + 15 * 60 * 1000);
 
-      const updated = await (prisma as any).pendingRegistration.update({
+      const updated = await prisma.pendingRegistration.update({
         where: { id: tokenId },
         data:  { codeHash, expires, attempts: 0, createdAt: new Date() },
         select: { id: true },
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     }
 
     // ── Fallback: buscar en EmailVerificationToken (usuarios ya existentes) ───
-    const existing = await (prisma as any).emailVerificationToken.findUnique({
+    const existing = await prisma.emailVerificationToken.findUnique({
       where: { id: tokenId },
       include: { user: { select: { id: true, email: true, name: true, emailVerified: true } } },
     });
@@ -97,15 +97,15 @@ export async function POST(request: Request) {
     const codeHash = await hash(code, 10);
     const expires = new Date(Date.now() + 15 * 60 * 1000);
 
-    const newToken = await (prisma as any).emailVerificationToken.update({
+    const newToken = await prisma.emailVerificationToken.update({
       where: { id: tokenId },
       data:  { codeHash, expires, attempts: 0, createdAt: new Date() },
       select: { id: true },
     });
 
     await sendVerificationEmail({
-      customerEmail: user.email,
-      customerName:  user.name || user.email,
+      customerEmail: user.email ?? "",
+      customerName:  user.name || user.email || "",
       code,
     });
 

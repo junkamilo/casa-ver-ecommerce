@@ -4,10 +4,11 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { cancelAddiApplication } from "@/services/addi/cancel";
 import type { Order } from "@/app/admin/pedidos/types/types";
+import type { OrderStatus } from "@prisma/client";
 
 async function requireAdmin() {
   const session = await auth();
-  if (!session?.user || (session.user as any).role !== "ADMIN") {
+  if (!session?.user || (session.user as { role?: string }).role !== "ADMIN") {
     throw new Error("No autorizado");
   }
 }
@@ -100,7 +101,7 @@ export async function updateOrderStatus(orderNumber: string, statusEs: string): 
 
   await prisma.order.update({
     where: { orderNumber },
-    data:  { status: dbStatus as any, ...extraData },
+    data:  { status: dbStatus as OrderStatus, ...extraData },
   });
 }
 

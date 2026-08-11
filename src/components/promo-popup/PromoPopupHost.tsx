@@ -46,41 +46,49 @@ export default function PromoPopupHost() {
 
   const [popup, setPopup] = useState<ActivePromoPopupDTO | null>(null);
   const [visible, setVisible] = useState(false);
-  const [checkoutReady, setCheckoutReady] = useState(false);
+  const [checkoutSessionReady, setCheckoutSessionReady] = useState(false);
+
+  const needsCheckoutGate = placement === "CHECKOUT" && authStatus !== "authenticated";
 
   useEffect(() => {
-    if (placement !== "CHECKOUT") {
-      setCheckoutReady(true);
-      return;
-    }
-    if (authStatus === "authenticated") {
-      setCheckoutReady(true);
-      return;
-    }
+    if (!needsCheckoutGate) return;
+
     const check = () => {
       try {
-        setCheckoutReady(sessionStorage.getItem("cv_checkout_promo_ready") === "1");
+        setCheckoutSessionReady(sessionStorage.getItem("cv_checkout_promo_ready") === "1");
       } catch {
-        setCheckoutReady(false);
+        setCheckoutSessionReady(false);
       }
     };
-    check();
+    const t = setTimeout(check, 0);
     const id = setInterval(check, 400);
-    return () => clearInterval(id);
-  }, [placement, authStatus]);
+    return () => {
+      clearTimeout(t);
+      clearInterval(id);
+    };
+  }, [needsCheckoutGate]);
 
-  const checkoutBlocked = placement === "CHECKOUT" && !checkoutReady;
+  const checkoutBlocked = needsCheckoutGate && !checkoutSessionReady;
 
   useEffect(() => {
-    setVisible(false);
-    setPopup(null);
-
-    if (!placement || isAdminRoute || launchLockActive || checkoutBlocked) {
-      return;
-    }
-
     let cancelled = false;
     let showTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const reset = () => {
+      if (!cancelled) {
+        setVisible(false);
+        setPopup(null);
+      }
+    };
+
+    if (!placement || isAdminRoute || launchLockActive || checkoutBlocked) {
+      queueMicrotask(reset);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    queueMicrotask(reset);
 
     const load = async () => {
       try {

@@ -53,6 +53,7 @@ export default function PriceInput({
       onChange={handleChange}
       placeholder={placeholder}
       disabled={disabled}
+      aria-invalid={hasError || undefined}
       className={className}
       autoComplete="off"
     />

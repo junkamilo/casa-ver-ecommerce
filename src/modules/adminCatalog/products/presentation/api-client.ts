@@ -1,5 +1,4 @@
 import type {
-  AdminProductListItemDTO,
   AdminProductListResponseDTO,
 } from "../contracts/product-list.dto";
 import type { ProductCreateInputDTO } from "../contracts/product-create.dto";

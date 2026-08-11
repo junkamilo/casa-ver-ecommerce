@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { MessageSquare, Sparkles } from "lucide-react";
 import ReviewForm from "./ReviewForm";
 import type { ExistingReview } from "../types";
@@ -95,7 +96,7 @@ export default function ReviewsSection({
                         {/* Avatar */}
                         <div className="w-10 h-10 rounded-full overflow-hidden bg-[#154734] shrink-0 border-2 border-white shadow-sm flex items-center justify-center">
                           {review.avatarUrl ? (
-                            <img src={review.avatarUrl} alt={review.name} className="w-full h-full object-cover" />
+                            <Image src={review.avatarUrl} alt={review.name} width={40} height={40} className="w-full h-full object-cover" />
                           ) : (
                             <span className="text-[#C19A6B] font-bold text-sm" style={{ fontFamily: "Georgia, serif" }}>
                               {review.name.charAt(0)}

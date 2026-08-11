@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useCart } from "@/context/CartContext";
+import { useIsClient } from "@/hooks/use-is-client";
 
 export function useHeaderClient() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -10,7 +11,7 @@ export function useHeaderClient() {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
 
   const { cartCount, openCart } = useCart();
   const { data: session } = useSession();
@@ -19,10 +20,6 @@ export function useHeaderClient() {
   // el servidor SSR tiene la sesión pero el cliente la recibe async via useSession.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const isAdmin = mounted && (session?.user as any)?.role === "ADMIN";
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);

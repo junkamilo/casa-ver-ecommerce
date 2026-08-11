@@ -1,8 +1,8 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useIsClient } from "@/hooks/use-is-client";
 
 export type AdminToastState = {
   type: "success" | "error";
@@ -18,11 +18,7 @@ type AdminToastProps = {
  * para quedar por encima del header (z-30) y del main (z-0).
  */
 export default function AdminToast({ toast }: AdminToastProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsClient();
 
   if (!toast || !mounted) return null;
 

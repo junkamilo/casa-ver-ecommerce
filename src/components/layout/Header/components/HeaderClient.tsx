@@ -7,7 +7,6 @@ import SearchModal from "@/components/SearchModal";
 import CartDrawer from "@/components/CartDrawer";
 import logoIcon from "@/assets/logo-icon.png";
 
-import { BRAND_GREEN } from "../constants/constants";
 import { useHeaderClient } from "../hooks/useHeaderClient";
 import { useNavCategories } from "../hooks/useNavCategories";
 import MegaMenu from "./MegaMenu";

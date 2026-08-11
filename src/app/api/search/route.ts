@@ -4,11 +4,6 @@ import { getClientIP } from "@/lib/ratelimit";
 import { searchProductsUseCase } from "@/modules/search/application/search-products.use-case";
 import { RateLimitExceededError } from "@/modules/search/application/search.errors";
 
-function isVideoUrl(url: string): boolean {
-  const clean = url.split("?")[0].toLowerCase();
-  return [".mp4", ".webm", ".mov", ".ogg"].some((ext) => clean.endsWith(ext));
-}
-
 export async function GET(req: NextRequest) {
   try {
     const ip = getClientIP(req);

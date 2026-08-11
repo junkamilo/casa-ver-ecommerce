@@ -428,7 +428,6 @@ export class PrismaProductRepository {
   }
 
   async getProductByIdForAdmin(id: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const product = await this.db.product.findUnique({
       where: { id },
       include: {
@@ -460,9 +459,8 @@ export class PrismaProductRepository {
 
     if (!product) return null;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const totalStock = product.colors.reduce((sum: number, c: any) =>
-      sum + c.variants.reduce((s: number, v: any) => s + v.stock, 0), 0
+    const totalStock = product.colors.reduce((sum: number, c: { variants: { stock: number }[] }) =>
+      sum + c.variants.reduce((s: number, v: { stock: number }) => s + v.stock, 0), 0
     );
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const allSizes = [...new Set(product.colors.flatMap((c: any) => c.variants.map((v: any) => v.size)))];

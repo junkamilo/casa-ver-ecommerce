@@ -147,8 +147,12 @@ export function getClientIP(request: Request): string {
 }
 
 // Limpieza periódica del store in-memory (solo aplica en fallback)
+type GlobalWithRateLimit = typeof globalThis & {
+  __ratelimit_interval?: ReturnType<typeof setInterval>;
+};
+
 if (typeof globalThis !== "undefined" && !("__ratelimit_interval" in globalThis)) {
-  (globalThis as any).__ratelimit_interval = setInterval(() => {
+  (globalThis as GlobalWithRateLimit).__ratelimit_interval = setInterval(() => {
     const now = Date.now();
     const maxAge = 24 * 60 * 60 * 1000;
     for (const [key, entry] of memoryStore.entries()) {

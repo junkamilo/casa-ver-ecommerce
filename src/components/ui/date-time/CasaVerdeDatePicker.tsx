@@ -59,8 +59,10 @@ export function CasaVerdeDatePicker({
   const initial = parseIsoDate(value) ?? parseIsoDate(todayIso)!;
   const [viewYear, setViewYear] = useState(initial.year);
   const [viewMonth, setViewMonth] = useState(initial.monthIndex);
+  const [prevValue, setPrevValue] = useState(value);
 
-  useEffect(() => {
+  if (value !== prevValue) {
+    setPrevValue(value);
     if (value) {
       const parsed = parseIsoDate(value);
       if (parsed) {
@@ -68,7 +70,7 @@ export function CasaVerdeDatePicker({
         setViewMonth(parsed.monthIndex);
       }
     }
-  }, [value]);
+  }
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

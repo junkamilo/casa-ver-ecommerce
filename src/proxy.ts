@@ -7,7 +7,7 @@ export default auth((req) => {
 
   // ── API de administración → requiere rol ADMIN, responde JSON ────────────
   if (pathname.startsWith("/api/admin")) {
-    const isAdmin = (session?.user as any)?.role === "ADMIN";
+    const isAdmin = (session?.user as { role?: string } | undefined)?.role === "ADMIN";
     if (!isAdmin) {
       return NextResponse.json({ message: "No autorizado" }, { status: 401 });
     }
@@ -16,7 +16,7 @@ export default auth((req) => {
 
   // ── Rutas de administración → requiere rol ADMIN ─────────────────────────
   if (pathname.startsWith("/admin")) {
-    const isAdmin = (session?.user as any)?.role === "ADMIN";
+    const isAdmin = (session?.user as { role?: string } | undefined)?.role === "ADMIN";
     if (!isAdmin) {
       const url = new URL("/login", req.url);
       url.searchParams.set("callbackUrl", pathname);

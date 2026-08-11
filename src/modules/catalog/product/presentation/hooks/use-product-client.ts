@@ -70,11 +70,11 @@ export function useProductClient(
   const activeDescription = activeItem
     ? (activeItem.description ?? product.description)
     : product.description;
-  const activeGeneralImages = activeItem ? [] : product.generalImages;
 
   // Galería maestra: incluye imágenes Y videos por color (y generales).
   const masterGallery = useMemo((): GalleryMediaItem[] => {
     const items: GalleryMediaItem[] = [];
+    const activeGeneralImages = activeItem ? [] : product.generalImages;
 
     activeGeneralImages.forEach((url) => {
       items.push({ url, color: null, isVideo: isVideoUrl(url) });
@@ -87,7 +87,7 @@ export function useProductClient(
     });
 
     return items;
-  }, [activeGeneralImages, activeColors]);
+  }, [activeItem, product.generalImages, activeColors]);
 
   const galleryUrls = masterGallery.map((item) => item.url);
 

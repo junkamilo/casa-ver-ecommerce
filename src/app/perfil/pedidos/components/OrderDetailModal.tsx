@@ -5,7 +5,7 @@ import {
   CreditCard, Clock, Circle,
 } from "lucide-react";
 import { OrderDetailModalProps, OrderStatus } from "../types";
-import { formatOrderDate, formatOrderPrice, ORDER_STATUS_CONFIG } from "../constants";
+import { formatOrderDate, formatOrderPrice } from "../constants";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { OrderItemRow } from "./OrderItemRow";
 import { useOrderDelivery } from "../hooks/useOrderDelivery";

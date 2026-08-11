@@ -1,4 +1,4 @@
-import { Truck, Sparkles, ShieldCheck } from "lucide-react";
+import { Truck } from "lucide-react";
 import type { Announcement } from "../types";
 
 export const ANNOUNCEMENTS: Announcement[] = [

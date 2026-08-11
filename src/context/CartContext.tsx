@@ -17,9 +17,27 @@ export interface CartItem {
   quantity: number;
 }
 
+/** Shape accepted by addToCart / setBuyNow (product page cart builders). */
+export interface CartProductInput {
+  id?: string;
+  name: string;
+  price: number;
+  variantId?: string;
+  sku?: string;
+  gallery?: (StaticImageData | string)[];
+  image?: StaticImageData | string;
+}
+
+export interface CartColorInput {
+  id?: string;
+  name: string;
+  variantId?: string;
+  sku?: string;
+}
+
 interface CartContextType {
   items: CartItem[];
-  addToCart: (product: any, quantity: number, color: any, size?: string) => void;
+  addToCart: (product: CartProductInput, quantity: number, color: CartColorInput, size?: string) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, delta: number) => void;
   clearCart: () => void;
@@ -29,7 +47,7 @@ interface CartContextType {
   openCart: () => void;
   closeCart: () => void;
   buyNowItem: CartItem | null;
-  setBuyNow: (product: any, quantity: number, color: any, size?: string) => void;
+  setBuyNow: (product: CartProductInput, quantity: number, color: CartColorInput, size?: string) => void;
   clearBuyNow: () => void;
 }
 
@@ -51,13 +69,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   // ── Hidratación desde localStorage (evita mismatch SSR) ─────────────────────
   useEffect(() => {
-    try {
-      const storedCart = localStorage.getItem(CART_KEY);
-      if (storedCart) setItems(JSON.parse(storedCart) as CartItem[]);
+    queueMicrotask(() => {
+      try {
+        const storedCart = localStorage.getItem(CART_KEY);
+        if (storedCart) setItems(JSON.parse(storedCart) as CartItem[]);
 
-      const storedBuyNow = localStorage.getItem(BUY_NOW_KEY);
-      if (storedBuyNow) setBuyNowItem(JSON.parse(storedBuyNow) as CartItem);
-    } catch {}
+        const storedBuyNow = localStorage.getItem(BUY_NOW_KEY);
+        if (storedBuyNow) setBuyNowItem(JSON.parse(storedBuyNow) as CartItem);
+      } catch {}
+    });
   }, []);
 
   // ── Sincronizar items → localStorage ────────────────────────────────────────
@@ -115,7 +135,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const subtotal  = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   // ── Acciones ─────────────────────────────────────────────────────────────────
-  const addToCart = useCallback((product: any, qty: number, color: any, size?: string) => {
+  const addToCart = useCallback((product: CartProductInput, qty: number, color: CartColorInput, size?: string) => {
     const sizeLabel = size || "Única";
     const itemId = `${product.id ?? product.name}-${color.id ?? color.name}-${sizeLabel}`;
 
@@ -139,7 +159,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           sku: product.sku ?? color.sku ?? "",
           name: product.name,
           price: product.price,
-          image: product.gallery?.[0] || product.image,
+          image: product.gallery?.[0] || product.image || "",
           color: color.name,
           size: sizeLabel,
           quantity: qty,
@@ -168,7 +188,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const openCart  = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
 
-  const setBuyNow = useCallback((product: any, qty: number, color: any, size?: string) => {
+  const setBuyNow = useCallback((product: CartProductInput, qty: number, color: CartColorInput, size?: string) => {
     const sizeLabel = size || "Única";
     const item: CartItem = {
       id: `buynow-${product.id ?? product.name}-${color.id ?? color.name}-${sizeLabel}`,
@@ -177,7 +197,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       sku: product.sku ?? color.sku ?? "",
       name: product.name,
       price: product.price,
-      image: product.gallery?.[0] || product.image,
+      image: product.gallery?.[0] || product.image || "",
       color: color.name,
       size: sizeLabel,
       quantity: qty,

@@ -119,7 +119,8 @@ export default function ImageUpload({
 
     // Validar tamaño antes de subir
     for (const file of candidates) {
-      const sizeError = validateFileSize(file);
+      const resourceType = file.type.startsWith("video") ? "video" : "image";
+      const sizeError = validateFileSize(file, resourceType);
       if (sizeError) {
         setUploadError(sizeError);
         return;
@@ -367,7 +368,7 @@ export default function ImageUpload({
               <span className="font-normal text-gray-400">(JPG, PNG, HEIC, MP4, MOV…)</span>
             </span>
             <span className="text-[10px] text-gray-400">
-              Puedes seleccionar varios a la vez · imágenes máx 10 MB · videos máx 100 MB
+              Puedes seleccionar varios a la vez · imágenes máx 15 MB · videos máx 500 MB
             </span>
           </button>
         </>

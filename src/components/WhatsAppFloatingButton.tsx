@@ -7,7 +7,6 @@ import { useLaunchLockGate } from "@/hooks/use-launch-lock-gate";
 
 const WA_NUMBER = "573022457432";
 const AGENT_NAME = "Casa Verde";
-const AGENT_AVATAR = "/assets/logo.png";
 const DEFAULT_MESSAGE = "¡Hola! Estoy interesado/a en sus productos y me gustaría recibir más información. 😊";
 
 const WhatsAppIcon = () => (
@@ -30,7 +29,7 @@ export default function WhatsAppFloatingButton() {
       textareaRef.current.focus();
       textareaRef.current.setSelectionRange(message.length, message.length);
     }
-  }, [open]);
+  }, [open, message.length]);
 
   const handleSend = () => {
     const encoded = encodeURIComponent(message.trim() || DEFAULT_MESSAGE);

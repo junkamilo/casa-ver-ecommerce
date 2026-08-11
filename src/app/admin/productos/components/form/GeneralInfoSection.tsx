@@ -22,9 +22,9 @@ export default function GeneralInfoSection({
   errors = {},
   isSet = false,
 }: GeneralInfoSectionProps) {
-  const cat = useDropdown();
-  const est = useDropdown();
-  const gt = useDropdown();
+  const { open: catOpen, setOpen: setCatOpen, ref: catRef } = useDropdown();
+  const { open: estOpen, setOpen: setEstOpen, ref: estRef } = useDropdown();
+  const { open: gtOpen, setOpen: setGtOpen, ref: gtRef } = useDropdown();
 
   const selectedCategoryNames = categories
     .filter((c) => categoryIds.includes(c.id))
@@ -104,10 +104,10 @@ export default function GeneralInfoSection({
           <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
             Categorías *
           </label>
-          <div className="relative" ref={cat.ref}>
+          <div className="relative" ref={catRef}>
             <button
               type="button"
-              onClick={() => cat.setOpen((v) => !v)}
+              onClick={() => setCatOpen((v) => !v)}
               className={`w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg border text-sm transition-colors bg-white ${
                 errors.categoryIds
                   ? "border-red-400"
@@ -121,12 +121,12 @@ export default function GeneralInfoSection({
                     : `${selectedCategoryNames.length} categorías seleccionadas`
                   : "Seleccionar categorías…"}
               </span>
-              {cat.open
+              {catOpen
                 ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" />
                 : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
             </button>
 
-            {cat.open && (
+            {catOpen && (
               <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
                 <div className="px-4 py-2.5 border-b border-gray-100 bg-[#154734]/5 flex items-center justify-between">
                   <p className="text-[11px] font-bold text-[#154734] uppercase tracking-widest">
@@ -180,22 +180,22 @@ export default function GeneralInfoSection({
           <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
             Estado
           </label>
-          <div className="relative" ref={est.ref}>
+          <div className="relative" ref={estRef}>
             <button
               type="button"
-              onClick={() => est.setOpen((v) => !v)}
+              onClick={() => setEstOpen((v) => !v)}
               className="w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg border border-gray-200 hover:border-[#C19A6B] text-sm transition-colors bg-white"
             >
               <span className="flex items-center gap-2">
                 <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${selectedStatus.dot}`} />
                 <span className="text-gray-800 font-medium">{selectedStatus.label}</span>
               </span>
-              {est.open
+              {estOpen
                 ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" />
                 : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
             </button>
 
-            {est.open && (
+            {estOpen && (
               <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
                 <div className="px-4 py-2.5 border-b border-gray-100 bg-[#154734]/5">
                   <p className="text-[11px] font-bold text-[#154734] uppercase tracking-widest">
@@ -209,7 +209,7 @@ export default function GeneralInfoSection({
                       <button
                         key={opt.value}
                         type="button"
-                        onClick={() => { onStatus(opt.value); est.setOpen(false); }}
+                        onClick={() => { onStatus(opt.value); setEstOpen(false); }}
                         className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                           active
                             ? "bg-[#154734]/8 text-[#154734]"
@@ -268,10 +268,10 @@ export default function GeneralInfoSection({
                 </p>
               </div>
             ) : (
-              <div className="relative" ref={gt.ref}>
+              <div className="relative" ref={gtRef}>
                 <button
                   type="button"
-                  onClick={() => gt.setOpen((v) => !v)}
+                  onClick={() => setGtOpen((v) => !v)}
                   className="w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg border border-gray-200 hover:border-[#C19A6B] text-sm transition-colors bg-white"
                 >
                   <span className={selectedNames.length > 0 ? "text-gray-800 font-medium truncate" : "text-gray-400"}>
@@ -281,12 +281,12 @@ export default function GeneralInfoSection({
                         : `${selectedNames.length} tipos seleccionados`
                       : "Sin clasificar…"}
                   </span>
-                  {gt.open
+                  {gtOpen
                     ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" />
                     : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
                 </button>
 
-                {gt.open && (
+                {gtOpen && (
                   <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
                     <div className="px-4 py-2.5 border-b border-gray-100 bg-[#154734]/5 flex items-center justify-between">
                       <p className="text-[11px] font-bold text-[#154734] uppercase tracking-widest">

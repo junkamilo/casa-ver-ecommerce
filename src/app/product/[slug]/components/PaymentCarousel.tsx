@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import Image from "next/image";
 import LogoNequiPng  from "@/assets/LogoNequi.png";
 import LogoPaypalPng from "@/assets/LogoPaypal.png";
@@ -19,18 +19,6 @@ function GooglePayLogo() {
       <span className="font-bold text-[15px] leading-none" style={{ color: "#34A853" }}>l</span>
       <span className="font-bold text-[15px] leading-none" style={{ color: "#EA4335" }}>e</span>
       <span className="ml-1 font-medium text-[15px] leading-none text-gray-500">Pay</span>
-    </div>
-  );
-}
-
-function ApplePayLogo() {
-  return (
-    <div className="flex items-center gap-1.5">
-      {/* Apple símbolo Unicode */}
-      <span className="text-[18px] leading-none text-gray-900" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
-
-      </span>
-      <span className="font-semibold text-[15px] leading-none text-gray-900">Pay</span>
     </div>
   );
 }
@@ -72,23 +60,6 @@ function VisaLogo() {
   );
 }
 
-function DinersLogo() {
-  return (
-    <div className="flex items-center gap-2">
-      {/* Círculo con línea vertical — símbolo Diners */}
-      <svg viewBox="0 0 28 28" className="h-7 w-auto" fill="none">
-        <circle cx="14" cy="14" r="12.5" stroke="#004A97" strokeWidth="2" />
-        <ellipse cx="11" cy="14" rx="7" ry="9.5" stroke="#004A97" strokeWidth="1.5" />
-        <ellipse cx="17" cy="14" rx="7" ry="9.5" stroke="#004A97" strokeWidth="1.5" />
-      </svg>
-      <div className="flex flex-col leading-none">
-        <span className="font-bold text-[11px] text-[#004A97]">Diners</span>
-        <span className="font-medium text-[10px] text-[#004A97]">Club</span>
-      </div>
-    </div>
-  );
-}
-
 function PSELogo() {
   return (
     <Image src={LogoPsePng} alt="PSE" height={28} style={{ width: "auto", height: 28 }} />
@@ -125,21 +96,20 @@ export default function PaymentCarousel() {
 
   useEffect(() => { pausedRef.current = paused; }, [paused]);
 
-  const animate = useCallback(() => {
-    const el = scrollRef.current;
-    if (el && !pausedRef.current) {
-      el.scrollLeft += 0.6;
-      if (el.scrollLeft >= el.scrollWidth / 2) {
-        el.scrollLeft -= el.scrollWidth / 2;
-      }
-    }
-    animRef.current = requestAnimationFrame(animate);
-  }, []);
-
   useEffect(() => {
+    const animate = () => {
+      const el = scrollRef.current;
+      if (el && !pausedRef.current) {
+        el.scrollLeft += 0.6;
+        if (el.scrollLeft >= el.scrollWidth / 2) {
+          el.scrollLeft -= el.scrollWidth / 2;
+        }
+      }
+      animRef.current = requestAnimationFrame(animate);
+    };
     animRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animRef.current);
-  }, [animate]);
+  }, []);
 
   return (
     <div className="mb-7">

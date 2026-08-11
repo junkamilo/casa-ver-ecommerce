@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     // ── Guardar registro pendiente (SIN crear usuario todavía) ────────────────
     // El usuario solo se crea en la BD cuando verifique su correo exitosamente.
-    const pending = await (prisma as any).pendingRegistration.upsert({
+    const pending = await prisma.pendingRegistration.upsert({
       where:  { email },
       create: {
         name:         name || null,

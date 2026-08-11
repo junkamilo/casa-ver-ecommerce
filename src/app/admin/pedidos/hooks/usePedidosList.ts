@@ -12,12 +12,27 @@ import { DEFAULT_ADMIN_PAGE_SIZE } from "@/components/ui/AdminPagination";
 export function usePedidosList(): UsePedidosListReturn {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("Todos");
-  const [methodFilter, setMethodFilter] = useState("Todos");
+  const [search, setSearchState] = useState("");
+  const [statusFilter, setStatusFilterState] = useState("Todos");
+  const [methodFilter, setMethodFilterState] = useState("Todos");
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSizeState] = useState(DEFAULT_ADMIN_PAGE_SIZE);
+
+  const setSearch = useCallback((value: string) => {
+    setSearchState(value);
+    setPage(1);
+  }, []);
+
+  const setStatusFilter = useCallback((value: string) => {
+    setStatusFilterState(value);
+    setPage(1);
+  }, []);
+
+  const setMethodFilter = useCallback((value: string) => {
+    setMethodFilterState(value);
+    setPage(1);
+  }, []);
 
   const setPageSize = useCallback((size: number) => {
     setPageSizeState(size);
@@ -36,9 +51,8 @@ export function usePedidosList(): UsePedidosListReturn {
       });
   }, []);
 
-  // Carga inicial
+  // Carga inicial (loading ya inicia en true)
   useEffect(() => {
-    setLoading(true);
     fetchAdminOrders()
       .then((data) => setOrders(mapAdminOrderListDtoToUi(data)))
       .catch((error: unknown) => {
@@ -68,11 +82,6 @@ export function usePedidosList(): UsePedidosListReturn {
     const matchMethod = methodFilter === "Todos" || o.paymentMethod === methodFilter;
     return matchSearch && matchStatus && matchMethod;
   });
-
-  // Resetea a página 1 cuando cambian los filtros
-  useEffect(() => {
-    setPage(1);
-  }, [search, statusFilter, methodFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
   const paginatedOrders = filteredOrders.slice(

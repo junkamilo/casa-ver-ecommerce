@@ -33,7 +33,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [status, router]);
 
   useEffect(() => {
-    if (window.innerWidth < 768) setIsSidebarOpen(false);
+    if (window.innerWidth < 768) {
+      queueMicrotask(() => setIsSidebarOpen(false));
+    }
   }, [pathname]);
 
   if (status === "loading") return <LoadingScreen />;

@@ -28,7 +28,7 @@ export default function BoldPaymentClient({
   // Detectar si el usuario ya inició un pago (viene de vuelta después de ir a Bold)
   useEffect(() => {
     if (orderRef && sessionStorage.getItem(`bold_initiated_${orderRef}`)) {
-      setPaymentInitiated(true);
+      queueMicrotask(() => setPaymentInitiated(true));
     }
   }, [orderRef]);
 

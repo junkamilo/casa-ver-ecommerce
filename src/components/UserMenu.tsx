@@ -85,7 +85,7 @@ const UserMenu = ({ onClose }: UserMenuProps) => {
             </div>
           </div>
 
-          {(session.user as any)?.role === "ADMIN" && (
+          {(session.user as { role?: string })?.role === "ADMIN" && (
             <Link href="/admin" onClick={onClose}
               className="flex items-center gap-3 p-3 bg-[#154734]/5 border border-[#154734]/20 rounded-lg hover:bg-[#154734]/10 transition-colors"
             >

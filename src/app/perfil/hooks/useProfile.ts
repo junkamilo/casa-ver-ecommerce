@@ -30,14 +30,19 @@ export function useProfile(): UseProfileResult {
 
   // Collapse sidebar on mobile by default
   useEffect(() => {
-    if (window.innerWidth < 768) setIsSidebarOpen(false);
+    if (window.innerWidth < 768) {
+      queueMicrotask(() => setIsSidebarOpen(false));
+    }
   }, []);
 
   // Fetch profile once authenticated
   useEffect(() => {
     if (status !== "authenticated") return;
 
-    setFetchError(null);
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) setFetchError(null);
+    });
     fetch("/api/profile")
       .then(async (res) => {
         if (res.status === 401) {
@@ -57,6 +62,10 @@ export function useProfile(): UseProfileResult {
         setFetchError(msg);
       })
       .finally(() => setLoading(false));
+
+    return () => {
+      cancelled = true;
+    };
   }, [status, redirectToLogin]);
 
   const showToast = useCallback((type: "success" | "error", message: string) => {

@@ -76,14 +76,6 @@ export default function OTPInput({ onComplete, disabled, hasError, onReset }: OT
     }
   };
 
-  const reset = () => {
-    setValues(Array(LENGTH).fill(""));
-    inputs.current[0]?.focus();
-  };
-
-  // Exponer reset para uso externo si es necesario
-  (OTPInput as any)._reset = reset;
-
   return (
     <div className="flex gap-2 sm:gap-3 justify-center">
       {values.map((val, i) => (

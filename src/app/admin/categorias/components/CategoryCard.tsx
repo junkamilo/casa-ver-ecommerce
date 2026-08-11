@@ -1,4 +1,5 @@
 import { Pencil, Eye, EyeOff, Trash2 } from "lucide-react";
+import Image from "next/image";
 import type { CategoryCardProps } from "../types/types";
 
 const CategoryCard = ({ category, onEdit, onToggleActive, onDelete }: CategoryCardProps) => (
@@ -11,10 +12,12 @@ const CategoryCard = ({ category, onEdit, onToggleActive, onDelete }: CategoryCa
     <div className="relative h-32 border-b border-gray-100 overflow-hidden flex items-center justify-center">
       {category.image ? (
         <>
-          <img
+          <Image
             src={category.image}
             alt={category.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-700"
+            sizes="(max-width: 768px) 100vw, 33vw"
           />
           <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent" />
         </>

@@ -76,7 +76,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // emailVerified se maneja en el callback jwt porque ahí el adapter
       // ya garantiza user.id y user.email correctos.
       if (account?.provider !== "google") return true;
-      const emailVerified = (profile as any)?.email_verified;
+      const emailVerified = (profile as { email_verified?: boolean } | undefined)?.email_verified;
       if (!emailVerified) return false;
       return true;
     },

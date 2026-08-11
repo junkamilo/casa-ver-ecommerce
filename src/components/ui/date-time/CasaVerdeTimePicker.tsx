@@ -53,8 +53,10 @@ export function CasaVerdeTimePicker({
   const [hour12, setHour12] = useState(parsed?.hour12 ?? 9);
   const [minute, setMinute] = useState(parsed?.minute ?? 0);
   const [period, setPeriod] = useState<TimePeriod>(parsed?.period ?? "AM");
+  const [prevValue, setPrevValue] = useState(value);
 
-  useEffect(() => {
+  if (value !== prevValue) {
+    setPrevValue(value);
     if (value) {
       const p = parseTime24to12Parts(value);
       if (p) {
@@ -63,7 +65,7 @@ export function CasaVerdeTimePicker({
         setPeriod(p.period);
       }
     }
-  }, [value]);
+  }
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

@@ -113,12 +113,12 @@ export default function CustomSelect({
     };
   }, [open, calcPosition, isMobile]);
 
-  // Enfocar búsqueda al abrir
+  // Enfocar búsqueda al abrir; limpiar query al cerrar
   useEffect(() => {
     if (open && searchable) {
       setTimeout(() => searchRef.current?.focus(), 50);
     }
-    if (!open) setQuery("");
+    if (!open) queueMicrotask(() => setQuery(""));
   }, [open, searchable]);
 
   const filtered = query.trim()

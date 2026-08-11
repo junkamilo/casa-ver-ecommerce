@@ -54,7 +54,10 @@ export function useOrders(): UseOrdersResult {
   const refreshOrders = useCallback(() => fetchOrders(false), [fetchOrders]);
 
   // Carga inicial
-  useEffect(() => { fetchOrders(true); }, [fetchOrders]);
+  useEffect(() => {
+    const t = setTimeout(() => { void fetchOrders(true); }, 0);
+    return () => clearTimeout(t);
+  }, [fetchOrders]);
 
   // Polling silencioso + refresco al volver a la pestaña
   useEffect(() => {

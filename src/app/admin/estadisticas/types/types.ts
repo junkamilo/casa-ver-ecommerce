@@ -2,8 +2,6 @@ import type {
   CancellationData,
   CategorySale,
   DailySale,
-  DeliveryTimeData,
-  DiscountData,
   Period,
   RetentionData,
   SalesPeriodData,

@@ -193,7 +193,7 @@ export class PrismaCheckoutRepository {
             const normalizedEmail = input.email.toLowerCase().trim();
             const normalizedDocumentId = input.cedula.trim();
 
-            const previousUsageCount = await (tx as any).couponUsage.count({
+            const previousUsageCount = await tx.couponUsage.count({
               where: {
                 couponId: coupon.id,
                 OR: [

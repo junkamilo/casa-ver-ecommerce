@@ -51,13 +51,7 @@ function clearRecentProducts() {
   localStorage.removeItem(RECENT_KEY);
 }
 
-function formatProductPrice(item: Pick<SearchProduct, "price" | "isSet" | "minPrice">): string {
-  if (item.isSet && item.minPrice != null) {
-    return `Desde $ ${item.minPrice.toLocaleString("es-CO")}`;
-  }
-  return `$ ${item.price.toLocaleString("es-CO")}`;
-}
-
+// ── Component ─────────────────────────────────────────────────────────────────
 const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".ogg"];
 
 function isVideoUrl(url: string): boolean {
@@ -76,7 +70,7 @@ const SearchModal = ({ onClose }: SearchModalProps) => {
 
   // Cargar recientes al abrir
   useEffect(() => {
-    setRecent(getRecentProducts());
+    queueMicrotask(() => setRecent(getRecentProducts()));
   }, []);
 
   // Búsqueda con debounce de 300ms
@@ -84,12 +78,14 @@ const SearchModal = ({ onClose }: SearchModalProps) => {
     const trimmed = query.trim();
 
     if (trimmed.length < 2) {
-      setResults([]);
-      setIsLoading(false);
-      return;
+      const clearId = setTimeout(() => {
+        setResults([]);
+        setIsLoading(false);
+      }, 0);
+      return () => clearTimeout(clearId);
     }
 
-    setIsLoading(true);
+    const loadingId = setTimeout(() => setIsLoading(true), 0);
     const timer = setTimeout(() => {
       fetch(`/api/search?q=${encodeURIComponent(trimmed)}`)
         .then((res) => (res.ok ? res.json() : []))
@@ -99,6 +95,7 @@ const SearchModal = ({ onClose }: SearchModalProps) => {
     }, 300);
 
     return () => {
+      clearTimeout(loadingId);
       clearTimeout(timer);
     };
   }, [query]);

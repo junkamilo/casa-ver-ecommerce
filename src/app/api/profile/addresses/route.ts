@@ -87,7 +87,7 @@ export async function GET() {
     if (!session?.user) {
       return NextResponse.json({ message: "No autorizado" }, { status: 401 });
     }
-    const userId = (session.user as any).id as string;
+    const userId = (session.user as { id?: string }).id as string;
 
     const addresses = await prisma.address.findMany({
       where: { userId },
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
     if (!session?.user) {
       return NextResponse.json({ message: "No autorizado" }, { status: 401 });
     }
-    const userId = (session.user as any).id as string;
+    const userId = (session.user as { id?: string }).id as string;
 
     let body: unknown;
     try {

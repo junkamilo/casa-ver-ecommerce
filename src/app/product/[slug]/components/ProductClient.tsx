@@ -155,7 +155,7 @@ export default function ProductClient({
                   {socialProof.recentBuyers.map((buyer, i) => (
                     <div key={i} className="w-8 h-8 rounded-full bg-[#154734]/10 border-2 border-white overflow-hidden shadow-sm flex items-center justify-center">
                       {buyer.avatar ? (
-                        <img src={buyer.avatar} alt="" aria-hidden="true" className="w-full h-full object-cover" />
+                        <Image src={buyer.avatar} alt="" aria-hidden="true" width={32} height={32} className="w-full h-full object-cover" />
                       ) : (
                         <span className="text-[10px] font-bold text-[#154734]">{buyer.name[0]}</span>
                       )}

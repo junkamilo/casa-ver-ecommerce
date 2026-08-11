@@ -34,7 +34,7 @@ export async function DELETE(
     return NextResponse.json({ message: "Proveedor no soportado" }, { status: 400 });
   }
 
-  const userId = (session.user as any).id as string;
+  const userId = (session.user as { id?: string }).id as string;
 
   const user = await prisma.user.findUnique({
     where: { id: userId },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useCallback, useEffect, useRef } from "react";
+import { useState, useTransition, useCallback, useEffect, useRef, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import type { Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -45,14 +45,17 @@ export function useCheckout(options?: UseCheckoutOptions) {
     }
   }, [preferBuyNow, items.length, buyNowItem, clearBuyNow]);
 
-  const checkoutItems =
-    preferBuyNow && buyNowItem
-      ? [buyNowItem]
-      : items.length > 0
-        ? items
-        : buyNowItem
-          ? [buyNowItem]
-          : [];
+  const checkoutItems = useMemo(
+    () =>
+      preferBuyNow && buyNowItem
+        ? [buyNowItem]
+        : items.length > 0
+          ? items
+          : buyNowItem
+            ? [buyNowItem]
+            : [],
+    [preferBuyNow, buyNowItem, items]
+  );
 
   const subtotal = checkoutItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -309,7 +312,6 @@ export function useCheckout(options?: UseCheckoutOptions) {
         }
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [checkoutItems, subtotal, shippingCost, couponDiscount, coupon, options, closeCart, clearCart, clearBuyNow]
   );
 

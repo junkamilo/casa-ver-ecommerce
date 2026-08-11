@@ -1,7 +1,19 @@
 import { renderHook, act } from "@testing-library/react";
 import { useProfileNav } from "../hooks/useProfileNav";
 
+const mockGet = jest.fn<string | null, [string]>(() => null);
+
+jest.mock("next/navigation", () => ({
+  useSearchParams: () => ({
+    get: (key: string) => mockGet(key),
+  }),
+}));
+
 describe("useProfileNav", () => {
+  beforeEach(() => {
+    mockGet.mockReturnValue(null);
+  });
+
   it("inicia con la sección 'perfil' por defecto", () => {
     const { result } = renderHook(() => useProfileNav());
     expect(result.current.activeSection).toBe("perfil");
@@ -50,5 +62,11 @@ describe("useProfileNav", () => {
 
     expect(result.current.isActive("pedidos")).toBe(true);
     expect(result.current.isActive("perfil")).toBe(false);
+  });
+
+  it("usa ?section= de la URL cuando es válida", () => {
+    mockGet.mockImplementation((key) => (key === "section" ? "direcciones" : null));
+    const { result } = renderHook(() => useProfileNav());
+    expect(result.current.activeSection).toBe("direcciones");
   });
 });

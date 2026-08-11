@@ -53,7 +53,7 @@ const PRODUCT_SLUGS = [
 
 // ── Flujo principal ───────────────────────────────────────────────────────────
 
-export default function () {
+export default function checkoutScenario() {
   const headers = {
     "Content-Type":  "application/json",
     "Accept":        "application/json",

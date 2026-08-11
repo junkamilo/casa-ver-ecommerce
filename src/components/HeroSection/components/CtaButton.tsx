@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BRAND_GREEN, BRAND_GOLD, SHIMMER_PRIMARY, SHIMMER_SECONDARY } from "../constants";
+import { BRAND_GREEN, SHIMMER_PRIMARY, SHIMMER_SECONDARY } from "../constants";
 import type { HeroButton } from "../types";
 
 export function CtaButton({ label, href, variant }: HeroButton) {

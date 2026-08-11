@@ -23,6 +23,21 @@ export function AddressFormModal({ open, editing, submitting, onSave, onClose }:
     shippingCost,
   } = useAddressForm({ open, editing });
 
+  const {
+    ref: deptRef,
+    name: deptName,
+    value: deptValue,
+    onBlur: deptOnBlur,
+    onChange: deptOnChange,
+  } = deptField;
+  const {
+    ref: cityRef,
+    name: cityName,
+    value: cityValue,
+    onBlur: cityOnBlur,
+    onChange: cityOnChange,
+  } = cityField;
+
   async function handleSave(values: AddressFormValues) {
     setServerError(null);
     const result = await onSave(values);
@@ -103,13 +118,13 @@ export function AddressFormModal({ open, editing, submitting, onSave, onClose }:
             {/* Departamento */}
             <div className="relative">
               <select
-                name={deptField.name}
-                ref={deptField.ref}
-                value={deptField.value}
-                onBlur={deptField.onBlur}
+                name={deptName}
+                ref={deptRef}
+                value={deptValue}
+                onBlur={deptOnBlur}
                 onChange={(e) => {
-                  deptField.onChange(e.target.value);
-                  cityField.onChange(""); // limpiar ciudad al cambiar departamento
+                  deptOnChange(e.target.value);
+                  cityOnChange(""); // limpiar ciudad al cambiar departamento
                 }}
                 className={FORM_STYLES.select}
               >
@@ -128,11 +143,11 @@ export function AddressFormModal({ open, editing, submitting, onSave, onClose }:
             {/* Ciudad */}
             <div className="relative">
               <select
-                name={cityField.name}
-                ref={cityField.ref}
-                value={cityField.value}
-                onBlur={cityField.onBlur}
-                onChange={(e) => cityField.onChange(e.target.value)}
+                name={cityName}
+                ref={cityRef}
+                value={cityValue}
+                onBlur={cityOnBlur}
+                onChange={(e) => cityOnChange(e.target.value)}
                 disabled={!selectedDepartment}
                 className={FORM_STYLES.select}
               >

@@ -21,7 +21,6 @@ export default function ProductGallery({
   selectedImage,
   productName,
   onSelect,
-  activeColorHex,
   isColorOutOfStock = false,
 }: Props) {
   const {

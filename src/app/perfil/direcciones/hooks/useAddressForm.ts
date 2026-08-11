@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useForm, useController } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { getDepartamentos, getMunicipiosForDepartment } from "@/lib/constants/colombia";
+import { getMunicipiosForDepartment } from "@/lib/constants/colombia";
 import { getShippingCost } from "@/lib/shipping";
 import { AddressFormValues, UseAddressFormOptions, UseAddressFormResult } from "../types";
 import { addressSchema, ADDRESS_FORM_DEFAULTS } from "../constants";
