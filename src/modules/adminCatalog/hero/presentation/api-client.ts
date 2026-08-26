@@ -1,6 +1,3 @@
-import { getAllHeroSlidesUseCase } from "../application/hero.use-case";
-import { mapHeroSlideDtoListToUi } from "./mappers";
-
 const HERO_API = "/api/admin/hero";
 
 type ApiErrorPayload = {
@@ -41,11 +38,6 @@ async function assertOk(response: Response): Promise<unknown> {
   throw new HeroApiError(message, response.status);
 }
 
-export async function fetchAdminHeroSlides() {
-  const slides = await getAllHeroSlidesUseCase();
-  return mapHeroSlideDtoListToUi(slides);
-}
-
 export type SaveHeroSlidePayload = {
   id?: string;
   mediaUrl: string;
@@ -67,7 +59,9 @@ export async function createHeroSlide(payload: Omit<SaveHeroSlidePayload, "id">)
   return (await assertOk(response)) as SavedHeroSlideResponse;
 }
 
-export async function updateHeroSlide(payload: Required<Pick<SaveHeroSlidePayload, "id">> & Omit<SaveHeroSlidePayload, "id">) {
+export async function updateHeroSlide(
+  payload: Required<Pick<SaveHeroSlidePayload, "id">> & Omit<SaveHeroSlidePayload, "id">
+) {
   const response = await fetch(HERO_API, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },

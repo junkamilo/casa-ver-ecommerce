@@ -2,7 +2,7 @@ import AdminPageHeader from "@/components/ui/AdminPageHeader";
 import HeroSlidesClient from "./components/HeroSlidesClient";
 import type { HeroSlideData } from "./types";
 import { ImageIcon } from "lucide-react";
-import { fetchAdminHeroSlides } from "@/modules/adminCatalog/hero/presentation/api-client";
+import { fetchAdminHeroSlides } from "@/modules/adminCatalog/hero/presentation/fetch-admin-hero-slides";
 
 export const dynamic = "force-dynamic";
 

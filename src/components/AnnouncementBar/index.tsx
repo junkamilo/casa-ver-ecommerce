@@ -1,12 +1,52 @@
 "use client";
 
-import { ANNOUNCEMENTS, MARQUEE_COPIES, STYLES } from "./constants";
+import { useEffect, useMemo, useState } from "react";
+import { Truck } from "lucide-react";
+import { MARQUEE_COPIES, STYLES } from "./constants";
 import { AnnouncementItem } from "./components";
+import type { Announcement } from "./types";
+import { FREE_SHIPPING_MIN_NET_SUBTOTAL } from "@/lib/shipping";
+
+function formatThresholdCop(value: number): string {
+  return value.toLocaleString("es-CO");
+}
+
+function buildFreeShippingAnnouncement(threshold: number): Announcement {
+  return {
+    text: `Envíos gratis por compras superiores a $${formatThresholdCop(threshold)}`,
+    icon: Truck,
+  };
+}
 
 export default function AnnouncementBar() {
+  const [threshold, setThreshold] = useState(FREE_SHIPPING_MIN_NET_SUBTOTAL);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/shipping-config", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { freeShippingThreshold?: number } | null) => {
+        if (!active) return;
+        const value = data?.freeShippingThreshold;
+        if (typeof value === "number" && value > 0) {
+          setThreshold(value);
+        }
+      })
+      .catch(() => {
+        // Mantener fallback local si la API no responde
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const announcements = useMemo(
+    () => [buildFreeShippingAnnouncement(threshold)],
+    [threshold]
+  );
+
   return (
     <div className="relative w-full select-none">
-
       {/* Línea de borde superior: degradado dorado que respira */}
       <div className="animate-border-shimmer h-[1.5px] bg-linear-to-r from-transparent via-[#C19A6B] to-transparent" />
 
@@ -38,7 +78,7 @@ export default function AnnouncementBar() {
         >
           {Array.from({ length: MARQUEE_COPIES }, (_, arrayIndex) => (
             <div key={arrayIndex} className="flex items-center">
-              {ANNOUNCEMENTS.map((item, index) => (
+              {announcements.map((item, index) => (
                 <AnnouncementItem
                   key={`${arrayIndex}-${index}`}
                   item={item}
@@ -49,12 +89,10 @@ export default function AnnouncementBar() {
             </div>
           ))}
         </div>
-
       </div>
 
       {/* Línea de borde inferior */}
       <div className="h-px bg-linear-to-r from-transparent via-[#C19A6B]/35 to-transparent" />
-
     </div>
   );
 }

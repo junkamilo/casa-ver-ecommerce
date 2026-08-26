@@ -10,8 +10,7 @@ import {
   CHECKOUT_MODE_BUY_NOW,
 } from "@/context/CartContext";
 import { validateCoupon } from "@/app/actions/coupons";
-import { createOrder } from "@/app/actions/checkout";
-import { resolveShippingQuote } from "@/lib/shipping";
+import { createOrder, getShippingCostAction } from "@/app/actions/checkout";
 import { calculateCouponDiscountAmount } from "@/modules/checkout/domain/coupon.entity";
 import { checkoutSchema } from "@/app/checkout/types/schema";
 import type { CheckoutFormData } from "@/app/checkout/types/schema";
@@ -93,11 +92,31 @@ export function useCheckout(options?: UseCheckoutOptions) {
       : 0;
 
   const netSubtotal = subtotal - couponDiscount;
-  const shippingQuote = resolveShippingQuote({
-    netSubtotal,
-    city: cityValue,
-    department: departmentValue,
+  
+  const [shippingQuote, setShippingQuote] = useState({
+    cost: 0,
+    baseCost: null as number | null,
+    isFreeByThreshold: false,
+    isPendingAddress: true,
+    freeShippingThreshold: 0,
   });
+
+  useEffect(() => {
+    let active = true;
+    
+    getShippingCostAction({
+      cityName: cityValue,
+      departmentName: departmentValue,
+      subtotalNeto: netSubtotal,
+    }).then((quote) => {
+      if (active) {
+        setShippingQuote(quote);
+      }
+    });
+
+    return () => { active = false; };
+  }, [cityValue, departmentValue, netSubtotal]);
+
   const shippingCost = shippingQuote.cost;
 
   // Modal de celebración al entrar a checkout con envío gratis (una vez por visita).

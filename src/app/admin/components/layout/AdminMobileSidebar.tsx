@@ -43,22 +43,36 @@ export default function AdminMobileSidebar({ isOpen, pathname, onClose }: Props)
 
         {/* Navegación */}
         <nav className="flex-1 py-4 px-3 space-y-1">
-          {ADMIN_NAV.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                  isActive
-                    ? "bg-white text-[#154734]"
-                    : "text-white/70 hover:bg-white/10"
-                }`}
-              >
-                <item.icon className="w-5 h-5" />
-                {item.label}
-              </Link>
-            );
+          {ADMIN_NAV.flatMap((item) => {
+            const links =
+              item.children?.length
+                ? item.children.filter((child) => child.href)
+                : item.href
+                  ? [item]
+                  : [];
+
+            return links.map((link) => {
+              const href = link.href!;
+              const isActive =
+                href === "/admin"
+                  ? pathname === "/admin"
+                  : pathname === href || pathname.startsWith(`${href}/`);
+
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    isActive
+                      ? "bg-white text-[#154734]"
+                      : "text-white/70 hover:bg-white/10"
+                  }`}
+                >
+                  <link.icon className="w-5 h-5" />
+                  {link.label}
+                </Link>
+              );
+            });
           })}
         </nav>
 

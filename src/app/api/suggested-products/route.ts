@@ -10,10 +10,13 @@ type SuggestedProductRow = {
   slug: string;
   basePrice: { toNumber(): number } | number;
   isSet: boolean;
+  coverImageUrl: string | null;
   images: Array<{ url: string }>;
   colors: Array<{ images: Array<{ url: string }> }>;
   items: Array<{
     price: { toNumber(): number } | number | null;
+    coverImageUrl: string | null;
+    isCardFeatured: boolean;
     colors: Array<{ images: Array<{ url: string }> }>;
   }>;
 };
@@ -24,24 +27,29 @@ function toNumber(value: { toNumber(): number } | number | null | undefined): nu
 }
 
 function mapSuggestedProduct(p: SuggestedProductRow) {
+  const featuredItem =
+    p.items.find((item) => item.isCardFeatured) ?? p.items[0] ?? null;
+  const coverFromProduct = p.coverImageUrl?.trim() || null;
   const coverFromImages = p.images[0]?.url ?? null;
   const coverFromColor = p.colors[0]?.images[0]?.url ?? null;
-  const coverFromItem = p.items[0]?.colors[0]?.images[0]?.url ?? null;
-  const image = coverFromImages || coverFromColor || coverFromItem || null;
+  const coverFromItem =
+    featuredItem?.coverImageUrl?.trim() ||
+    featuredItem?.colors[0]?.images[0]?.url ||
+    null;
+  const image =
+    coverFromProduct || coverFromImages || coverFromColor || coverFromItem || null;
 
-  const itemPrices = p.isSet
-    ? p.items
-        .map((item) => toNumber(item.price))
-        .filter((price): price is number => price != null && price > 0)
-    : [];
-  const minPrice = itemPrices.length > 0 ? Math.min(...itemPrices) : null;
-  const price = toNumber(p.basePrice) ?? 0;
+  const featuredPrice = toNumber(featuredItem?.price);
+  const price =
+    p.isSet && featuredPrice != null && featuredPrice > 0
+      ? featuredPrice
+      : (toNumber(p.basePrice) ?? 0);
 
   return {
     name: p.name,
     slug: p.slug,
     price,
-    minPrice: p.isSet ? minPrice : null,
+    minPrice: null,
     image,
     isSet: p.isSet,
   };
@@ -63,6 +71,7 @@ export async function GET(request: NextRequest) {
       slug: true,
       basePrice: true,
       isSet: true,
+      coverImageUrl: true,
       images: {
         where: { colorId: null },
         orderBy: [{ isCover: "desc" }, { order: "asc" }],
@@ -84,6 +93,8 @@ export async function GET(request: NextRequest) {
         take: 6,
         select: {
           price: true,
+          coverImageUrl: true,
+          isCardFeatured: true,
           colors: {
             take: 1,
             include: {

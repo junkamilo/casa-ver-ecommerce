@@ -18,6 +18,11 @@ export async function getProductSeoUseCase(
     description: product.description,
     metaTitle: product.metaTitle,
     metaDescription: product.metaDescription,
-    firstImageUrl: product.images[0]?.url ?? null,
+    firstImageUrl:
+      (typeof product.coverImageUrl === "string" && product.coverImageUrl.trim()
+        ? product.coverImageUrl.trim()
+        : null) ??
+      product.images[0]?.url ??
+      null,
   };
 }

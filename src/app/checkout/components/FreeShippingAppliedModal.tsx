@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { Sparkles, Truck } from "lucide-react";
-import { FREE_SHIPPING_MIN_NET_SUBTOTAL } from "@/lib/shipping";
 import { LOCALE } from "../constants";
 
 interface FreeShippingAppliedModalProps {
@@ -10,6 +9,8 @@ interface FreeShippingAppliedModalProps {
   onClose: () => void;
   /** Tarifa geográfica evitada; null si aún no hay dirección. */
   shippingSavings: number | null;
+  /** Umbral de envío gratis desde ShippingConfig (COP). */
+  threshold: number;
 }
 
 const BALLOON_COLORS = ["#154734", "#C19A6B", "#FAFAFA", "#2d6a4f", "#d4a574"];
@@ -41,8 +42,9 @@ export default function FreeShippingAppliedModal({
   open,
   onClose,
   shippingSavings,
+  threshold,
 }: FreeShippingAppliedModalProps) {
-  const threshold = FREE_SHIPPING_MIN_NET_SUBTOTAL.toLocaleString(LOCALE);
+  const formattedThreshold = threshold.toLocaleString(LOCALE);
 
   useEffect(() => {
     if (!open) return;
@@ -130,7 +132,7 @@ export default function FreeShippingAppliedModal({
           </h2>
           <p className="mt-2 text-sm text-white/70">
             Tu compra supera los{" "}
-            <span className="font-bold text-[#C19A6B]">${threshold}</span> después de descuentos
+            <span className="font-bold text-[#C19A6B]">${formattedThreshold}</span> después de descuentos
           </p>
         </div>
 

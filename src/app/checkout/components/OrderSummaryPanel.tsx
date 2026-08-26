@@ -115,7 +115,7 @@ const OrderSummaryPanel = ({
 
         {shippingQuote.isFreeByThreshold && (
           <div className="mb-4">
-            <FreeShippingBanner />
+            <FreeShippingBanner threshold={shippingQuote.freeShippingThreshold ?? 0} />
           </div>
         )}
 

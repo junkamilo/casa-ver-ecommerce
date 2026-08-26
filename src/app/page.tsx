@@ -32,17 +32,6 @@ import { SEED_TESTIMONIALS } from "@/components/layout/Testimonials/constants/co
 import type { TestimonialItem } from "@/components/layout/Testimonials/types/types";
 import PaymentMethodsBanner from "@/components/PaymentMethodsBanner";
 
-
-
-type DbSlide = {
-  id: string;
-  position: number;
-  mediaUrl: string;
-  mediaType: string;
-  headline: string | null;
-  subheadline: string | null;
-};
-
 async function fetchTestimonials(): Promise<TestimonialItem[]> {
   try {
     const dbReviews = await prisma.review.findMany({
@@ -68,24 +57,31 @@ async function fetchTestimonials(): Promise<TestimonialItem[]> {
 
 async function fetchHeroSlides(): Promise<Slide[]> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = prisma as any;
-    const dbSlides: DbSlide[] = await db.heroSlide.findMany({
+    const dbSlides = await prisma.heroSlide.findMany({
       where: { isActive: true },
       orderBy: { position: "asc" },
+      select: {
+        id: true,
+        position: true,
+        mediaUrl: true,
+        mediaType: true,
+        headline: true,
+        subheadline: true,
+      },
     });
 
     // Si no hay slides en DB (primera vez), usa los estáticos como fallback
     if (dbSlides.length === 0) return SLIDES;
 
     return dbSlides.map((s, i) => ({
-      id: `hero-${s.position}`,
+      id: s.id || `hero-${s.position}`,
       image: s.mediaUrl || (SLIDES[i]?.image ?? SLIDES[0].image),
       mediaType: (s.mediaType === "video" ? "video" : "image") as "image" | "video",
       headline: s.headline ?? SLIDES[i]?.headline,
       subheadline: s.subheadline ?? SLIDES[i]?.subheadline,
     }));
-  } catch {
+  } catch (error) {
+    console.error("[HOME_HERO] No se pudieron cargar slides desde DB", error);
     return SLIDES;
   }
 }

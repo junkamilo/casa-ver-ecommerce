@@ -1,13 +1,16 @@
 import { Truck } from "lucide-react";
 import type { Announcement } from "../types";
 
+/**
+ * Anuncios estáticos de respaldo. El texto de envío gratis en la barra
+ * se construye en runtime con ShippingConfig.freeShippingThreshold.
+ */
 export const ANNOUNCEMENTS: Announcement[] = [
   {
-    text: "Envíos gratis por compras superiores a $300.000 mil pesos",
+    text: "Envíos gratis por compras superiores a $300.000",
     icon: Truck,
-  }
+  },
 ];
-
 // Cuántas copias del marquee para garantizar loop sin saltos en pantallas ultra-anchas
 export const MARQUEE_COPIES = 4;
 

@@ -47,6 +47,48 @@ describe("Collections — transformProduct (sin stock)", () => {
     expect(result.badge).toBeUndefined();
   });
 
+  it("pone coverImageUrl primero en images del card", () => {
+    const result = transformProduct(
+      baseProduct({
+        coverImageUrl: "/img/main-cover.jpg",
+        images: [{ url: "/img/p1.jpg" }, { url: "/img/p2.jpg" }],
+      }),
+    );
+
+    expect(result.coverImageUrl).toBe("/img/main-cover.jpg");
+    expect(result.images[0]).toBe("/img/main-cover.jpg");
+    expect(result.images).toEqual([
+      "/img/main-cover.jpg",
+      "/img/p1.jpg",
+      "/img/p2.jpg",
+    ]);
+  });
+
+  it("en sets sin imágenes padre usa coverImageUrl de la primera pieza", () => {
+    const result = transformProduct(
+      baseProduct({
+        isSet: true,
+        images: [],
+        items: [
+          {
+            price: 50000,
+            coverImageUrl: "/img/item-cover.jpg",
+            colors: [
+              {
+                name: "Negro",
+                hexCode: "#000",
+                images: [{ url: "/img/item-color.jpg" }],
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect(result.coverImageUrl).toBe("/img/item-cover.jpg");
+    expect(result.images[0]).toBe("/img/item-cover.jpg");
+  });
+
   it("mapea oldPrice desde comparePrice del padre cuando NO es set", () => {
     const result = transformProduct(
       baseProduct({ comparePrice: 120000, isOnSale: true }),
@@ -74,10 +116,11 @@ describe("Collections — transformProduct (sin stock)", () => {
 });
 
 describe("Collections — transformProduct (sets)", () => {
-  it("usa items[0].comparePrice como oldPrice para sets", () => {
+  it("usa la pieza representante para oldPrice y price (sin minPrice/Desde)", () => {
     const result = transformProduct(
       baseProduct({
         isSet: true,
+        basePrice: 0,
         comparePrice: 999999, // ignorado para sets
         items: [
           {
@@ -94,8 +137,51 @@ describe("Collections — transformProduct (sets)", () => {
       }),
     );
     expect(result.oldPrice).toBe(70000);
-    expect(result.minPrice).toBe(50000);
+    expect(result.price).toBe(50000);
+    expect(result.minPrice).toBeUndefined();
     expect(result.isSet).toBe(true);
+  });
+
+  it("respeta isCardFeatured aunque no sea el primer ítem", () => {
+    const result = transformProduct(
+      baseProduct({
+        isSet: true,
+        basePrice: 0,
+        images: [],
+        items: [
+          {
+            price: 145900,
+            coverImageUrl: "/img/pantalon-cover.jpg",
+            isCardFeatured: false,
+            colors: [
+              {
+                name: "Amarillo",
+                hexCode: "#ff0",
+                images: [{ url: "/img/pantalon.jpg" }],
+              },
+            ],
+          },
+          {
+            price: 129900,
+            coverImageUrl: "/img/short-cover.jpg",
+            isCardFeatured: true,
+            colors: [
+              {
+                name: "Celeste",
+                hexCode: "#0af",
+                images: [{ url: "/img/short.jpg" }],
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect(result.price).toBe(129900);
+    expect(result.coverImageUrl).toBe("/img/short-cover.jpg");
+    expect(result.images[0]).toBe("/img/short-cover.jpg");
+    expect(result.minPrice).toBeUndefined();
+    expect(result.colors?.[0]?.name).toBe("Celeste");
   });
 
   it("hace fallback a items[0].colors[0].images cuando el padre no tiene imágenes", () => {
@@ -146,10 +232,11 @@ describe("Collections — transformProduct (sets)", () => {
     ]);
   });
 
-  it("calcula minPrice ignorando items sin price", () => {
+  it("usa el precio de la primera pieza con price cuando ninguna está featured", () => {
     const result = transformProduct(
       baseProduct({
         isSet: true,
+        basePrice: 0,
         items: [
           { price: 10000, colors: [] },
           { price: null, colors: [] },
@@ -157,7 +244,8 @@ describe("Collections — transformProduct (sets)", () => {
         ],
       }),
     );
-    expect(result.minPrice).toBe(5000);
+    expect(result.price).toBe(10000);
+    expect(result.minPrice).toBeUndefined();
   });
 });
 

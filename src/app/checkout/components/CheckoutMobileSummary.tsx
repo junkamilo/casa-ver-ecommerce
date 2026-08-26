@@ -196,7 +196,12 @@ export default function CheckoutMobileSummary({
               })}
             </div>
 
-            {shippingQuote.isFreeByThreshold && <FreeShippingBanner compact />}
+            {shippingQuote.isFreeByThreshold && (
+              <FreeShippingBanner
+                compact
+                threshold={shippingQuote.freeShippingThreshold ?? 0}
+              />
+            )}
 
             <OrderTotals
               subtotal={subtotal}

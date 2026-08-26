@@ -25,6 +25,8 @@ type SetItemForm = {
   price: string;
   comparePrice: string;
   videoUrl: string;
+  coverImageUrl: string;
+  isCardFeatured: boolean;
   stock: string;
   colors: SelectedColor[];
   sizes: string[];
@@ -61,6 +63,7 @@ export type AdminProductDetailDTO = {
   isSuggested?: boolean;
   suggestedAt?: string | null;
   videoUrl?: string | null;
+  coverImageUrl?: string | null;
   garmentTypes?: string[];
   isSet?: boolean;
   colors?: SelectedColor[];
@@ -71,6 +74,8 @@ export type AdminProductDetailDTO = {
     price?: number | null;
     comparePrice?: number | null;
     videoUrl?: string | null;
+    coverImageUrl?: string | null;
+    isCardFeatured?: boolean;
     stock?: number | null;
     colors?: SelectedColor[];
     sizes?: string[];
@@ -96,6 +101,7 @@ export type ProductFormInitialValues = {
   isSuggested: boolean;
   suggestedAt: string | null;
   videoUrl: string;
+  coverImageUrl: string;
   garmentTypes: string[];
   isSet: boolean;
   selectedColors: SelectedColor[];
@@ -152,19 +158,22 @@ export function mapAdminProductDetailToFormInitialValues(
     isSuggested: product.isSuggested || false,
     suggestedAt: product.suggestedAt ? new Date(product.suggestedAt).toISOString() : null,
     videoUrl: product.videoUrl || "",
+    coverImageUrl: product.coverImageUrl || "",
     garmentTypes: product.garmentTypes ?? [],
     isSet: product.isSet || false,
     selectedColors: product.colors || [],
     selectedSizes: product.sizes || [],
     setItems:
       product.isSet && product.items?.length
-        ? product.items.map((item) => ({
+        ? product.items.map((item, index) => ({
             localId: crypto.randomUUID(),
             name: item.name || "",
             description: item.description || "",
             price: item.price?.toString() || "",
             comparePrice: item.comparePrice != null ? String(item.comparePrice) : "",
             videoUrl: item.videoUrl || "",
+            coverImageUrl: item.coverImageUrl || "",
+            isCardFeatured: Boolean(item.isCardFeatured) || (!product.items?.some((i) => i.isCardFeatured) && index === 0),
             stock: item.stock?.toString() || "",
             colors: item.colors || [],
             sizes: item.sizes || [],
@@ -192,6 +201,7 @@ export function mapProductFormToCreatePayload(input: {
   isSuggested: boolean;
   suggestedAt: string | null;
   videoUrl: string;
+  coverImageUrl: string;
   garmentTypes: string[];
   isSet: boolean;
   selectedColors: SelectedColor[];
@@ -227,6 +237,7 @@ export function mapProductFormToCreatePayload(input: {
     isSuggested: input.isSuggested,
     suggestedAt: input.suggestedAt ?? null,
     videoUrl: input.videoUrl || null,
+    coverImageUrl: input.coverImageUrl || null,
     garmentTypes: input.garmentTypes,
     isSet: input.isSet,
     colors: input.selectedColors,
@@ -238,6 +249,8 @@ export function mapProductFormToCreatePayload(input: {
           price: item.price ? parseFloat(item.price) : null,
           comparePrice: item.comparePrice ? parseFloat(item.comparePrice) : null,
           videoUrl: item.videoUrl || null,
+          coverImageUrl: item.coverImageUrl || null,
+          isCardFeatured: Boolean(item.isCardFeatured),
           stock: calcEffectiveStock(item.colors, item.stock),
           colors: item.colors,
           sizes: item.sizes,

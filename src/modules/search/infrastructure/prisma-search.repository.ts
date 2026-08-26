@@ -10,6 +10,7 @@ const PRODUCT_SELECT = {
   name: true,
   slug: true,
   basePrice: true,
+  coverImageUrl: true,
   images: {
     where: { url: { not: "" } },
     take: 8,
@@ -31,6 +32,8 @@ const PRODUCT_SELECT = {
     orderBy: { order: "asc" },
     select: {
       price: true,
+      coverImageUrl: true,
+      isCardFeatured: true,
       colors: {
         take: 1,
         select: {

@@ -72,9 +72,14 @@ export function useProductClient(
     : product.description;
 
   // Galería maestra: incluye imágenes Y videos por color (y generales).
+  // En piezas de set, la portada principal de la pieza va primero (sin color).
   const masterGallery = useMemo((): GalleryMediaItem[] => {
     const items: GalleryMediaItem[] = [];
-    const activeGeneralImages = activeItem ? [] : product.generalImages;
+    const activeGeneralImages = activeItem
+      ? activeItem.coverImageUrl
+        ? [activeItem.coverImageUrl]
+        : []
+      : product.generalImages;
 
     activeGeneralImages.forEach((url) => {
       items.push({ url, color: null, isVideo: isVideoUrl(url) });
@@ -82,6 +87,7 @@ export function useProductClient(
 
     activeColors.forEach((color) => {
       color.images.forEach((url) => {
+        if (items.some((existing) => existing.url === url)) return;
         items.push({ url, color, isVideo: isVideoUrl(url) });
       });
     });

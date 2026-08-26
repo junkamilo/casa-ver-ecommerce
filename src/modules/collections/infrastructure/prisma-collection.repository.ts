@@ -24,6 +24,7 @@ const STANDARD_SELECT = {
   isProductNew: true,
   isProductNewAt: true,
   isOnSale: true,
+  coverImageUrl: true,
   images: {
     orderBy: { order: "asc" as const },
     take: 8,
@@ -34,6 +35,8 @@ const STANDARD_SELECT = {
     select: {
       price: true,
       comparePrice: true,
+      coverImageUrl: true,
+      isCardFeatured: true,
       colors: {
         select: {
           name: true,
@@ -69,6 +72,7 @@ const WITH_STOCK_SELECT = {
   isProductNew: true,
   isProductNewAt: true,
   isOnSale: true,
+  coverImageUrl: true,
   images: {
     orderBy: { order: "asc" as const },
     take: 8,
@@ -79,6 +83,8 @@ const WITH_STOCK_SELECT = {
     select: {
       price: true,
       comparePrice: true,
+      coverImageUrl: true,
+      isCardFeatured: true,
       colors: {
         select: {
           name: true,

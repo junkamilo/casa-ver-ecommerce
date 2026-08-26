@@ -31,6 +31,8 @@ type RawItemColor = {
 type RawItem = {
   price: unknown;
   comparePrice?: unknown;
+  coverImageUrl?: string | null;
+  isCardFeatured?: boolean;
   colors: RawItemColor[];
 };
 
@@ -43,6 +45,7 @@ export interface RawCollectionProduct {
   isProductNew: boolean;
   isProductNewAt: Date | null;
   isOnSale: boolean;
+  coverImageUrl?: string | null;
   images: RawImage[];
   items: RawItem[];
   colors: RawColor[];
@@ -88,33 +91,45 @@ function computeTotalStock(p: RawCollectionProduct): number | undefined {
 export function transformProduct(p: RawCollectionProduct): CollectionProduct {
   const totalStock = computeTotalStock(p);
 
+  const featuredItem =
+    p.isSet && p.items.length > 0
+      ? (p.items.find((item) => item.isCardFeatured) ?? p.items[0])
+      : null;
+
+  const coverImageUrl =
+    (typeof p.coverImageUrl === "string" && p.coverImageUrl.trim()) ||
+    (featuredItem && typeof featuredItem.coverImageUrl === "string"
+      ? featuredItem.coverImageUrl.trim()
+      : "") ||
+    null;
+
   const parentImages = p.images.map((i) => i.url);
-  const cardImages: string[] =
+  const fallbackImages: string[] =
     parentImages.length > 0
       ? parentImages
-      : p.isSet && (p.items?.[0]?.colors?.[0]?.images?.length ?? 0) > 0
-        ? p.items[0].colors[0].images.map((i) => i.url)
+      : featuredItem && (featuredItem.colors?.[0]?.images?.length ?? 0) > 0
+        ? featuredItem.colors[0].images.map((i) => i.url)
         : [];
 
-  const itemPrices: number[] =
-    p.isSet && p.items?.length > 0
-      ? p.items
-          .map((it) => (it.price ? Number(it.price) : null))
-          .filter((v): v is number => v !== null)
-      : [];
-  const minPrice = itemPrices.length > 0 ? Math.min(...itemPrices) : undefined;
+  const cardImages: string[] = coverImageUrl
+    ? [coverImageUrl, ...fallbackImages.filter((url) => url !== coverImageUrl)]
+    : fallbackImages;
 
-  // Para sets: oldPrice = comparePrice de la primera subcategoría (si existe).
+  // Para sets: precio de la pieza representante (sin "Desde"/minPrice).
+  const featuredPrice =
+    featuredItem?.price != null ? Number(featuredItem.price) : null;
+
+  // Para sets: oldPrice = comparePrice de la pieza representante.
   // Para productos normales: oldPrice = comparePrice del producto padre.
   const oldPrice = p.isSet
-    ? p.items?.[0]?.comparePrice
-      ? Number(p.items[0].comparePrice)
+    ? featuredItem?.comparePrice
+      ? Number(featuredItem.comparePrice)
       : undefined
     : p.comparePrice
       ? Number(p.comparePrice)
       : undefined;
 
-  // Para sets: si el padre no tiene colores, usar los de la primera subcategoría.
+  // Para sets: si el padre no tiene colores, usar los de la pieza representante.
   const parentColors =
     p.colors.length > 0
       ? p.colors.map((c) => {
@@ -127,9 +142,9 @@ export function transformProduct(p: RawCollectionProduct): CollectionProduct {
         })
       : undefined;
 
-  const firstItemColors =
-    p.isSet && !parentColors && (p.items?.[0]?.colors?.length ?? 0) > 0
-      ? p.items[0].colors.map((c) => {
+  const featuredItemColors =
+    p.isSet && !parentColors && (featuredItem?.colors?.length ?? 0) > 0
+      ? featuredItem!.colors.map((c) => {
           const urls = c.images.map((i) => i.url);
           return {
             name: c.name,
@@ -141,19 +156,23 @@ export function transformProduct(p: RawCollectionProduct): CollectionProduct {
 
   return {
     images: cardImages,
+    coverImageUrl,
     name: p.name,
     slug: p.slug,
-    price: Number(p.basePrice),
+    price:
+      p.isSet && featuredPrice != null && !Number.isNaN(featuredPrice)
+        ? featuredPrice
+        : Number(p.basePrice),
     oldPrice,
     isSet: p.isSet || false,
-    minPrice,
+    minPrice: undefined,
     badge: computeProductBadge({
       isProductNew: p.isProductNew,
       isProductNewAt: p.isProductNewAt,
       isOnSale: p.isOnSale,
       ...(totalStock !== undefined ? { stock: totalStock } : {}),
     }),
-    colors: parentColors ?? firstItemColors,
+    colors: parentColors ?? featuredItemColors,
   };
 }
 

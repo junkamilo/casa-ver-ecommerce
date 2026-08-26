@@ -8,6 +8,7 @@ import { SIZES, MAX_IMAGES_PER_COLOR } from "../../constants";
 import ImageUpload from "@/components/ui/image-upload";
 import FieldError from "../shared/FieldError";
 import SectionTitle from "./SectionTitle";
+import ProductCoverPicker from "./ProductCoverPicker";
 
 const normalizeColorName = (name: string) =>
   name
@@ -25,6 +26,9 @@ export default function ColorsSection({
   colorError,
   sizeError,
   colorImagesError,
+  coverImageUrl = "",
+  coverImageError,
+  onCoverImageUrl,
   onToggleColor,
   onToggleSize,
   onSetColorImages,
@@ -234,6 +238,18 @@ export default function ColorsSection({
             );
           })}
         </div>
+      )}
+
+      {selectedColors.length > 0 && onCoverImageUrl && (
+        <ProductCoverPicker
+          title="Portada principal del producto"
+          helpText="Elige una foto o video ya subido en cualquier color. Se muestra en el Home hasta que el cliente elija un color."
+          colors={selectedColors}
+          value={coverImageUrl}
+          onChange={onCoverImageUrl}
+          disabled={disabled}
+          error={coverImageError}
+        />
       )}
 
       {/* ── Tallas ─────────────────────────────────────────────── */}

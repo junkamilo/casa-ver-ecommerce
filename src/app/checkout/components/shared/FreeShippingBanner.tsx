@@ -1,14 +1,18 @@
 import { Truck } from "lucide-react";
-import { FREE_SHIPPING_MIN_NET_SUBTOTAL } from "@/lib/shipping";
 import { LOCALE } from "../../constants";
 
 interface FreeShippingBannerProps {
   /** compact=true → estilos reducidos para el panel mobile */
   compact?: boolean;
+  /** Umbral de envío gratis desde ShippingConfig (COP). */
+  threshold: number;
 }
 
-export default function FreeShippingBanner({ compact = false }: FreeShippingBannerProps) {
-  const threshold = FREE_SHIPPING_MIN_NET_SUBTOTAL.toLocaleString(LOCALE);
+export default function FreeShippingBanner({
+  compact = false,
+  threshold,
+}: FreeShippingBannerProps) {
+  const formatted = threshold.toLocaleString(LOCALE);
 
   return (
     <div
@@ -22,8 +26,8 @@ export default function FreeShippingBanner({ compact = false }: FreeShippingBann
         aria-hidden
       />
       <p className="font-medium leading-snug">
-        <span className="font-bold">¡Envío gratis!</span> Tu compra supera los ${threshold} después
-        de descuentos.
+        <span className="font-bold">¡Envío gratis!</span> Tu compra supera los ${formatted}{" "}
+        después de descuentos.
       </p>
     </div>
   );

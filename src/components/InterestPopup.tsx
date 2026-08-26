@@ -24,9 +24,6 @@ const INITIAL_DELAY_MS = 5_000;
 const MAX_SHOWS_PER_SESSION = 4;
 
 function formatPrice(item: SuggestedItem): string {
-  if (item.isSet && item.minPrice != null) {
-    return `Desde $${item.minPrice.toLocaleString("es-CO")}`;
-  }
   return `$${item.price.toLocaleString("es-CO")}`;
 }
 

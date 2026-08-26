@@ -50,10 +50,10 @@ export default function HeroSection({ slides = SLIDES }: HeroSectionProps) {
       )}
 
       {/* Botones CTA */}
-      <div className="absolute inset-0 flex flex-col justify-end z-20 pointer-events-none px-4 sm:px-6 md:px-8 lg:px-12 2xl:px-0">
-        <div className="pb-3 sm:pb-16 md:pb-16 lg:pb-20 max-w-2xl 2xl:mx-auto 2xl:max-w-4xl">
+      <div className="absolute inset-0 flex flex-col justify-end z-20 pointer-events-none px-4 sm:px-6 md:px-8 lg:px-12">
+        <div className="pb-3 sm:pb-16 md:pb-16 lg:pb-20 w-full flex justify-center">
           <div
-            className="flex flex-row items-center gap-2 sm:gap-3 md:gap-6 opacity-0 animate-hero-in pointer-events-auto"
+            className="flex flex-row items-center justify-center gap-2 sm:gap-3 md:gap-6 opacity-0 animate-hero-in pointer-events-auto"
             style={{ animationDelay: "700ms", animationFillMode: "forwards" }}
           >
             {HERO_BUTTONS.map((btn) => (

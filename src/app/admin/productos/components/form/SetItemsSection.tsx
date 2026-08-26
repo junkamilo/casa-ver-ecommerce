@@ -11,6 +11,7 @@ export default function SetItemsSection({
   onAdd,
   onRemove,
   onUpdate,
+  onFeatureForHome,
   onToggleColor,
   onToggleSize,
   onSetColorImages,
@@ -20,6 +21,13 @@ export default function SetItemsSection({
 }: SetItemsSectionProps & { scrollContainer?: Element | null }) {
   return (
     <div className="space-y-4">
+      {items.length > 0 ? (
+        <p className="text-xs text-gray-400 leading-relaxed">
+          Marca con el check la subcategoría que se muestra en Home (precio y portada).
+          Por defecto es la primera.
+        </p>
+      ) : null}
+
       {items.length === 0 ? (
         <div className={`text-center py-10 bg-gray-50 rounded-2xl border-2 border-dashed transition-colors ${noItemsError ? "border-red-400 bg-red-50/30" : "border-gray-200"}`}>
           <p className={`text-sm font-semibold ${noItemsError ? "text-red-500" : "text-gray-500"}`}>
@@ -39,6 +47,7 @@ export default function SetItemsSection({
               errors={itemErrors[item.localId]}
               onRemove={onRemove}
               onUpdate={onUpdate}
+              onFeatureForHome={onFeatureForHome}
               onToggleColor={onToggleColor}
               onToggleSize={onToggleSize}
               onSetColorImages={onSetColorImages}

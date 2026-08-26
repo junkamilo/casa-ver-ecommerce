@@ -1,8 +1,13 @@
 import Link from "next/link";
 import type { NavItemProps } from "../types";
 import { NavItemContent } from "./NavItemContent";
+import { NavGroup } from "./NavGroup";
 
 export function NavItem({ item, collapsed }: NavItemProps) {
+  if (item.children?.length) {
+    return <NavGroup item={item} collapsed={collapsed} />;
+  }
+
   const baseClass = `relative flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200 group overflow-hidden ${
     collapsed ? "justify-center p-3" : "px-4 py-3"
   } ${

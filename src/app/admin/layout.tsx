@@ -10,11 +10,7 @@ import NotificationsBell from "./components/layout/NotificationsBell";
 import AppSidebar from "@/components/layout/AppSidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { ADMIN_NAV } from "./constants";
-
-const getPageLabel = (pathname: string): string => {
-  if (pathname === "/admin") return "Dashboard";
-  return pathname.split("/").pop() ?? "Panel";
-};
+import { buildAdminSidebarNav, getAdminPageLabel } from "./utils/build-sidebar-nav";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
@@ -41,23 +37,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (status === "loading") return <LoadingScreen />;
   if (!isAdmin) return <AccessDenied />;
 
-  const isActive = (href: string) =>
-    href === "/admin"
-      ? pathname === "/admin"
-      : pathname === href || pathname.startsWith(href + "/");
+  const sidebarNav = buildAdminSidebarNav(ADMIN_NAV, pathname);
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
       <AppSidebar
         isOpen={isSidebarOpen}
         onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-        navItems={ADMIN_NAV.map((item) => ({
-          id: item.href,
-          label: item.label,
-          icon: item.icon,
-          isActive: isActive(item.href),
-          href: item.href,
-        }))}
+        navItems={sidebarNav}
         brandSubtitle="Admin Panel"
         userName={userName}
         userInitial={userInitial}
@@ -69,7 +56,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <AppTopHeader
           onMenuOpen={() => setIsSidebarOpen(!isSidebarOpen)}
           breadcrumbRoot="Admin"
-          breadcrumbCurrent={getPageLabel(pathname)}
+          breadcrumbCurrent={getAdminPageLabel(pathname)}
           rightSlot={<NotificationsBell />}
         />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-gray-50 scrollbar-hide">
@@ -78,7 +65,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </main>
       </div>
-      <Toaster position="top-right" richColors offset="5rem" />
+      <Toaster position="top-right" closeButton offset="5rem" />
     </div>
   );
 }

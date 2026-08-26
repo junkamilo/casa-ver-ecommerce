@@ -1,8 +1,8 @@
 // ---------------------------------------------------------------------------
 // Locale
 // ---------------------------------------------------------------------------
-// El cálculo del costo de envío vive en `resolveShippingQuote` de
-// `src/lib/shipping.ts` (subtotal neto + ciudad/departamento).
+// Costo de envío + umbral de envío gratis: getShippingCostAction → DB
+// (ShippingConfig.freeShippingThreshold / tarifas por municipio).
 export const LOCALE = "es-CO";
 
 // ---------------------------------------------------------------------------

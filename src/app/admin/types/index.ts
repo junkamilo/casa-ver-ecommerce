@@ -42,6 +42,8 @@ export interface OrderStatusInfo {
 
 export interface AdminNavItem {
   label: string;
-  href: string;
+  href?: string;
   icon: LucideIcon;
+  /** Sub-ítems del módulo (ej. Configuraciones → Precio envíos) */
+  children?: AdminNavItem[];
 }

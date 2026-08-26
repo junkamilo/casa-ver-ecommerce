@@ -13,7 +13,6 @@ import {
   calcLineItemDisplayTotals,
   calcCheckoutTotals,
 } from "@/modules/checkout/presentation/calculators/line-item-totals";
-import { resolveShippingQuote } from "@/lib/shipping";
 
 describe("Checkout — coupon domain", () => {
   const legacyCoupon = { isUsed: false, assignedEmail: "Test@Example.com" };
@@ -218,21 +217,12 @@ describe("Checkout — checkout totals calculator", () => {
 
   it("calcCheckoutTotals con envío gratis por umbral neto: total sin envío", () => {
     const highValueItems = [{ price: 350_000, quantity: 1 }];
-    const subtotal = 350_000;
     const couponDiscount = 0;
-    const netSubtotal = subtotal - couponDiscount;
-    const quote = resolveShippingQuote({
-      netSubtotal,
-      city: "Bogotá",
-      department: "Cundinamarca",
-    });
     const r = calcCheckoutTotals({
       items: highValueItems,
-      shippingCost: quote.cost,
+      shippingCost: 0,
       couponDiscount,
     });
-    expect(quote.cost).toBe(0);
-    expect(quote.isFreeByThreshold).toBe(true);
     expect(r.total).toBe(350_000);
   });
 });

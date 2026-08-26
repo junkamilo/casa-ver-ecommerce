@@ -19,6 +19,7 @@ export type ProductCreateInputDTO = {
   isSuggested?: boolean;
   suggestedAt?: string | null;
   videoUrl?: string | null;
+  coverImageUrl?: string | null;
   isSet?: boolean;
   colors: ColorInput[];
   sizes: string[];

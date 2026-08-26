@@ -18,7 +18,7 @@ export function calcEffectiveStock(colors: SelectedColor[], fallbackStock: strin
 }
 
 /** Factory: crea un SetItemForm vacío con localId único */
-export function newSetItem(): SetItemForm {
+export function newSetItem(isCardFeatured = false): SetItemForm {
   return {
     localId: crypto.randomUUID(),
     name: "",
@@ -26,6 +26,8 @@ export function newSetItem(): SetItemForm {
     price: "",
     comparePrice: "",
     videoUrl: "",
+    coverImageUrl: "",
+    isCardFeatured,
     stock: "",
     colors: [],
     sizes: [],

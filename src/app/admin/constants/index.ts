@@ -11,6 +11,9 @@ import {
   Palette,
   MessageSquare,
   TicketPercent,
+  Settings,
+  Truck,
+  MapPin,
 } from "lucide-react";
 import type { NavItem, AdminNavItem } from "../types";
 
@@ -26,6 +29,23 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { label: "Reseñas",   href: "/admin/resenas",           icon: MessageSquare },
   { label: "Reportes",   href: "/admin/estadisticas",      icon: BarChart3 },
   { label: "Header",     href: "/admin/hero",               icon: ImageIcon },
+  {
+    label: "Configuraciones",
+    icon: Settings,
+    href: "/admin/configuraciones",
+    children: [
+      {
+        label: "Precio envíos",
+        href: "/admin/configuraciones/precio-envios",
+        icon: Truck,
+      },
+      {
+        label: "Ciudades de envío",
+        href: "/admin/configuraciones/ciudades-envios",
+        icon: MapPin,
+      },
+    ],
+  },
   { label: "Admins",     href: "/admin/administradores",   icon: Shield },
   { label: "Mi Perfil",  href: "/admin/perfil",            icon: UserCog },
 ];

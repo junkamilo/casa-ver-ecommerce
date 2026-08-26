@@ -3,6 +3,10 @@
 import { createOrderUseCase } from "@/modules/checkout/application/create-order.use-case";
 import { markOrderPaidUseCase } from "@/modules/orders/application/mark-order-paid.use-case";
 import { releaseOrderStockUseCase } from "@/modules/orders/application/release-order-stock.use-case";
+import { getShippingCost } from "@/modules/shipping/application/use-cases/get-shipping-cost.use-case";
+import { getShippingConfigFromDb } from "@/modules/shipping/infrastructure/prisma-shipping-config.repository";
+import { prisma } from "@/lib/prisma";
+import { normalizeString } from "@/modules/geography/domain/normalize-string";
 
 // ---------------------------------------------------------------------------
 // Tipos públicos del Server Action — preservados byte-a-byte para que
@@ -87,4 +91,64 @@ export async function releaseOrderStock(
 // ---------------------------------------------------------------------------
 export async function markOrderPaid(transactionId: string, paymentId: string) {
   return markOrderPaidUseCase(transactionId, paymentId);
+}
+
+export async function getShippingCostAction(input: {
+  cityName?: string;
+  departmentName?: string;
+  subtotalNeto: number;
+}) {
+  const config = await getShippingConfigFromDb();
+  const freeShippingThreshold = config?.freeShippingThreshold ?? 0;
+  const qualifiesForFreeShipping = input.subtotalNeto >= freeShippingThreshold;
+
+  if (!input.cityName || !input.departmentName) {
+    return {
+      cost: 0,
+      baseCost: null,
+      isFreeByThreshold: qualifiesForFreeShipping,
+      isPendingAddress: true,
+      freeShippingThreshold,
+    };
+  }
+
+  const municipality = await prisma.municipality.findFirst({
+    where: {
+      normalizedName: normalizeString(input.cityName),
+      department: { name: input.departmentName },
+    },
+  });
+
+  if (!municipality) {
+    return {
+      cost: 0,
+      baseCost: null,
+      isFreeByThreshold: qualifiesForFreeShipping,
+      isPendingAddress: true,
+      freeShippingThreshold,
+    };
+  }
+
+  const quote = await getShippingCost({
+    municipalityId: municipality.id,
+    subtotalNeto: input.subtotalNeto,
+  });
+
+  if (!quote.ok) {
+    return {
+      cost: 0,
+      baseCost: null,
+      isFreeByThreshold: qualifiesForFreeShipping,
+      isPendingAddress: true,
+      freeShippingThreshold,
+    };
+  }
+
+  return {
+    cost: quote.cost,
+    baseCost: quote.baseCost,
+    isFreeByThreshold: quote.isFreeByThreshold,
+    isPendingAddress: false,
+    freeShippingThreshold: quote.freeShippingThreshold,
+  };
 }

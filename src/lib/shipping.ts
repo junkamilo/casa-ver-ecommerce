@@ -12,7 +12,7 @@ export const SHIPPING_SANTANDER = 11_000;
 export const SHIPPING_NATIONAL = 18_000;
 export const SHIPPING_ISLANDS = 30_000;
 
-/** Subtotal neto (productos − cupón) mínimo para envío gratis. */
+/** @deprecated Preferir ShippingConfig.freeShippingThreshold (DB). Solo fallback UI. */
 export const FREE_SHIPPING_MIN_NET_SUBTOTAL = 300_000;
 
 export interface ShippingQuote {
@@ -20,6 +20,8 @@ export interface ShippingQuote {
   baseCost: number | null;
   isFreeByThreshold: boolean;
   isPendingAddress: boolean;
+  /** Umbral admin (ShippingConfig.freeShippingThreshold). Fuente de verdad en DB. */
+  freeShippingThreshold?: number;
 }
 
 /**

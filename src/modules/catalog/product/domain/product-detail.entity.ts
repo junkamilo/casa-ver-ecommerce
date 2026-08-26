@@ -72,6 +72,7 @@ interface RawItem {
   price: unknown;
   comparePrice: unknown;
   videoUrl?: string | null;
+  coverImageUrl?: string | null;
   colors: RawColor[];
 }
 
@@ -90,6 +91,7 @@ interface RawProductDetail {
   basePrice: unknown;
   comparePrice: unknown;
   videoUrl: string | null;
+  coverImageUrl?: string | null;
   isSet: boolean;
   isProductNew: boolean;
   isProductNewAt: Date | null;
@@ -131,6 +133,10 @@ export function mapUIItems(items: RawItem[]): UIProductItem[] {
     price: item.price ? Number(item.price) : null,
     comparePrice: item.comparePrice ? Number(item.comparePrice) : null,
     videoUrl: item.videoUrl ?? null,
+    coverImageUrl:
+      typeof item.coverImageUrl === "string" && item.coverImageUrl.trim()
+        ? item.coverImageUrl.trim()
+        : null,
     stock: item.colors.reduce(
       (acc, c) => acc + c.variants.reduce((s, v) => s + v.stock, 0),
       0,
@@ -161,6 +167,11 @@ export function mapUIProduct(
   resolvedVideoUrl: string | null,
   allGeneralImages: string[],
 ): UIProduct {
+  const coverImageUrl =
+    typeof product.coverImageUrl === "string" && product.coverImageUrl.trim()
+      ? product.coverImageUrl.trim()
+      : null;
+
   return {
     id: product.id,
     name: product.name,
@@ -169,6 +180,7 @@ export function mapUIProduct(
     basePrice: Number(product.basePrice),
     comparePrice: product.comparePrice ? Number(product.comparePrice) : null,
     videoUrl: resolvedVideoUrl,
+    coverImageUrl,
     generalImages: allGeneralImages.filter((url) => !isVideoUrl(url)),
     colors: product.colors.map(mapUIColor),
     rating: liveRating,
@@ -253,11 +265,17 @@ export function resolveInitialItemId(
 // ── Resolver galería e información de video ─────────────────────────────────
 
 export function resolveGalleryAndVideo(
-  product: Pick<RawProductDetail, "images" | "videoUrl">,
+  product: Pick<RawProductDetail, "images" | "videoUrl" | "coverImageUrl">,
 ): { allGeneralImages: string[]; resolvedVideoUrl: string | null } {
-  const allGeneralImages: string[] = product.images
+  const fromImages = product.images
     .filter((img) => !img.colorId)
     .map((img) => img.url);
+  const cover =
+    typeof product.coverImageUrl === "string" && product.coverImageUrl.trim()
+      ? product.coverImageUrl.trim()
+      : null;
+  const allGeneralImages =
+    cover && !fromImages.includes(cover) ? [cover, ...fromImages] : fromImages;
   const dbVideoUrl = product.videoUrl;
   const resolvedVideoUrl =
     dbVideoUrl ?? allGeneralImages.find(isVideoUrl) ?? null;

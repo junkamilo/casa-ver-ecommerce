@@ -7,6 +7,7 @@ import {
 } from "@/modules/adminCatalog/hero/application/hero.use-case";
 import { runAdminRoute } from "@/server/http/admin-route";
 import { toErrorResponse } from "@/server/http/error-response";
+import { revalidateHeroPages } from "@/lib/revalidate-hero-pages";
 
 export async function GET() {
   return runAdminRoute(async () => {
@@ -24,6 +25,7 @@ export async function POST(req: Request) {
     try {
       const body = await req.json();
       const slide = await createHeroSlideUseCase(body, admin.role);
+      revalidateHeroPages();
       return NextResponse.json(slide, { status: 201 });
     } catch (error) {
       return toErrorResponse(error);
@@ -36,6 +38,7 @@ export async function PUT(req: Request) {
     try {
       const body = await req.json();
       const slide = await updateHeroSlideUseCase(body, admin.role);
+      revalidateHeroPages();
       return NextResponse.json(slide);
     } catch (error) {
       return toErrorResponse(error);
@@ -49,6 +52,7 @@ export async function DELETE(req: Request) {
       const { searchParams } = new URL(req.url);
       const id = searchParams.get("id");
       const result = await deleteHeroSlideUseCase(id, admin.role);
+      revalidateHeroPages();
       return NextResponse.json(result);
     } catch (error) {
       return toErrorResponse(error);

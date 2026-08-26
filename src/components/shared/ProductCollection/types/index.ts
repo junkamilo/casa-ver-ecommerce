@@ -2,6 +2,8 @@
 
 export interface CollectionProduct {
   images: string[];
+  /** Portada principal del producto (Home sin color seleccionado). */
+  coverImageUrl?: string | null;
   name: string;
   price: number;
   oldPrice?: number;

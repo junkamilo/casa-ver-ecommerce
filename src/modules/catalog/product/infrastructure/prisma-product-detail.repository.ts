@@ -29,6 +29,7 @@ export class PrismaProductDetailRepository {
         description: true,
         metaTitle: true,
         metaDescription: true,
+        coverImageUrl: true,
         images: {
           where: { colorId: null },
           orderBy: { order: "asc" },

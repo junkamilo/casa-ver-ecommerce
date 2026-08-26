@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useFormContext, useController } from "react-hook-form";
-import { getDepartamentos, getMunicipiosForDepartment } from "@/lib/constants/colombia";
+import { getPublicDepartmentsAction, getPublicMunicipalitiesAction } from "@/app/actions/geography";
 import { INPUT_CLS, LABEL_CLS } from "../constants";
 import type { CheckoutFormData } from "../types/schema";
 import CustomSelect from "./CustomSelect";
@@ -33,6 +33,32 @@ export function DeliveryFormFields() {
 
   const selectedDepartment = deptField.value;
 
+  const [departments, setDepartments] = useState<string[]>([]);
+  const [muniCache, setMuniCache] = useState<{ dept: string; list: string[] } | null>(null);
+
+  // Cargar departamentos al montar
+  useEffect(() => {
+    getPublicDepartmentsAction().then(setDepartments);
+  }, []);
+
+  // Cargar municipios cuando el departamento cambia
+  useEffect(() => {
+    if (!selectedDepartment) return;
+    const dept = selectedDepartment;
+    let cancelled = false;
+    getPublicMunicipalitiesAction(dept).then((list) => {
+      if (!cancelled) setMuniCache({ dept, list });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDepartment]);
+
+  const municipalities =
+    selectedDepartment && muniCache?.dept === selectedDepartment
+      ? muniCache.list
+      : [];
+
   // Limpiar ciudad cuando el departamento CAMBIA (no en el primer render)
   const prevDeptRef = useRef<string | undefined>(undefined);
   useEffect(() => {
@@ -41,10 +67,6 @@ export function DeliveryFormFields() {
     }
     prevDeptRef.current = selectedDepartment;
   }, [selectedDepartment, setValue]);
-
-  const municipios = selectedDepartment
-    ? getMunicipiosForDepartment(selectedDepartment)
-    : [];
 
   return (
     <div className="space-y-4 sm:space-y-5">
@@ -152,7 +174,7 @@ export function DeliveryFormFields() {
           label="Departamento"
           value={deptField.value ?? ""}
           onChange={(val) => deptField.onChange(val)}
-          options={getDepartamentos()}
+          options={departments}
           placeholder="Seleccionar"
           searchable
           error={errors.department?.message}
@@ -161,7 +183,7 @@ export function DeliveryFormFields() {
           label="Ciudad / Municipio"
           value={cityField.value ?? ""}
           onChange={(val) => cityField.onChange(val)}
-          options={municipios}
+          options={municipalities}
           placeholder={
             selectedDepartment ? "Seleccionar ciudad" : "Primero elige departamento"
           }

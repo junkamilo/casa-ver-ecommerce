@@ -53,6 +53,7 @@ export function useProductForm() {
   const colorImageCache = useRef<Record<string, string[]>>({});
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [videoUrl, setVideoUrl] = useState("");
+  const [coverImageUrl, setCoverImageUrl] = useState("");
 
   const [garmentTypes, setGarmentTypes] = useState<string[]>([]);
 
@@ -80,6 +81,7 @@ export function useProductForm() {
     setSelectedColors([]);
     setSelectedSizes([]);
     setVideoUrl("");
+    setCoverImageUrl("");
     setGarmentTypes([]);
     setIsSet(false);
     setSetItems([]);
@@ -112,6 +114,7 @@ export function useProductForm() {
     setIsSuggested(mapped.isSuggested);
     setSuggestedAt(mapped.suggestedAt);
     setVideoUrl(mapped.videoUrl);
+    setCoverImageUrl(mapped.coverImageUrl || "");
     setGarmentTypes(mapped.garmentTypes);
     setIsSet(mapped.isSet);
 
@@ -190,6 +193,7 @@ export function useProductForm() {
       isSuggested,
       suggestedAt,
       videoUrl,
+      coverImageUrl,
       garmentTypes,
       isSet,
       selectedColors,
@@ -204,21 +208,31 @@ export function useProductForm() {
       const key = normalizeColorName(name);
       const existing = prev.find((c) => normalizeColorName(c.name) === key);
       if (existing) {
-        // Al deseleccionar: guardar imágenes en caché antes de eliminar
         if (existing.images.length > 0) {
           colorImageCache.current[name] = existing.images;
         }
-        return prev.filter((c) => normalizeColorName(c.name) !== key);
+        const next = prev.filter((c) => normalizeColorName(c.name) !== key);
+        const remainingUrls = new Set(next.flatMap((c) => c.images));
+        if (coverImageUrl && !remainingUrls.has(coverImageUrl)) {
+          setCoverImageUrl("");
+        }
+        return next;
       }
-      // Al seleccionar: restaurar imágenes del caché si existen
       const cachedImages = colorImageCache.current[name] ?? [];
       return [...prev, { name, hexCode, images: cachedImages, variantStocks: {} }];
     });
 
-  const setColorImages = (colorName: string, images: string[]) =>
-    setSelectedColors((prev) =>
-      prev.map((c) => (c.name === colorName ? { ...c, images } : c))
-    );
+  const setColorImages = (colorName: string, images: string[]) => {
+    setSelectedColors((prev) => {
+      const next = prev.map((c) => (c.name === colorName ? { ...c, images } : c));
+      const allUrls = next.flatMap((c) => c.images);
+      setCoverImageUrl((current) => {
+        if (current && allUrls.includes(current)) return current;
+        return allUrls[0] ?? "";
+      });
+      return next;
+    });
+  };
 
   const toggleSize = (size: string) => {
     setSelectedSizes((prev) => {
@@ -245,14 +259,31 @@ export function useProductForm() {
 
   // ── Helpers subcategorías ─────────────────────────────────────────────────
 
-  const addSetItem = () => setSetItems((prev) => [...prev, newSetItem()]);
+  const addSetItem = () =>
+    setSetItems((prev) => [...prev, newSetItem(prev.length === 0)]);
 
   const removeSetItem = (localId: string) =>
-    setSetItems((prev) => prev.filter((i) => i.localId !== localId));
+    setSetItems((prev) => {
+      const next = prev.filter((i) => i.localId !== localId);
+      if (next.length === 0) return next;
+      if (next.some((i) => i.isCardFeatured)) return next;
+      return next.map((item, index) => ({
+        ...item,
+        isCardFeatured: index === 0,
+      }));
+    });
 
   const updateSetItem = (localId: string, updates: Partial<SetItemForm>) =>
     setSetItems((prev) =>
       prev.map((i) => (i.localId === localId ? { ...i, ...updates } : i))
+    );
+
+  const featureSetItemForHome = (localId: string) =>
+    setSetItems((prev) =>
+      prev.map((i) => ({
+        ...i,
+        isCardFeatured: i.localId === localId,
+      }))
     );
 
   const toggleSetItemColor = (localId: string, colorName: string, hexCode: string) =>
@@ -317,10 +348,13 @@ export function useProductForm() {
     setSetItems((prev) =>
       prev.map((i) => {
         if (i.localId !== localId) return i;
-        return {
-          ...i,
-          colors: i.colors.map((c) => (c.name === colorName ? { ...c, images } : c)),
-        };
+        const colors = i.colors.map((c) => (c.name === colorName ? { ...c, images } : c));
+        const allUrls = colors.flatMap((c) => c.images);
+        const coverImageUrl =
+          i.coverImageUrl && allUrls.includes(i.coverImageUrl)
+            ? i.coverImageUrl
+            : allUrls[0] ?? "";
+        return { ...i, colors, coverImageUrl };
       })
     );
 
@@ -343,6 +377,7 @@ export function useProductForm() {
     selectedColors,
     selectedSizes,
     videoUrl, setVideoUrl,
+    coverImageUrl, setCoverImageUrl,
     garmentTypes, setGarmentTypes,
     isSet, setIsSet,
     setItems,
@@ -356,6 +391,7 @@ export function useProductForm() {
     addSetItem,
     removeSetItem,
     updateSetItem,
+    featureSetItemForHome,
     toggleSetItemColor,
     toggleSetItemSize,
     setSetItemColorImages,

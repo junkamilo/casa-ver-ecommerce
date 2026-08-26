@@ -83,6 +83,7 @@ export default function CheckoutPage() {
         open={showFreeShippingCelebration && !showModal && !showCouponCelebration}
         onClose={dismissFreeShippingCelebration}
         shippingSavings={shippingQuote.baseCost}
+        threshold={shippingQuote.freeShippingThreshold ?? 0}
       />
 
       <form

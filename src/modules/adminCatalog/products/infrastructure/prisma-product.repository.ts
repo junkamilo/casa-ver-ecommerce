@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { ProductCreateInputDTO } from "../contracts/product-create.dto";
-import { createColorVariants, createSetItems } from "./product-relations.helpers";
+import { createColorVariants, createSetItems, resolveCoverImageUrl, type ColorInput } from "./product-relations.helpers";
 import { collectProductAssetUrls } from "../application/product-assets";
 import type {
   AdminProductListItemDTO,
@@ -40,6 +40,8 @@ export class PrismaProductRepository {
           select: {
             name: true,
             price: true,
+            coverImageUrl: true,
+            isCardFeatured: true,
             colors: {
               select: {
                 images: { orderBy: [{ isCover: "desc" }, { order: "asc" }], take: 1, select: { url: true } },
@@ -54,9 +56,14 @@ export class PrismaProductRepository {
     const mapped: AdminProductListItemDTO[] = products.map(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (p: any): AdminProductListItemDTO => {
+        const coverImg = typeof p.coverImageUrl === "string" && p.coverImageUrl.trim() ? p.coverImageUrl.trim() : null;
         const generalImg = p.images[0]?.url;
         const colorImg = p.colors[0]?.images[0]?.url;
-        const setItemImg = p.items?.[0]?.colors?.[0]?.images?.[0]?.url;
+        const featuredItem =
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (p.items ?? []).find((item: any) => item.isCardFeatured) ?? p.items?.[0];
+        const setItemCover = featuredItem?.coverImageUrl;
+        const setItemImg = featuredItem?.colors?.[0]?.images?.[0]?.url;
         const regularStock = p.variants.reduce(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (sum: number, v: any) => sum + v.stock,
@@ -90,10 +97,14 @@ export class PrismaProductRepository {
           categories: (p.categories ?? []).map(
             (relation: { category: { id: string; name: string } }) => relation.category
           ),
-          images: generalImg
+          images: coverImg
+            ? [{ url: coverImg }]
+            : generalImg
             ? [{ url: generalImg }]
             : colorImg
               ? [{ url: colorImg }]
+              : setItemCover
+                ? [{ url: setItemCover }]
               : setItemImg
                 ? [{ url: setItemImg }]
                 : [],
@@ -204,6 +215,7 @@ export class PrismaProductRepository {
           isSuggested: dto.isSuggested || false,
           suggestedAt: resolvedSuggestedAt,
           videoUrl: dto.videoUrl || null,
+          coverImageUrl: resolveCoverImageUrl(dto.coverImageUrl, (dto.colors as ColorInput[]) || []),
           categories: {
             create: resolvedCategoryIds.map((categoryId) => ({ categoryId })),
           },
@@ -329,6 +341,7 @@ export class PrismaProductRepository {
           isSuggested: dto.isSuggested ?? false,
           suggestedAt: resolvedSuggestedAt,
           videoUrl: dto.videoUrl !== undefined ? (dto.videoUrl || null) : undefined,
+          coverImageUrl: resolveCoverImageUrl(dto.coverImageUrl, (dto.colors as ColorInput[]) || []),
           categories: {
             deleteMany: {},
             create: resolvedCategoryIds.map((categoryId) => ({ categoryId })),
@@ -489,6 +502,7 @@ export class PrismaProductRepository {
       metaTitle: product.metaTitle,
       metaDescription: product.metaDescription,
       videoUrl: product.videoUrl,
+      coverImageUrl: product.coverImageUrl ?? null,
       garmentTypes: product.garmentTypes.map((relation: { garmentType: { id: string } }) => relation.garmentType.id),
       generalImages: product.images
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -525,6 +539,8 @@ export class PrismaProductRepository {
         price: item.price ? Number(item.price) : null,
         comparePrice: item.comparePrice ? Number(item.comparePrice) : null,
         videoUrl: item.videoUrl,
+        coverImageUrl: item.coverImageUrl ?? null,
+        isCardFeatured: Boolean(item.isCardFeatured),
         order: item.order,
         stock: item.colors.reduce(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -307,7 +307,9 @@ model Product {
 
   // Datos Adicionales
   videoUrl        String?
-  
+  // Portada principal del producto (URL ya subida en algún color)
+  coverImageUrl   String?
+
   // Calificaciones
   rating          Float          @default(0)
   numReviews      Int            @default(0)
@@ -420,6 +422,10 @@ model ProductItem {
   price        Decimal?           @db.Decimal(10, 2) // Precio propio (opcional)
   comparePrice Decimal?           @db.Decimal(10, 2) // Precio tachado (oferta)
   videoUrl     String?
+  // Portada principal de la pieza (URL ya subida en algún color de la pieza)
+  coverImageUrl String?
+  // Pieza que representa el set en Home (precio + portada + colores)
+  isCardFeatured Boolean            @default(false)
   order        Int                @default(0)
 
   colors    ProductItemColor[]
@@ -509,6 +515,8 @@ model Order {
   shippingDepartment String
   shippingPhone      String
   shippingCedula     String?
+  shippingZone       String?       // "REGIONAL" | "ISLANDS" | "NATIONAL" — snapshot
+  shippingRateName   String?       // "Metropolitana Bucaramanga" — foto del momento de compra
 
   // Montos
   subtotal                  Decimal       @db.Decimal(10, 2)                          // Suma de ítems a precios reales de BD
@@ -881,4 +889,107 @@ model HeroSlide {
 
   @@index([position])
   @@map("hero_slides")
+}
+
+// ============================================================
+// CONFIGURACIÓN DE ENVÍOS Y CATÁLOGO GEOGRÁFICO
+// ============================================================
+
+
+model Country {
+  id          String       @id @default(cuid())
+  // Códigos ISO estándar — te sirven para integraciones, pagos, envíos internacionales a futuro
+  isoCode2    String       @unique // "CO"  (ISO 3166-1 alpha-2)
+  isoCode3    String       @unique // "COL" (ISO 3166-1 alpha-3)
+  numericCode String?      @unique // "170" (ISO 3166-1 numeric)
+  name        String       @unique // "Colombia"
+  phoneCode   String?      // "+57" — útil para formularios de checkout
+  currency    String?      // "COP"
+  isActive    Boolean      @default(true) // por si algún día habilitas/deshabilitas países
+
+  departments Department[]
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("countries")
+}
+
+model Department {
+  id         String   @id @default(cuid())
+  countryId  String
+  country    Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  // Código DANE del departamento (2 dígitos): "08" Atlántico, "68" Santander...
+  // Es el estándar oficial colombiano — mejor que un externalId de una API de terceros.
+  daneCode   String?
+  name       String   // "Atlántico"
+  // Nombre normalizado para búsquedas sin tildes/mayúsculas
+  normalizedName String
+
+  municipalities Municipality[]
+
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Un mismo nombre de departamento no se repite dentro del mismo país
+  @@unique([countryId, name])
+  @@unique([countryId, daneCode])
+  @@index([normalizedName])
+  @@map("departments")
+}
+
+model Municipality {
+  id           String     @id @default(cuid())
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  // Código DANE del municipio (5 dígitos): "08001" Barranquilla.
+  // Los 2 primeros dígitos coinciden con el daneCode del departamento.
+  daneCode     String?
+  name         String     // "Barranquilla"
+  normalizedName String   // "barranquilla"
+
+  shippingRateId String?
+  shippingRate   ShippingRate? @relation(fields: [shippingRateId], references: [id], onDelete: SetNull)
+
+  isActive     Boolean    @default(true) // ¿hay cobertura de envío aquí?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  // No se repite el mismo municipio dentro del mismo departamento
+  @@unique([departmentId, normalizedName])
+  @@unique([daneCode])
+  @@index([normalizedName])
+  @@map("municipalities")
+}
+
+model ShippingConfig {
+  id                    String   @id @default("singleton")
+  freeShippingThreshold Int
+
+  // La tarifa Nacional por defecto — fuente única de verdad del "resto del país"
+  defaultRateId         String?       @unique
+  defaultRate           ShippingRate? @relation(fields: [defaultRateId], references: [id])
+
+  updatedAt             DateTime @updatedAt
+
+  @@map("shipping_configs")
+}
+
+model ShippingRate {
+  id       String  @id @default(cuid())
+  name     String?
+  price    Int               // en pesos enteros: 9000, 12500, 19000
+  isActive Boolean @default(true)
+
+  // Quién usa esta tarifa
+  municipalities Municipality[]
+  configDefault  ShippingConfig? // relación inversa del default global (1-1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("shipping_rates")
 }

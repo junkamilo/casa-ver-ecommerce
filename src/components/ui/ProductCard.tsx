@@ -171,8 +171,9 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
 
   const images = item.images;
   const hasImages = images.length > 0;
+  const defaultImage = item.coverImageUrl || (hasImages ? images[0] : null);
 
-  const currentImage = activeColor?.imageUrl ?? (hasImages ? images[currentIndex] : null);
+  const currentImage = activeColor?.imageUrl ?? (hasImages ? images[currentIndex] : defaultImage);
 
   const canHoverSwap = !activeColor && currentIndex === 0 && images.length > 1 && currentImage && !isVideoUrl(currentImage) && !isVideoUrl(images[1]);
   const showHover = isHovered && canHoverSwap;
@@ -283,9 +284,7 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
           </h3>
           <div className="flex items-center gap-3 mb-1">
             <span className="font-medium text-[#154734] text-sm">
-              {item.isSet && item.minPrice != null
-                ? `Desde $${item.minPrice.toLocaleString("es-CO")}`
-                : `$${item.price.toLocaleString("es-CO")}`}
+              {`$${item.price.toLocaleString("es-CO")}`}
             </span>
             {item.oldPrice && (
               <span className="text-gray-400 line-through text-xs font-light">${item.oldPrice.toLocaleString("es-CO")}</span>
@@ -454,9 +453,7 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
         </h3>
         <div className="flex flex-row items-center gap-2 sm:gap-3 text-sm mb-0.5 flex-wrap">
           <span className="font-medium text-[#154734] text-sm">
-            {item.isSet && item.minPrice != null
-              ? `Desde $${item.minPrice.toLocaleString("es-CO")}`
-              : `$${item.price.toLocaleString("es-CO")}`}
+            {`$${item.price.toLocaleString("es-CO")}`}
           </span>
           {item.oldPrice && (
             <span className="text-gray-400 line-through text-xs font-light">${item.oldPrice.toLocaleString("es-CO")}</span>

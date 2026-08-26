@@ -27,6 +27,8 @@ export interface SetItemForm {
   price: string;
   comparePrice: string;
   videoUrl: string;
+  coverImageUrl: string;
+  isCardFeatured: boolean;
   stock: string;
   colors: SelectedColor[];
   sizes: string[];
@@ -39,13 +41,13 @@ export type ToastState = { type: "success" | "error"; message: string } | null;
 
 export type ProductFormErrors = Partial<
   Record<
-    "name" | "description" | "basePrice" | "comparePrice" | "stock" | "categoryIds" | "videoUrl",
+    "name" | "description" | "basePrice" | "comparePrice" | "stock" | "categoryIds" | "videoUrl" | "coverImageUrl",
     string
   >
 >;
 
 export type SingleItemFormErrors = Partial<
-  Record<"name" | "price" | "comparePrice" | "videoUrl" | "colors" | "sizes" | "colorImages", string>
+  Record<"name" | "price" | "comparePrice" | "videoUrl" | "coverImageUrl" | "colors" | "sizes" | "colorImages", string>
 >;
 
 export type ItemFormErrors = Record<string, SingleItemFormErrors>;
@@ -90,6 +92,7 @@ export interface ProductModalProps {
   selectedColors: SelectedColor[];
   selectedSizes: string[];
   videoUrl: string; setVideoUrl: (v: string) => void;
+  coverImageUrl: string; setCoverImageUrl: (v: string) => void;
   toggleColor: (name: string, hexCode: string) => void;
   toggleSize: (size: string) => void;
   setColorImages: (colorName: string, images: string[]) => void;
@@ -100,6 +103,7 @@ export interface ProductModalProps {
   addSetItem: () => void;
   removeSetItem: (localId: string) => void;
   updateSetItem: (localId: string, updates: Partial<SetItemForm>) => void;
+  featureSetItemForHome: (localId: string) => void;
   toggleSetItemColor: (localId: string, name: string, hexCode: string) => void;
   toggleSetItemSize: (localId: string, size: string) => void;
   setSetItemColorImages: (localId: string, colorName: string, images: string[]) => void;
@@ -177,6 +181,9 @@ export interface ColorsSectionProps {
   colorError?: string | null;
   sizeError?: string | null;
   colorImagesError?: string | null;
+  coverImageUrl?: string;
+  coverImageError?: string | null;
+  onCoverImageUrl?: (url: string) => void;
   onToggleColor: (name: string, hexCode: string) => void;
   onToggleSize: (size: string) => void;
   onSetColorImages: (colorName: string, images: string[]) => void;
@@ -191,6 +198,7 @@ export interface SetItemCardProps {
   errors?: SingleItemFormErrors;
   onRemove: (id: string) => void;
   onUpdate: (id: string, u: Partial<SetItemForm>) => void;
+  onFeatureForHome: (localId: string) => void;
   onToggleColor: (id: string, name: string, hex: string) => void;
   onToggleSize: (id: string, size: string) => void;
   onSetColorImages: (id: string, colorName: string, images: string[]) => void;
@@ -207,6 +215,7 @@ export interface SetItemsSectionProps {
   onAdd: () => void;
   onRemove: (localId: string) => void;
   onUpdate: (localId: string, updates: Partial<SetItemForm>) => void;
+  onFeatureForHome: (localId: string) => void;
   onToggleColor: (localId: string, name: string, hexCode: string) => void;
   onToggleSize: (localId: string, size: string) => void;
   onSetColorImages: (localId: string, colorName: string, images: string[]) => void;

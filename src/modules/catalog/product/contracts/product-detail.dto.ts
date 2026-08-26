@@ -37,6 +37,7 @@ export interface UIProductItem {
   price: number | null;
   comparePrice: number | null;
   videoUrl: string | null;
+  coverImageUrl: string | null;
   colors: UIColor[];
   stock: number;
 }
@@ -49,6 +50,7 @@ export interface UIProduct {
   basePrice: number;
   comparePrice: number | null;
   videoUrl: string | null;
+  coverImageUrl: string | null;
   generalImages: string[];
   colors: UIColor[];
   rating: number;

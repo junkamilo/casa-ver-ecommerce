@@ -9,6 +9,8 @@ export interface AppSidebarNavItem {
   href?: string;
   onClick?: () => void;
   description?: string;
+  /** Sub-ítems anidados (ej. Configuraciones) */
+  children?: AppSidebarNavItem[];
 }
 
 export interface AppSidebarProps {

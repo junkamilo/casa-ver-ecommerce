@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
-import { resolveShippingQuote } from "@/lib/shipping";
+import { getShippingCost } from "@/modules/shipping/application/use-cases/get-shipping-cost.use-case";
 import {
   calculateCouponDiscount,
   calculateCouponDiscountAmount,
@@ -241,11 +241,24 @@ export class PrismaCheckoutRepository {
 
         const finalDiscount = couponDiscountAmount;
         const netSubtotal = realSubtotal - finalDiscount;
-        const shippingQuote = resolveShippingQuote({
-          netSubtotal,
-          city: input.city,
-          department: input.department,
+
+        const municipality = await tx.municipality.findFirst({
+          where: { name: input.city, department: { name: input.department } },
+          include: { shippingRate: true, department: true }
         });
+
+        if (!municipality) {
+          throw new InvalidAddressError("Municipio no encontrado para envío");
+        }
+
+        const shippingQuote = await getShippingCost({
+          subtotalNeto: netSubtotal,
+          municipalityId: municipality.id,
+        });
+
+        if (!shippingQuote.ok) {
+          throw new InvalidAddressError("No hay cobertura para esta dirección");
+        }
         const realShippingCost = shippingQuote.cost;
         const realTotal = realSubtotal + realShippingCost - finalDiscount;
 
@@ -276,6 +289,7 @@ export class PrismaCheckoutRepository {
             shippingPhone: input.phone,
             subtotal: realSubtotal,
             shippingCost: realShippingCost,
+            shippingRateName: shippingQuote.rateName,
             discount: finalDiscount,
             total: realTotal,
             status: "PENDING",

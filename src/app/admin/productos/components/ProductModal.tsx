@@ -45,6 +45,7 @@ export default function ProductModal({
   selectedColors,
   selectedSizes,
   videoUrl, setVideoUrl,
+  coverImageUrl, setCoverImageUrl,
   toggleColor,
   toggleSize,
   setColorImages,
@@ -54,6 +55,7 @@ export default function ProductModal({
   addSetItem,
   removeSetItem,
   updateSetItem,
+  featureSetItemForHome,
   toggleSetItemColor,
   toggleSetItemSize,
   setSetItemColorImages,
@@ -64,6 +66,7 @@ export default function ProductModal({
   const [colorError, setColorError] = useState<string | null>(null);
   const [sizeError, setSizeError] = useState<string | null>(null);
   const [colorImagesError, setColorImagesError] = useState<string | null>(null);
+  const [coverImageError, setCoverImageError] = useState<string | null>(null);
   const [noItemsError, setNoItemsError] = useState<string | null>(null);
 
   // Contenedor scrolleable del modal — se pasa a ImageUpload para que el
@@ -114,12 +117,18 @@ export default function ProductModal({
     const newColorImagesError = !isSet && selectedColors.some((c) => c.images.length === 0)
       ? `Todos los colores deben tener al menos 1 foto (falta: ${selectedColors.filter((c) => c.images.length === 0).map((c) => c.name).join(", ")})`
       : null;
+    const allColorUrls = selectedColors.flatMap((c) => c.images);
+    const newCoverImageError =
+      !isSet && allColorUrls.length > 0 && (!coverImageUrl || !allColorUrls.includes(coverImageUrl))
+        ? "Elige la portada principal del producto entre las imágenes de los colores"
+        : null;
 
     // ── 3. Validar subcategorías (solo si isSet) ──────────────────────────────
     const newItemErrors: ItemFormErrors = {};
-    const newNoItemsError = isSet && setItems.length === 0
-      ? "Debes agregar al menos 1 subcategoría"
-      : null;
+    let newNoItemsError: string | null =
+      isSet && setItems.length === 0
+        ? "Debes agregar al menos 1 subcategoría"
+        : null;
 
     if (isSet && setItems.length > 0) {
       for (const item of setItems) {
@@ -150,7 +159,21 @@ export default function ProductModal({
         if (missingImgColors.length > 0)
           errs.colorImages = `Foto requerida en: ${missingImgColors.map((c) => c.name).join(", ")}`;
 
+        const itemUrls = item.colors.flatMap((c) => c.images);
+        if (
+          itemUrls.length > 0 &&
+          (!item.coverImageUrl || !itemUrls.includes(item.coverImageUrl))
+        ) {
+          errs.coverImageUrl =
+            "Elige la portada principal de la pieza entre las imágenes de sus colores";
+        }
+
         if (Object.keys(errs).length > 0) newItemErrors[item.localId] = errs;
+      }
+
+      if (!setItems.some((item) => item.isCardFeatured)) {
+        newNoItemsError =
+          "Elige qué subcategoría se muestra en Home (check en el encabezado).";
       }
     }
 
@@ -159,6 +182,7 @@ export default function ProductModal({
     setColorError(newColorError);
     setSizeError(newSizeError);
     setColorImagesError(newColorImagesError);
+    setCoverImageError(newCoverImageError);
     setNoItemsError(newNoItemsError);
 
     const isValid =
@@ -167,6 +191,7 @@ export default function ProductModal({
       !newColorError &&
       !newSizeError &&
       !newColorImagesError &&
+      !newCoverImageError &&
       !newNoItemsError;
 
     if (isValid) {
@@ -180,6 +205,7 @@ export default function ProductModal({
     setColorError(null);
     setSizeError(null);
     setColorImagesError(null);
+    setCoverImageError(null);
     setNoItemsError(null);
     onClose();
   };
@@ -358,10 +384,20 @@ export default function ProductModal({
                       presetColors={presetColors}
                       onToggleColor={(name, hex) => { setColorError(null); toggleColor(name, hex); }}
                       onToggleSize={(size) => { setSizeError(null); toggleSize(size); }}
-                      onSetColorImages={(colorName, images) => { setColorImagesError(null); setColorImages(colorName, images); }}
+                      onSetColorImages={(colorName, images) => {
+                        setColorImagesError(null);
+                        setCoverImageError(null);
+                        setColorImages(colorName, images);
+                      }}
+                      coverImageUrl={coverImageUrl}
+                      onCoverImageUrl={(url) => {
+                        setCoverImageError(null);
+                        setCoverImageUrl(url);
+                      }}
                       colorError={colorError}
                       sizeError={sizeError}
                       colorImagesError={colorImagesError}
+                      coverImageError={coverImageError}
                       scrollContainer={scrollEl}
                       onUploadingChange={handleUploadingChange}
                     />
@@ -419,6 +455,7 @@ export default function ProductModal({
                     onAdd={() => { setNoItemsError(null); addSetItem(); }}
                     onRemove={removeSetItem}
                     onUpdate={updateSetItem}
+                    onFeatureForHome={featureSetItemForHome}
                     onToggleColor={toggleSetItemColor}
                     onToggleSize={toggleSetItemSize}
                     onSetColorImages={setSetItemColorImages}

@@ -5,27 +5,15 @@ import ColorList from "./components/ColorList";
 import ColorModal from "./components/ColorModal";
 import AdminPageHeader from "@/components/ui/AdminPageHeader";
 import AdminPagination from "@/components/ui/AdminPagination";
+import AdminToast from "@/app/admin/components/AdminToast";
 import { Plus, Search } from "lucide-react";
-
-function Toast({ toast }: { toast: { type: "success" | "error"; message: string } | null }) {
-  if (!toast) return null;
-  return (
-    <div
-      className={`fixed top-5 right-5 z-[200] px-5 py-3.5 rounded-xl shadow-lg text-sm font-semibold transition-all ${
-        toast.type === "success" ? "bg-[#154734] text-white" : "bg-red-600 text-white"
-      }`}
-    >
-      {toast.message}
-    </div>
-  );
-}
 
 export default function AdminColores() {
   const m = useColorManager();
 
   return (
     <div className="space-y-8 p-6 bg-gray-50 min-h-screen font-sans">
-      <Toast toast={m.toast} />
+      <AdminToast toast={m.toast} />
 
       <AdminPageHeader
         title="Colores"

@@ -9,6 +9,7 @@ import FieldError from "../shared/FieldError";
 import PriceInput from "../shared/PriceInput";
 import { SetItemCardProps } from "../../types";
 import { SIZES, fieldCls } from "../../constants";
+import ProductCoverPicker from "./ProductCoverPicker";
 
 const normalizeColorName = (name: string) =>
   name
@@ -26,6 +27,7 @@ export default function SetItemCard({
   errors = {},
   onRemove,
   onUpdate,
+  onFeatureForHome,
   onToggleColor,
   onToggleSize,
   onSetColorImages,
@@ -77,6 +79,24 @@ export default function SetItemCard({
           />
           {errors.name && <p className="text-red-500 text-xs mt-0.5">{errors.name}</p>}
         </div>
+        <label
+          className={`shrink-0 inline-flex items-center justify-center w-5 h-5 rounded border-2 cursor-pointer transition-colors ${
+            item.isCardFeatured
+              ? "bg-[#154734] border-[#154734] text-white"
+              : "bg-white border-gray-300 hover:border-[#154734]/50"
+          } ${disabled ? "opacity-50 pointer-events-none" : ""}`}
+          title="Mostrar esta subcategoría en Home (precio y portada)"
+        >
+          <input
+            type="radio"
+            name="set-item-home-featured"
+            className="sr-only"
+            checked={item.isCardFeatured}
+            disabled={disabled}
+            onChange={() => onFeatureForHome(item.localId)}
+          />
+          {item.isCardFeatured ? <Check className="w-3 h-3" strokeWidth={3} /> : null}
+        </label>
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
@@ -290,6 +310,18 @@ export default function SetItemCard({
                 </div>
               )}
             </div>
+
+            {item.colors.length > 0 && (
+              <ProductCoverPicker
+                title="Portada principal de la pieza"
+                helpText="Elige una foto o video ya subido en cualquier color de esta pieza."
+                colors={item.colors}
+                value={item.coverImageUrl}
+                onChange={(url) => onUpdate(item.localId, { coverImageUrl: url })}
+                disabled={disabled}
+                error={errors?.coverImageUrl}
+              />
+            )}
           </div>
 
           {/* ── BLOQUE E: Tallas ─────────────────────────────── */}

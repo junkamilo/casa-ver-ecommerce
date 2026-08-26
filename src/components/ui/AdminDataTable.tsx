@@ -41,8 +41,8 @@ export default function AdminDataTable<T>({
   getRowClassName,
 }: AdminDataTableProps<T>) {
   const desktopTableClass = paginated
-    ? "hidden md:block"
-    : "hidden md:block overflow-auto max-h-150";
+    ? "hidden md:block overflow-auto max-h-[600px]"
+    : "hidden md:block overflow-auto max-h-[600px]";
   const shellClass = "bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden";
 
   if (loading) {

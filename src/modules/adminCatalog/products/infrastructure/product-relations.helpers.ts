@@ -13,10 +13,35 @@ export type SetItemInput = {
   price?: number | null;
   comparePrice?: number | null;
   videoUrl?: string | null;
+  coverImageUrl?: string | null;
+  isCardFeatured?: boolean;
   stock?: number;
   colors: ColorInput[];
   sizes: string[];
 };
+
+/** Resuelve portada principal: debe ser URL de algún color; si no, primera imagen disponible. */
+export function resolveCoverImageUrl(
+  coverImageUrl: string | null | undefined,
+  colors: ColorInput[]
+): string | null {
+  const urls = new Set(
+    colors.flatMap((c) =>
+      (c.images ?? [])
+        .filter((u): u is string => typeof u === "string" && Boolean(u.trim()))
+        .map((u) => u.trim())
+    )
+  );
+
+  const candidate = coverImageUrl?.trim();
+  if (candidate && urls.has(candidate)) return candidate;
+
+  for (const color of colors) {
+    const first = (color.images ?? []).find((u) => typeof u === "string" && u.trim());
+    if (first) return first.trim();
+  }
+  return null;
+}
 
 export function toSlugPart(s: string): string {
   return s
@@ -93,6 +118,14 @@ export async function createSetItems(
   slug: string,
   items: SetItemInput[]
 ) {
+  const namedIndexes = items
+    .map((item, index) => (item.name ? index : -1))
+    .filter((index) => index >= 0);
+  let featuredIndex = namedIndexes.find((index) => items[index].isCardFeatured);
+  if (featuredIndex === undefined) {
+    featuredIndex = namedIndexes[0];
+  }
+
   for (let order = 0; order < items.length; order++) {
     const itemData = items[order];
     if (!itemData.name) continue;
@@ -105,6 +138,8 @@ export async function createSetItems(
         price: itemData.price || null,
         comparePrice: itemData.comparePrice || null,
         videoUrl: itemData.videoUrl || null,
+        coverImageUrl: resolveCoverImageUrl(itemData.coverImageUrl, itemData.colors || []),
+        isCardFeatured: order === featuredIndex,
         order,
       },
     });
