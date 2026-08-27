@@ -3,11 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Search, User, Shield, ChevronRight, ChevronDown } from "lucide-react";
-import { HOVER_BRAND } from "../constants/constants";
+import { Search, User, ChevronRight, ChevronDown } from "lucide-react";
 import type { MobileMenuProps } from "../types";
 
-export default function MobileMenu({ isAdmin, categories, onClose, onSearchOpen }: MobileMenuProps) {
+export default function MobileMenu({ categories, onClose, onSearchOpen }: MobileMenuProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const activeTipo = searchParams.get("tipo");
@@ -228,40 +227,6 @@ export default function MobileMenu({ isAdmin, categories, onClose, onSearchOpen 
             </div>
           </div>
         </div>
-
-        {/* ── PANEL ADMIN ── */}
-        {isAdmin && (
-          <div className="flex flex-col gap-3 pt-5 mt-3 border-t border-border/40">
-            <div className="flex items-center gap-3">
-              <Shield className="w-3.5 h-3.5 text-[#C19A6B]" />
-              <span className="text-[10px] font-bold text-[#C19A6B] uppercase tracking-[0.25em]">
-                PANEL ADMIN
-              </span>
-              <div className="h-px flex-1 bg-linear-to-r from-[#C19A6B]/30 to-transparent" />
-            </div>
-            {[
-              { href: "/admin",               label: "Dashboard" },
-              { href: "/admin/productos",      label: "Gestionar Productos" },
-              { href: "/admin/pedidos",        label: "Ver Pedidos" },
-              { href: "/admin/estadisticas",   label: "Estadísticas" },
-            ].map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className={`relative group flex items-center gap-2 text-sm text-foreground/75 ${HOVER_BRAND} transition-all duration-200 pl-4 py-0.5`}
-                onClick={onClose}
-              >
-                <span
-                  className="absolute left-0 top-0 bottom-0 w-[1.5px] bg-[#C19A6B] scale-y-0 group-hover:scale-y-100 transition-transform duration-200 origin-top rounded-full"
-                  aria-hidden="true"
-                />
-                <span className="group-hover:translate-x-0.5 transition-transform duration-200">
-                  {label}
-                </span>
-              </Link>
-            ))}
-          </div>
-        )}
 
         {/* ── MI CUENTA ── */}
         <Link

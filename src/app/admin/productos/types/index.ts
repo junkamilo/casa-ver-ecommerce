@@ -56,7 +56,7 @@ export type ItemFormErrors = Record<string, SingleItemFormErrors>;
 // ── Component Props ───────────────────────────────────────────────────────────
 
 export interface BlockHeaderProps {
-  icon: React.ElementType;
+  icon?: React.ElementType;
   title: string;
   subtitle?: string;
 }

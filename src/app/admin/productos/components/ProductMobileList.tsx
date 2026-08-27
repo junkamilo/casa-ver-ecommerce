@@ -1,5 +1,6 @@
 import Image from "next/image";
-import { Edit2, Trash2, Video } from "lucide-react";
+import { Video } from "lucide-react";
+import { DeleteIcon, EditIcon } from "@/components/icons";
 import { ProductMobileListProps } from "../types";
 import { formatPrice, getStockStatus } from "../constants";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
@@ -90,18 +91,18 @@ export default function ProductMobileList({ products, onEdit, onDelete, onToggle
 
               <button
                 onClick={() => onEdit(product.id)}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#C19A6B]/10 text-[#C19A6B] active:scale-90 transition-transform"
+                className="group w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 active:scale-90 transition-transform"
                 title="Editar producto"
               >
-                <Edit2 className="w-5 h-5" />
+                <EditIcon size={20} />
               </button>
 
               <button
                 onClick={() => onDelete(product.id)}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50 text-red-400 active:scale-90 transition-transform"
+                className="group w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 active:scale-90 transition-transform"
                 title="Eliminar producto"
               >
-                <Trash2 className="w-5 h-5" />
+                <DeleteIcon size={20} />
               </button>
             </div>
           </div>

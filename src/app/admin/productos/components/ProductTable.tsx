@@ -1,5 +1,6 @@
 import Image from "next/image";
-import { Edit2, Trash2, Loader2, Video } from "lucide-react";
+import { Loader2, Video } from "lucide-react";
+import { DeleteIcon, EditIcon } from "@/components/icons";
 import { ProductTableProps } from "../types";
 import { formatPrice, getStockStatus } from "../constants";
 import ProductMobileList from "./ProductMobileList";
@@ -134,15 +135,17 @@ export default function ProductTable({
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={() => onEdit(product.id)}
-                      className="p-2 text-gray-400 hover:text-[#C19A6B] bg-gray-50 rounded-lg"
+                      className="group p-0.5 bg-gray-50 rounded-lg"
+                      title="Editar producto"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <EditIcon size={16} />
                     </button>
                     <button
                       onClick={() => onDelete(product.id)}
-                      className="p-2 text-gray-400 hover:text-red-500 bg-gray-50 rounded-lg"
+                      className="group p-0.5 bg-gray-50 rounded-lg"
+                      title="Eliminar producto"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <DeleteIcon size={16} />
                     </button>
                   </div>
                 </td>

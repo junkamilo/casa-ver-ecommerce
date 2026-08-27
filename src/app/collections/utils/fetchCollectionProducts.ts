@@ -20,6 +20,7 @@ export { transformProduct } from "@/modules/collections/domain/product-mapper.en
 
 export async function fetchCollectionProducts(
   where: ProductWhereFilter,
+  q?: string,
 ): Promise<CollectionProductsResultDTO> {
-  return getProductsByFlagUseCase(where);
+  return getProductsByFlagUseCase(where, q);
 }

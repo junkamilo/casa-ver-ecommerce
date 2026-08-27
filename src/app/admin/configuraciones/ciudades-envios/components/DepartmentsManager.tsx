@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, Edit2, Map, Search } from "lucide-react";
 import AdminDataTable from "@/components/ui/AdminDataTable";
+import AdminPagination, { DEFAULT_ADMIN_PAGE_SIZE } from "@/components/ui/AdminPagination";
 import type { DepartmentAdminDTO, CountryAdminDTO, CreateDepartmentInput } from "@/modules/geography/contracts/geography.dto";
 import { Button } from "@/components/ui/button";
 import AdminSelect from "@/components/ui/AdminSelect";
@@ -18,6 +19,8 @@ export default function DepartmentsManager({ departments, countries, onSave }: P
   const [editingDept, setEditingDept] = useState<DepartmentAdminDTO | null>(null);
   const [search, setSearch] = useState("");
   const [countryFilter, setCountryFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_ADMIN_PAGE_SIZE);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -56,6 +59,19 @@ export default function DepartmentsManager({ departments, countries, onSave }: P
     setIsEditing(false);
   };
 
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return departments.filter((d) => {
+      const matchesSearch = d.name.toLowerCase().includes(q);
+      const matchesCountry = countryFilter ? d.countryId === countryFilter : true;
+      return matchesSearch && matchesCountry;
+    });
+  }, [departments, search, countryFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paged = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row gap-4 py-2">
@@ -65,14 +81,20 @@ export default function DepartmentsManager({ departments, countries, onSave }: P
             type="text"
             placeholder="Buscar departamento..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-xl text-sm focus:border-[#154734] outline-none"
           />
         </div>
         <div className="w-full md:w-64">
           <AdminSelect
             value={countryFilter}
-            onChange={setCountryFilter}
+            onChange={(v) => {
+              setCountryFilter(v);
+              setPage(1);
+            }}
             options={[
               { value: "", label: "Todos los países" },
               ...countries.map(c => ({ value: c.id, label: c.name }))
@@ -88,11 +110,8 @@ export default function DepartmentsManager({ departments, countries, onSave }: P
       </div>
 
       <AdminDataTable
-        data={departments.filter(d => {
-          const matchesSearch = d.name.toLowerCase().includes(search.toLowerCase());
-          const matchesCountry = countryFilter ? d.countryId === countryFilter : true;
-          return matchesSearch && matchesCountry;
-        })}
+        data={paged}
+        paginated
         rowKey={(d) => d.id}
         emptyState={{
           title: "No hay departamentos",
@@ -131,6 +150,21 @@ export default function DepartmentsManager({ departments, countries, onSave }: P
             )
           }
         ]}
+        footer={
+          <AdminPagination
+            page={currentPage}
+            totalPages={totalPages}
+            total={filtered.length}
+            pageSize={pageSize}
+            itemLabel="departamentos"
+            alwaysShow
+            onPageChange={setPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+            }}
+          />
+        }
       />
 
       {isEditing && (

@@ -173,6 +173,8 @@ export default function MunicipalitiesManager({
             totalPages={pageData.totalPages}
             total={pageData.total}
             pageSize={pageData.pageSize}
+            itemLabel="municipios"
+            alwaysShow
             onPageChange={onPageChange}
             onPageSizeChange={onPageSizeChange}
           />

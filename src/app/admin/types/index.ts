@@ -1,3 +1,4 @@
+import type { ComponentType } from "react";
 import type { LucideIcon } from "lucide-react";
 import type {
   DashboardBacklogDTO,
@@ -43,7 +44,7 @@ export interface OrderStatusInfo {
 export interface AdminNavItem {
   label: string;
   href?: string;
-  icon: LucideIcon;
+  icon: ComponentType<{ className?: string }>;
   /** Sub-ítems del módulo (ej. Configuraciones → Precio envíos) */
   children?: AdminNavItem[];
 }

@@ -36,4 +36,19 @@ export class PrismaNotificationRepository {
       data: { isRead: true },
     });
   }
+
+  async deleteById(id: string): Promise<boolean> {
+    const existing = await this.db.adminNotification.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!existing) return false;
+    await this.db.adminNotification.delete({ where: { id } });
+    return true;
+  }
+
+  async deleteAll(): Promise<number> {
+    const result = await this.db.adminNotification.deleteMany({});
+    return result.count as number;
+  }
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Store, X, ShieldCheck } from "lucide-react";
+import { X, ShieldCheck } from "lucide-react";
+import { StoreIcon } from "@/components/icons";
 import logoIcon from "@/assets/logo-icon.png";
 import type { MobileDrawerProps } from "../types";
 import { NavItem } from "./NavItem";
@@ -75,13 +76,15 @@ export function MobileDrawer({
               {extraLink.label}
             </Link>
           )}
-          <Link
-            href={backLink.href}
-            className="flex items-center justify-center gap-2 w-full py-2.5 bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 rounded-lg text-xs font-medium text-white/80 hover:text-white transition-all"
-          >
-            <Store className="w-4 h-4" />
-            {backLink.label}
-          </Link>
+          {backLink && (
+            <Link
+              href={backLink.href}
+              className="flex items-center justify-center gap-2 w-full py-2.5 bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 rounded-lg text-xs font-medium text-white/80 hover:text-white transition-all"
+            >
+              <StoreIcon size={16} />
+              {backLink.label}
+            </Link>
+          )}
         </div>
 
       </aside>

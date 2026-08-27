@@ -5,6 +5,11 @@ import CollectionHero from "@/app/collections/[slug]/components/CollectionHero";
 import CollectionClient from "@/app/collections/[slug]/components/CollectionClient";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
 import BackButton from "@/components/ui/BackButton";
+import {
+  CatalogListingSearch,
+  catalogSearchEmptyMessage,
+} from "@/components/search";
+import { isSearchQueryActive } from "@/modules/search/domain/search.entity";
 import { fetchCollectionProducts } from "../utils/fetchCollectionProducts";
 import { NEW_COLLECTION_WHERE, EMPTY_STATE_MESSAGE } from "./constants";
 
@@ -15,8 +20,16 @@ export const metadata = {
   description: "Descubre los últimos ingresos de nuestra colección.",
 };
 
-export default async function NuevaColeccionPage() {
-  const { products, filterOptions } = await fetchCollectionProducts(NEW_COLLECTION_WHERE);
+export default async function NuevaColeccionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
+  const { products, filterOptions } = await fetchCollectionProducts(
+    NEW_COLLECTION_WHERE,
+    q,
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFA] selection:bg-[#C19A6B]/20 relative overflow-hidden">
@@ -38,11 +51,17 @@ export default async function NuevaColeccionPage() {
 
           <CollectionHero title="Nuevos Ingresos" />
 
+          <CatalogListingSearch placeholder="Buscar en nuevos ingresos..." />
+
           <div className="mt-4 sm:mt-6 lg:mt-8 w-full">
-            {products.length === 0 ? (
+            {products.length === 0 && !isSearchQueryActive(q) ? (
               <SectionEmptyState message={EMPTY_STATE_MESSAGE} />
             ) : (
-              <CollectionClient products={products} filterOptions={filterOptions} />
+              <CollectionClient
+                products={products}
+                filterOptions={filterOptions}
+                emptyMessage={catalogSearchEmptyMessage(q, EMPTY_STATE_MESSAGE)}
+              />
             )}
           </div>
         </div>

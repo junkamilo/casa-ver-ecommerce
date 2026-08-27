@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Store, ChevronLeft, ChevronRight, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
+import { ChevronLeft, ChevronRight, StoreIcon } from "@/components/icons";
 import logoIcon from "@/assets/logo-icon.png";
 import type { DesktopSidebarProps } from "../types";
 import { NavItem } from "./NavItem";
@@ -25,13 +26,13 @@ export function DesktopSidebar({
       {/* Collapse toggle */}
       <button
         onClick={onToggle}
-        className="absolute -right-3 top-[5.5rem] w-6 h-6 rounded-full bg-[#154734] border-2 border-white/20 hover:border-[#C19A6B] flex items-center justify-center text-white/60 hover:text-white transition-all z-10 shadow-md"
+        className="absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#154734] border-2 border-white/30 hover:border-[#C19A6B] flex items-center justify-center text-white/80 hover:text-white transition-all z-10 shadow-md"
         aria-label={isOpen ? "Colapsar menú" : "Expandir menú"}
       >
         {isOpen ? (
-          <ChevronLeft className="w-3 h-3" />
+          <ChevronLeft size={16} />
         ) : (
-          <ChevronRight className="w-3 h-3" />
+          <ChevronRight size={16} />
         )}
       </button>
 
@@ -96,13 +97,15 @@ export function DesktopSidebar({
                 {extraLink.label}
               </Link>
             )}
-            <Link
-              href={backLink.href}
-              className="flex items-center justify-center gap-2 w-full py-2.5 bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 rounded-lg text-xs font-medium text-white/80 hover:text-white transition-all"
-            >
-              <Store className="w-4 h-4" />
-              {backLink.label}
-            </Link>
+            {backLink && (
+              <Link
+                href={backLink.href}
+                className="flex items-center justify-center gap-2 w-full py-2.5 bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 rounded-lg text-xs font-medium text-white/80 hover:text-white transition-all"
+              >
+                <StoreIcon size={16} />
+                {backLink.label}
+              </Link>
+            )}
           </>
         ) : (
           <>
@@ -112,13 +115,15 @@ export function DesktopSidebar({
             >
               {userInitial}
             </div>
-            <Link
-              href={backLink.href}
-              title={backLink.label}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white"
-            >
-              <Store className="w-4 h-4" />
-            </Link>
+            {backLink && (
+              <Link
+                href={backLink.href}
+                title={backLink.label}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white"
+              >
+                <StoreIcon size={16} />
+              </Link>
+            )}
           </>
         )}
       </div>

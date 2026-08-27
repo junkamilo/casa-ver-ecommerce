@@ -1,6 +1,13 @@
 "use client";
 
-import { ChevronDown, ChevronUp, Check, Star, Sparkles, Percent, BadgeCheck, Tag, Megaphone } from "lucide-react";
+import { ChevronDown, ChevronUp, Check, BadgeCheck, Tag } from "lucide-react";
+import {
+  BadgePercent,
+  FlameIcon,
+  LightbulbIcon,
+  PackageOpen,
+  SparklesIcon,
+} from "@/components/icons";
 import { GeneralInfoSectionProps } from "../../types";
 import { STATUS_OPTIONS, inputCls } from "../../constants";
 import { useDropdown } from "../../hooks/useDropdown";
@@ -346,7 +353,7 @@ export default function GeneralInfoSection({
           <LabelToggle
             active={isFeatured}
             onToggle={() => onFeatured(!isFeatured)}
-            icon={Star}
+            icon={FlameIcon}
             label="Más Vendidos"
             description="Aparece en sección Más Vendidos"
             activeColor="text-amber-600"
@@ -356,7 +363,7 @@ export default function GeneralInfoSection({
           <LabelToggle
             active={isNew}
             onToggle={() => onNew(!isNew)}
-            icon={Sparkles}
+            icon={PackageOpen}
             label="Nuevos Ingresos"
             description="Aparece en Nueva Colección"
             activeColor="text-[#154734]"
@@ -366,7 +373,7 @@ export default function GeneralInfoSection({
           <LabelToggle
             active={isProductNew}
             onToggle={handleProductNewToggle}
-            icon={BadgeCheck}
+            icon={SparklesIcon}
             label="Producto Nuevo"
             description="Muestra etiqueta roja · dura 7 días"
             infoText="Etiqueta activa · expira en 7 días"
@@ -377,7 +384,7 @@ export default function GeneralInfoSection({
           <LabelToggle
             active={isOnSale}
             onToggle={handleOnSaleToggle}
-            icon={Percent}
+            icon={BadgePercent}
             label="Producto en Oferta"
             description="Muestra etiqueta dorada de oferta"
             infoText="Etiqueta de oferta activa"
@@ -388,7 +395,7 @@ export default function GeneralInfoSection({
           <LabelToggle
             active={isSuggested}
             onToggle={handleSuggestedToggle}
-            icon={Megaphone}
+            icon={LightbulbIcon}
             label="Sugerir en popup"
             description="Aparece en 'Te podría interesar'"
             infoText="Sugerencia activa en popup"

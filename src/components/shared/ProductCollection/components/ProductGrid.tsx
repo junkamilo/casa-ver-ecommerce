@@ -5,9 +5,16 @@ import ProductCard from "@/components/ui/ProductCard";
 import { ProductGridProps } from '../types/index';
 
 
-export function ProductGrid({ products, setItemKey }: ProductGridProps) {
+export function ProductGrid({ products, setItemKey, emptyMessage }: ProductGridProps) {
   if (products.length === 0) {
-    return <SectionEmptyState message="Pronto añadiremos nuevas prendas exclusivas a esta colección." />;
+    return (
+      <SectionEmptyState
+        message={
+          emptyMessage ??
+          "Pronto añadiremos nuevas prendas exclusivas a esta colección."
+        }
+      />
+    );
   }
 
   return (

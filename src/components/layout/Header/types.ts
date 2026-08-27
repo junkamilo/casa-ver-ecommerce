@@ -55,7 +55,6 @@ export interface MegaMenuProps {
 }
 
 export interface MobileMenuProps {
-  isAdmin: boolean;
   categories: NavCategory[];
   onClose: () => void;
   onSearchOpen: () => void;

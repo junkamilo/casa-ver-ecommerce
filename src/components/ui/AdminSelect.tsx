@@ -69,7 +69,7 @@ export default function AdminSelect({
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute z-50 mt-1.5 left-0 w-full bg-white border border-gray-200 rounded-xl shadow-lg py-1 overflow-hidden">
+        <div className="absolute z-50 mt-1.5 left-0 w-full max-h-60 overflow-y-auto overscroll-contain bg-white border border-gray-200 rounded-xl shadow-lg py-1">
           {options.map((opt) => {
             const optVal = getOptValue(opt);
             const optLabel = getOptLabel(opt);

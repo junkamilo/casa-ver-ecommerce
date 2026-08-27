@@ -185,9 +185,12 @@ export class PrismaCollectionRepository {
    */
   async findProductsByFlag(
     where: ProductWhereFilter,
+    productIds?: string[],
   ): Promise<RawCollectionProduct[]> {
+    if (productIds && productIds.length === 0) return [];
+
     return this.db.product.findMany({
-      where,
+      where: productIds ? { ...where, id: { in: productIds } } : where,
       select: STANDARD_SELECT,
       orderBy: { createdAt: "desc" },
     });
@@ -199,7 +202,10 @@ export class PrismaCollectionRepository {
   async findProductsByCategory(
     categorySlug: string,
     garmentTypeId?: string,
+    productIds?: string[],
   ): Promise<RawCollectionProduct[]> {
+    if (productIds && productIds.length === 0) return [];
+
     const where: Prisma.ProductWhereInput = {
       categories: {
         some: {
@@ -214,6 +220,7 @@ export class PrismaCollectionRepository {
             },
           }
         : {}),
+      ...(productIds ? { id: { in: productIds } } : {}),
     };
 
     return this.db.product.findMany({

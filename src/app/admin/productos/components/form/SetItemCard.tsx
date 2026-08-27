@@ -73,7 +73,7 @@ export default function SetItemCard({
             type="text"
             value={item.name}
             onChange={(e) => onUpdate(item.localId, { name: e.target.value })}
-            placeholder="Nombre de la subcategoría (ej: Short, Pantalón, Blusa...)"
+            placeholder="Nombre del subproducto (ej: Short, Pantalón, Blusa...)"
             disabled={disabled}
             className={`w-full bg-transparent border-none outline-none text-sm font-bold text-gray-800 placeholder:font-normal placeholder:text-gray-400 ${errors.name ? "text-red-700" : ""}`}
           />
@@ -85,7 +85,7 @@ export default function SetItemCard({
               ? "bg-[#154734] border-[#154734] text-white"
               : "bg-white border-gray-300 hover:border-[#154734]/50"
           } ${disabled ? "opacity-50 pointer-events-none" : ""}`}
-          title="Mostrar esta subcategoría en Home (precio y portada)"
+          title="Mostrar este subproducto en Home (precio y portada)"
         >
           <input
             type="radio"
@@ -129,7 +129,7 @@ export default function SetItemCard({
               rows={2}
               value={item.description}
               onChange={(e) => onUpdate(item.localId, { description: e.target.value })}
-              placeholder="Describe esta subcategoría..."
+              placeholder="Describe este subproducto..."
               disabled={disabled}
               className={`${fieldCls()} resize-none`}
             />

@@ -1,53 +1,43 @@
+import { BadgePercent, BannerIcon, CategoryIcon, ColorIcon, ConfigIcon, DashboardIcon, InventoryIcon, MapIcon, OrdersIcon, PerfilIcon, ReportsIcon, ReviewsIcon, StackedShirtIcon, TruckIcon } from "@/components/icons";
 import {
   Package,
   ClipboardList,
   BarChart3,
-  LayoutDashboard,
   Shield,
-  UserCog,
-  Tag,
-  Layers,
-  ImageIcon,
-  Palette,
-  MessageSquare,
-  TicketPercent,
-  Settings,
-  Truck,
-  MapPin,
 } from "lucide-react";
 import type { NavItem, AdminNavItem } from "../types";
 
 // --- Navegación del panel admin (sidebar + mobile) ---
 export const ADMIN_NAV: AdminNavItem[] = [
-  { label: "Dashboard",  href: "/admin",                  icon: LayoutDashboard },
-  { label: "Inventario", href: "/admin/productos",         icon: Package },
-  { label: "Categorías",      href: "/admin/categorias",        icon: Tag },
-  { label: "Tipos de Prenda", href: "/admin/tipos-de-prenda",  icon: Layers },
-  { label: "Colores",         href: "/admin/colores",           icon: Palette },
-  { label: "Promociones",     href: "/admin/promociones",       icon: TicketPercent },
-  { label: "Pedidos",    href: "/admin/pedidos",           icon: ClipboardList },
-  { label: "Reseñas",   href: "/admin/resenas",           icon: MessageSquare },
-  { label: "Reportes",   href: "/admin/estadisticas",      icon: BarChart3 },
-  { label: "Header",     href: "/admin/hero",               icon: ImageIcon },
+  { label: "Dashboard",  href: "/admin",                  icon: DashboardIcon },
+  { label: "Inventario", href: "/admin/productos",         icon: InventoryIcon },
+  { label: "Categorías",      href: "/admin/categorias",        icon: CategoryIcon },
+  { label: "Tipos de Prenda", href: "/admin/tipos-de-prenda",  icon: StackedShirtIcon },
+  { label: "Colores",         href: "/admin/colores",           icon: ColorIcon },
+  { label: "Promociones",     href: "/admin/promociones",       icon: BadgePercent },
+  { label: "Pedidos",    href: "/admin/pedidos",           icon: OrdersIcon },
+  { label: "Reseñas",   href: "/admin/resenas",           icon: ReviewsIcon },
+  { label: "Reportes",   href: "/admin/estadisticas",      icon: ReportsIcon },
+  { label: "Banners",    href: "/admin/hero",               icon: BannerIcon },
   {
     label: "Configuraciones",
-    icon: Settings,
+    icon: ConfigIcon,
     href: "/admin/configuraciones",
     children: [
       {
         label: "Precio envíos",
         href: "/admin/configuraciones/precio-envios",
-        icon: Truck,
+        icon: TruckIcon,
       },
       {
         label: "Ciudades de envío",
         href: "/admin/configuraciones/ciudades-envios",
-        icon: MapPin,
+        icon: MapIcon,
       },
     ],
   },
   { label: "Admins",     href: "/admin/administradores",   icon: Shield },
-  { label: "Mi Perfil",  href: "/admin/perfil",            icon: UserCog },
+  { label: "Mi Perfil",  href: "/admin/perfil",            icon: PerfilIcon },
 ];
 
 // --- Menú de navegación horizontal ---

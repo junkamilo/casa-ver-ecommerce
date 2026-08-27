@@ -2,6 +2,7 @@
 
 import {
   expandSpanishTokenVariants,
+  isSearchQueryActive,
   matchesSearchQuery,
   normalizeSearchText,
   productMatchesSearch,
@@ -51,6 +52,14 @@ describe("search entity", () => {
   it("tokenizeSearchQuery descarta tokens de menos de 2 caracteres", () => {
     expect(tokenizeSearchQuery("p")).toEqual([]);
     expect(tokenizeSearchQuery("pantalon p")).toEqual(["pantalon"]);
+  });
+
+  it("isSearchQueryActive exige al menos 2 caracteres", () => {
+    expect(isSearchQueryActive("")).toBe(false);
+    expect(isSearchQueryActive("p")).toBe(false);
+    expect(isSearchQueryActive("  ")).toBe(false);
+    expect(isSearchQueryActive("ab")).toBe(true);
+    expect(isSearchQueryActive(" pantalon ")).toBe(true);
   });
 
   it("scoreSearchRelevance prioriza nombre sobre descripción", () => {

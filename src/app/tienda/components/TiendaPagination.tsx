@@ -7,6 +7,7 @@ function buildQuery(filters: TiendaFilters, page: number): string {
   if (filters.minPrice?.trim()) p.set("minPrice", filters.minPrice.trim());
   if (filters.maxPrice?.trim()) p.set("maxPrice", filters.maxPrice.trim());
   if (filters.color?.trim()) p.set("color", filters.color.trim());
+  if (filters.q?.trim()) p.set("q", filters.q.trim());
   if (page > 1) p.set("page", String(page));
   const s = p.toString();
   return s ? `?${s}` : "";

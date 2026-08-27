@@ -126,7 +126,6 @@ const HeaderClient = ({ categories: initialCategories }: HeaderClientProps) => {
 
         {menuOpen && (
           <MobileMenu
-            isAdmin={isAdmin}
             categories={categories}
             onClose={() => setMenuOpen(false)}
             onSearchOpen={openSearch}

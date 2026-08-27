@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { X, ArrowLeft } from "lucide-react";
+import { X } from "lucide-react";
+import { StoreIcon } from "@/components/icons";
 import logoIcon from "@/assets/logo-icon.png";
 import { ADMIN_NAV } from "../../constants";
 
@@ -82,7 +83,7 @@ export default function AdminMobileSidebar({ isOpen, pathname, onClose }: Props)
             href="/"
             className="flex items-center gap-2 text-white/80 hover:text-white text-sm"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <StoreIcon size={16} />
             Volver a Tienda
           </Link>
         </div>

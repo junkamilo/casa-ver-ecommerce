@@ -22,7 +22,7 @@ export interface AppSidebarProps {
   userName: string | null | undefined;
   userInitial: string;
   userRole: string;
-  backLink: { href: string; label: string };
+  backLink?: { href: string; label: string };
   /** Enlace extra en el footer (ej. "Panel Admin" para clientes con rol ADMIN) */
   extraLink?: { href: string; label: string };
 }
@@ -44,7 +44,7 @@ export interface MobileDrawerProps {
   userName: string | null | undefined;
   userInitial: string;
   userRole: string;
-  backLink: { href: string; label: string };
+  backLink?: { href: string; label: string };
   extraLink?: { href: string; label: string };
 }
 
@@ -56,6 +56,6 @@ export interface DesktopSidebarProps {
   userName: string | null | undefined;
   userInitial: string;
   userRole: string;
-  backLink: { href: string; label: string };
+  backLink?: { href: string; label: string };
   extraLink?: { href: string; label: string };
 }

@@ -1,0 +1,19 @@
+{
+  "measuredAt": "2026-08-27T05:25:51.537Z",
+  "baseUrl": "http://localhost:3001",
+  "tool": "scripts/bench-shop-baseline.mjs",
+  "note": "Proxy single-process. Re-correr con k6 CLI para carga multi-VU.",
+  "targets": {
+    "shop_listing_p95_ms": 500,
+    "shop_search_p95_ms": 120
+  },
+  "results": {
+    "count": 80,
+    "p50": 1733,
+    "p95": 2663,
+    "max": 2881,
+    "avg": 1644,
+    "fails": 0,
+    "scenario": "shop-search"
+  }
+}

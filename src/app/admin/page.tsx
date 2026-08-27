@@ -5,7 +5,6 @@ import AdminPageHeader from "@/components/ui/AdminPageHeader";
 import { Plus } from "lucide-react";
 import StatsSection from "./components/StatsSection";
 import HorizontalNav from "./components/HorizontalNav";
-import NotificationsCard from "./components/NotificationsCard";
 import DashboardError from "./components/DashboardError";
 import OperationsCockpit from "./components/OperationsCockpit";
 import PaymentIncidentsCard from "./components/PaymentIncidentsCard";
@@ -27,17 +26,19 @@ export default async function AdminDashboard() {
     return <DashboardError />;
   }
 
-  const { stats, recentOrders, slaQueue, paymentIncidents, backlog, serverNow } =
+  const { stats, slaQueue, paymentIncidents, backlog, serverNow } =
     dashboard;
 
   return (
     <div className="space-y-4 sm:space-y-6 md:space-y-8 p-4 sm:p-6 md:p-8 bg-gray-50 min-h-screen font-sans">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+      <div className="relative">
         <AdminPageHeader
           title="Panel de Control"
           action={{ label: "Nuevo Producto", href: "/admin/productos?action=new", icon: Plus }}
         />
-        <DashboardAutoRefresh serverNow={serverNow} />
+        <div className="flex justify-center sm:absolute sm:top-0 sm:right-0 mt-2 sm:mt-0">
+          <DashboardAutoRefresh serverNow={serverNow} />
+        </div>
       </div>
 
       <StatsSection stats={stats} />
@@ -47,8 +48,6 @@ export default async function AdminDashboard() {
       <PaymentIncidentsCard incidents={paymentIncidents} />
 
       <HorizontalNav />
-
-      <NotificationsCard orders={recentOrders} />
     </div>
   );
 }

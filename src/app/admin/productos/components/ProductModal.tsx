@@ -1,7 +1,8 @@
 import { useState, useRef } from "react";
 import {
-  X, Save, Loader2, Info, LayoutGrid, Tag, Package, Video,
+  X, Loader2, Info, LayoutGrid, Package, Video,
 } from "lucide-react";
+import { SaveIcon, ShirtIcon } from "@/components/icons";
 import { ProductModalProps, ProductFormErrors, ItemFormErrors } from "../types";
 import {
   productFormSchema,
@@ -127,7 +128,7 @@ export default function ProductModal({
     const newItemErrors: ItemFormErrors = {};
     let newNoItemsError: string | null =
       isSet && setItems.length === 0
-        ? "Debes agregar al menos 1 subcategoría"
+        ? "Debes agregar al menos 1 subproducto"
         : null;
 
     if (isSet && setItems.length > 0) {
@@ -173,7 +174,7 @@ export default function ProductModal({
 
       if (!setItems.some((item) => item.isCardFeatured)) {
         newNoItemsError =
-          "Elige qué subcategoría se muestra en Home (check en el encabezado).";
+          "Elige qué subproducto se muestra en Home (check en el encabezado).";
       }
     }
 
@@ -281,58 +282,56 @@ export default function ProductModal({
                   ║  BLOQUE 2 — Tipo de Producto         ║
                   ╚══════════════════════════════════════╝ */}
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#C19A6B]/10 flex items-center justify-center shrink-0">
-                      <LayoutGrid className="w-5 h-5 text-[#C19A6B]" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900">
-                        ¿Este producto tiene piezas separadas?
-                      </p>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        Activa para añadir subcategorías comprables por separado (ej: Short, Pantalón, Blusa)
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsSet(!isSet)}
-                    className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 focus:outline-none shadow-inner ${
-                      isSet ? "bg-[#154734]" : "bg-gray-300"
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-300 ease-in-out ${
-                        isSet ? "translate-x-5" : "translate-x-0"
-                      }`}
-                    />
-                  </button>
+                <div>
+                  <p className="text-sm font-bold text-gray-900">
+                    ¿Este producto tiene piezas separadas?
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Elije para añadir subproductos comprables por separado (ej: Short, Pantalón, Blusa)
+                  </p>
                 </div>
 
-                <div className="mt-4 flex gap-3 transition-all duration-300">
-                  <div className={`flex-1 rounded-xl border-2 px-4 py-3 text-center transition-all ${
-                    !isSet
-                      ? "border-[#154734] bg-[#154734]/5"
-                      : "border-gray-200 bg-gray-50 opacity-50"
-                  }`}>
-                    <Tag className={`w-4 h-4 mx-auto mb-1 ${!isSet ? "text-[#154734]" : "text-gray-400"}`} />
+                <div className="mt-4 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsSet(false)}
+                    className={`flex-1 rounded-xl border-2 px-4 py-3 text-center transition-all ${
+                      !isSet
+                        ? "border-[#154734] bg-[#154734]/5"
+                        : "border-gray-200 bg-gray-50 hover:border-[#154734]/40 hover:bg-[#154734]/5"
+                    }`}
+                  >
+                    <ShirtIcon
+                      size={16}
+                      className={`mx-auto mb-1 ${!isSet ? "text-[#154734]" : "text-gray-400"}`}
+                    />
                     <p className={`text-xs font-bold ${!isSet ? "text-[#154734]" : "text-gray-400"}`}>
-                      Producto Simple
+                      Producto
                     </p>
                     <p className="text-[10px] text-gray-400 mt-0.5">Un único ítem con colores y tallas</p>
-                  </div>
-                  <div className={`flex-1 rounded-xl border-2 px-4 py-3 text-center transition-all ${
-                    isSet
-                      ? "border-[#C19A6B] bg-[#C19A6B]/5"
-                      : "border-gray-200 bg-gray-50 opacity-50"
-                  }`}>
-                    <LayoutGrid className={`w-4 h-4 mx-auto mb-1 ${isSet ? "text-[#C19A6B]" : "text-gray-400"}`} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsSet(true)}
+                    className={`flex-1 rounded-xl border-2 px-4 py-3 text-center transition-all ${
+                      isSet
+                        ? "border-[#C19A6B] bg-[#C19A6B]/5"
+                        : "border-gray-200 bg-gray-50 hover:border-[#C19A6B]/50 hover:bg-[#C19A6B]/10"
+                    }`}
+                  >
+                    <div className={`relative mx-auto mb-1 h-5 w-6 ${isSet ? "text-[#C19A6B]" : "text-gray-400"}`}>
+                      <span className="absolute left-0 top-0 opacity-45">
+                        <ShirtIcon size={16} />
+                      </span>
+                      <span className="absolute left-1.5 top-1">
+                        <ShirtIcon size={16} />
+                      </span>
+                    </div>
                     <p className={`text-xs font-bold ${isSet ? "text-[#C19A6B]" : "text-gray-400"}`}>
-                      Con Subcategorías
+                      Subproductos
                     </p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">Subcategorías comprables de forma independiente</p>
-                  </div>
+                    <p className="text-[10px] text-gray-400 mt-0.5">Subproductos comprables de forma independiente</p>
+                  </button>
                 </div>
               </div>
 
@@ -442,9 +441,8 @@ export default function ProductModal({
               {isSet && (
                 <div className="bg-white rounded-2xl border border-[#C19A6B]/30 shadow-sm p-6">
                   <BlockHeader
-                    icon={LayoutGrid}
-                    title="Subcategorías"
-                    subtitle="Cada subcategoría tiene su propio precio, stock, descripción, colores, imágenes y video — comprables de forma independiente"
+                    title="Subproductos"
+                    subtitle="Cada subproducto tiene su propio precio, stock, descripción, colores, imágenes y video — comprables de forma independiente"
                   />
                   <SetItemsSection
                     items={setItems}
@@ -474,8 +472,8 @@ export default function ProductModal({
                 {isUploading
                   ? "Subiendo archivos, espera…"
                   : isSet
-                    ? `Con subcategorías · ${setItems.length} subcategoría${setItems.length !== 1 ? "s" : ""}`
-                    : "Producto simple"}
+                    ? `Con subproductos · ${setItems.length} subproducto${setItems.length !== 1 ? "s" : ""}`
+                    : "Producto"}
               </p>
               <div className="flex gap-3">
                 <button
@@ -494,7 +492,7 @@ export default function ProductModal({
                   {submitting || isUploading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <Save className="w-4 h-4" />
+                    <SaveIcon size={16} />
                   )}
                   {submitting
                     ? (editingId ? "Guardando…" : "Creando…")

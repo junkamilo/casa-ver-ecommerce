@@ -23,17 +23,17 @@ export default function SetItemsSection({
     <div className="space-y-4">
       {items.length > 0 ? (
         <p className="text-xs text-gray-400 leading-relaxed">
-          Marca con el check la subcategoría que se muestra en Home (precio y portada).
-          Por defecto es la primera.
+          Marca con el check el subproducto que se muestra en Home (precio y portada).
+          Por defecto es el primero.
         </p>
       ) : null}
 
       {items.length === 0 ? (
         <div className={`text-center py-10 bg-gray-50 rounded-2xl border-2 border-dashed transition-colors ${noItemsError ? "border-red-400 bg-red-50/30" : "border-gray-200"}`}>
           <p className={`text-sm font-semibold ${noItemsError ? "text-red-500" : "text-gray-500"}`}>
-            {noItemsError ?? "Aún no hay subcategorías."}
+            {noItemsError ?? "Aún no hay subproductos."}
           </p>
-          <p className="text-xs text-gray-400 mt-1">Añade subcategorías comprables de forma independiente.</p>
+          <p className="text-xs text-gray-400 mt-1">Añade subproductos comprables de forma independiente.</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -66,7 +66,7 @@ export default function SetItemsSection({
         className="w-full flex items-center justify-center gap-2 py-3.5 border-2 border-dashed border-[#C19A6B]/60 text-[#C19A6B] rounded-2xl text-sm font-bold hover:bg-[#C19A6B]/5 hover:border-[#C19A6B] transition-all disabled:opacity-50"
       >
         <Plus className="w-4 h-4" />
-        Añadir subcategoría
+        Añadir Subproducto
       </button>
     </div>
   );

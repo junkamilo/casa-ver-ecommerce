@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, Edit2, Globe2, Search } from "lucide-react";
 import AdminSelect from "@/components/ui/AdminSelect";
 import AdminDataTable from "@/components/ui/AdminDataTable";
+import AdminPagination, { DEFAULT_ADMIN_PAGE_SIZE } from "@/components/ui/AdminPagination";
 import type { CountryAdminDTO, CreateCountryInput } from "@/modules/geography/contracts/geography.dto";
 import { Button } from "@/components/ui/button";
 
@@ -17,6 +18,8 @@ export default function CountriesManager({ countries, onSave }: Props) {
   const [editingCountry, setEditingCountry] = useState<CountryAdminDTO | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_ADMIN_PAGE_SIZE);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -64,6 +67,26 @@ export default function CountriesManager({ countries, onSave }: Props) {
     setIsEditing(false);
   };
 
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return countries.filter((c) => {
+      const matchesSearch =
+        c.name.toLowerCase().includes(q) ||
+        c.isoCode2.toLowerCase().includes(q);
+      const matchesStatus =
+        statusFilter === "active"
+          ? c.isActive
+          : statusFilter === "inactive"
+            ? !c.isActive
+            : true;
+      return matchesSearch && matchesStatus;
+    });
+  }, [countries, search, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paged = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div className="space-y-4">
 
@@ -74,14 +97,20 @@ export default function CountriesManager({ countries, onSave }: Props) {
             type="text"
             placeholder="Buscar país por nombre o ISO..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-xl text-sm focus:border-[#154734] outline-none"
           />
         </div>
         <div className="w-full md:w-48">
           <AdminSelect
             value={statusFilter}
-            onChange={setStatusFilter}
+            onChange={(v) => {
+              setStatusFilter(v);
+              setPage(1);
+            }}
             options={[
               { value: "", label: "Todos los estados" },
               { value: "active", label: "Activos" },
@@ -98,13 +127,8 @@ export default function CountriesManager({ countries, onSave }: Props) {
       </div>
 
       <AdminDataTable
-        data={countries.filter(c => {
-          const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase()) ||
-            c.isoCode2.toLowerCase().includes(search.toLowerCase());
-          const matchesStatus = statusFilter === "active" ? c.isActive :
-            statusFilter === "inactive" ? !c.isActive : true;
-          return matchesSearch && matchesStatus;
-        })}
+        data={paged}
+        paginated
         rowKey={(c) => c.id}
         emptyState={{
           title: "No hay países",
@@ -142,6 +166,21 @@ export default function CountriesManager({ countries, onSave }: Props) {
             )
           }
         ]}
+        footer={
+          <AdminPagination
+            page={currentPage}
+            totalPages={totalPages}
+            total={filtered.length}
+            pageSize={pageSize}
+            itemLabel="países"
+            alwaysShow
+            onPageChange={setPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+            }}
+          />
+        }
       />
 
       {isEditing && (

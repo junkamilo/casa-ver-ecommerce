@@ -4,6 +4,17 @@ import type { Prisma } from "@prisma/client";
 
 const findManyMock = jest.fn();
 const countMock = jest.fn();
+const captureExceptionMock = jest.fn();
+const withScopeMock = jest.fn((cb: (scope: { setTag: jest.Mock; setExtra: jest.Mock }) => void) => {
+  cb({ setTag: jest.fn(), setExtra: jest.fn() });
+});
+const startSpanMock = jest.fn((_opts: unknown, fn: () => unknown) => fn());
+
+jest.mock("@sentry/nextjs", () => ({
+  withScope: (...args: unknown[]) => withScopeMock(...args),
+  captureException: (...args: unknown[]) => captureExceptionMock(...args),
+  startSpan: (...args: unknown[]) => startSpanMock(...args),
+}));
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {
@@ -15,11 +26,13 @@ jest.mock("@/lib/prisma", () => ({
 }));
 
 import { getShopProductsUseCase } from "@/modules/catalog/shop/application/get-shop-products.use-case";
-import { TIENDA_PAGE_SIZE } from "@/modules/catalog/shop/contracts/shop.dto";
 
 beforeEach(() => {
   findManyMock.mockReset();
   countMock.mockReset();
+  captureExceptionMock.mockReset();
+  withScopeMock.mockClear();
+  startSpanMock.mockClear();
 });
 
 function mockShopQueries(
@@ -32,15 +45,6 @@ function mockShopQueries(
     .mockResolvedValueOnce(filteredRows);
   countMock.mockResolvedValueOnce(totalProducts);
 }
-
-const EMPTY_RESULT = {
-  products: [],
-  filterOptions: { availableColors: [], maxPriceDb: 0 },
-  page: 1,
-  pageSize: TIENDA_PAGE_SIZE,
-  totalProducts: 0,
-  totalPages: 1,
-};
 
 describe("getShopProductsUseCase — filterOptions builder", () => {
   it("acumula colores únicos por hexCode y maxPriceDb", async () => {
@@ -100,11 +104,11 @@ describe("getShopProductsUseCase — where builder desde filtros", () => {
 });
 
 describe("getShopProductsUseCase — robustez ante errores", () => {
-  it("devuelve resultado vacío si la query lanza", async () => {
+  it("propaga el error y reporta a Sentry si la query lanza", async () => {
     findManyMock.mockRejectedValueOnce(new Error("DB down"));
 
-    const result = await getShopProductsUseCase({});
-    expect(result).toEqual(EMPTY_RESULT);
+    await expect(getShopProductsUseCase({})).rejects.toThrow("DB down");
+    expect(captureExceptionMock).toHaveBeenCalled();
   });
 });
 
@@ -141,5 +145,27 @@ describe("getShopProductsUseCase — transforma productos al CollectionProduct",
     expect(result.totalProducts).toBe(1);
     expect(result.page).toBe(1);
     expect(result.products[0].badge).toBe("En Oferta");
+  });
+});
+
+describe("getShopProductsUseCase — búsqueda acotada (q)", () => {
+  it("acota el where a los IDs coincidentes cuando q tiene 2+ caracteres", async () => {
+    findManyMock
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+    countMock.mockResolvedValueOnce(0);
+
+    await getShopProductsUseCase({ q: "pantalon" });
+
+    expect(countMock.mock.calls[0][0].where.id).toEqual({ in: [] });
+  });
+
+  it("no consulta IDs de búsqueda si q tiene menos de 2 caracteres", async () => {
+    mockShopQueries([], 0, []);
+    await getShopProductsUseCase({ q: "p" });
+
+    expect(findManyMock).toHaveBeenCalledTimes(2);
+    expect(countMock.mock.calls[0][0].where.id).toBeUndefined();
   });
 });

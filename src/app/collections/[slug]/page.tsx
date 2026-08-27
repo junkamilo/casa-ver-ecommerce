@@ -8,6 +8,10 @@ import Header from "@/components/layout/Header";
 import CollectionHero from "./components/CollectionHero";
 import CollectionClient from "./components/CollectionClient";
 import BackButton from "@/components/ui/BackButton";
+import {
+  CatalogListingSearch,
+  catalogSearchEmptyMessage,
+} from "@/components/search";
 import { getCollectionProductsUseCase } from "@/modules/collections/application/get-collection-products.use-case";
 import { getCategoryBySlugUseCase } from "@/modules/collections/application/get-category-by-slug.use-case";
 
@@ -56,17 +60,22 @@ export default async function CollectionPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ tipo?: string }>;
+  searchParams: Promise<{ tipo?: string; q?: string }>;
 }) {
   const { slug } = await params;
-  const { tipo } = await searchParams;
+  const { tipo, q } = await searchParams;
   const { category, garmentTypeName, products, filterOptions } =
-    await getCollectionProductsUseCase(slug, tipo);
+    await getCollectionProductsUseCase(slug, tipo, q);
   const title = (
     garmentTypeName ??
     category?.name ??
     slug.replace(/-/g, " ")
   ).toUpperCase();
+  const scopeName = (
+    garmentTypeName ??
+    category?.name ??
+    "esta colección"
+  ).toLowerCase();
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFA] selection:bg-[#C19A6B]/20 relative overflow-hidden">
@@ -90,11 +99,14 @@ export default async function CollectionPage({
 
           <CollectionHero title={title} />
 
+          <CatalogListingSearch placeholder={`Buscar en ${scopeName}...`} />
+
           <div className="mt-4 sm:mt-6 lg:mt-8 w-full">
             <CollectionClient
               products={products}
               filterOptions={filterOptions}
               setItemKey={tipo ?? null}
+              emptyMessage={catalogSearchEmptyMessage(q)}
             />
           </div>
 

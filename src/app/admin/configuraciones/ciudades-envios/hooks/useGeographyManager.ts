@@ -37,7 +37,7 @@ export function useGeographyManager() {
   const [countries, setCountries] = useState<CountryAdminDTO[]>([]);
   const [departments, setDepartments] = useState<DepartmentAdminDTO[]>([]);
   const [municipalitiesPage, setMunicipalitiesPage] = useState<PaginatedResult<MunicipalityAdminDTO>>({
-    data: [], page: 1, pageSize: 50, total: 0, totalPages: 0
+    data: [], page: 1, pageSize: 10, total: 0, totalPages: 0
   });
   const [rates, setRates] = useState<ShippingRateDTO[]>([]);
   const [defaultRateId, setDefaultRateId] = useState<string | null>(null);
@@ -46,7 +46,7 @@ export function useGeographyManager() {
   const [muniSearch, setMuniSearchState] = useState("");
   const [muniDepartmentId, setMuniDepartmentIdState] = useState<string>("");
   const [muniPage, setMuniPage] = useState(1);
-  const [muniPageSize, setMuniPageSize] = useState(50);
+  const [muniPageSize, setMuniPageSizeState] = useState(10);
 
   // Al cambiar búsqueda/filtro, volver a página 1 para que el resultado no quede vacío
   const setMuniSearch = useCallback((value: string) => {
@@ -56,6 +56,11 @@ export function useGeographyManager() {
 
   const setMuniDepartmentId = useCallback((value: string) => {
     setMuniDepartmentIdState(value);
+    setMuniPage(1);
+  }, []);
+
+  const setMuniPageSize = useCallback((size: number) => {
+    setMuniPageSizeState(size);
     setMuniPage(1);
   }, []);
 

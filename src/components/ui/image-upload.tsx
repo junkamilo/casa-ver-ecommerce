@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { Trash2, Upload, Loader2, PlayCircle, AlertCircle } from "lucide-react";
+import { Upload, Loader2, PlayCircle, AlertCircle } from "lucide-react";
+import { DeleteIcon } from "@/components/icons";
 import { uploadToBunny, validateFileSize } from "@/lib/bunny";
 
 const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".ogg", ".mkv"];
@@ -302,9 +303,12 @@ export default function ImageUpload({
                     type="button"
                     onClick={(e) => { e.stopPropagation(); onRemove(url); }}
                     disabled={disabled}
-                    className="absolute top-1.5 right-1.5 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 shadow-md"
+                    className={`absolute top-1 right-1 z-10 transition-opacity ${
+                      index === 0 ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                    }`}
+                    aria-label="Eliminar archivo"
                   >
-                    <Trash2 className="w-3 h-3" />
+                    <DeleteIcon size={14} className="bg-white/95 shadow-md" />
                   </button>
                 </div>
               ))}
@@ -444,9 +448,12 @@ export default function ImageUpload({
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onRemove(url); }}
                 disabled={disabled}
-                className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 shadow-md"
+                className={`absolute top-1 right-1 z-10 transition-opacity ${
+                  index === 0 ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                }`}
+                aria-label="Eliminar archivo"
               >
-                <Trash2 className="w-3 h-3" />
+                <DeleteIcon size={14} className="bg-white/95 shadow-md" />
               </button>
             </div>
           ))}

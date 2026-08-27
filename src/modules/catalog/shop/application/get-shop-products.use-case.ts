@@ -1,5 +1,8 @@
 import type { Prisma } from "@prisma/client";
+import * as Sentry from "@sentry/nextjs";
 import { PrismaShopRepository } from "../infrastructure/prisma-shop.repository";
+import { PrismaSearchRepository } from "@/modules/search/infrastructure/prisma-search.repository";
+import { isSearchQueryActive } from "@/modules/search/domain/search.entity";
 import { transformProduct } from "@/modules/collections/domain/product-mapper.entity";
 import {
   TIENDA_PAGE_SIZE,
@@ -9,15 +12,7 @@ import {
 import type { FilterOptions } from "@/components/shared/ProductCollection/types";
 
 const repository = new PrismaShopRepository();
-
-const EMPTY_RESULT: ShopProductsResultDTO = {
-  products: [],
-  filterOptions: { availableColors: [], maxPriceDb: 0 },
-  page: 1,
-  pageSize: TIENDA_PAGE_SIZE,
-  totalProducts: 0,
-  totalPages: 1,
-};
+const searchRepository = new PrismaSearchRepository();
 
 function buildShopWhereFromFilters(
   filters: TiendaFilters,
@@ -63,16 +58,28 @@ function parsePage(filters: TiendaFilters): number {
 
 /**
  * Productos del catálogo `/tienda` con filtros opcionales y paginación (24/página).
+ * Si Prisma falla, reporta a Sentry y relanza (error.tsx de tienda) — nunca grilla vacía.
  */
 export async function getShopProductsUseCase(
   filters: TiendaFilters,
 ): Promise<ShopProductsResultDTO> {
   try {
-    const where = buildShopWhereFromFilters(filters);
+    let where = buildShopWhereFromFilters(filters);
     const requestedPage = parsePage(filters);
 
+    if (isSearchQueryActive(filters.q)) {
+      const matchedIds = await searchRepository.searchActiveProductIds(
+        filters.q!.trim(),
+        where,
+      );
+      where = { ...where, id: { in: matchedIds } };
+    }
+
     const { allForFilters, totalProducts, totalPages, page, raw } =
-      await repository.getProductsForShop(where, requestedPage);
+      await Sentry.startSpan(
+        { name: "shop.getProducts", op: "db.shop" },
+        () => repository.getProductsForShop(where, requestedPage),
+      );
 
     return {
       products: raw.map(transformProduct),
@@ -82,7 +89,12 @@ export async function getShopProductsUseCase(
       totalProducts,
       totalPages,
     };
-  } catch {
-    return EMPTY_RESULT;
+  } catch (err) {
+    Sentry.withScope((scope) => {
+      scope.setTag("flow", "shop-listing");
+      scope.setExtra("filters", filters);
+      Sentry.captureException(err);
+    });
+    throw err;
   }
 }

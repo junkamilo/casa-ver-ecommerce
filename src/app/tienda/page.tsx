@@ -5,6 +5,10 @@ import Header from "@/components/layout/Header";
 import CollectionHero from "@/app/collections/[slug]/components/CollectionHero";
 import CollectionClient from "@/components/shared/ProductCollection/components/CollectionClient";
 import BackButton from "@/components/ui/BackButton";
+import {
+  CatalogListingSearch,
+  catalogSearchEmptyMessage,
+} from "@/components/search";
 import { getAllProducts } from "./services";
 import type { TiendaFilters } from "./types";
 import TiendaPagination from "./components/TiendaPagination";
@@ -59,8 +63,14 @@ export default async function TiendaPage({
 
           <CollectionHero title="TIENDA" />
 
-          <div className="mt-6 sm:mt-8 lg:mt-10 w-full">
-            <CollectionClient products={products} filterOptions={filterOptions} />
+          <CatalogListingSearch placeholder="Buscar en tienda..." />
+
+          <div className="mt-4 sm:mt-6 lg:mt-8 w-full">
+            <CollectionClient
+              products={products}
+              filterOptions={filterOptions}
+              emptyMessage={catalogSearchEmptyMessage(filters.q)}
+            />
             <TiendaPagination
               page={page}
               totalPages={totalPages}

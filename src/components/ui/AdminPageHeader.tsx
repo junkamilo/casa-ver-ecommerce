@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { LucideIcon } from "lucide-react";
+import type { ComponentType } from "react";
 
 interface ActionButton {
   label: string;
-  icon: LucideIcon;
+  icon: ComponentType<{ className?: string }>;
   href?: string;
   onClick?: () => void;
 }

@@ -1,6 +1,7 @@
 import AdminPageHeader from "@/components/ui/AdminPageHeader";
 import HeroSlidesClient from "./components/HeroSlidesClient";
 import type { HeroSlideData } from "./types";
+import { StoreIcon } from "@/components/icons";
 import { ImageIcon } from "lucide-react";
 import { fetchAdminHeroSlides } from "@/modules/adminCatalog/hero/presentation/fetch-admin-hero-slides";
 
@@ -12,8 +13,8 @@ export default async function HeroAdminPage() {
   return (
     <div className="space-y-6 p-4 sm:p-6 md:p-8 bg-gray-50 min-h-screen font-sans">
       <AdminPageHeader
-        title="Imágenes del Header"
-        action={{ label: "Ver tienda", href: "/", icon: ImageIcon }}
+        title="Banners"
+        action={{ label: "Ver tienda", href: "/", icon: StoreIcon }}
       />
 
       <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 flex items-start gap-3">

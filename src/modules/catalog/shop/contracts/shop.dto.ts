@@ -15,6 +15,7 @@ export interface TiendaFilters {
   maxPrice?: string;
   color?: string;
   page?: string;
+  q?: string;
 }
 
 export interface ShopProductsResultDTO {

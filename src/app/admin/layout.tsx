@@ -10,7 +10,7 @@ import NotificationsBell from "./components/layout/NotificationsBell";
 import AppSidebar from "@/components/layout/AppSidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { ADMIN_NAV } from "./constants";
-import { buildAdminSidebarNav, getAdminPageLabel } from "./utils/build-sidebar-nav";
+import { buildAdminSidebarNav } from "./utils/build-sidebar-nav";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
@@ -49,14 +49,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         userName={userName}
         userInitial={userInitial}
         userRole="Administrador"
-        backLink={{ href: "/", label: "Ir a la Tienda" }}
       />
 
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <AppTopHeader
           onMenuOpen={() => setIsSidebarOpen(!isSidebarOpen)}
-          breadcrumbRoot="Admin"
-          breadcrumbCurrent={getAdminPageLabel(pathname)}
           rightSlot={<NotificationsBell />}
         />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-gray-50 scrollbar-hide">

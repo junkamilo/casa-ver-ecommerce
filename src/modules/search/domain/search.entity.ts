@@ -1,7 +1,12 @@
 const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".ogg"];
 
-const MIN_TOKEN_LENGTH = 2;
+export const MIN_SEARCH_QUERY_LENGTH = 2;
+const MIN_TOKEN_LENGTH = MIN_SEARCH_QUERY_LENGTH;
 const MIN_PREFIX_LENGTH = 4;
+
+export function isSearchQueryActive(query?: string | null): boolean {
+  return (query?.trim().length ?? 0) >= MIN_SEARCH_QUERY_LENGTH;
+}
 
 /** Quita tildes, colapsa espacios y pasa a minúsculas para comparar búsquedas. */
 export function normalizeSearchText(value: string): string {

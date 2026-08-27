@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 import {
   productMatchesSearch,
   scoreSearchRelevance,
@@ -115,6 +116,26 @@ function toRelevanceFields(product: SearchCandidate): SearchRelevanceFields {
   };
 }
 
+function rankMatchedCandidates(
+  candidates: SearchCandidate[],
+  q: string,
+): SearchCandidate[] {
+  return candidates
+    .filter((product) => productMatchesSearch(buildSearchableText(product), q))
+    .map((product) => ({
+      product,
+      score: scoreSearchRelevance(toRelevanceFields(product), q),
+    }))
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      if (a.product.isFeatured !== b.product.isFeatured) {
+        return a.product.isFeatured ? -1 : 1;
+      }
+      return b.product.createdAt.getTime() - a.product.createdAt.getTime();
+    })
+    .map(({ product }) => product);
+}
+
 export class PrismaSearchRepository {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly db: any;
@@ -124,29 +145,26 @@ export class PrismaSearchRepository {
     this.db = prisma as any;
   }
 
-  async searchActiveProducts(q: string, maxResults: number) {
+  /**
+   * IDs de productos ACTIVE que coinciden con `q`, acotados por `extraWhere`
+   * (categoría, flags, filtros de tienda, etc.). Sin tope: el listado pagina
+   * sobre el set completo de matches.
+   */
+  async searchActiveProductIds(
+    q: string,
+    extraWhere: Prisma.ProductWhereInput = {},
+  ): Promise<string[]> {
     const candidates: SearchCandidate[] = await this.db.product.findMany({
-      where: { status: "ACTIVE" },
+      where: { AND: [{ status: "ACTIVE" }, extraWhere] },
       select: CANDIDATE_SELECT,
       orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
     });
 
-    const ranked = candidates
-      .filter((product) => productMatchesSearch(buildSearchableText(product), q))
-      .map((product) => ({
-        product,
-        score: scoreSearchRelevance(toRelevanceFields(product), q),
-      }))
-      .sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score;
-        if (a.product.isFeatured !== b.product.isFeatured) {
-          return a.product.isFeatured ? -1 : 1;
-        }
-        return b.product.createdAt.getTime() - a.product.createdAt.getTime();
-      })
-      .slice(0, maxResults);
+    return rankMatchedCandidates(candidates, q).map((product) => product.id);
+  }
 
-    const matchedIds = ranked.map(({ product }) => product.id);
+  async searchActiveProducts(q: string, maxResults: number) {
+    const matchedIds = (await this.searchActiveProductIds(q)).slice(0, maxResults);
 
     if (matchedIds.length === 0) {
       return [];

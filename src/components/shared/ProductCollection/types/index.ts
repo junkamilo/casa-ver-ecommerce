@@ -25,6 +25,7 @@ export interface CollectionClientProps {
   products: CollectionProduct[];
   filterOptions: FilterOptions;
   setItemKey?: string | null;
+  emptyMessage?: string;
 }
 
 export interface ProductToolbarProps {
@@ -38,6 +39,7 @@ export interface ProductToolbarProps {
 export interface ProductGridProps {
   products: CollectionProduct[];
   setItemKey?: string | null;
+  emptyMessage?: string;
 }
 
 export interface MobileFilterDrawerProps {

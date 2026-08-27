@@ -4,3 +4,10 @@ export class NotificationUnauthorizedError extends Error {
     this.name = "NotificationUnauthorizedError";
   }
 }
+
+export class NotificationNotFoundError extends Error {
+  constructor(message = "Notificación no encontrada") {
+    super(message);
+    this.name = "NotificationNotFoundError";
+  }
+}
