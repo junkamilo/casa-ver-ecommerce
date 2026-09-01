@@ -101,6 +101,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
       }
 
+      // Refrescar role desde DB (evita ADMIN demoted con JWT stale hasta 30 días)
+      const userId = (token.id ?? token.sub) as string | undefined;
+      if (userId) {
+        const lastRefresh = typeof token.roleCheckedAt === "number" ? token.roleCheckedAt : 0;
+        const now = Date.now();
+        if (user || now - lastRefresh > 5 * 60 * 1000) {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { role: true },
+          });
+          token.role = dbUser?.role ?? "USER";
+          token.roleCheckedAt = now;
+        }
+      }
+
       return token;
     },
 

@@ -42,7 +42,7 @@ function mapStatus(error: unknown): number {
 
   const name = getErrorName(error);
   if (name.endsWith("ValidationError")) return 400;
-  if (name.endsWith("ForbiddenError")) return 403;
+  if (name.endsWith("UnauthorizedError") || name.endsWith("ForbiddenError")) return 403;
   if (name.endsWith("NotFoundError")) return 404;
   if (name.endsWith("ConflictError")) return 409;
 

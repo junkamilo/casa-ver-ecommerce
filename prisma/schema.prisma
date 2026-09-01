@@ -878,17 +878,33 @@ model Color {
 // ============================================================
 
 model HeroSlide {
-  id          String   @id @default(cuid())
-  position    Int      @unique          // orden de aparición en el slider
-  mediaUrl    String   @default("")     // URL de media en Bunny CDN (imagen o video)
-  mediaType   String   @default("image") // "image" | "video"
-  headline    String?                   // Texto principal (opcional)
-  subheadline String?                   // Subtítulo (opcional)
-  isActive    Boolean  @default(true)
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  position       Int      @unique          // orden de aparición en el slider
+  mediaUrl       String   @default("")     // Desktop / arte principal (Bunny CDN)
+  mediaUrlMobile String?                   // Art-direction mobile (opcional)
+  mediaUrlTablet String?                   // Art-direction tablet (opcional)
+  posterUrl      String?                   // Optional legacy poster for video slides
+  mediaType      String   @default("image") // "image" | "video"
+  headline       String?                   // Texto principal (opcional)
+  subheadline    String?                   // Subtítulo (opcional)
+  /// { mobile/tablet/desktop: { x, y, zoom } } — object-position 0–100 por dispositivo
+  mediaFocus     Json?
+  /// Si true y mediaType=video, el carrusel espera a que termine el video
+  playFullVideo  Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  updatedAt      DateTime @updatedAt
 
   @@index([position])
   @@map("hero_slides")
+}
+
+/// Singleton (id=1) — duración global del carrusel hero
+model HeroSettings {
+  id              Int      @id @default(1)
+  slideDurationMs Int      @default(6000)
+  updatedAt       DateTime @updatedAt
+
+  @@map("hero_settings")
 }
 
 // ============================================================

@@ -196,6 +196,11 @@
     100% { background-position: 200% center; }
   }
 
+  @keyframes upload-indeterminate {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(400%); }
+  }
+
   /* Scrollbar estilo Casa Verde */
   .scrollbar-brand {
     scrollbar-width: thin;
@@ -242,7 +247,7 @@
   scrollbar-width: none;
 }
 
-/* Scrollbar para sidebar oscuro — fuera de @layer para que ::-webkit-scrollbar funcione */
+/* Scrollbar para sidebar oscuro ? fuera de @layer para que ::-webkit-scrollbar funcione */
 .scrollbar-sidebar {
   scrollbar-width: thin;
   scrollbar-color: rgba(193,154,107,0.5) transparent;
@@ -259,4 +264,41 @@
 }
 .scrollbar-sidebar::-webkit-scrollbar-thumb:hover {
   background: rgba(193,154,107,0.8);
+}
+/* Hero slide media: object-position + zoom from CSS vars (per-device focus) */
+.hero-slide-media {
+  object-fit: cover;
+  object-position: var(--hero-focus-mobile, 50% 50%);
+  transform: scale(var(--hero-zoom-mobile, 1));
+  transform-origin: var(--hero-focus-mobile, 50% 50%);
+}
+/* Align with <picture> sources: tablet ?768, desktop ?1024 */
+@media (min-width: 768px) {
+  .hero-slide-media {
+    object-position: var(--hero-focus-tablet, 50% 40%);
+    transform: scale(var(--hero-zoom-tablet, 1));
+    transform-origin: var(--hero-focus-tablet, 50% 40%);
+  }
+}
+@media (min-width: 1024px) {
+  .hero-slide-media {
+    object-position: var(--hero-focus-desktop, 50% 0%);
+    transform: scale(var(--hero-zoom-desktop, 1));
+    transform-origin: var(--hero-focus-desktop, 50% 0%);
+  }
+}
+.hero-slide-media--force-mobile {
+  object-position: var(--hero-focus-mobile, 50% 50%) !important;
+  transform: scale(var(--hero-zoom-mobile, 1)) !important;
+  transform-origin: var(--hero-focus-mobile, 50% 50%) !important;
+}
+.hero-slide-media--force-tablet {
+  object-position: var(--hero-focus-tablet, 50% 40%) !important;
+  transform: scale(var(--hero-zoom-tablet, 1)) !important;
+  transform-origin: var(--hero-focus-tablet, 50% 40%) !important;
+}
+.hero-slide-media--force-desktop {
+  object-position: var(--hero-focus-desktop, 50% 0%) !important;
+  transform: scale(var(--hero-zoom-desktop, 1)) !important;
+  transform-origin: var(--hero-focus-desktop, 50% 0%) !important;
 }

@@ -1,20 +1,14 @@
 import { Readable } from "stream";
 import { randomUUID } from "crypto";
 import {
-  createReadStream,
-  createWriteStream,
-  promises as fs,
-} from "fs";
-import os from "os";
-import path from "path";
-import { finished } from "stream/promises";
-import {
   buildBunnyObjectKey,
   getBunnyStorageConfig,
+  listBunnyPrefix,
   toBunnyPublicUrl,
   uploadBufferToBunny,
   type BunnyStorageConfig,
 } from "@/lib/bunny-admin";
+import { createServerUploadTimer } from "@/lib/upload-perf";
 import {
   MAX_IMAGE_BYTES,
   MAX_UPLOAD_CHUNKS,
@@ -22,6 +16,14 @@ import {
   PROXY_SAFE_MAX_BYTES,
   UPLOAD_CHUNK_BYTES,
   bytesToMbLabel,
+  getUploadLimitsForFolder,
+  HERO_IMAGE_MIME_ALLOWLIST,
+  HERO_VIDEO_MIME_ALLOWLIST,
+  HERO_IMAGE,
+  HERO_VIDEO,
+  getHeroVariantMaxOutputBytes,
+  isHeroImageVariant,
+  type HeroImageVariant,
 } from "@/lib/upload-limits";
 
 export class BunnyUploadConfigError extends Error {
@@ -83,21 +85,81 @@ export function assertUploadConstraints(input: {
   resourceType: "image" | "video";
   mimeType: string;
   fileSize: number;
+  folder?: string;
+  heroVariant?: HeroImageVariant;
+  /** true when client already ran WebP pipeline (heroes images). */
+  heroProcessed?: boolean;
 }): void {
-  if (
-    !input.mimeType.startsWith("image/") &&
-    !input.mimeType.startsWith("video/")
-  ) {
+  const mime = (input.mimeType || "").toLowerCase().split(";")[0].trim();
+  const folder = input.folder ?? "products";
+  const { maxImageBytes, maxVideoBytes } = getUploadLimitsForFolder(folder);
+
+  if (folder === "heroes") {
+    if (input.resourceType === "image") {
+      if (input.heroProcessed) {
+        if (mime !== HERO_IMAGE.outputMime) {
+          throw new BunnyUploadValidationError(
+            "Heroes: la imagen procesada debe ser WebP",
+          );
+        }
+        if (!input.heroVariant || !isHeroImageVariant(input.heroVariant)) {
+          throw new BunnyUploadValidationError(
+            "Heroes: heroVariant requerido (desktop, tablet o mobile)",
+          );
+        }
+        const maxOut = getHeroVariantMaxOutputBytes(input.heroVariant);
+        if (input.fileSize > maxOut) {
+          throw new BunnyUploadValidationError(
+            `La imagen ${input.heroVariant} supera el objetivo de salida (${Math.round(maxOut / 1024)} KB)`,
+          );
+        }
+        return;
+      }
+
+      if (!HERO_IMAGE_MIME_ALLOWLIST.has(mime)) {
+        throw new BunnyUploadValidationError(
+          "Heroes: solo JPEG, PNG, WebP o GIF (no SVG). Sube desde el admin para procesar automáticamente.",
+        );
+      }
+      if (input.fileSize > HERO_IMAGE.maxInputBytes) {
+        throw new BunnyUploadValidationError(
+          `La imagen supera el límite de entrada de ${bytesToMbLabel(HERO_IMAGE.maxInputBytes)} MB`,
+        );
+      }
+      return;
+    }
+
+    if (input.resourceType === "video") {
+      if (!HERO_VIDEO_MIME_ALLOWLIST.has(mime)) {
+        throw new BunnyUploadValidationError(
+          "Heroes: solo MP4 (H.264). Exporta el video como MP4.",
+        );
+      }
+      if (input.fileSize > HERO_VIDEO.maxInputBytes) {
+        throw new BunnyUploadValidationError(
+          `El video supera el límite de ${bytesToMbLabel(HERO_VIDEO.maxInputBytes)} MB`,
+        );
+      }
+      return;
+    }
+  }
+
+  if (!mime.startsWith("image/") && !mime.startsWith("video/")) {
     throw new BunnyUploadValidationError("Solo se permiten imágenes o videos");
   }
-  if (input.resourceType === "image" && input.fileSize > MAX_IMAGE_BYTES) {
+
+  if (mime === "image/svg+xml") {
+    throw new BunnyUploadValidationError("SVG no permitido");
+  }
+
+  if (input.resourceType === "image" && input.fileSize > maxImageBytes) {
     throw new BunnyUploadValidationError(
-      `La imagen supera el límite de ${bytesToMbLabel(MAX_IMAGE_BYTES)} MB`
+      `La imagen supera el límite de ${bytesToMbLabel(maxImageBytes)} MB`,
     );
   }
-  if (input.resourceType === "video" && input.fileSize > MAX_VIDEO_BYTES) {
+  if (input.resourceType === "video" && input.fileSize > maxVideoBytes) {
     throw new BunnyUploadValidationError(
-      `El video supera el límite de ${bytesToMbLabel(MAX_VIDEO_BYTES)} MB`
+      `El video supera el límite de ${bytesToMbLabel(maxVideoBytes)} MB`,
     );
   }
 }
@@ -116,6 +178,8 @@ export async function uploadMediaUseCase(input: {
   file: File;
   folder?: string;
   resourceType?: "image" | "video";
+  heroVariant?: HeroImageVariant;
+  heroProcessed?: boolean;
 }): Promise<{ url: string; objectKey: string }> {
   const config = requireBunnyConfig();
   const folder = normalizeUploadFolder(input.folder);
@@ -125,6 +189,9 @@ export async function uploadMediaUseCase(input: {
     resourceType,
     mimeType: input.file.type,
     fileSize: input.file.size,
+    folder,
+    heroVariant: input.heroVariant,
+    heroProcessed: input.heroProcessed,
   });
 
   if (input.file.size > PROXY_SAFE_MAX_BYTES) {
@@ -146,22 +213,90 @@ export async function uploadMediaUseCase(input: {
   return { url, objectKey };
 }
 
-async function downloadBunnyObject(
+async function downloadBunnyObjectStream(
   objectKey: string,
-  config: BunnyStorageConfig
-): Promise<Buffer> {
+  config: BunnyStorageConfig,
+  partLabel?: string,
+): Promise<ReadableStream<Uint8Array>> {
   const endpoint = `https://${config.storageHost}/${config.zoneName}/${objectKey}`;
   const response = await fetch(endpoint, {
     method: "GET",
     headers: { AccessKey: config.accessKey },
   });
+  if (response.status === 404) {
+    throw new BunnyUploadValidationError(
+      partLabel
+        ? `Falta la ${partLabel}. Reintenta la subida.`
+        : "Falta una parte de la subida. Reintenta.",
+    );
+  }
   if (!response.ok) {
     const body = await response.text().catch(() => "");
     throw new Error(
-      `No se pudo leer parte temporal (${response.status}): ${body}`
+      `No se pudo leer parte temporal (${response.status}): ${body}`,
     );
   }
-  return Buffer.from(await response.arrayBuffer());
+  if (!response.body) {
+    throw new Error("Respuesta de Bunny sin body");
+  }
+  return response.body;
+}
+
+async function* orderedPartByteChunks(
+  partKeys: string[],
+  config: BunnyStorageConfig,
+): AsyncGenerator<Uint8Array> {
+  for (let i = 0; i < partKeys.length; i += 1) {
+    const key = partKeys[i]!;
+    const partLabel = `parte ${i + 1} de ${partKeys.length}`;
+    const body = await downloadBunnyObjectStream(key, config, partLabel);
+    const reader = body.getReader();
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) yield value;
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+}
+
+function createOrderedPartsReadable(
+  partKeys: string[],
+  config: BunnyStorageConfig,
+): Readable {
+  return Readable.from(orderedPartByteChunks(partKeys, config));
+}
+
+async function uploadStreamToBunny(input: {
+  stream: Readable;
+  fileSize: number;
+  objectKey: string;
+  contentType: string;
+  config: BunnyStorageConfig;
+}): Promise<string> {
+  const endpoint = `https://${input.config.storageHost}/${input.config.zoneName}/${input.objectKey}`;
+  const webStream = Readable.toWeb(input.stream) as unknown as BodyInit;
+
+  const response = await fetch(endpoint, {
+    method: "PUT",
+    headers: {
+      AccessKey: input.config.accessKey,
+      "Content-Type": input.contentType || "application/octet-stream",
+      "Content-Length": String(input.fileSize),
+    },
+    duplex: "half",
+    body: webStream,
+  } as RequestInit & { duplex: "half" });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`Bunny upload failed (${response.status}): ${body}`);
+  }
+
+  return toBunnyPublicUrl(input.config.cdnBaseUrl, input.objectKey);
 }
 
 async function deleteBunnyObjectKey(
@@ -179,35 +314,31 @@ async function deleteBunnyObjectKey(
   }
 }
 
-async function uploadFilePathToBunny(input: {
-  filePath: string;
-  fileSize: number;
-  objectKey: string;
-  contentType: string;
-  config: BunnyStorageConfig;
-}): Promise<string> {
-  const endpoint = `https://${input.config.storageHost}/${input.config.zoneName}/${input.objectKey}`;
-  const nodeStream = createReadStream(input.filePath);
-  const webStream = Readable.toWeb(nodeStream) as unknown as BodyInit;
+export async function cleanupTempChunks(input: {
+  uploadId: string;
+  totalChunks: number;
+}): Promise<{ deleted: number; failed: number }> {
+  const config = requireBunnyConfig();
+  assertValidUploadId(input.uploadId);
 
-  const response = await fetch(endpoint, {
-    method: "PUT",
-    headers: {
-      AccessKey: input.config.accessKey,
-      "Content-Type": input.contentType || "application/octet-stream",
-      "Content-Length": String(input.fileSize),
-    },
-    // Node fetch requiere duplex al enviar streams
-    duplex: "half",
-    body: webStream,
-  } as RequestInit & { duplex: "half" });
-
-  if (!response.ok) {
-    const body = await response.text().catch(() => "");
-    throw new Error(`Bunny upload failed (${response.status}): ${body}`);
+  if (
+    !Number.isInteger(input.totalChunks) ||
+    input.totalChunks < 1 ||
+    input.totalChunks > MAX_UPLOAD_CHUNKS
+  ) {
+    throw new BunnyUploadValidationError("totalChunks inválido");
   }
 
-  return toBunnyPublicUrl(input.config.cdnBaseUrl, input.objectKey);
+  const partKeys = Array.from({ length: input.totalChunks }, (_, i) =>
+    tempChunkObjectKey(input.uploadId, i),
+  );
+
+  const results = await Promise.allSettled(
+    partKeys.map((key) => deleteBunnyObjectKey(key, config)),
+  );
+
+  const failed = results.filter((r) => r.status === "rejected").length;
+  return { deleted: partKeys.length - failed, failed };
 }
 
 export async function uploadChunkPartUseCase(input: {
@@ -249,6 +380,8 @@ export async function completeChunkedUploadUseCase(input: {
   folder?: string;
   resourceType?: "image" | "video";
   fileSize: number;
+  heroVariant?: HeroImageVariant;
+  heroProcessed?: boolean;
 }): Promise<{ url: string; objectKey: string }> {
   const config = requireBunnyConfig();
   assertValidUploadId(input.uploadId);
@@ -267,60 +400,46 @@ export async function completeChunkedUploadUseCase(input: {
     resourceType,
     mimeType: input.contentType,
     fileSize: input.fileSize,
+    folder,
+    heroVariant: input.heroVariant,
+    heroProcessed: input.heroProcessed,
   });
 
   const partKeys = Array.from({ length: input.totalChunks }, (_, i) =>
     tempChunkObjectKey(input.uploadId, i)
   );
 
-  const tmpDir = path.join(os.tmpdir(), `cv-upload-${input.uploadId}`);
-  const finalPath = path.join(tmpDir, "final.bin");
-  await fs.mkdir(tmpDir, { recursive: true });
+  const timer = createServerUploadTimer();
 
-  try {
-    const writeStream = createWriteStream(finalPath);
-    let assembled = 0;
+  timer.mark("assemble-stream");
+  const orderedStream = createOrderedPartsReadable(partKeys, config);
 
-    for (let i = 0; i < partKeys.length; i += 1) {
-      const part = await downloadBunnyObject(partKeys[i], config);
-      assembled += part.length;
-      const canContinue = writeStream.write(part);
-      if (!canContinue) {
-        await new Promise<void>((resolve) => writeStream.once("drain", resolve));
-      }
-    }
-    writeStream.end();
-    await finished(writeStream);
+  const objectKey = buildBunnyObjectKey(
+    input.fileName,
+    input.contentType,
+    folder,
+  );
 
-    const delta = Math.abs(assembled - input.fileSize);
-    if (delta > 1024) {
-      throw new BunnyUploadValidationError(
-        `Tamaño final inconsistente (esperado ${input.fileSize}, recibido ${assembled})`
-      );
-    }
+  timer.mark("final-put");
+  const url = await uploadStreamToBunny({
+    stream: orderedStream,
+    fileSize: input.fileSize,
+    objectKey,
+    contentType: input.contentType || "application/octet-stream",
+    config,
+  });
 
-    const objectKey = buildBunnyObjectKey(
-      input.fileName,
-      input.contentType,
-      folder
-    );
+  timer.mark("cleanup");
+  await Promise.allSettled(
+    partKeys.map((key) => deleteBunnyObjectKey(key, config)),
+  );
 
-    const url = await uploadFilePathToBunny({
-      filePath: finalPath,
-      fileSize: assembled,
-      objectKey,
-      contentType: input.contentType || "application/octet-stream",
-      config,
-    });
-
-    await Promise.allSettled(
-      partKeys.map((key) => deleteBunnyObjectKey(key, config))
-    );
-
-    return { url, objectKey };
-  } finally {
-    await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => undefined);
+  if (process.env.NODE_ENV === "development") {
+    const report = timer.report();
+    console.info("[upload complete]", report);
   }
+
+  return { url, objectKey };
 }
 
 export async function initChunkedUploadUseCase(input: {
@@ -329,14 +448,19 @@ export async function initChunkedUploadUseCase(input: {
   fileSize: number;
   folder?: string;
   resourceType?: "image" | "video";
+  heroVariant?: HeroImageVariant;
+  heroProcessed?: boolean;
 }): Promise<{ uploadId: string; chunkSize: number }> {
   requireBunnyConfig();
-  normalizeUploadFolder(input.folder);
+  const folder = normalizeUploadFolder(input.folder);
   const resourceType = resolveResourceType(input.resourceType, input.contentType);
   assertUploadConstraints({
     resourceType,
     mimeType: input.contentType,
     fileSize: input.fileSize,
+    folder,
+    heroVariant: input.heroVariant,
+    heroProcessed: input.heroProcessed,
   });
 
   const estimatedChunks = Math.ceil(input.fileSize / UPLOAD_CHUNK_BYTES);
@@ -347,4 +471,75 @@ export async function initChunkedUploadUseCase(input: {
   }
 
   return { uploadId: randomUUID(), chunkSize: UPLOAD_CHUNK_BYTES };
+}
+
+export type DirectChunkUploadCredentials = {
+  storageHost: string;
+  zoneName: string;
+  accessKey: string;
+  pathPrefix: string;
+};
+
+/**
+ * Credenciales para subir chunks directamente a Bunny desde el admin (evita proxy en cada parte).
+ * Solo para sesiones admin autenticadas; el path queda acotado a casa-verde/_tmp/{uploadId}.
+ */
+export async function getDirectChunkUploadCredentialsUseCase(input: {
+  uploadId: string;
+}): Promise<DirectChunkUploadCredentials> {
+  const config = requireBunnyConfig();
+  assertValidUploadId(input.uploadId);
+  return {
+    storageHost: config.storageHost,
+    zoneName: config.zoneName,
+    accessKey: config.accessKey,
+    pathPrefix: `casa-verde/_tmp/${input.uploadId}`,
+  };
+}
+
+const TMP_UPLOAD_PREFIX = "casa-verde/_tmp";
+const STALE_TMP_UPLOAD_MS = 24 * 60 * 60 * 1000;
+
+export async function cleanupStaleTempUploadsUseCase(): Promise<{
+  deletedUploads: number;
+  deletedObjects: number;
+  errors: number;
+}> {
+  const config = requireBunnyConfig();
+  const uploads = await listBunnyPrefix(TMP_UPLOAD_PREFIX, config);
+  const cutoff = Date.now() - STALE_TMP_UPLOAD_MS;
+
+  let deletedUploads = 0;
+  let deletedObjects = 0;
+  let errors = 0;
+
+  for (const entry of uploads) {
+    if (!entry.IsDirectory) continue;
+    const uploadId = entry.ObjectName;
+    if (!/^[a-z0-9-]{10,80}$/i.test(uploadId)) continue;
+
+    const partsPrefix = `${TMP_UPLOAD_PREFIX}/${uploadId}`;
+    const parts = await listBunnyPrefix(partsPrefix, config);
+    if (parts.length === 0) continue;
+
+    const newestMs = parts.reduce((max, part) => {
+      const changed = Date.parse(part.LastChanged);
+      return Number.isFinite(changed) && changed > max ? changed : max;
+    }, 0);
+
+    if (newestMs > cutoff) continue;
+
+    const fileParts = parts.filter((part) => !part.IsDirectory);
+    const results = await Promise.allSettled(
+      fileParts.map((part) =>
+        deleteBunnyObjectKey(`${partsPrefix}/${part.ObjectName}`, config),
+      ),
+    );
+
+    deletedUploads += 1;
+    deletedObjects += results.filter((r) => r.status === "fulfilled").length;
+    errors += results.filter((r) => r.status === "rejected").length;
+  }
+
+  return { deletedUploads, deletedObjects, errors };
 }

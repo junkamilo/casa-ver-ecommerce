@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { isBunnyCdnUrl } from "@/lib/media-url";
+import { getBunnyObjectKeyFromUrl } from "@/lib/media-url";
 
 export type BunnyStorageConfig = {
   zoneName: string;
@@ -73,14 +73,7 @@ export function toBunnyPublicUrl(cdnBaseUrl: string, objectKey: string): string 
  *       → casa-verde/products/abc.jpg
  */
 export function parseBunnyObjectKey(url: string): string | null {
-  if (!isBunnyCdnUrl(url)) return null;
-  try {
-    const parsed = new URL(url);
-    const key = decodeURIComponent(parsed.pathname.replace(/^\//, ""));
-    return key || null;
-  } catch {
-    return null;
-  }
+  return getBunnyObjectKeyFromUrl(url);
 }
 
 export async function uploadBufferToBunny(input: {
@@ -128,6 +121,50 @@ async function deleteBunnyObject(objectKey: string, config: BunnyStorageConfig):
     const body = await response.text().catch(() => "");
     throw new Error(`Bunny delete failed (${response.status}): ${body}`);
   }
+}
+
+export type BunnyListEntry = {
+  ObjectName: string;
+  IsDirectory: boolean;
+  LastChanged: string;
+  Length: number;
+};
+
+export async function listBunnyPrefix(
+  prefix: string,
+  config?: BunnyStorageConfig,
+): Promise<BunnyListEntry[]> {
+  const cfg = config ?? getBunnyStorageConfig();
+  if (!cfg) {
+    throw new Error("Bunny.net no está configurado");
+  }
+
+  const normalized = prefix.replace(/^\/+/, "").replace(/\/+$/, "");
+  const endpoint = `https://${cfg.storageHost}/${cfg.zoneName}/${normalized}/`;
+
+  const response = await fetch(endpoint, {
+    method: "GET",
+    headers: { AccessKey: cfg.accessKey },
+  });
+
+  if (response.status === 404) return [];
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`Bunny list failed (${response.status}): ${body}`);
+  }
+
+  return (await response.json()) as BunnyListEntry[];
+}
+
+export async function deleteBunnyObjectKey(
+  objectKey: string,
+  config?: BunnyStorageConfig,
+): Promise<void> {
+  const cfg = config ?? getBunnyStorageConfig();
+  if (!cfg) {
+    throw new Error("Bunny.net no está configurado");
+  }
+  await deleteBunnyObject(objectKey, cfg);
 }
 
 export async function deleteBunnyAssetsByUrls(urls: string[]): Promise<void> {

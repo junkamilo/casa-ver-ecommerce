@@ -121,7 +121,7 @@ export default function ImageUpload({
     // Validar tamaño antes de subir
     for (const file of candidates) {
       const resourceType = file.type.startsWith("video") ? "video" : "image";
-      const sizeError = validateFileSize(file, resourceType);
+      const sizeError = validateFileSize(file, resourceType, folder);
       if (sizeError) {
         setUploadError(sizeError);
         return;

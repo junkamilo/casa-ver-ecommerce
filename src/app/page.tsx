@@ -6,8 +6,12 @@ import { unstable_cache } from "next/cache";
 import { Suspense } from "react";
 import { AnnouncementBar, Header, HeroSection } from "@/components";
 import { prisma } from "@/lib/prisma";
-import { SLIDES } from "@/components/HeroSection/constants";
 import type { Slide } from "@/components/HeroSection/types";
+import { HeroLcpPreload } from "@/components/HeroSection/components/HeroLcpPreload";
+import {
+  mapActiveDbHeroSlidesToStorefront,
+  type DbHeroSlideRow,
+} from "@/modules/hero/presentation/map-to-storefront-slide";
 
 export const revalidate = 3600;
 
@@ -56,37 +60,40 @@ async function fetchTestimonials(): Promise<TestimonialItem[]> {
 }
 
 async function fetchHeroSlides(): Promise<Slide[]> {
-  try {
-    const dbSlides = await prisma.heroSlide.findMany({
-      where: { isActive: true },
-      orderBy: { position: "asc" },
-      select: {
-        id: true,
-        position: true,
-        mediaUrl: true,
-        mediaType: true,
-        headline: true,
-        subheadline: true,
-      },
-    });
+  const dbSlides = (await prisma.heroSlide.findMany({
+    where: { isActive: true },
+    orderBy: { position: "asc" },
+    select: {
+      id: true,
+      position: true,
+      mediaUrl: true,
+      mediaUrlMobile: true,
+      mediaUrlTablet: true,
+      posterUrl: true,
+      mediaType: true,
+      headline: true,
+      subheadline: true,
+      mediaFocus: true,
+      playFullVideo: true,
+    },
+  })) as DbHeroSlideRow[];
 
-    // Si no hay slides en DB (primera vez), usa los estáticos como fallback
-    if (dbSlides.length === 0) return SLIDES;
+  if (dbSlides.length === 0) return [];
 
-    return dbSlides.map((s, i) => ({
-      id: s.id || `hero-${s.position}`,
-      image: s.mediaUrl || (SLIDES[i]?.image ?? SLIDES[0].image),
-      mediaType: (s.mediaType === "video" ? "video" : "image") as "image" | "video",
-      headline: s.headline ?? SLIDES[i]?.headline,
-      subheadline: s.subheadline ?? SLIDES[i]?.subheadline,
-    }));
-  } catch (error) {
-    console.error("[HOME_HERO] No se pudieron cargar slides desde DB", error);
-    return SLIDES;
-  }
+  return mapActiveDbHeroSlidesToStorefront(dbSlides);
+}
+
+async function fetchHeroSettings(): Promise<number> {
+  const settings = await prisma.heroSettings.findUnique({ where: { id: 1 } });
+  return settings?.slideDurationMs ?? 6000;
 }
 
 const getCachedHeroSlides = unstable_cache(fetchHeroSlides, ["hero-slides"], {
+  revalidate: 3600,
+  tags: ["hero"],
+});
+
+const getCachedHeroSettings = unstable_cache(fetchHeroSettings, ["hero-settings"], {
   revalidate: 3600,
   tags: ["hero"],
 });
@@ -97,13 +104,30 @@ const getCachedTestimonials = unstable_cache(fetchTestimonials, ["testimonials"]
 });
 
 export default async function Home() {
-  const [heroSlides, testimonials] = await Promise.all([getCachedHeroSlides(), getCachedTestimonials()]);
+  let heroSlides: Slide[];
+  let slideDurationMs: number;
+
+  try {
+    [heroSlides, slideDurationMs] = await Promise.all([
+      getCachedHeroSlides(),
+      getCachedHeroSettings(),
+    ]);
+  } catch (error) {
+    console.error("[HOME_HERO] Cache miss, reintentando sin caché", error);
+    [heroSlides, slideDurationMs] = await Promise.all([
+      fetchHeroSlides(),
+      fetchHeroSettings(),
+    ]);
+  }
+
+  const testimonials = await getCachedTestimonials();
 
   return (
     <div className="min-h-screen bg-background">
+      <HeroLcpPreload slide={heroSlides[0] ?? null} />
       <AnnouncementBar />
       <Header />
-      <HeroSection slides={heroSlides} />
+      <HeroSection slides={heroSlides} slideDurationMs={slideDurationMs} />
       <Suspense fallback={null}>
         <BestSellers />
       </Suspense>
