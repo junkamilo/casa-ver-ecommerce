@@ -1,36 +1,57 @@
 "use client";
 
 import { useHeroSection } from "./hooks";
-import { HERO_BUTTONS, SLIDES } from "./constants";
-import { SlideTrack, Overlays, CtaButton } from "./components";
-import type { Slide } from "./types";
+import { AUTOPLAY_TIME, HERO_BUTTONS } from "./constants";
+import { SlideTrack, Overlays, CtaButton, HeroEmptyBanner } from "./components";
+import { getHeroLayoutClasses } from "./previewLayoutClasses";
+import type { HeroPreviewLayout, Slide } from "./types";
 
 interface HeroSectionProps {
   slides?: Slide[];
+  /** Admin device preview: fixed layout classes instead of viewport breakpoints. */
+  previewLayout?: HeroPreviewLayout;
+  /** When false, carousel autoplay is disabled. Default true. */
+  autoplay?: boolean;
+  /** Global duration for image slides / videos without playFullVideo. */
+  slideDurationMs?: number;
 }
 
-export default function HeroSection({ slides = SLIDES }: HeroSectionProps) {
-  const { currentSlide } = useHeroSection(slides.length);
+export default function HeroSection({
+  slides = [],
+  previewLayout,
+  autoplay = true,
+  slideDurationMs = AUTOPLAY_TIME,
+}: HeroSectionProps) {
+  const { currentSlide, onActiveVideoEnded } = useHeroSection(
+    slides,
+    autoplay && slides.length > 1,
+    slideDurationMs,
+  );
+
+  if (slides.length === 0) {
+    return <HeroEmptyBanner previewLayout={previewLayout} />;
+  }
   const slide = slides[currentSlide];
+  const layout = getHeroLayoutClasses(previewLayout);
 
   return (
-    <section className="relative w-full h-80 sm:h-screen md:h-[72vh] sm:min-h-120 md:min-h-125 md:max-h-190 lg:min-h-130 lg:max-h-200 xl:max-h-205 2xl:max-h-215 overflow-hidden select-none bg-black">
-
-      <SlideTrack currentSlide={currentSlide} slides={slides} />
+    <section className={layout.section}>
+      <SlideTrack
+        currentSlide={currentSlide}
+        slides={slides}
+        forceFocusLayout={previewLayout}
+        onActiveVideoEnded={onActiveVideoEnded}
+      />
       <Overlays />
 
-      {/* Texto del slide — se reanima en cada cambio de slide */}
-      {slide.headline && (
-        <div
-          key={`text-${currentSlide}`}
-          className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4 sm:px-6"
-        >
+      {slide?.headline && (
+        <div key={`text-${currentSlide}`} className={layout.textWrap}>
           <div
             className="text-center opacity-0 animate-hero-in"
             style={{ animationDelay: "150ms", animationFillMode: "forwards" }}
           >
             <h1
-              className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white leading-none tracking-tight"
+              className={layout.headline}
               style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
             >
               {slide.headline}
@@ -38,22 +59,19 @@ export default function HeroSection({ slides = SLIDES }: HeroSectionProps) {
           </div>
           {slide.subheadline && (
             <div
-              className="opacity-0 animate-hero-in mt-3 sm:mt-4 md:mt-5"
+              className={layout.subheadlineWrap}
               style={{ animationDelay: "350ms", animationFillMode: "forwards" }}
             >
-              <p className="text-sm sm:text-lg md:text-xl lg:text-2xl text-white/85 font-light tracking-widest text-center uppercase">
-                {slide.subheadline}
-              </p>
+              <p className={layout.subheadline}>{slide.subheadline}</p>
             </div>
           )}
         </div>
       )}
 
-      {/* Botones CTA */}
-      <div className="absolute inset-0 flex flex-col justify-end z-20 pointer-events-none px-4 sm:px-6 md:px-8 lg:px-12">
-        <div className="pb-3 sm:pb-16 md:pb-16 lg:pb-20 w-full flex justify-center">
+      <div className={layout.ctaOuter}>
+        <div className={layout.ctaInner}>
           <div
-            className="flex flex-row items-center justify-center gap-2 sm:gap-3 md:gap-6 opacity-0 animate-hero-in pointer-events-auto"
+            className={layout.ctaGap}
             style={{ animationDelay: "700ms", animationFillMode: "forwards" }}
           >
             {HERO_BUTTONS.map((btn) => (
@@ -62,7 +80,6 @@ export default function HeroSection({ slides = SLIDES }: HeroSectionProps) {
           </div>
         </div>
       </div>
-
     </section>
   );
 }

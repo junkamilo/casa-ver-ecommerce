@@ -26,6 +26,8 @@ export async function POST(request: NextRequest) {
         fileSize?: number;
         folder?: string;
         resourceType?: "image" | "video";
+        heroVariant?: "desktop" | "tablet" | "mobile";
+        heroProcessed?: boolean;
       };
 
       if (
@@ -52,6 +54,8 @@ export async function POST(request: NextRequest) {
         fileSize: body.fileSize,
         folder: body.folder,
         resourceType: body.resourceType,
+        heroVariant: body.heroVariant,
+        heroProcessed: body.heroProcessed,
       });
 
       return NextResponse.json(result, {

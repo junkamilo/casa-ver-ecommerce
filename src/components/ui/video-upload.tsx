@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Upload, Loader2, X, AlertCircle } from "lucide-react";
+import { Upload, X, AlertCircle } from "lucide-react";
 import { uploadToBunny } from "@/lib/bunny";
+import UploadProgressOverlay from "@/components/ui/upload-progress-overlay";
+import { createPhaseEvent } from "@/lib/upload-progress";
 
 interface Props {
   value: string;
@@ -23,6 +25,9 @@ export default function VideoUpload({
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [progressMessage, setProgressMessage] = useState("Subiendo video…");
+  const [progressPct, setProgressPct] = useState<number | null>(null);
+  const [progressDetail, setProgressDetail] = useState<string | undefined>();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -33,7 +38,13 @@ export default function VideoUpload({
     setUploading(true);
     onUploadingChange?.(true);
     try {
-      const url = await uploadToBunny(file, "video", folder);
+      const url = await uploadToBunny(file, "video", folder, {
+        onProgress: (event) => {
+          setProgressMessage(event.message);
+          setProgressPct(event.progress ?? null);
+          setProgressDetail(event.detail);
+        },
+      });
       onChange(url);
     } catch (error) {
       setUploadError(
@@ -43,6 +54,9 @@ export default function VideoUpload({
       URL.revokeObjectURL(local);
       setPreviewUrl(null);
       setUploading(false);
+      setProgressMessage(createPhaseEvent("uploading_chunks").message);
+      setProgressPct(null);
+      setProgressDetail(undefined);
       onUploadingChange?.(false);
     }
   };
@@ -80,14 +94,14 @@ export default function VideoUpload({
         </button>
       ) : (
         <div className="relative">
-          {uploading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50 rounded-lg">
-              <div className="flex flex-col items-center gap-2 text-white">
-                <Loader2 className="w-7 h-7 animate-spin" />
-                <span className="text-xs font-semibold">Subiendo video…</span>
-              </div>
-            </div>
-          )}
+          <UploadProgressOverlay
+            open={uploading}
+            variant="inline"
+            message={progressMessage}
+            progress={progressPct}
+            progressLabel={progressDetail}
+            className="rounded-lg"
+          />
           {displayUrl && (
             <video
               src={displayUrl}

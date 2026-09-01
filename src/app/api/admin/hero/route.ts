@@ -4,7 +4,7 @@ import {
   createHeroSlideUseCase,
   updateHeroSlideUseCase,
   deleteHeroSlideUseCase,
-} from "@/modules/adminCatalog/hero/application/hero.use-case";
+} from "@/modules/hero/application/hero.use-case";
 import { runAdminRoute } from "@/server/http/admin-route";
 import { toErrorResponse } from "@/server/http/error-response";
 import { revalidateHeroPages } from "@/lib/revalidate-hero-pages";

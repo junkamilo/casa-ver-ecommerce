@@ -54,7 +54,24 @@ export async function POST(request: NextRequest) {
           ? resourceTypeRaw
           : undefined;
 
-      const result = await uploadMediaUseCase({ file, folder, resourceType });
+      const heroVariantRaw = formData.get("heroVariant");
+      const heroProcessedRaw = formData.get("heroProcessed");
+      const heroVariant =
+        typeof heroVariantRaw === "string" &&
+        (heroVariantRaw === "desktop" ||
+          heroVariantRaw === "tablet" ||
+          heroVariantRaw === "mobile")
+          ? heroVariantRaw
+          : undefined;
+      const heroProcessed = heroProcessedRaw === "true";
+
+      const result = await uploadMediaUseCase({
+        file,
+        folder,
+        resourceType,
+        heroVariant,
+        heroProcessed,
+      });
 
       return NextResponse.json(result, {
         headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },

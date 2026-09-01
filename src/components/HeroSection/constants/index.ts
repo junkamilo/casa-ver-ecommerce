@@ -1,24 +1,13 @@
-import type { Slide, HeroButton } from "../types";
-import ImagenHeader1 from "@/assets/ImagenHeader1.jpg";
-import ImagenHeader2 from "@/assets/ImagenHeader2.jpeg";
+import type { HeroButton } from "../types";
 
 export const BRAND_GREEN = "#154734";
 export const BRAND_GOLD  = "#C19A6B";
 
 export const AUTOPLAY_TIME = 6000;
 
-export const SLIDES: Slide[] = [
-  {
-    id: "01",
-    image: ImagenHeader1,
-    headline: "¡Bienvenida!",
-    subheadline: "A tu nueva tienda web favorita",
-  },
-  {
-    id: "02",
-    image: ImagenHeader2,
-  },
-];
+/** Copy shown when there are no active hero slides on the storefront. */
+export const EMPTY_HERO_HEADLINE = "¡Bienvenida!";
+export const EMPTY_HERO_SUBHEADLINE = "A tu nueva tienda web favorita";
 
 export const HERO_BUTTONS: HeroButton[] = [
   { label: "COMPRAR AHORA", href: "/tienda",      variant: "primary"   },
