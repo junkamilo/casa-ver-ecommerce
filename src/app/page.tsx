@@ -4,6 +4,7 @@
 import type { Metadata } from "next";
 import { unstable_cache } from "next/cache";
 import { Suspense } from "react";
+import { Prisma } from "@prisma/client";
 import { AnnouncementBar, Header, HeroSection } from "@/components";
 import { prisma } from "@/lib/prisma";
 import type { Slide } from "@/components/HeroSection/types";
@@ -36,6 +37,14 @@ import { SEED_TESTIMONIALS } from "@/components/layout/Testimonials/constants/co
 import type { TestimonialItem } from "@/components/layout/Testimonials/types/types";
 import PaymentMethodsBanner from "@/components/PaymentMethodsBanner";
 
+const DEFAULT_HERO_SLIDE_DURATION_MS = 6000;
+
+function isMissingHeroTableError(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021"
+  );
+}
+
 async function fetchTestimonials(): Promise<TestimonialItem[]> {
   try {
     const dbReviews = await prisma.review.findMany({
@@ -60,32 +69,52 @@ async function fetchTestimonials(): Promise<TestimonialItem[]> {
 }
 
 async function fetchHeroSlides(): Promise<Slide[]> {
-  const dbSlides = (await prisma.heroSlide.findMany({
-    where: { isActive: true },
-    orderBy: { position: "asc" },
-    select: {
-      id: true,
-      position: true,
-      mediaUrl: true,
-      mediaUrlMobile: true,
-      mediaUrlTablet: true,
-      posterUrl: true,
-      mediaType: true,
-      headline: true,
-      subheadline: true,
-      mediaFocus: true,
-      playFullVideo: true,
-    },
-  })) as DbHeroSlideRow[];
+  try {
+    const dbSlides = (await prisma.heroSlide.findMany({
+      where: { isActive: true },
+      orderBy: { position: "asc" },
+      select: {
+        id: true,
+        position: true,
+        mediaUrl: true,
+        mediaUrlMobile: true,
+        mediaUrlTablet: true,
+        posterUrl: true,
+        mediaType: true,
+        headline: true,
+        subheadline: true,
+        mediaFocus: true,
+        playFullVideo: true,
+      },
+    })) as DbHeroSlideRow[];
 
-  if (dbSlides.length === 0) return [];
+    if (dbSlides.length === 0) return [];
 
-  return mapActiveDbHeroSlidesToStorefront(dbSlides);
+    return mapActiveDbHeroSlidesToStorefront(dbSlides);
+  } catch (error) {
+    if (isMissingHeroTableError(error)) {
+      console.warn(
+        "[HOME_HERO] Tablas hero no encontradas; usando banner vacío. Ejecuta prisma migrate deploy.",
+      );
+      return [];
+    }
+    throw error;
+  }
 }
 
 async function fetchHeroSettings(): Promise<number> {
-  const settings = await prisma.heroSettings.findUnique({ where: { id: 1 } });
-  return settings?.slideDurationMs ?? 6000;
+  try {
+    const settings = await prisma.heroSettings.findUnique({ where: { id: 1 } });
+    return settings?.slideDurationMs ?? DEFAULT_HERO_SLIDE_DURATION_MS;
+  } catch (error) {
+    if (isMissingHeroTableError(error)) {
+      console.warn(
+        "[HOME_HERO] hero_settings no encontrada; usando duración por defecto. Ejecuta prisma migrate deploy.",
+      );
+      return DEFAULT_HERO_SLIDE_DURATION_MS;
+    }
+    throw error;
+  }
 }
 
 const getCachedHeroSlides = unstable_cache(fetchHeroSlides, ["hero-slides"], {
