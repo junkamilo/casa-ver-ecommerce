@@ -84,3 +84,27 @@ export class CouponAlreadyUsedError extends Error {
     this.name = "CouponAlreadyUsedError";
   }
 }
+
+export const CREATE_ORDER_GENERIC_ERROR =
+  "No pudimos confirmar el pedido. Intenta de nuevo en unos segundos.";
+
+const CHECKOUT_DOMAIN_ERRORS = [
+  CartEmptyError,
+  CheckoutValidationError,
+  CouponAlreadyUsedError,
+  CouponExhaustedError,
+  CouponExpiredError,
+  CouponInactiveError,
+  CouponNotYetValidError,
+  InvalidAddressError,
+  OutOfStockError,
+  ProductUnavailableError,
+  VariantNotFoundError,
+] as const;
+
+export function toCreateOrderErrorMessage(err: unknown): string {
+  if (CHECKOUT_DOMAIN_ERRORS.some((ErrorClass) => err instanceof ErrorClass)) {
+    return (err as Error).message;
+  }
+  return CREATE_ORDER_GENERIC_ERROR;
+}

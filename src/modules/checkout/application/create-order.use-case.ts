@@ -4,6 +4,7 @@ import type {
   CreateOrderInputDTO,
   CreateOrderResultDTO,
 } from "../contracts/create-order.dto";
+import { toCreateOrderErrorMessage } from "./checkout.errors";
 
 const repository = new PrismaCheckoutRepository();
 
@@ -39,8 +40,7 @@ export async function createOrderUseCase(
       transactionId: result.order.transactionId,
     };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Error interno al crear la orden";
     console.error("[createOrder] Error:", err);
-    return { success: false, error: message };
+    return { success: false, error: toCreateOrderErrorMessage(err) };
   }
 }

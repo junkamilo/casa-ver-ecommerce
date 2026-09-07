@@ -1,6 +1,7 @@
 "use server";
 
 import { createOrderUseCase } from "@/modules/checkout/application/create-order.use-case";
+import { verifyCaptcha } from "@/modules/checkout/infrastructure/verify-recaptcha";
 import { markOrderPaidUseCase } from "@/modules/orders/application/mark-order-paid.use-case";
 import { releaseOrderStockUseCase } from "@/modules/orders/application/release-order-stock.use-case";
 import { getShippingCost } from "@/modules/shipping/application/use-cases/get-shipping-cost.use-case";
@@ -47,6 +48,8 @@ export interface CreateOrderInput {
 
   couponId?: string;
   couponCode?: string;
+
+  captchaToken?: string;
 }
 
 export interface CreateOrderResult {
@@ -65,7 +68,17 @@ export interface CreateOrderResult {
 // useCheckout y cualquier otro consumidor existente.
 // ---------------------------------------------------------------------------
 export async function createOrder(input: CreateOrderInput): Promise<CreateOrderResult> {
-  return createOrderUseCase(input);
+  const isHuman = await verifyCaptcha(input.captchaToken ?? "");
+  if (!isHuman) {
+    console.error("[createOrder] reCAPTCHA fallido");
+    return {
+      success: false,
+      error: "Verificación de seguridad fallida. Intenta de nuevo.",
+    };
+  }
+  const { captchaToken, ...orderInput } = input;
+  void captchaToken;
+  return createOrderUseCase(orderInput);
 }
 
 // ---------------------------------------------------------------------------

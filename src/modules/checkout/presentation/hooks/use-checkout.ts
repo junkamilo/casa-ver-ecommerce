@@ -60,6 +60,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
 
   const [isPending, startTransition] = useTransition();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const [coupon, setCoupon] = useState<CouponState>({
     code: "",
@@ -213,6 +214,11 @@ export function useCheckout(options?: UseCheckoutOptions) {
         return;
       }
 
+      if (!captchaToken) {
+        setSubmitError("Confirma que no eres un robot para continuar.");
+        return;
+      }
+
       setSubmitError(null);
 
       startTransition(async () => {
@@ -244,6 +250,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
           discount: couponDiscount,
           couponId: coupon.couponId,
           couponCode: coupon.status === "valid" ? coupon.code : undefined,
+          captchaToken,
         });
 
         if (!orderResult.success || !orderResult.orderId) {
@@ -331,7 +338,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
         }
       });
     },
-    [checkoutItems, subtotal, shippingCost, couponDiscount, coupon, options, closeCart, clearCart, clearBuyNow]
+    [checkoutItems, subtotal, shippingCost, couponDiscount, coupon, captchaToken, options, closeCart, clearCart, clearBuyNow]
   );
 
   return {
@@ -354,6 +361,8 @@ export function useCheckout(options?: UseCheckoutOptions) {
     dismissFreeShippingCelebration,
     isPending,
     submitError,
+    captchaToken,
+    setCaptchaToken,
     onSubmit: form.handleSubmit(handleSubmit),
   };
 }
