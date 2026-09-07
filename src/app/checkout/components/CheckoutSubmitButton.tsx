@@ -4,12 +4,13 @@ import { LOCALE } from "../constants";
 interface CheckoutSubmitButtonProps {
   isPending: boolean;
   total: number;
+  captchaReady: boolean;
 }
 
-const CheckoutSubmitButton = ({ isPending, total }: CheckoutSubmitButtonProps) => (
+const CheckoutSubmitButton = ({ isPending, total, captchaReady }: CheckoutSubmitButtonProps) => (
   <button
     type="submit"
-    disabled={isPending}
+    disabled={isPending || !captchaReady}
     className="w-full bg-[#154734] text-white text-xs sm:text-sm font-bold uppercase tracking-[0.12em] sm:tracking-[0.15em] py-3.5 sm:py-4 rounded-xl sm:rounded-2xl hover:bg-[#103a2a] shadow-md hover:shadow-lg transition-all duration-300 active:scale-[0.99] mb-6 lg:mb-10 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-[#154734]"
   >
     <span className="flex flex-row items-center justify-center gap-2 sm:gap-3">

@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { getShippingCost } from "@/modules/shipping/application/use-cases/get-shipping-cost.use-case";
+import { applyFreeShipping } from "@/modules/shipping/domain/resolve-shipping-price";
 import {
   calculateCouponDiscount,
   calculateCouponDiscountAmount,
@@ -41,6 +42,30 @@ export interface CreatedOrderRecord {
 // ---------------------------------------------------------------------------
 export class PrismaCheckoutRepository {
   async createOrderTransaction(input: CreateOrderInputDTO): Promise<CreatedOrderRecord> {
+    // Lecturas de envío ANTES del $transaction: getShippingCost usa el cliente
+    // Prisma global. Dentro del tx (connection_limit=1) eso deadlockea el pool.
+    const municipality = await prisma.municipality.findFirst({
+      where: { name: input.city, department: { name: input.department } },
+      select: { id: true },
+    });
+
+    if (!municipality) {
+      throw new InvalidAddressError("Municipio no encontrado para envío");
+    }
+
+    const shippingQuote = await getShippingCost({
+      municipalityId: municipality.id,
+      subtotalNeto: 0,
+    });
+
+    if (!shippingQuote.ok || shippingQuote.baseCost == null) {
+      throw new InvalidAddressError("No hay cobertura para esta dirección");
+    }
+
+    const shippingBaseCost = shippingQuote.baseCost;
+    const shippingRateName = shippingQuote.rateName;
+    const freeShippingThreshold = shippingQuote.freeShippingThreshold;
+
     return prisma.$transaction(
       async (tx) => {
         // 1. Buscar o crear usuario guest/registrado
@@ -241,25 +266,11 @@ export class PrismaCheckoutRepository {
 
         const finalDiscount = couponDiscountAmount;
         const netSubtotal = realSubtotal - finalDiscount;
-
-        const municipality = await tx.municipality.findFirst({
-          where: { name: input.city, department: { name: input.department } },
-          include: { shippingRate: true, department: true }
-        });
-
-        if (!municipality) {
-          throw new InvalidAddressError("Municipio no encontrado para envío");
-        }
-
-        const shippingQuote = await getShippingCost({
-          subtotalNeto: netSubtotal,
-          municipalityId: municipality.id,
-        });
-
-        if (!shippingQuote.ok) {
-          throw new InvalidAddressError("No hay cobertura para esta dirección");
-        }
-        const realShippingCost = shippingQuote.cost;
+        const realShippingCost = applyFreeShipping(
+          shippingBaseCost,
+          netSubtotal,
+          freeShippingThreshold
+        );
         const realTotal = realSubtotal + realShippingCost - finalDiscount;
 
         const orderNumber = generateOrderNumber();
@@ -289,7 +300,7 @@ export class PrismaCheckoutRepository {
             shippingPhone: input.phone,
             subtotal: realSubtotal,
             shippingCost: realShippingCost,
-            shippingRateName: shippingQuote.rateName,
+            shippingRateName: shippingRateName,
             discount: finalDiscount,
             total: realTotal,
             status: "PENDING",

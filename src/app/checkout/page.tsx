@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { useSession } from "next-auth/react";
 import { FormProvider } from "react-hook-form";
 import { useCheckout } from "./hooks/useCheckout";
@@ -18,6 +19,10 @@ import OrderSummaryPanel from "./components/OrderSummaryPanel";
 import GuestCheckoutModal from "./components/GuestCheckoutModal";
 import CouponAppliedModal from "./components/CouponAppliedModal";
 import FreeShippingAppliedModal from "./components/FreeShippingAppliedModal";
+
+const ReCAPTCHA = dynamic(() => import("react-google-recaptcha"), { ssr: false });
+
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? "";
 
 export default function CheckoutPage() {
   const { status: authStatus } = useSession();
@@ -60,6 +65,8 @@ export default function CheckoutPage() {
     dismissFreeShippingCelebration,
     isPending,
     submitError,
+    captchaToken,
+    setCaptchaToken,
     onSubmit,
   } = useCheckout({ onBeforePayment: saveAddress });
 
@@ -135,13 +142,32 @@ export default function CheckoutPage() {
             <PaymentSection />
             <BillingSection />
 
+            <div className="mb-6">
+              {RECAPTCHA_SITE_KEY ? (
+                <ReCAPTCHA
+                  sitekey={RECAPTCHA_SITE_KEY}
+                  hl="es"
+                  onChange={(token) => setCaptchaToken(token)}
+                  onExpired={() => setCaptchaToken(null)}
+                />
+              ) : (
+                <p className="text-sm text-red-700">
+                  Falta NEXT_PUBLIC_RECAPTCHA_SITE_KEY. El pago no se puede habilitar.
+                </p>
+              )}
+            </div>
+
             {submitError && (
               <div className="mb-6 px-5 py-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-medium">
                 {submitError}
               </div>
             )}
 
-            <CheckoutSubmitButton isPending={isPending} total={total} />
+            <CheckoutSubmitButton
+              isPending={isPending}
+              total={total}
+              captchaReady={Boolean(captchaToken)}
+            />
           </div>
         </div>
 

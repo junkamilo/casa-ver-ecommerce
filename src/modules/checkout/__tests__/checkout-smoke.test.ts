@@ -10,6 +10,13 @@ import {
 } from "@/modules/checkout/domain/coupon.entity";
 import { createOrderInputSchema } from "@/modules/checkout/contracts/create-order.schema";
 import {
+  CREATE_ORDER_GENERIC_ERROR,
+  InvalidAddressError,
+  OutOfStockError,
+  toCreateOrderErrorMessage,
+} from "@/modules/checkout/application/checkout.errors";
+import { applyFreeShipping } from "@/modules/shipping/domain/resolve-shipping-price";
+import {
   calcLineItemDisplayTotals,
   calcCheckoutTotals,
 } from "@/modules/checkout/presentation/calculators/line-item-totals";
@@ -224,5 +231,38 @@ describe("Checkout — checkout totals calculator", () => {
       couponDiscount,
     });
     expect(r.total).toBe(350_000);
+  });
+});
+
+describe("Checkout — applyFreeShipping", () => {
+  it("cobra la tarifa base si el neto no alcanza el umbral", () => {
+    expect(applyFreeShipping(18000, 200_000, 300_000)).toBe(18000);
+  });
+
+  it("deja el envío en 0 si el neto alcanza el umbral", () => {
+    expect(applyFreeShipping(18000, 300_000, 300_000)).toBe(0);
+    expect(applyFreeShipping(18000, 350_000, 300_000)).toBe(0);
+  });
+});
+
+describe("Checkout — toCreateOrderErrorMessage", () => {
+  it("conserva el mensaje de errores de dominio", () => {
+    expect(toCreateOrderErrorMessage(new InvalidAddressError("Municipio no encontrado para envío"))).toBe(
+      "Municipio no encontrado para envío"
+    );
+    expect(
+      toCreateOrderErrorMessage(new OutOfStockError("Stock insuficiente para \"Falda\""))
+    ).toBe('Stock insuficiente para "Falda"');
+  });
+
+  it("oculta errores de Prisma / genéricos", () => {
+    expect(
+      toCreateOrderErrorMessage(
+        new Error(
+          "Invalid prisma.shippingConfig.findUnique() invocation: Timed out fetching a new connection from the connection pool"
+        )
+      )
+    ).toBe(CREATE_ORDER_GENERIC_ERROR);
+    expect(toCreateOrderErrorMessage("boom")).toBe(CREATE_ORDER_GENERIC_ERROR);
   });
 });
