@@ -14,6 +14,8 @@ import {
   type DbHeroSlideRow,
 } from "@/modules/hero/presentation/map-to-storefront-slide";
 
+export const dynamic = "force-dynamic";
+
 export const revalidate = 3600;
 
 export const metadata: Metadata = {

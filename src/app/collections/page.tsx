@@ -10,6 +10,8 @@ import { listActiveCategoriesUseCase } from "@/modules/collections/application/l
 import { getPosCategoryTree } from "@/modules/posIntegration/application/get-pos-categories.use-case";
 import { toPosCarouselItems } from "@/modules/posIntegration/domain/pos-category-view";
 
+export const dynamic = "force-dynamic";
+
 export const revalidate = 300;
 
 export const metadata: Metadata = {
