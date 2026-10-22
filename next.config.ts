@@ -15,6 +15,13 @@ function devTunnelHost(): string | null {
 }
 const tunnelHost = process.env.NODE_ENV === "production" ? null : devTunnelHost();
 
+// Orígenes extra para server actions (ej. dominios de QA), separados por coma.
+// Producción de Vercel no define esta variable, así que su lista no cambia.
+const extraServerActionOrigins = (process.env.EXTRA_SERVER_ACTION_ORIGINS ?? "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 const nextConfig: NextConfig = {
   ...(tunnelHost ? { allowedDevOrigins: [tunnelHost] } : {}),
   images: {
@@ -53,7 +60,11 @@ const nextConfig: NextConfig = {
     serverActions: {
       allowedOrigins:
         process.env.NODE_ENV === "production"
-          ? ["casaverdeoficial.com", "www.casaverdeoficial.com"]
+          ? [
+            "casaverdeoficial.com",
+            "www.casaverdeoficial.com",
+            ...extraServerActionOrigins,
+          ]
           : ["localhost:3000", ...(tunnelHost ? [tunnelHost] : [])],
     },
     // Persiste compilaciones de Turbopack entre reinicios de `next dev`.
