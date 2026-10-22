@@ -85,6 +85,14 @@ export class CouponAlreadyUsedError extends Error {
   }
 }
 
+/** Compra mínima o alcance (productos/categorías) de una promoción del POS. */
+export class CouponNotApplicableError extends Error {
+  constructor(message = "El cupón no aplica a los productos de tu carrito") {
+    super(message);
+    this.name = "CouponNotApplicableError";
+  }
+}
+
 export const CREATE_ORDER_GENERIC_ERROR =
   "No pudimos confirmar el pedido. Intenta de nuevo en unos segundos.";
 
@@ -96,6 +104,7 @@ const CHECKOUT_DOMAIN_ERRORS = [
   CouponExpiredError,
   CouponInactiveError,
   CouponNotYetValidError,
+  CouponNotApplicableError,
   InvalidAddressError,
   OutOfStockError,
   ProductUnavailableError,

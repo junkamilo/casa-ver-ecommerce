@@ -1,114 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getCatalog } from "@/modules/catalog/listing/application/get-catalog";
+import { toCard } from "@/modules/catalog/listing/domain/catalog-entry.entity";
+import { transformProduct } from "@/modules/collections/domain/product-mapper.entity";
 
-/** Siempre fresco tras marcar/desmarcar en admin (evita servir [] cacheado). */
+/** Siempre fresco tras marcar/desmarcar en el POS o el admin (evita servir [] cacheado). */
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-type SuggestedProductRow = {
-  name: string;
-  slug: string;
-  basePrice: { toNumber(): number } | number;
-  isSet: boolean;
-  coverImageUrl: string | null;
-  images: Array<{ url: string }>;
-  colors: Array<{ images: Array<{ url: string }> }>;
-  items: Array<{
-    price: { toNumber(): number } | number | null;
-    coverImageUrl: string | null;
-    isCardFeatured: boolean;
-    colors: Array<{ images: Array<{ url: string }> }>;
-  }>;
-};
+const TAKE = 12;
 
-function toNumber(value: { toNumber(): number } | number | null | undefined): number | null {
-  if (value == null) return null;
-  return typeof value === "number" ? value : value.toNumber();
-}
-
-function mapSuggestedProduct(p: SuggestedProductRow) {
-  const featuredItem =
-    p.items.find((item) => item.isCardFeatured) ?? p.items[0] ?? null;
-  const coverFromProduct = p.coverImageUrl?.trim() || null;
-  const coverFromImages = p.images[0]?.url ?? null;
-  const coverFromColor = p.colors[0]?.images[0]?.url ?? null;
-  const coverFromItem =
-    featuredItem?.coverImageUrl?.trim() ||
-    featuredItem?.colors[0]?.images[0]?.url ||
-    null;
-  const image =
-    coverFromProduct || coverFromImages || coverFromColor || coverFromItem || null;
-
-  const featuredPrice = toNumber(featuredItem?.price);
-  const price =
-    p.isSet && featuredPrice != null && featuredPrice > 0
-      ? featuredPrice
-      : (toNumber(p.basePrice) ?? 0);
-
-  return {
-    name: p.name,
-    slug: p.slug,
-    price,
-    minPrice: null,
-    image,
-    isSet: p.isSet,
-  };
-}
-
+/** Popup "Te podría interesar": etiqueta SUGGEST_POPUP del POS (o bandera de la web), más reciente primero. */
 export async function GET(request: NextRequest) {
   const excludeSlug = request.nextUrl.searchParams.get("excludeSlug")?.trim() || null;
 
-  const products = await prisma.product.findMany({
-    where: {
-      status: "ACTIVE",
-      isSuggested: true,
-      ...(excludeSlug ? { slug: { not: excludeSlug } } : {}),
-    },
-    orderBy: [{ suggestedAt: "desc" }, { updatedAt: "desc" }],
-    take: 12,
-    select: {
-      name: true,
-      slug: true,
-      basePrice: true,
-      isSet: true,
-      coverImageUrl: true,
-      images: {
-        where: { colorId: null },
-        orderBy: [{ isCover: "desc" }, { order: "asc" }],
-        take: 1,
-        select: { url: true },
-      },
-      colors: {
-        take: 1,
-        include: {
-          images: {
-            orderBy: [{ isCover: "desc" }, { order: "asc" }],
-            take: 1,
-            select: { url: true },
-          },
-        },
-      },
-      items: {
-        orderBy: { order: "asc" },
-        take: 6,
-        select: {
-          price: true,
-          coverImageUrl: true,
-          isCardFeatured: true,
-          colors: {
-            take: 1,
-            include: {
-              images: {
-                orderBy: [{ isCover: "desc" }, { order: "asc" }],
-                take: 1,
-                select: { url: true },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
+  const suggested = (await getCatalog())
+    .filter((entry) => entry.isSuggested && entry.slug !== excludeSlug)
+    .sort(
+      (a, b) =>
+        (b.suggestedAt?.getTime() ?? 0) - (a.suggestedAt?.getTime() ?? 0) ||
+        b.publishedAt.getTime() - a.publishedAt.getTime(),
+    )
+    .slice(0, TAKE);
 
-  return NextResponse.json(products.map(mapSuggestedProduct));
+  return NextResponse.json(
+    suggested.map((entry) => {
+      const card = transformProduct(toCard(entry));
+      return {
+        name: card.name,
+        slug: card.slug,
+        price: card.price,
+        minPrice: null,
+        image: card.images[0] ?? card.colors?.find((c) => c.imageUrl)?.imageUrl ?? null,
+        isSet: card.isSet ?? false,
+      };
+    }),
+  );
 }

@@ -40,6 +40,14 @@ export default function AdminPromocionesPage() {
       render: (row: CouponListItemDTO) => (
         <div className="flex items-center gap-2">
           <span className="font-mono text-sm font-semibold text-gray-900">{row.code}</span>
+          {row.source === "POS" ? (
+            <span
+              title={`Lote del POS ${row.posPromotionId ?? ""}: se administra en el POS`}
+              className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#154734] text-white"
+            >
+              POS
+            </span>
+          ) : null}
           <button
             type="button"
             onClick={() => m.copyCode(row.code)}
@@ -67,7 +75,7 @@ export default function AdminPromocionesPage() {
             row.isUsed ? "bg-emerald-100 text-emerald-800" : "bg-gray-100 text-gray-600"
           }`}
         >
-          {row.isUsed ? "Usado" : "Disponible"}
+          {row.isUsed ? "Usado" : row.isActive ? "Disponible" : "Inactivo"}
         </span>
       ),
     },
@@ -75,7 +83,9 @@ export default function AdminPromocionesPage() {
       key: "batch",
       header: "Lote",
       render: (row: CouponListItemDTO) => (
-        <span className="text-sm text-gray-600">{formatBatchLabel(row)}</span>
+        <span className="text-sm text-gray-600">
+          {row.source === "POS" ? `${row.label ?? "Lote del POS"} · ${row.posPromotionId ?? ""}` : formatBatchLabel(row)}
+        </span>
       ),
     },
     {
@@ -99,6 +109,10 @@ export default function AdminPromocionesPage() {
           >
             <Eye className="w-4 h-4" />
           </button>
+        ) : row.source === "POS" ? (
+          <span className="px-2 text-xs text-gray-400" title="Este cupón lo administra el POS">
+            Administrado en el POS
+          </span>
         ) : (
           <button
             type="button"
@@ -151,6 +165,8 @@ export default function AdminPromocionesPage() {
           <Eye className="w-3.5 h-3.5" />
           Ver comprador
         </button>
+      ) : row.source === "POS" ? (
+        <span className="text-xs text-gray-400">Administrado en el POS</span>
       ) : (
         <button
           type="button"

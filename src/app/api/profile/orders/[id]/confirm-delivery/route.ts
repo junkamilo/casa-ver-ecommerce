@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { reportOrderStatusQuietly } from "@/modules/posIntegration/application/sync-order-status.use-case";
 import type { NextRequest } from "next/server";
 
 export async function POST(
@@ -51,6 +52,9 @@ export async function POST(
       where: { id },
       data: { status: "DELIVERED", deliveredAt: new Date() },
     });
+
+    // El POS (Tienda → Pedidos) marca el pedido entregado y confirmado por el cliente.
+    void reportOrderStatusQuietly({ id }, { confirmedByCustomer: true });
 
     return NextResponse.json({ ok: true });
   } catch (err) {

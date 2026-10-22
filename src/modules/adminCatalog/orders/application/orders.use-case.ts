@@ -1,4 +1,6 @@
 import { cancelAddiApplication } from "@/services/addi/cancel";
+import { reportOrderCancellationToPos } from "@/modules/posIntegration/application/report-order-to-pos.use-case";
+import { reportOrderStatusQuietly } from "@/modules/posIntegration/application/sync-order-status.use-case";
 import type { AdminOrderDTO } from "../contracts/order-admin.dto";
 import { PrismaOrderAdminRepository } from "../infrastructure/prisma-order-admin.repository";
 import { OrderAdminNotFoundError, OrderAdminValidationError } from "./order-admin.errors";
@@ -109,4 +111,15 @@ export async function updateAdminOrderStatusUseCase(orderNumber: string, statusE
   if (dbStatus === "DELIVERED") extraData.deliveredAt = now;
   if (dbStatus === "CANCELLED" || dbStatus === "REFUNDED") extraData.cancelledAt = now;
   await repository.updateOrderStatus(orderNumber, dbStatus, extraData);
+
+  // Pedido pagado que se cancela o reembolsa: el POS anula su venta y devuelve el inventario.
+  // Best-effort: el cron /api/cron/pos-orders lo reintenta si el POS no responde.
+  if (isCancellation) {
+    void reportOrderCancellationToPos({ orderNumber }).catch((error) =>
+      console.warn(`[POS orders] Anulación de ${orderNumber} quedará para el reintento:`, error instanceof Error ? error.message : error),
+    );
+  } else {
+    // Procesando / Enviado / Entregado: el POS (Tienda → Pedidos) refleja el mismo estado.
+    void reportOrderStatusQuietly({ orderNumber });
+  }
 }

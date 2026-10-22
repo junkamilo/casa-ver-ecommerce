@@ -10,6 +10,8 @@ import ProductFilters from "./components/ProductFilters";
 import ProductTable from "./components/ProductTable";
 import AdminPagination from "@/components/ui/AdminPagination";
 import ProductModal from "./components/ProductModal";
+import PosProductModal from "./components/PosProductModal";
+import type { AdminProductDetailDTO } from "@/modules/adminCatalog/products/presentation/mappers";
 import AdminPageHeader from "@/components/ui/AdminPageHeader";
 import { Plus } from "lucide-react";
 import {
@@ -29,6 +31,9 @@ export default function AdminProductos() {
   const [formLoading, setFormLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState>(null);
+  const [posProduct, setPosProduct] = useState<AdminProductDetailDTO | null>(null);
+  const [posModalOpen, setPosModalOpen] = useState(false);
+  const [posLoading, setPosLoading] = useState(false);
 
   const showToast = useCallback((type: "success" | "error", message: string) => {
     setToast({ type, message });
@@ -41,7 +46,25 @@ export default function AdminProductos() {
     setShowModal(true);
   };
 
+  const openPosEdit = async (productId: string) => {
+    setPosProduct(null);
+    setPosLoading(true);
+    setPosModalOpen(true);
+    try {
+      setPosProduct(await fetchAdminProductById(productId));
+    } catch (error: unknown) {
+      showToast("error", error instanceof Error ? error.message : "No se pudo cargar el producto");
+      setPosModalOpen(false);
+    } finally {
+      setPosLoading(false);
+    }
+  };
+
   const openEdit = async (productId: string) => {
+    if (list.products.find((p) => p.id === productId)?.posManaged) {
+      await openPosEdit(productId);
+      return;
+    }
     form.reset();
     setEditingId(productId);
     setFormLoading(true);
@@ -111,8 +134,20 @@ export default function AdminProductos() {
 
       <AdminPageHeader
         title="Inventario"
-        action={{ label: "Nuevo Producto", onClick: openNew, icon: Plus }}
+        action={
+          list.posCatalogEnabled
+            ? undefined
+            : { label: "Nuevo Producto", onClick: openNew, icon: Plus }
+        }
       />
+
+      {list.posCatalogEnabled && (
+        <p className="text-sm text-gray-500 -mt-4">
+          El catálogo lo administra el POS: los productos se crean, editan, ocultan y borran allí y
+          llegan solos a la web. En los productos marcados como POS solo se editan etiquetas,
+          sugeridos, portada, tipos de prenda y SEO.
+        </p>
+      )}
 
       {list.fetchError && (
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-medium">
@@ -156,6 +191,22 @@ export default function AdminProductos() {
           onClose={() => setShowModal(false)}
           onSubmit={handleSubmit}
           {...form}
+        />
+      )}
+
+      {posModalOpen && (
+        <PosProductModal
+          product={posProduct}
+          loading={posLoading}
+          categories={list.categories}
+          onClose={() => setPosModalOpen(false)}
+          onSaved={async (message) => {
+            showToast("success", message);
+            setPosModalOpen(false);
+            router.refresh();
+            await list.fetchProducts();
+          }}
+          onError={(message) => showToast("error", message)}
         />
       )}
     </div>

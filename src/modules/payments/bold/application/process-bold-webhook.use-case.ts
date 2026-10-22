@@ -5,6 +5,8 @@ import { PrismaBoldOrderRepository } from "../infrastructure/prisma-bold-order.r
 import { WebhookLogRepository } from "@/modules/payments/shared/infrastructure/webhook-log.repository";
 import { markOrderPaidUseCase } from "@/modules/orders/application/mark-order-paid.use-case";
 import { releaseOrderStockUseCase } from "@/modules/orders/application/release-order-stock.use-case";
+import { markPaidOrderRefundedUseCase } from "@/modules/orders/application/mark-order-refunded.use-case";
+import { reportOrderCancellationToPos } from "@/modules/posIntegration/application/report-order-to-pos.use-case";
 import type { BoldWebhookFieldsDTO } from "../contracts/bold.dto";
 
 const orderRepository = new PrismaBoldOrderRepository();
@@ -107,6 +109,14 @@ export async function processBoldWebhookAsync(fields: BoldWebhookFieldsDTO): Pro
     if (reference) {
       // releaseOrderStockUseCase es idempotente; si ya está terminal no hace nada.
       await releaseOrderStockUseCase(reference, newStatus as "FAILED" | "REFUNDED");
+      // Reembolso de un pedido ya pagado: pasa a REFUNDED y el POS anula su venta y devuelve el
+      // inventario. Solo aplica si el pedido se pagó; el cron lo reintenta si el POS no responde.
+      if (refunded) {
+        await markPaidOrderRefundedUseCase(reference);
+        void reportOrderCancellationToPos({ transactionId: reference }, "Reembolso aprobado en Bold").catch((error) =>
+          console.warn("[BOLD WEBHOOK] Anulación en el POS quedará para el reintento:", error instanceof Error ? error.message : error),
+        );
+      }
     }
 
     updateLog(200);

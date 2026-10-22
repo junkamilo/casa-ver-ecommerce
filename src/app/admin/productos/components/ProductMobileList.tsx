@@ -47,6 +47,11 @@ export default function ProductMobileList({ products, onEdit, onDelete, onToggle
               <p className="text-base font-semibold text-gray-900 truncate leading-tight">
                 {product.name}
               </p>
+              {product.posManaged && (
+                <span className="inline-flex mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-[#C19A6B]/15 text-[#8a6a43]">
+                  POS
+                </span>
+              )}
               <p className="text-base font-bold text-[#154734] mt-1">
                 {formatPrice(product.price)}
               </p>
@@ -77,10 +82,15 @@ export default function ProductMobileList({ products, onEdit, onDelete, onToggle
             <div className="flex flex-col items-center gap-3 shrink-0">
               <button
                 onClick={() => onToggleActive(product.id, product.active)}
-                className={`relative inline-flex h-7 w-13 items-center rounded-full transition-colors duration-200 ${
+                disabled={product.posManaged}
+                className={`relative inline-flex h-7 w-13 items-center rounded-full transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                   product.active ? "bg-[#154734]" : "bg-gray-200"
                 }`}
-                title={product.active ? "Desactivar" : "Activar"}
+                title={
+                  product.posManaged
+                    ? "La visibilidad la controla el POS"
+                    : product.active ? "Desactivar" : "Activar"
+                }
               >
                 <span
                   className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${
@@ -97,13 +107,15 @@ export default function ProductMobileList({ products, onEdit, onDelete, onToggle
                 <EditIcon size={20} />
               </button>
 
-              <button
-                onClick={() => onDelete(product.id)}
-                className="group w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 active:scale-90 transition-transform"
-                title="Eliminar producto"
-              >
-                <DeleteIcon size={20} />
-              </button>
+              {!product.posManaged && (
+                <button
+                  onClick={() => onDelete(product.id)}
+                  className="group w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 active:scale-90 transition-transform"
+                  title="Eliminar producto"
+                >
+                  <DeleteIcon size={20} />
+                </button>
+              )}
             </div>
           </div>
         );

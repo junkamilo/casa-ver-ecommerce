@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { neonProductIdsOf } from "@/modules/checkout/infrastructure/coupon-eligibility";
 import type { AccountingSalePayloadDTO } from "../contracts/accounting-sale.dto";
 
 const EXPORTABLE_STATUSES = [
@@ -40,7 +41,9 @@ export async function buildAccountingSalePayload(
     return null;
   }
 
-  const productIds = [...new Set(order.items.map((i) => i.productId))];
+  // Ítems del POS (SKU del POS como variantId): sus categorías son las de su espejo en Neon.
+  const neonIdOf = await neonProductIdsOf(prisma, order.items);
+  const productIds = [...new Set(neonIdOf.values())];
   const categoryLinks =
     productIds.length > 0
       ? await prisma.productCategory.findMany({
@@ -90,7 +93,7 @@ export async function buildAccountingSalePayload(
       variantId: item.variantId,
       sku: item.sku,
       name: item.name,
-      categories: categoriesByProduct.get(item.productId) ?? [],
+      categories: categoriesByProduct.get(neonIdOf.get(item.productId) ?? item.productId) ?? [],
       colorName: item.colorName,
       size: item.size,
       price: toNumber(item.price),

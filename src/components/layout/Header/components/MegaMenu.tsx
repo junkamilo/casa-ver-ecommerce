@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { TEXT_BRAND } from "../constants/constants";
 import type { MegaMenuProps } from "../types";
+import { getSecondLevelLinks } from "../utils/secondLevelLinks";
 
 // Delays escalonados para que cada columna entre con un pequeño retraso
 const COLUMN_DELAYS = ["0ms", "60ms", "120ms", "180ms", "240ms", "300ms"];
@@ -69,7 +70,8 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
         >
           {categories.map((category, colIdx) => {
             const isCategoryActive = pathname === `/collections/${category.slug}`;
-            const hasGarmentTypes = category.garmentTypes.length > 0;
+            const links = getSecondLevelLinks(category, pathname, activeTipo);
+            const hasGarmentTypes = links.length > 0;
 
             return (
               <div
@@ -104,16 +106,13 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
                 {/* ── Tipos de prenda ── */}
                 {hasGarmentTypes && (
                   <div className="flex flex-col gap-2">
-                    {category.garmentTypes.map((gt) => {
-                      const href = `/collections/${category.slug}?tipo=${gt.slug}`;
-                      const isGarmentActive =
-                        pathname === `/collections/${category.slug}` &&
-                        activeTipo === gt.slug;
+                    {links.map((gt) => {
+                      const isGarmentActive = gt.active;
 
                       return (
                         <Link
                           key={gt.id}
-                          href={href}
+                          href={gt.href}
                           className={`relative group flex items-center text-sm font-normal transition-colors duration-300 pl-3 min-w-0 ${
                             isGarmentActive
                               ? "text-[#C19A6B]"

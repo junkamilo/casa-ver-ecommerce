@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runAdminRoute } from "@/server/http/admin-route";
 import { toErrorResponse } from "@/server/http/error-response";
+import { assertShippingEditable } from "@/modules/shipping/application/shipping-editable";
 import { searchMunicipalitiesForAdmin } from "@/modules/geography/infrastructure/prisma-municipality.repository";
 import { createMunicipalityUseCase } from "@/modules/geography/application/admin/create-municipality.use-case";
 import { toMunicipalityAdminDTO } from "@/modules/geography/presentation/geography.mappers";
@@ -40,6 +41,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   return runAdminRoute(async () => {
     try {
+      assertShippingEditable();
       const body = await request.json();
       const municipality = await createMunicipalityUseCase(body);
       return NextResponse.json(toMunicipalityAdminDTO(municipality), { status: 201 });

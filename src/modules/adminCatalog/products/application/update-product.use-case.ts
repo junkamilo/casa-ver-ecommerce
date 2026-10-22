@@ -9,6 +9,7 @@ import {
 } from "./create-product.validation";
 import { collectBodyAssetUrls } from "./product-assets";
 import { deleteMediaAssetsByUrls } from "@/lib/media-admin";
+import { updatePosManagedProductUseCase } from "./update-pos-managed-product.use-case";
 
 const productRepository = new PrismaProductRepository();
 
@@ -20,6 +21,15 @@ export async function updateProductUseCase(input: { id: string; body: unknown })
   }
 
   const payload = body as Record<string, unknown>;
+
+  const ownership = await productRepository.findPosOwnership(id);
+  if (!ownership) {
+    throw new ProductNotFoundError("Producto no encontrado");
+  }
+  if (ownership.posSlug) {
+    return updatePosManagedProductUseCase(id, payload);
+  }
+
   if (payload.active !== undefined && Object.keys(payload).length === 1) {
     if (typeof payload.active !== "boolean") {
       throw new ProductValidationError("Valor de estado inválido");

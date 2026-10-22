@@ -1,0 +1,166 @@
+{
+  "_descripcion": "Contrato Web Casa Verde -> POS para las COMPRAS. Describe lo que la web envía hoy al POS cuando un cliente paga un pedido, y lo que la web espera como respuesta. Fuente: src/modules/posIntegration (report-order-to-pos.use-case.ts, pos-mapper.ts -> buildPosOrderPayload, pos-catalog.client.ts -> postOrder).",
+
+  "1_flujo_completo_de_la_compra": {
+    "resumen": "El POS solo recibe datos de dos formas: (A) consultas GET de disponibilidad mientras el cliente compra y (B) UN POST con el pedido cuando el pago ya está aprobado. El carrito, las reservas y el pago se manejan solo en la web.",
+    "pasos": [
+      {
+        "paso": "1. Ficha del producto",
+        "que_pasa": "El cliente elige color, talla y cantidad. La web usa los colores, tallas y disponibilidad que ya sincronizó del POS.",
+        "llamada_al_POS": "Ninguna."
+      },
+      {
+        "paso": "2. Carrito",
+        "que_pasa": "Se guarda en la web (en la base si inició sesión, en el navegador si no).",
+        "llamada_al_POS": "Ninguna."
+      },
+      {
+        "paso": "3. Formulario de checkout",
+        "que_pasa": "El cliente llena nombre, cédula, teléfono, departamento, ciudad y dirección; aplica un cupón si tiene; elige el medio de pago (Bold o Addi).",
+        "llamada_al_POS": "Ninguna."
+      },
+      {
+        "paso": "4. Crear el pedido (clic en pagar)",
+        "que_pasa": "Antes de crear el pedido, la web verifica en vivo en el POS que cada variante siga disponible. Si alguna está agotada, el pedido NO se crea y se avisa al cliente. Si el POS no responde, la web confía en su copia local para no bloquear la venta. Luego crea el pedido en estado PENDING y reserva el stock en la web por 15 minutos.",
+        "llamada_al_POS": "GET /api/public/catalog/products/{slug} por cada producto del POS en el carrito (mismo endpoint del contrato de catálogo; se revisa available de la variante color+talla)."
+      },
+      {
+        "paso": "5. Pago en Bold o Addi",
+        "que_pasa": "El cliente paga en la pasarela. Si el pago falla o expira, la web libera la reserva y el POS nunca se entera.",
+        "llamada_al_POS": "Ninguna."
+      },
+      {
+        "paso": "6. Pago aprobado",
+        "que_pasa": "Bold o Addi confirman el pago a la web (webhook/callback). La web marca el pedido como PAID, envía el correo de confirmación y ENVÍA EL PEDIDO AL POS.",
+        "llamada_al_POS": "POST /api/public/orders (sección 2). Es lo único que el POS tiene que registrar como venta."
+      },
+      {
+        "paso": "7. Reintento automático",
+        "que_pasa": "Si el POS no respondió (caída, red, 5xx), un cron diario (06:30 UTC) reenvía todos los pedidos pagados de los últimos 7 días. Por eso el POS DEBE ser idempotente por orderNumber.",
+        "llamada_al_POS": "El mismo POST /api/public/orders, con el mismo cuerpo."
+      }
+    ]
+  },
+
+  "2_peticion_que_envia_la_web": {
+    "metodo": "POST",
+    "url": "https://<pos>/api/public/orders",
+    "nota_url": "La web toma POS_API_BASE_URL (https://<pos>/api/public/catalog), le quita '/catalog' y agrega '/orders'.",
+    "headers": {
+      "X-Api-Key": "<misma clave de integración del catálogo>",
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    "body": {
+      "orderNumber": "ORD-0153",
+      "customer": {
+        "fullName": "María Fernanda Gómez",
+        "documentNumber": "1098765432",
+        "email": "maria.gomez@gmail.com",
+        "phone": "3001234567",
+        "city": "Bucaramanga",
+        "address": "Cra 27 # 45-12 Apto 302"
+      },
+      "shipping": 11000,
+      "discount": 12000,
+      "lines": [
+        {
+          "productSlug": "set-venus",
+          "colorId": 10,
+          "sizeId": 2,
+          "quantity": 2,
+          "unitPrice": 60000
+        },
+        {
+          "productSlug": "set-venus",
+          "colorId": 11,
+          "sizeId": 3,
+          "quantity": 1,
+          "unitPrice": 60000
+        }
+      ]
+    },
+    "campos": {
+      "orderNumber": "string. Número único del pedido en la web (ORD-xxxx). Es la LLAVE DE IDEMPOTENCIA: si llega dos veces, el POS no debe registrar dos ventas.",
+      "customer": "Datos que el cliente llenó en el formulario de checkout (snapshot del momento de la compra).",
+      "customer.fullName": "string. Siempre viene.",
+      "customer.documentNumber": "string o null. Cédula.",
+      "customer.email": "string o null. Correo de la cuenta del cliente.",
+      "customer.phone": "string o null.",
+      "customer.city": "string o null.",
+      "customer.address": "string o null.",
+      "shipping": "number (COP). Costo de envío cobrado al cliente en TODO el pedido.",
+      "discount": "number (COP). Descuento por cupón aplicado a TODO el pedido. 0 si no hubo cupón.",
+      "lines": "Una línea por cada combinación producto + color + talla del carrito. Nunca viene vacío.",
+      "lines[].productSlug": "string en minúsculas. Es el slug que el POS publica en /products (ej. 'set-venus').",
+      "lines[].colorId": "number. El colorId que el POS envió en colors[].colorId de ese producto.",
+      "lines[].sizeId": "number. El sizeId que el POS envió en sizes[].sizeId de ese producto.",
+      "lines[].quantity": "number entero >= 1. Unidades compradas.",
+      "lines[].unitPrice": "number (COP). Precio unitario que pagó el cliente (el salePrice del POS al momento de la compra), ANTES del cupón."
+    },
+    "como_calcular_el_total_en_el_POS": "sum(lines[].unitPrice * lines[].quantity) + shipping - discount. Ejemplo: (60000*2 + 60000*1) + 11000 - 12000 = 179000.",
+    "reglas_importantes": [
+      "Solo viajan los productos que vinieron del POS. Si el pedido mezcla productos creados solo en la web, esos ítems NO aparecen en lines (no existen en el POS).",
+      "Si el pedido no tiene ningún producto del POS, la web no envía nada.",
+      "Ojo: shipping y discount son del pedido COMPLETO, aunque lines solo traiga los ítems del POS. En un pedido mixto el total calculado en el POS no coincidirá con lo que pagó el cliente.",
+      "colorId y sizeId son los IDs internos del POS, no nombres. La web los guarda desde la sincronización y los devuelve tal cual.",
+      "El POS debe descontar inventario por cada línea (y las telas en los productos compuestos).",
+      "La web ya cobró: el POS NO debe rechazar por precio; solo tiene sentido rechazar por producto/variante inexistente o stock insuficiente."
+    ]
+  },
+
+  "3_respuestas_que_la_web_espera_del_POS": {
+    "200_o_201_registrado": {
+      "body": {
+        "success": true,
+        "data": {
+          "saleNumber": "V-000981",
+          "total": 179000,
+          "replay": false
+        }
+      },
+      "significado": "Venta registrada. saleNumber es el número de venta en el POS (opcional); total opcional."
+    },
+    "200_duplicado": {
+      "body": {
+        "success": true,
+        "data": {
+          "saleNumber": "V-000981",
+          "total": 179000,
+          "replay": true
+        }
+      },
+      "significado": "Ese orderNumber ya estaba registrado. Responder 2xx con replay=true y NO crear otra venta."
+    },
+    "4xx_rechazo_definitivo": {
+      "ejemplos_de_status": [400, 404, 409, 422],
+      "body": {
+        "success": false,
+        "message": "Stock insuficiente",
+        "details": [
+          "set-venus color 10 talla 2: disponible 1, solicitado 2"
+        ]
+      },
+      "que_hace_la_web": "No reintenta. Crea una notificación en el admin de la web ('Pedido sin registrar en el POS · ORD-0153') con message y details, para registrarla a mano.",
+      "usar_para": "producto o variante desconocida, stock insuficiente, payload inválido."
+    },
+    "401": "Clave X-Api-Key inválida. La web lo registra como error y el cron vuelve a intentar.",
+    "429": "Demasiadas peticiones. Enviar header Retry-After (segundos). La web espera y reintenta hasta 3 veces.",
+    "5xx_o_timeout": "Error temporal. La web lo deja para el cron diario, que reenvía el MISMO body durante 7 días. Timeout de la web: 8 segundos."
+  },
+
+  "4_lo_que_HOY_NO_se_envia_al_POS": {
+    "nota": "Estos datos existen en el pedido de la web pero el payload actual no los incluye. Si el POS los necesita (por ejemplo para conciliar con Bold/Addi), hay que agregarlos en buildPosOrderPayload.",
+    "campos": {
+      "paymentMethod": "BOLD | ADDI (también existen NEQUI, BANCOLOMBIA, DAVIPLATA en el enum)",
+      "transactionId": "Referencia que la web envió a la pasarela",
+      "paymentId": "ID de la transacción aprobada que devuelve Bold/Addi",
+      "paidAt": "Fecha y hora del pago (ISO-8601)",
+      "subtotal / total": "Montos que calculó la web",
+      "customer.department": "Departamento (shippingDepartment)",
+      "shippingRateName / shippingZone": "Tarifa de envío aplicada",
+      "couponCode": "Código del cupón usado",
+      "lines[].name / colorName / size / sku": "Nombre, color, talla y SKU legibles de cada línea"
+    }
+  }
+}

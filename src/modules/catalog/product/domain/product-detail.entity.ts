@@ -57,7 +57,7 @@ export function normalizeTipoCandidates(tipo: string): string[] {
 
 type RawVariant = { id: string; sku: string; size: string; stock: number };
 
-interface RawColor {
+export interface RawColor {
   id: string;
   name: string;
   hexCode: string;
@@ -76,14 +76,14 @@ interface RawItem {
   colors: RawColor[];
 }
 
-interface RawReview {
+export interface RawReview {
   rating: number;
   comment: string | null;
   createdAt: Date | string;
   user: { name: string | null } | null;
 }
 
-interface RawProductDetail {
+export interface RawProductDetail {
   id: string;
   name: string;
   slug: string;
@@ -99,7 +99,6 @@ interface RawProductDetail {
   images: { url: string; colorId?: string | null }[];
   colors: RawColor[];
   items: RawItem[];
-  reviews: RawReview[];
 }
 
 // ── Mappers de UI ─────────────────────────────────────────────────────────────

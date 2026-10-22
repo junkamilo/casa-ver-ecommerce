@@ -15,9 +15,21 @@ import {
 import { computeOrderPaymentExpiresAt } from "../domain/order-payment-grace";
 import { validateCouponTimeWindow } from "../domain/validate-coupon-time-window";
 import {
+  eligibleSubtotal,
+  isWholeOrder,
+  minPurchaseMessage,
+  OUT_OF_SCOPE_MESSAGE,
+  type CouponScopeType,
+} from "../domain/coupon-scope";
+import { eligibleVariantIds } from "./coupon-eligibility";
+import { resolvePosLinePrices } from "./pos-line-prices";
+import { productSlugsByKeys } from "@/lib/product-keys";
+import { parsePosLineId } from "@/modules/posIntegration/domain/pos-mapper";
+import {
   CouponAlreadyUsedError,
   CouponExhaustedError,
   CouponInactiveError,
+  CouponNotApplicableError,
   InvalidAddressError,
   OutOfStockError,
   ProductUnavailableError,
@@ -66,6 +78,16 @@ export class PrismaCheckoutRepository {
     const shippingRateName = shippingQuote.rateName;
     const freeShippingThreshold = shippingQuote.freeShippingThreshold;
 
+    // Ítems del POS (SKU como variantId): precio del POS; no se reservan en la web (el POS ya
+    // verificó el stock en verifyPosAvailability y lo descuenta al registrar la venta).
+    const posPrices = await resolvePosLinePrices(input.items);
+
+    // El pedido identifica el producto por su slug (reseñas, prueba social): el carrito puede traer aún
+    // el id de Neon (carritos guardados antes de la migración).
+    const slugByKey = await productSlugsByKeys(prisma, input.items.map((item) => item.productId));
+    const productSlugOf = (item: { productId: string; variantId: string }) =>
+      parsePosLineId(item.variantId)?.slug ?? slugByKey.get(item.productId) ?? item.productId;
+
     return prisma.$transaction(
       async (tx) => {
         // 1. Buscar o crear usuario guest/registrado
@@ -85,6 +107,12 @@ export class PrismaCheckoutRepository {
         const realPriceMap = new Map<string, number>();
 
         for (const item of input.items) {
+          const posPrice = posPrices.get(item.variantId);
+          if (posPrice !== undefined) {
+            realPriceMap.set(item.variantId, posPrice);
+            continue;
+          }
+
           const productVariant = await tx.productVariant.findUnique({
             where: { id: item.variantId },
             select: {
@@ -199,6 +227,10 @@ export class PrismaCheckoutRepository {
               maxGlobalUses: true,
               currentGlobalUses: true,
               maxUsesPerUser: true,
+              minPurchase: true,
+              scopeType: true,
+              scopeProductIds: true,
+              scopeCategoryIds: true,
             },
           });
 
@@ -238,12 +270,44 @@ export class PrismaCheckoutRepository {
               throw new CouponAlreadyUsedError();
             }
 
+            // Promociones del POS: compra mínima y alcance por productos o categorías (B.9).
+            if (coupon.minPurchase && realSubtotal < coupon.minPurchase) {
+              throw new CouponNotApplicableError(minPurchaseMessage(coupon.minPurchase));
+            }
+            let discountBase = realSubtotal;
+            if (!isWholeOrder(coupon)) {
+              const eligible = await eligibleVariantIds(
+                tx,
+                {
+                  scopeType: coupon.scopeType as CouponScopeType,
+                  scopeProductIds: coupon.scopeProductIds ?? [],
+                  scopeCategoryIds: coupon.scopeCategoryIds ?? [],
+                },
+                input.items.map((item) => item.variantId)
+              );
+              discountBase = eligibleSubtotal(
+                input.items.map((item) => ({
+                  variantId: item.variantId,
+                  productId: null,
+                  price: realPriceMap.get(item.variantId) ?? item.price,
+                  quantity: item.quantity,
+                })),
+                eligible
+              );
+              if (discountBase <= 0) {
+                throw new CouponNotApplicableError(OUT_OF_SCOPE_MESSAGE);
+              }
+            }
+
             couponDiscountAmount = calculateCouponDiscountAmount(
-              realSubtotal,
+              discountBase,
               coupon.discountType as CouponDiscountType,
               coupon.discountValue
             );
             appliedCouponId = coupon.id;
+          } else if (coupon.isActive === false) {
+            // Cupón de un solo uso desactivado (p. ej. un lote del POS desactivado en el POS).
+            throw new CouponInactiveError();
           } else if (isCouponEligibleForEmail(coupon, input.email)) {
             let canRedeem = true;
             if (coupon && !coupon.assignedEmail) {
@@ -311,7 +375,7 @@ export class PrismaCheckoutRepository {
               create: input.items.map((item) => {
                 const realPrice = realPriceMap.get(item.variantId) ?? item.price;
                 return {
-                  productId: item.productId,
+                  productId: productSlugOf(item),
                   variantId: item.variantId,
                   name: item.name,
                   sku: item.sku,

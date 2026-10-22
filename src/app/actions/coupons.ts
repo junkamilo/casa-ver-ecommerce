@@ -11,6 +11,17 @@ import {
   type CouponKind,
 } from "@/modules/checkout/domain/coupon.entity";
 import { validateCouponTimeWindow } from "@/modules/checkout/domain/validate-coupon-time-window";
+import {
+  eligibleSubtotal,
+  isWholeOrder,
+  minPurchaseMessage,
+  OUT_OF_SCOPE_MESSAGE,
+  type CouponScopeType,
+} from "@/modules/checkout/domain/coupon-scope";
+import { eligibleVariantIds } from "@/modules/checkout/infrastructure/coupon-eligibility";
+
+/** Línea del carrito para validar compra mínima y alcance (precio mostrado; el servidor recalcula al pagar). */
+export type CouponCartLine = { variantId: string; price: number; quantity: number };
 
 // ---------------------------------------------------------------------------
 // generateFirstPurchaseCoupon
@@ -63,6 +74,13 @@ export type ValidateCouponResult = {
   couponId?: string;
   kind?: CouponKind;
   error?: string;
+  /** Promociones del POS: subtotal mínimo y alcance. */
+  minPurchase?: number | null;
+  scopeType?: CouponScopeType;
+  /** Variantes del carrito a las que aplica (solo si el cupón tiene alcance); el descuento se calcula sobre ellas. */
+  eligibleVariantIds?: string[];
+  /** Cupón administrado por el POS. */
+  source?: "WEB" | "POS";
 };
 
 // ---------------------------------------------------------------------------
@@ -70,7 +88,8 @@ export type ValidateCouponResult = {
 // ---------------------------------------------------------------------------
 export async function validateCoupon(
   code: string,
-  email?: string
+  email?: string,
+  items?: CouponCartLine[]
 ): Promise<ValidateCouponResult> {
   if (!code) {
     return { valid: false, error: "Código requerido" };
@@ -101,6 +120,30 @@ export async function validateCoupon(
         return { valid: false, error: "El cupón ya no tiene usos disponibles" };
       }
 
+      // Compra mínima y alcance (promociones del POS). Con el carrito se valida aquí; sin él, al pagar.
+      let eligible: string[] | undefined;
+      if (items && items.length > 0) {
+        const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        if (coupon.minPurchase && subtotal < coupon.minPurchase) {
+          return { valid: false, error: minPurchaseMessage(coupon.minPurchase) };
+        }
+        if (!isWholeOrder(coupon)) {
+          const ids = await eligibleVariantIds(
+            prisma,
+            {
+              scopeType: coupon.scopeType as CouponScopeType,
+              scopeProductIds: coupon.scopeProductIds ?? [],
+              scopeCategoryIds: coupon.scopeCategoryIds ?? [],
+            },
+            items.map((item) => item.variantId)
+          );
+          if (eligibleSubtotal(items.map((i) => ({ ...i, productId: null })), ids) <= 0) {
+            return { valid: false, error: OUT_OF_SCOPE_MESSAGE };
+          }
+          eligible = [...ids];
+        }
+      }
+
       return {
         valid: true,
         discountType: coupon.discountType as CouponDiscountType,
@@ -109,7 +152,16 @@ export async function validateCoupon(
           coupon.discountType === "PERCENTAGE" ? coupon.discountValue : undefined,
         couponId: coupon.id,
         kind: coupon.kind as CouponKind,
+        minPurchase: coupon.minPurchase ?? null,
+        scopeType: coupon.scopeType as CouponScopeType,
+        eligibleVariantIds: eligible,
+        source: coupon.source,
       };
+    }
+
+    // Cupones de un solo uso: los de un lote del POS se pueden desactivar desde el POS.
+    if (coupon.isActive === false) {
+      return { valid: false, error: "El cupón no está activo" };
     }
 
     if (!email) {

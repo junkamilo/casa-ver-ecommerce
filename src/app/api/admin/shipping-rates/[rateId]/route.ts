@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runAdminRoute } from "@/server/http/admin-route";
 import { toErrorResponse } from "@/server/http/error-response";
+import { assertShippingEditable } from "@/modules/shipping/application/shipping-editable";
 import { updateShippingRateUseCase } from "@/modules/shipping/application/use-cases/update-shipping-rate.use-case";
 import { deleteShippingRateUseCase } from "@/modules/shipping/application/use-cases/delete-shipping-rate.use-case";
 import { UpdateShippingRateSchema } from "@/modules/shipping/contracts/shipping.dto";
@@ -11,6 +12,7 @@ export async function PATCH(
 ) {
   return runAdminRoute(async () => {
     try {
+      assertShippingEditable();
       const p = await params;
       const body = await request.json();
       const parsed = UpdateShippingRateSchema.parse(body);
@@ -28,6 +30,7 @@ export async function DELETE(
 ) {
   return runAdminRoute(async () => {
     try {
+      assertShippingEditable();
       const p = await params;
       const data = await deleteShippingRateUseCase(p.rateId);
       return NextResponse.json(data);

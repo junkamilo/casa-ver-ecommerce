@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { cancelAddiApplication } from "@/services/addi/cancel";
+import { reportOrderCancellationToPos } from "@/modules/posIntegration/application/report-order-to-pos.use-case";
 import type { Order } from "@/app/admin/pedidos/types/types";
 import type { OrderStatus } from "@prisma/client";
 
@@ -103,6 +104,14 @@ export async function updateOrderStatus(orderNumber: string, statusEs: string): 
     where: { orderNumber },
     data:  { status: dbStatus as OrderStatus, ...extraData },
   });
+
+  // Pedido pagado que se cancela o reembolsa: el POS anula su venta y devuelve el inventario.
+  // Best-effort: el cron /api/cron/pos-orders lo reintenta si el POS no responde.
+  if (isCancellation) {
+    void reportOrderCancellationToPos({ orderNumber }).catch((error) =>
+      console.warn(`[POS orders] Anulación de ${orderNumber} quedará para el reintento:`, error instanceof Error ? error.message : error),
+    );
+  }
 }
 
 export async function getOrders(): Promise<Order[]> {

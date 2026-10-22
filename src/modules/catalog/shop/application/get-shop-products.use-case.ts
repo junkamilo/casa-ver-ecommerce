@@ -1,55 +1,26 @@
-import type { Prisma } from "@prisma/client";
 import * as Sentry from "@sentry/nextjs";
-import { PrismaShopRepository } from "../infrastructure/prisma-shop.repository";
-import { PrismaSearchRepository } from "@/modules/search/infrastructure/prisma-search.repository";
-import { isSearchQueryActive } from "@/modules/search/domain/search.entity";
-import { transformProduct } from "@/modules/collections/domain/product-mapper.entity";
+import { getCatalog } from "@/modules/catalog/listing/application/get-catalog";
+import { filterBySearch, toCard, type CatalogEntry } from "@/modules/catalog/listing/domain/catalog-entry.entity";
+import { buildFilterOptions, transformProduct } from "@/modules/collections/domain/product-mapper.entity";
 import {
   TIENDA_PAGE_SIZE,
   type ShopProductsResultDTO,
   type TiendaFilters,
 } from "../contracts/shop.dto";
-import type { FilterOptions } from "@/components/shared/ProductCollection/types";
 
-const repository = new PrismaShopRepository();
-const searchRepository = new PrismaSearchRepository();
-
-function buildShopWhereFromFilters(
-  filters: TiendaFilters,
-): Prisma.ProductWhereInput {
-  const where: Prisma.ProductWhereInput = { status: "ACTIVE" };
-
+/** Filtros de precio y color de `/tienda` sobre el catálogo (antes, el `where` de Prisma). */
+export function filterShopEntries(entries: CatalogEntry[], filters: TiendaFilters): CatalogEntry[] {
   const minPrice = filters.minPrice ? parseFloat(filters.minPrice) : undefined;
   const maxPrice = filters.maxPrice ? parseFloat(filters.maxPrice) : undefined;
+  const colorHex = filters.color ? `#${filters.color}`.toUpperCase() : null;
 
-  if (minPrice !== undefined || maxPrice !== undefined) {
-    where.basePrice = {
-      ...(minPrice !== undefined && { gte: minPrice }),
-      ...(maxPrice !== undefined && { lte: maxPrice }),
-    };
-  }
-
-  if (filters.color) {
-    where.colors = { some: { hexCode: `#${filters.color}` } };
-  }
-
-  return where;
-}
-
-function buildFilterOptionsFromAll(
-  rows: { basePrice: unknown; colors: { name: string; hexCode: string }[] }[],
-): FilterOptions {
-  const colorMap = new Map<string, string>();
-  let maxPriceDb = 0;
-  for (const p of rows) {
-    const price = Number(p.basePrice);
-    if (price > maxPriceDb) maxPriceDb = price;
-    for (const c of p.colors) colorMap.set(c.hexCode, c.name);
-  }
-  const availableColors = Array.from(colorMap.entries()).map(
-    ([hexCode, name]) => ({ hexCode, name }),
-  );
-  return { availableColors, maxPriceDb };
+  return entries.filter((entry) => {
+    const price = Number(entry.card.basePrice);
+    if (minPrice !== undefined && !Number.isNaN(minPrice) && price < minPrice) return false;
+    if (maxPrice !== undefined && !Number.isNaN(maxPrice) && price > maxPrice) return false;
+    if (colorHex && !entry.card.colors.some((c) => c.hexCode.toUpperCase() === colorHex)) return false;
+    return true;
+  });
 }
 
 function parsePage(filters: TiendaFilters): number {
@@ -58,32 +29,24 @@ function parsePage(filters: TiendaFilters): number {
 
 /**
  * Productos del catálogo `/tienda` con filtros opcionales y paginación (24/página).
- * Si Prisma falla, reporta a Sentry y relanza (error.tsx de tienda) — nunca grilla vacía.
+ * Si la lectura falla, reporta a Sentry y relanza (error.tsx de tienda) — nunca grilla vacía.
  */
 export async function getShopProductsUseCase(
   filters: TiendaFilters,
 ): Promise<ShopProductsResultDTO> {
   try {
-    let where = buildShopWhereFromFilters(filters);
-    const requestedPage = parsePage(filters);
+    const catalog = await Sentry.startSpan({ name: "shop.getProducts", op: "db.shop" }, () => getCatalog());
 
-    if (isSearchQueryActive(filters.q)) {
-      const matchedIds = await searchRepository.searchActiveProductIds(
-        filters.q!.trim(),
-        where,
-      );
-      where = { ...where, id: { in: matchedIds } };
-    }
-
-    const { allForFilters, totalProducts, totalPages, page, raw } =
-      await Sentry.startSpan(
-        { name: "shop.getProducts", op: "db.shop" },
-        () => repository.getProductsForShop(where, requestedPage),
-      );
+    const matches = filterBySearch(filterShopEntries(catalog, filters), filters.q);
+    const totalProducts = matches.length;
+    const totalPages = Math.max(1, Math.ceil(totalProducts / TIENDA_PAGE_SIZE));
+    const page = Math.min(parsePage(filters), totalPages);
+    const pageEntries = matches.slice((page - 1) * TIENDA_PAGE_SIZE, page * TIENDA_PAGE_SIZE);
 
     return {
-      products: raw.map(transformProduct),
-      filterOptions: buildFilterOptionsFromAll(allForFilters),
+      products: pageEntries.map((entry) => transformProduct(toCard(entry))),
+      // Opciones del panel de filtros: sobre todo el catálogo, no solo la página.
+      filterOptions: buildFilterOptions(catalog.map((entry) => entry.card)),
       page,
       pageSize: TIENDA_PAGE_SIZE,
       totalProducts,

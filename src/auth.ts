@@ -4,6 +4,7 @@ import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { compare } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { verifyPosAdminPassword } from "@/modules/posIntegration/application/verify-pos-admin.use-case";
 
 class InvalidCredentials extends CredentialsSignin {
   code = "invalid_credentials";
@@ -13,6 +14,12 @@ class UseGoogleSignIn extends CredentialsSignin {
 }
 class EmailNotVerified extends CredentialsSignin {
   code = "email_not_verified";
+}
+class TooManyAttempts extends CredentialsSignin {
+  code = "too_many_attempts";
+}
+class AdminUnavailable extends CredentialsSignin {
+  code = "admin_unavailable";
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -42,7 +49,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const email = credentials?.email as string | undefined;
         const password = credentials?.password as string | undefined;
 
@@ -51,6 +58,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const user = await prisma.user.findUnique({ where: { email } });
 
         if (!user) throw new InvalidCredentials();
+
+        // Admin gestionado por el POS (Configuraciones → Usuarios): la contraseña es la del POS y la
+        // verifica el POS. Nunca se usa la contraseña guardada en la web para estas cuentas.
+        if (user.posUserId) {
+          const outcome = await verifyPosAdminPassword(email, password, clientIpOf(request));
+          if (outcome === "too_many_attempts") throw new TooManyAttempts();
+          if (outcome === "unavailable") throw new AdminUnavailable();
+          if (outcome !== "valid") throw new InvalidCredentials();
+          return { id: user.id, name: user.name, email: user.email, role: user.role };
+        }
+
         if (!user.password) throw new UseGoogleSignIn();
 
         const match = await compare(password, user.password);
@@ -129,3 +147,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 });
+
+/** IP del visitante (Vercel la pone primera en x-forwarded-for), para el límite de intentos del POS. */
+function clientIpOf(request: Request | undefined): string | null {
+  const forwarded = request?.headers.get("x-forwarded-for");
+  return forwarded?.split(",")[0]?.trim() || request?.headers.get("x-real-ip") || null;
+}

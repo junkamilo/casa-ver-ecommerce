@@ -18,3 +18,6 @@ export class CouponConflictError extends Error {
     this.name = "CouponConflictError";
   }
 }
+
+/** Cupones de promociones del POS: se administran en el POS (Tienda → Promociones). */
+export const POS_MANAGED_MESSAGE = "Esta promoción la administra el POS";

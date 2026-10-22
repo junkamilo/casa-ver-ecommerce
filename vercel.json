@@ -19,6 +19,14 @@
     {
       "path": "/api/cron/cleanup-upload-tmp",
       "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/pos-sync",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/pos-orders",
+      "schedule": "30 6 * * *"
     }
   ]
 }

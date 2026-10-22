@@ -30,6 +30,10 @@ export interface CouponState {
   discountValue?: number;
   couponId?: string;
   errorMessage?: string;
+  /** Promociones del POS: subtotal mínimo para que el cupón aplique. */
+  minPurchase?: number | null;
+  /** Variantes del carrito a las que aplica (alcance por productos o categorías); sin valor = todo el pedido. */
+  eligibleVariantIds?: string[];
 }
 
 // ---------------------------------------------------------------------------

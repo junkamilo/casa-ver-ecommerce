@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runAdminRoute } from "@/server/http/admin-route";
 import { toErrorResponse } from "@/server/http/error-response";
+import { assertShippingEditable } from "@/modules/shipping/application/shipping-editable";
 import { listAllDepartments } from "@/modules/geography/infrastructure/prisma-department.repository";
 import { createDepartmentUseCase } from "@/modules/geography/application/admin/create-department.use-case";
 import { toDepartmentAdminDTO } from "@/modules/geography/presentation/geography.mappers";
@@ -21,6 +22,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   return runAdminRoute(async () => {
     try {
+      assertShippingEditable();
       const body = await request.json();
       const department = await createDepartmentUseCase(body);
       return NextResponse.json(toDepartmentAdminDTO(department), { status: 201 });

@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react";
 import { useSession } from "next-auth/react";
 import { StaticImageData } from "next/image";
+import { parsePosLineId } from "@/modules/posIntegration/domain/pos-mapper";
 
 export interface CartItem {
   id: string;
@@ -53,6 +54,15 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+/**
+ * Prendas del POS: su identidad es el SKU del POS (`pos-<slug>-<colorId>-<sizeId>`), no el id de la
+ * copia en Neon. Convierte también los carritos guardados con el id viejo. `productId` se mantiene
+ * (las reseñas aún lo usan).
+ */
+function withPosLineId(item: CartItem): CartItem {
+  return parsePosLineId(item.sku) && item.variantId !== item.sku ? { ...item, variantId: item.sku } : item;
+}
+
 const CART_KEY     = "cv_cart";
 const BUY_NOW_KEY  = "cv_buy_now";
 
@@ -72,10 +82,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     queueMicrotask(() => {
       try {
         const storedCart = localStorage.getItem(CART_KEY);
-        if (storedCart) setItems(JSON.parse(storedCart) as CartItem[]);
+        if (storedCart) setItems((JSON.parse(storedCart) as CartItem[]).map(withPosLineId));
 
         const storedBuyNow = localStorage.getItem(BUY_NOW_KEY);
-        if (storedBuyNow) setBuyNowItem(JSON.parse(storedBuyNow) as CartItem);
+        if (storedBuyNow) setBuyNowItem(withPosLineId(JSON.parse(storedBuyNow) as CartItem));
       } catch {}
     });
   }, []);
@@ -152,7 +162,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       }
       return [
         ...current,
-        {
+        withPosLineId({
           id: itemId,
           variantId: product.variantId ?? color.variantId ?? "",
           productId: product.id ?? "",
@@ -163,7 +173,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           color: color.name,
           size: sizeLabel,
           quantity: qty,
-        },
+        }),
       ];
     });
   }, []);
@@ -190,7 +200,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const setBuyNow = useCallback((product: CartProductInput, qty: number, color: CartColorInput, size?: string) => {
     const sizeLabel = size || "Única";
-    const item: CartItem = {
+    const item: CartItem = withPosLineId({
       id: `buynow-${product.id ?? product.name}-${color.id ?? color.name}-${sizeLabel}`,
       variantId: product.variantId ?? color.variantId ?? "",
       productId: product.id ?? "",
@@ -201,7 +211,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       color: color.name,
       size: sizeLabel,
       quantity: qty,
-    };
+    });
     setBuyNowItem(item);
     try { localStorage.setItem(BUY_NOW_KEY, JSON.stringify(item)); } catch {}
   }, []);

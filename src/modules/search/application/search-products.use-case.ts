@@ -1,32 +1,14 @@
-import { PrismaSearchRepository } from "../infrastructure/prisma-search.repository";
-import { pickFirstImageUrl, calculateMinimumPrice } from "../domain/search.entity";
+import { getCatalog } from "@/modules/catalog/listing/application/get-catalog";
+import { rankBySearch, toCard } from "@/modules/catalog/listing/domain/catalog-entry.entity";
+import { transformProduct } from "@/modules/collections/domain/product-mapper.entity";
 import { RateLimitExceededError } from "./search.errors";
 import type { ProductSearchResultDTO, SearchInputDTO } from "../contracts/search.dto";
 
 import { rateLimit, RATE_LIMIT_CONFIGS } from "@/lib/ratelimit";
 
-const searchRepository = new PrismaSearchRepository();
 const MAX_RESULTS = 12;
 
-type SearchImage = { url: string };
-type SearchColor = { images: SearchImage[] };
-type SearchItem = {
-  price: unknown;
-  coverImageUrl?: string | null;
-  isCardFeatured?: boolean;
-  colors: SearchColor[];
-};
-type SearchProduct = {
-  id: string;
-  name: string;
-  slug: string;
-  basePrice: unknown;
-  coverImageUrl?: string | null;
-  images: SearchImage[];
-  colors: SearchColor[];
-  items: SearchItem[];
-};
-
+/** Buscador del header: coincidencias por relevancia sobre el catálogo de la tienda (POS + web). */
 export async function searchProductsUseCase(input: SearchInputDTO): Promise<ProductSearchResultDTO[]> {
   const rl = await rateLimit(`${input.ip}:search`, RATE_LIMIT_CONFIGS.search);
 
@@ -40,49 +22,17 @@ export async function searchProductsUseCase(input: SearchInputDTO): Promise<Prod
     return [];
   }
 
-  const products = (await searchRepository.searchActiveProducts(
-    q,
-    MAX_RESULTS,
-  )) as SearchProduct[];
-
-  return products.map((p): ProductSearchResultDTO => {
-    const productCover =
-      typeof p.coverImageUrl === "string" && p.coverImageUrl.trim()
-        ? p.coverImageUrl.trim()
-        : null;
-    const featuredItem =
-      p.items.find((item) => item.isCardFeatured) ?? p.items[0] ?? null;
-    const parentImage = pickFirstImageUrl(p.images.map((img) => img.url));
-    const firstColorImage = pickFirstImageUrl(
-      p.colors.flatMap((c) => c.images.map((img) => img.url)),
-    );
-    const featuredCover =
-      typeof featuredItem?.coverImageUrl === "string" && featuredItem.coverImageUrl.trim()
-        ? featuredItem.coverImageUrl.trim()
-        : null;
-    const featuredItemImage = pickFirstImageUrl(
-      (featuredItem?.colors ?? []).flatMap((c) => c.images.map((img) => img.url)),
-    );
-
-    const featuredPrice =
-      featuredItem?.price != null ? Number(featuredItem.price) : null;
-    const resolvedPrice =
-      featuredPrice != null && !Number.isNaN(featuredPrice) && featuredPrice > 0
-        ? featuredPrice
-        : calculateMinimumPrice(Number(p.basePrice), []);
-
-    return {
-      id: p.id,
-      name: p.name,
-      slug: p.slug,
-      price: resolvedPrice,
-      image:
-        productCover ??
-        parentImage ??
-        firstColorImage ??
-        featuredCover ??
-        featuredItemImage ??
-        null,
-    };
-  });
+  return rankBySearch(await getCatalog(), q)
+    .slice(0, MAX_RESULTS)
+    .map((entry): ProductSearchResultDTO => {
+      const card = transformProduct(toCard(entry));
+      return {
+        // El slug es la identidad del producto (igual en el POS y en la web).
+        id: entry.slug,
+        name: card.name,
+        slug: card.slug,
+        price: card.price,
+        image: card.images[0] ?? card.colors?.find((c) => c.imageUrl)?.imageUrl ?? null,
+      };
+    });
 }

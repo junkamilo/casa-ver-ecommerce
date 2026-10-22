@@ -35,6 +35,10 @@ type CouponRow = {
   batchId: string | null;
   createdAt: Date;
   batch?: { createdAt: Date } | null;
+  source?: string | null;
+  posPromotionId?: string | null;
+  label?: string | null;
+  isActive?: boolean;
 };
 
 export function mapCouponToListItem(coupon: CouponRow): CouponListItemDTO {
@@ -48,6 +52,11 @@ export function mapCouponToListItem(coupon: CouponRow): CouponListItemDTO {
     batchId: coupon.batchId,
     batchCreatedAt: coupon.batch?.createdAt?.toISOString() ?? null,
     createdAt: coupon.createdAt.toISOString(),
+    source: coupon.source === "POS" ? "POS" : "WEB",
+    // Lote del POS: el cupón guarda "<promotionId>:<código>"; se muestra el promotionId.
+    posPromotionId: coupon.posPromotionId ? coupon.posPromotionId.split(":")[0] : null,
+    label: coupon.label ?? null,
+    isActive: coupon.isActive !== false,
   };
 }
 
@@ -122,6 +131,11 @@ type PromotionalCouponRow = {
   validTo: Date | null;
   expiresAt: Date | null;
   createdAt: Date;
+  source?: string | null;
+  posPromotionId?: string | null;
+  label?: string | null;
+  minPurchase?: number | null;
+  scopeType?: string | null;
 };
 
 export function mapPromotionalCouponToListItem(
@@ -143,6 +157,11 @@ export function mapPromotionalCouponToListItem(
     scheduleLabel: formatCouponScheduleLabel(coupon),
     status: getPromotionalCouponStatus(coupon),
     createdAt: coupon.createdAt.toISOString(),
+    source: coupon.source === "POS" ? "POS" : "WEB",
+    posPromotionId: coupon.posPromotionId ?? null,
+    label: coupon.label ?? null,
+    minPurchase: coupon.minPurchase ?? null,
+    scopeType: (coupon.scopeType as "ORDER" | "PRODUCTS" | "CATEGORIES" | null | undefined) ?? "ORDER",
   };
 }
 

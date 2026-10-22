@@ -20,7 +20,8 @@ interface Props {
   onDepartmentFilterChange: (v: string) => void;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
-  onSave: (id: string | null, data: CreateMunicipalityInput) => Promise<void>;
+  /** Sin onSave la pantalla es de solo consulta (geografía administrada en el POS). */
+  onSave?: (id: string | null, data: CreateMunicipalityInput) => Promise<void>;
 }
 
 export default function MunicipalitiesManager({
@@ -67,7 +68,7 @@ export default function MunicipalitiesManager({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSave(editingMuni ? editingMuni.id : null, {
+    await onSave?.(editingMuni ? editingMuni.id : null, {
       name: formData.name,
       daneCode: formData.daneCode || undefined,
       departmentId: formData.departmentId,
@@ -102,10 +103,10 @@ export default function MunicipalitiesManager({
           />
         </div>
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-          <Button onClick={handleOpenNew} className="bg-[#154734] text-white hover:bg-[#113a29] whitespace-nowrap">
+          {onSave && <Button onClick={handleOpenNew} className="bg-[#154734] text-white hover:bg-[#113a29] whitespace-nowrap">
             <Plus className="w-4 h-4 mr-2" />
             Añadir Municipio
-          </Button>
+          </Button>}
         </div>
       </div>
 
@@ -158,14 +159,14 @@ export default function MunicipalitiesManager({
               return <span className="text-gray-400 italic text-sm">Sin tarifa</span>;
             }
           },
-          {
-            key: "actions", header: "Acciones", align: "right",
-            render: (m) => (
+          ...(!onSave ? [] : [{
+            key: "actions", header: "Acciones", align: "right" as const,
+            render: (m: MunicipalityAdminDTO) => (
               <button onClick={() => handleOpenEdit(m)} className="p-2 text-gray-400 hover:text-[#154734] transition-colors">
                 <Edit2 className="w-4 h-4" />
               </button>
             )
-          }
+          }]),
         ]}
         footer={
           <AdminPagination

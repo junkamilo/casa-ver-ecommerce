@@ -1,6 +1,7 @@
 import { notifyOrderConfirmation } from "@/modules/payments/shared/infrastructure/order-confirmation.notifier";
 import { notifyAdminNewOrder } from "@/modules/payments/shared/infrastructure/admin-new-order.notifier";
 import { persistAccountingSaleExport } from "@/modules/accounting/application/persist-accounting-sale-export";
+import { reportPaidOrderToPos } from "@/modules/posIntegration/application/report-order-to-pos.use-case";
 import { PrismaOrderRepository } from "../infrastructure/prisma-order.repository";
 import type { PaidOrderDTO } from "../contracts/order-payment.dto";
 
@@ -25,6 +26,10 @@ export async function markOrderPaidUseCase(
   if (newlyPaid) {
     await notifyAdminNewOrder(order);
     void persistAccountingSaleExport(order.id);
+    // Best-effort: el cron /api/cron/pos-orders reintenta si el POS no responde.
+    void reportPaidOrderToPos(order.id).catch((error) =>
+      console.warn(`[POS orders] ${order.id} quedará para el reintento:`, error instanceof Error ? error.message : error),
+    );
   }
   return order;
 }

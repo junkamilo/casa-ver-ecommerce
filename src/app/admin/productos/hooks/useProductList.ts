@@ -26,6 +26,7 @@ export function useProductList() {
   const [presetColors, setPresetColors] = useState<PresetColor[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [posCatalogEnabled, setPosCatalogEnabled] = useState(false);
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("Todos");
   const [page, setPage] = useState(1);
@@ -46,6 +47,7 @@ export function useProductList() {
 
       while (true) {
         const response = await fetchAdminProducts({ page, limit });
+        if (page === 1) setPosCatalogEnabled(Boolean(response.posCatalogEnabled));
         const mappedResponse = mapAdminProductsResponseToUi(response);
         const data = mappedResponse.data;
         allProducts = [...allProducts, ...data];
@@ -150,6 +152,7 @@ export function useProductList() {
     presetColors,
     loading,
     fetchError,
+    posCatalogEnabled,
     search,
     setSearch,
     filterCategory,

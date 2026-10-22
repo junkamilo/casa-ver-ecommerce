@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { findProductsByKeys } from "@/lib/product-keys";
 
 export const revalidate = 60; // cache 60s
 
@@ -51,11 +52,9 @@ export async function GET() {
     return NextResponse.json([]);
   }
 
-  const products = await prisma.product.findMany({
-    where: { id: { in: productIds } },
-    select: { id: true, slug: true },
-  });
-  const slugMap = Object.fromEntries(products.map((p) => [p.id, p.slug]));
+  // productId es el slug (o el id de Neon en pedidos anteriores); solo se muestran productos que existan.
+  const products = await findProductsByKeys(prisma, productIds);
+  const slugMap = Object.fromEntries(productIds.map((key) => [key, products.get(key)?.slug ?? null]));
 
   const now = Date.now();
 

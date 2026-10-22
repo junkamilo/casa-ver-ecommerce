@@ -5,6 +5,7 @@ import { createAdminUserUseCase } from "@/modules/adminCatalog/users/application
 import { revokeAdminUserUseCase } from "@/modules/adminCatalog/users/application/revoke-admin-user.use-case";
 import { runAdminRoute } from "@/server/http/admin-route";
 import { toErrorResponse } from "@/server/http/error-response";
+import { assertAdminsEditable } from "@/modules/adminCatalog/users/application/admins-editable";
 
 // GET - Listar todos los admins o buscar usuario por email
 export async function GET(req: NextRequest) {
@@ -20,6 +21,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   return runAdminRoute(async () => {
     try {
+    assertAdminsEditable();
     const { name, email, password } = await req.json();
     const result = await createAdminUserUseCase({ name, email, password });
     const status = "promoted" in result ? 200 : 201;
@@ -34,6 +36,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   return runAdminRoute(async (admin) => {
     try {
+    assertAdminsEditable();
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("id");
     const result = await revokeAdminUserUseCase({ userId, currentUserId: admin.userId });

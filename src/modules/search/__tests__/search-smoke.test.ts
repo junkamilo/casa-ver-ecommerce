@@ -10,7 +10,6 @@ import {
   tokenizeSearchQuery,
   tokenMatchesText,
 } from "@/modules/search/domain/search.entity";
-import { buildSearchableText } from "@/modules/search/infrastructure/prisma-search.repository";
 
 describe("search entity", () => {
   it("normalizeSearchText quita tildes, trim y colapsa espacios", () => {
@@ -76,28 +75,5 @@ describe("search entity", () => {
         "pantalon"
       )
     ).toBe(1);
-  });
-});
-
-describe("buildSearchableText", () => {
-  const baseProduct = {
-    id: "1",
-    name: "Conjunto Verano",
-    description: "Set cómodo para el día",
-    slug: "conjunto-verano",
-    metaTitle: null,
-    metaDescription: null,
-    isFeatured: false,
-    createdAt: new Date(),
-    garmentTypes: [{ garmentType: { name: "Pantalón" } }],
-    categories: [{ category: { name: "Mujer" } }],
-    items: [{ name: "Short" }],
-  };
-
-  it("incluye tipos de prenda, categorías e ítems de conjunto", () => {
-    const text = buildSearchableText(baseProduct);
-    expect(productMatchesSearch(text, "pantalones")).toBe(true);
-    expect(productMatchesSearch(text, "short")).toBe(true);
-    expect(productMatchesSearch(text, "mujer")).toBe(true);
   });
 });

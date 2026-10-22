@@ -4,11 +4,11 @@ import type { Prisma } from "@prisma/client";
 // ── Repositorio Prisma para PDP ──────────────────────────────────────────────
 //
 // Encapsula todas las queries del PDP (página de producto individual):
-//   - Mega-query principal con includes profundos
+//   - Mega-query principal con includes profundos (productos de la web / respaldo si el POS no responde)
 //   - Query SEO lite (solo lo necesario para metadata)
 //   - Lookup user by email
 //   - Social proof: compradores reales (orders PAID)
-//   - Save/delete review en $transaction con recálculo de rating + numReviews
+//   - Reseñas por slug + save/delete en $transaction con recálculo de rating + numReviews
 
 export class PrismaProductDetailRepository {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -37,6 +37,19 @@ export class PrismaProductDetailRepository {
           select: { url: true },
         },
       },
+    });
+  }
+
+  // ── Copia en Neon ──────────────────────────────────────────────────────
+
+  /**
+   * Fila de Neon del producto: los creados en la web viven aquí (`posSlug` null); los del POS tienen una
+   * copia que sirve de respaldo si el POS no responde. `null` si no hay fila.
+   */
+  async findNeonProduct(slug: string): Promise<{ id: string; status: string; posSlug: string | null } | null> {
+    return this.db.product.findUnique({
+      where: { slug },
+      select: { id: true, status: true, posSlug: true },
     });
   }
 
@@ -71,89 +84,26 @@ export class PrismaProductDetailRepository {
             },
           },
         },
-        reviews: {
-          where: { status: "APPROVED" },
-          orderBy: { createdAt: "desc" },
-          include: {
-            user: { select: { name: true } },
-          },
-        },
       },
     });
   }
 
-  async getRecommendedProducts(productId: string, slug: string, take = 4) {
-    const links = await this.db.productCategory.findMany({
-      where: { productId },
-      select: { categoryId: true },
-    });
-    const categoryIds = links.map(
-      (link: { categoryId: string }) => link.categoryId
-    );
-    if (categoryIds.length === 0) return [];
+  // ── Reseñas (por slug: sirven igual para productos del POS y de la web) ───
 
-    return this.db.product.findMany({
-      where: {
-        status: "ACTIVE",
-        slug: { not: slug },
-        categories: { some: { categoryId: { in: categoryIds } } },
-      },
-      take,
+  async getApprovedReviews(slug: string) {
+    return this.db.review.findMany({
+      where: { productSlug: slug, status: "APPROVED" },
       orderBy: { createdAt: "desc" },
-      select: {
-        name: true,
-        slug: true,
-        basePrice: true,
-        comparePrice: true,
-        isSet: true,
-        isProductNew: true,
-        isProductNewAt: true,
-        isOnSale: true,
-        images: {
-          orderBy: { order: "asc" },
-          take: 8,
-          select: { url: true },
-        },
-        items: {
-          orderBy: { order: "asc" },
-          select: {
-            price: true,
-            comparePrice: true,
-            colors: {
-              select: {
-                name: true,
-                hexCode: true,
-                images: {
-                  orderBy: { order: "asc" },
-                  take: 8,
-                  select: { url: true },
-                },
-              },
-            },
-          },
-        },
-        colors: {
-          select: {
-            name: true,
-            hexCode: true,
-            images: {
-              orderBy: { order: "asc" },
-              take: 1,
-              select: { url: true },
-            },
-            variants: { select: { stock: true } },
-          },
-          orderBy: { id: "asc" },
-        },
-      },
+      include: { user: { select: { name: true } } },
     });
   }
 
   // ── Social proof ─────────────────────────────────────────────────────────
 
-  async getBuyerOrders(productId: string) {
+  /** `productKeys`: slug del producto y, si existe, su id de Neon (pedidos anteriores a la migración). */
+  async getBuyerOrders(productKeys: string[]) {
     return this.db.order.findMany({
-      where: { status: "PAID", items: { some: { productId } } },
+      where: { status: "PAID", items: { some: { productId: { in: productKeys } } } },
       select: { shippingName: true, user: { select: { image: true } } },
       orderBy: { paidAt: "desc" },
       take: 50,
@@ -172,33 +122,20 @@ export class PrismaProductDetailRepository {
 
   // ── Reviews CRUD (con tx) ────────────────────────────────────────────────
 
-  async findProductForReview(productId: string) {
-    return this.db.product.findUnique({
-      where: { id: productId },
-      select: { id: true, slug: true, status: true },
-    });
-  }
-
-  async findProductSlugById(productId: string) {
-    return this.db.product.findUnique({
-      where: { id: productId },
-      select: { id: true, slug: true },
-    });
-  }
-
-  async findOwnReview(userId: string, productId: string) {
+  async findOwnReview(userId: string, productSlug: string) {
     return this.db.review.findFirst({
-      where: { userId, productId },
+      where: { userId, productSlug },
       select: { id: true },
     });
   }
 
-  async findPaidOrderForProduct(userId: string, productId: string) {
+  /** `productKeys`: slug del producto y, si existe, su id de Neon (pedidos anteriores a la migración). */
+  async findPaidOrderForProduct(userId: string, productKeys: string[]) {
     return this.db.order.findFirst({
       where: {
         userId,
         status: "PAID",
-        items: { some: { productId } },
+        items: { some: { productId: { in: productKeys } } },
       },
       select: { id: true },
       orderBy: { createdAt: "desc" },
@@ -211,32 +148,20 @@ export class PrismaProductDetailRepository {
    */
   async upsertReviewAndRecompute(args: {
     userId: string;
-    productId: string;
+    productSlug: string;
+    productName: string;
     orderId: string;
     rating: number;
     comment: string | null;
   }): Promise<void> {
-    const { userId, productId, orderId, rating, comment } = args;
+    const { userId, productSlug, productName, orderId, rating, comment } = args;
     await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.review.upsert({
-        where: { orderId_productId: { orderId, productId } },
+        where: { orderId_productSlug: { orderId, productSlug } },
         update: { rating, comment: comment ?? "" },
-        create: { userId, productId, orderId, rating, comment: comment ?? "" },
+        create: { userId, productSlug, productName, orderId, rating, comment: comment ?? "" },
       });
-
-      const agg = await tx.review.aggregate({
-        where: { productId },
-        _avg: { rating: true },
-        _count: { rating: true },
-      });
-
-      await tx.product.update({
-        where: { id: productId },
-        data: {
-          rating: agg._avg.rating ?? 0,
-          numReviews: agg._count.rating,
-        },
-      });
+      await recomputeProductRating(tx, productSlug);
     });
   }
 
@@ -246,25 +171,25 @@ export class PrismaProductDetailRepository {
    */
   async deleteReviewAndRecompute(args: {
     reviewId: string;
-    productId: string;
+    productSlug: string;
   }): Promise<void> {
-    const { reviewId, productId } = args;
+    const { reviewId, productSlug } = args;
     await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.review.delete({ where: { id: reviewId } });
-
-      const agg = await tx.review.aggregate({
-        where: { productId },
-        _avg: { rating: true },
-        _count: { rating: true },
-      });
-
-      await tx.product.update({
-        where: { id: productId },
-        data: {
-          rating: agg._avg.rating ?? 0,
-          numReviews: agg._count.rating,
-        },
-      });
+      await recomputeProductRating(tx, productSlug);
     });
   }
+}
+
+/** Rating y número de reseñas de la copia en Neon (si existe; el PDP los calcula en vivo). */
+async function recomputeProductRating(tx: Prisma.TransactionClient, productSlug: string) {
+  const agg = await tx.review.aggregate({
+    where: { productSlug },
+    _avg: { rating: true },
+    _count: { rating: true },
+  });
+  await tx.product.updateMany({
+    where: { slug: productSlug },
+    data: { rating: agg._avg.rating ?? 0, numReviews: agg._count.rating },
+  });
 }

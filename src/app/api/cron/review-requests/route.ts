@@ -57,14 +57,16 @@ export async function GET(request: Request) {
 
     // Busca si ya existe una reseña aprobada para este item en esta orden
     const existingReview = await prisma.review.findFirst({
-      where: { orderId: order.id, productId: firstItem.productId },
+      where: { orderId: order.id, productSlug: firstItem.productId },
     });
     if (existingReview) continue;
 
     // Crea el registro de reseña pendiente con token
     await prisma.review.create({
       data: {
-        productId:           firstItem.productId,
+        // OrderItem.productId es el slug del producto (POS o web).
+        productSlug:         firstItem.productId,
+        productName:         firstItem.name,
         orderId:             order.id,
         userId:              order.userId,
         rating:              5,
@@ -95,7 +97,7 @@ export async function GET(request: Request) {
     } else {
       // Limpia el token creado para reintentar la próxima vez
       await prisma.review.deleteMany({
-        where: { orderId: order.id, productId: firstItem.productId, reviewTokenUsed: false },
+        where: { orderId: order.id, productSlug: firstItem.productId, reviewTokenUsed: false },
       });
       failed++;
       console.error(`[Cron/ReviewRequests] Error para orden ${order.orderNumber}:`, result.error);

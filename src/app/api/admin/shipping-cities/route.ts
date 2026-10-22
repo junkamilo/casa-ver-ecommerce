@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runAdminRoute } from "@/server/http/admin-route";
 import { toErrorResponse } from "@/server/http/error-response";
+import { assertShippingEditable } from "@/modules/shipping/application/shipping-editable";
 import { prisma } from "@/lib/prisma";
 import { AssignCityRateSchema } from "@/modules/shipping/contracts/shipping.dto";
 
@@ -39,6 +40,7 @@ export async function GET() {
 export async function POST(request: Request) {
   return runAdminRoute(async () => {
     try {
+      assertShippingEditable();
       const body = await request.json();
       const { cityId, shippingRateId } = AssignCityRateSchema.parse(body);
 

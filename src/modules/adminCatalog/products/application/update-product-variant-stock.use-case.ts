@@ -4,6 +4,7 @@ import { PrismaProductRepository } from "../infrastructure/prisma-product.reposi
 import {
   ProductNotFoundError,
   ProductOwnershipError,
+  ProductPosManagedConflictError,
   ProductValidationError,
 } from "./product.errors";
 
@@ -28,6 +29,12 @@ export async function updateProductVariantStockUseCase(input: {
 
   if (variant.productId !== productId) {
     throw new ProductOwnershipError("Variante no pertenece a este producto");
+  }
+
+  if (variant.product.posSlug) {
+    throw new ProductPosManagedConflictError(
+      "La disponibilidad de este producto la controla el POS."
+    );
   }
 
   const updated = await productRepository.updateVariantStock(variantId, parsed.data.stock);

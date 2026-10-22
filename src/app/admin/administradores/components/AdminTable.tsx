@@ -11,6 +11,7 @@ const AdminTable = ({
   onConfirmDelete,
   onCancelDelete,
   onDelete,
+  readOnly,
 }: AdminTableProps) => (
   <table className="w-full">
     <thead>
@@ -68,7 +69,9 @@ const AdminTable = ({
             </span>
           </td>
           <td className="px-6 py-4 text-right">
-            {admin.id !== currentUserId ? (
+            {readOnly ? (
+              <span className="text-xs text-gray-400 italic pr-2">Gestionado en el POS</span>
+            ) : admin.id !== currentUserId ? (
               confirmDelete === admin.id ? (
                 <div className="flex items-center justify-end gap-2 animate-in fade-in slide-in-from-right-2">
                   <span className="text-xs text-gray-500 font-medium mr-1">¿Seguro?</span>

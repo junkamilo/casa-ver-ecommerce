@@ -1,10 +1,17 @@
 import { PrismaProductRepository } from "../infrastructure/prisma-product.repository";
-import { ProductNotFoundError } from "./product.errors";
+import { ProductNotFoundError, ProductPosManagedConflictError } from "./product.errors";
 import { deleteMediaAssetsByUrls } from "@/lib/media-admin";
 
 const productRepository = new PrismaProductRepository();
 
 export async function deleteProductUseCase(input: { id: string }) {
+  const ownership = await productRepository.findPosOwnership(input.id);
+  if (ownership?.posSlug) {
+    throw new ProductPosManagedConflictError(
+      "Este producto lo administra el POS: bórralo u ocúltalo desde allí."
+    );
+  }
+
   const result = await productRepository.deleteProductWithRelations(input.id);
   if (!result) {
     throw new ProductNotFoundError("Producto no encontrado");

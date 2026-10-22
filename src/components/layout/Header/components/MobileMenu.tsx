@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Search, User, ChevronRight, ChevronDown } from "lucide-react";
 import type { MobileMenuProps } from "../types";
+import { getSecondLevelLinks } from "../utils/secondLevelLinks";
 
 export default function MobileMenu({ categories, onClose, onSearchOpen }: MobileMenuProps) {
   const pathname = usePathname();
@@ -121,7 +122,8 @@ export default function MobileMenu({ categories, onClose, onSearchOpen }: Mobile
 
               {categories.map((category) => {
                 const isOpen = openCategoryId === category.id;
-                const hasTypes = category.garmentTypes.length > 0;
+                const links = getSecondLevelLinks(category, pathname, activeTipo);
+                const hasTypes = links.length > 0;
 
                 return (
                   <div key={category.id} className="flex flex-col">
@@ -187,14 +189,12 @@ export default function MobileMenu({ categories, onClose, onSearchOpen }: Mobile
                             Ver toda la colección
                           </Link>
 
-                          {category.garmentTypes.map((gt) => {
-                            const isGarmentActive =
-                              pathname === `/collections/${category.slug}` &&
-                              activeTipo === gt.slug;
+                          {links.map((gt) => {
+                            const isGarmentActive = gt.active;
                             return (
                               <Link
                                 key={gt.id}
-                                href={`/collections/${category.slug}?tipo=${gt.slug}`}
+                                href={gt.href}
                                 className={`relative group flex items-center gap-2 py-2.5 pl-2 text-sm transition-colors duration-200 rounded-md ${
                                   isGarmentActive
                                     ? "text-[#C19A6B] font-medium bg-[#C19A6B]/5"

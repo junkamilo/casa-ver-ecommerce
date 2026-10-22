@@ -1,19 +1,34 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
+import { REMOTE_IMAGE_HOSTS, isPosMediaLocal, posMediaRemotePattern } from "./src/lib/image-hosts";
+
+const posMediaPattern = posMediaRemotePattern();
+
+// En desarrollo la app también se abre por el túnel ngrok de NEXT_PUBLIC_APP_URL (pagos Bold/Addi).
+function devTunnelHost(): string | null {
+  try {
+    const { hostname } = new URL(process.env.NEXT_PUBLIC_APP_URL ?? "");
+    return hostname && hostname !== "localhost" ? hostname : null;
+  } catch {
+    return null;
+  }
+}
+const tunnelHost = process.env.NODE_ENV === "production" ? null : devTunnelHost();
 
 const nextConfig: NextConfig = {
+  ...(tunnelHost ? { allowedDevOrigins: [tunnelHost] } : {}),
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 86400,
     deviceSizes: [375, 640, 750, 828, 1080, 1200, 1920],
     imageSizes: [96, 128, 192, 256, 384],
     remotePatterns: [
-      { protocol: "https", hostname: "media.casaverdeoficial.com" },
-      { protocol: "https", hostname: "casa-verde-cdn.b-cdn.net" },
-      { protocol: "https", hostname: "images.unsplash.com" },
-      { protocol: "https", hostname: "lh3.googleusercontent.com" },
-      { protocol: "https", hostname: "lh3.google.com" },
+      ...REMOTE_IMAGE_HOSTS.map((hostname) => ({ protocol: "https" as const, hostname })),
+      // Fotos del POS (NEXT_PUBLIC_POS_MEDIA_BASE_URL).
+      ...(posMediaPattern ? [posMediaPattern] : []),
     ],
+    // Solo en desarrollo, cuando el POS corre en localhost.
+    dangerouslyAllowLocalIP: process.env.NODE_ENV !== "production" && isPosMediaLocal(),
   },
 
   async headers() {
@@ -39,7 +54,7 @@ const nextConfig: NextConfig = {
       allowedOrigins:
         process.env.NODE_ENV === "production"
           ? ["casaverdeoficial.com", "www.casaverdeoficial.com"]
-          : ["localhost:3000"],
+          : ["localhost:3000", ...(tunnelHost ? [tunnelHost] : [])],
     },
     // Persiste compilaciones de Turbopack entre reinicios de `next dev`.
     turbopackFileSystemCacheForDev: true,

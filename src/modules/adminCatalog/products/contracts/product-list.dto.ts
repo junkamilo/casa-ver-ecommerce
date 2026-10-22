@@ -14,6 +14,8 @@ export type AdminProductListItemDTO = {
   stock: number;
   active: boolean;
   isSet: boolean;
+  /** Sincronizado desde el POS: solo se editan los campos propios de la web. */
+  posManaged: boolean;
   setItems?:
     | Array<{
         name: string;
@@ -35,4 +37,6 @@ export type ProductListPaginationDTO = {
 export type AdminProductListResponseDTO = {
   data: AdminProductListItemDTO[];
   pagination: ProductListPaginationDTO;
+  /** El catálogo lo administra el POS: la web no crea productos nuevos. */
+  posCatalogEnabled?: boolean;
 };

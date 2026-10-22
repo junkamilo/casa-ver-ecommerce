@@ -69,7 +69,17 @@ export default function ProductTable({
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">{product.name}</p>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {product.name}
+                        {product.posManaged && (
+                          <span
+                            className="ml-2 align-middle inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-[#C19A6B]/15 text-[#8a6a43]"
+                            title="Sincronizado desde el POS"
+                          >
+                            POS
+                          </span>
+                        )}
+                      </p>
                       <p className="text-xs text-gray-500">ID: {product.id.slice(0, 8)}...</p>
                     </div>
                   </div>
@@ -120,7 +130,9 @@ export default function ProductTable({
                 <td className="px-6 py-4">
                   <button
                     onClick={() => onToggleActive(product.id, product.active)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    disabled={product.posManaged}
+                    title={product.posManaged ? "La visibilidad la controla el POS" : undefined}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                       product.active ? "bg-[#154734]" : "bg-gray-200"
                     }`}
                   >
@@ -140,13 +152,15 @@ export default function ProductTable({
                     >
                       <EditIcon size={16} />
                     </button>
-                    <button
-                      onClick={() => onDelete(product.id)}
-                      className="group p-0.5 bg-gray-50 rounded-lg"
-                      title="Eliminar producto"
-                    >
-                      <DeleteIcon size={16} />
-                    </button>
+                    {!product.posManaged && (
+                      <button
+                        onClick={() => onDelete(product.id)}
+                        className="group p-0.5 bg-gray-50 rounded-lg"
+                        title="Eliminar producto"
+                      >
+                        <DeleteIcon size={16} />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

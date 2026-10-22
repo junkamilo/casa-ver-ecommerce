@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 
 interface Props {
   countries: CountryAdminDTO[];
-  onSave: (id: string | null, data: CreateCountryInput) => Promise<void>;
+  /** Sin onSave la pantalla es de solo consulta (geografía administrada en el POS). */
+  onSave?: (id: string | null, data: CreateCountryInput) => Promise<void>;
 }
 
 export default function CountriesManager({ countries, onSave }: Props) {
@@ -55,7 +56,7 @@ export default function CountriesManager({ countries, onSave }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSave(editingCountry ? editingCountry.id : null, {
+    await onSave?.(editingCountry ? editingCountry.id : null, {
       name: formData.name,
       isoCode2: formData.isoCode2,
       isoCode3: formData.isoCode3,
@@ -119,10 +120,10 @@ export default function CountriesManager({ countries, onSave }: Props) {
           />
         </div>
         <div className="flex justify-between items-center">
-          <Button onClick={handleOpenNew} className="bg-[#154734] text-white hover:bg-[#113a29]">
+          {onSave && <Button onClick={handleOpenNew} className="bg-[#154734] text-white hover:bg-[#113a29]">
             <Plus className="w-4 h-4 mr-2" />
             Añadir País
-          </Button>
+          </Button>}
         </div>
       </div>
 
@@ -157,14 +158,14 @@ export default function CountriesManager({ countries, onSave }: Props) {
               </span>
             )
           },
-          {
-            key: "actions", header: "Acciones", align: "right",
-            render: (c) => (
+          ...(!onSave ? [] : [{
+            key: "actions", header: "Acciones", align: "right" as const,
+            render: (c: CountryAdminDTO) => (
               <button onClick={() => handleOpenEdit(c)} className="p-2 text-gray-400 hover:text-[#154734] transition-colors">
                 <Edit2 className="w-4 h-4" />
               </button>
             )
-          }
+          }]),
         ]}
         footer={
           <AdminPagination

@@ -37,11 +37,15 @@ export function useNavCategories(initialCategories: NavCategory[]): NavCategory[
         if (sig === sigRef.current) return;
         sigRef.current = sig;
 
-        // Paso 2: traer datos completos solo cuando algo cambió
-        const dataRes = await fetch("/api/nav-categories", { cache: "no-store" });
-        if (!dataRes.ok) return;
-        const data: NavCategory[] = await dataRes.json();
-        setCategories(data);
+        // Paso 2: traer datos completos solo cuando algo cambió (POS primero, luego la web)
+        const [posRes, webRes] = await Promise.all([
+          fetch("/api/pos-categories?format=nav", { cache: "no-store" }).catch(() => null),
+          fetch("/api/nav-categories", { cache: "no-store" }),
+        ]);
+        if (!webRes.ok) return;
+        const web: NavCategory[] = await webRes.json();
+        const pos: NavCategory[] = posRes?.ok ? await posRes.json() : [];
+        setCategories([...pos, ...web]);
       } catch {
         // Silencioso: si falla el poll se mantienen los datos del SSR
       }

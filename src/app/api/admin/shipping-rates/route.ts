@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runAdminRoute } from "@/server/http/admin-route";
 import { toErrorResponse } from "@/server/http/error-response";
+import { assertShippingEditable } from "@/modules/shipping/application/shipping-editable";
 import { listShippingRatesUseCase } from "@/modules/shipping/application/use-cases/list-shipping-rates.use-case";
 import { createShippingRateUseCase } from "@/modules/shipping/application/use-cases/create-shipping-rate.use-case";
 import { CreateShippingRateSchema } from "@/modules/shipping/contracts/shipping.dto";
@@ -19,6 +20,7 @@ export async function GET() {
 export async function POST(request: Request) {
   return runAdminRoute(async () => {
     try {
+      assertShippingEditable();
       const body = await request.json();
       const parsed = CreateShippingRateSchema.parse(body);
       const data = await createShippingRateUseCase(parsed);

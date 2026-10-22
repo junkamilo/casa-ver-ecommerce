@@ -153,6 +153,8 @@ model User {
   image         String?
   password      String?
   role          Role      @default(USER)
+  // Admin gestionado por el POS (Configuraciones → Usuarios): su rol y su contraseña los decide el POS.
+  posUserId     String?   @unique
   phone         String?
   cedula        String?
   recoveryEmail String?
@@ -262,6 +264,9 @@ model Category {
   metaTitle       String?
   metaDescription String?
 
+  // Integración POS: webId público de la categoría/subcategoría en el POS (null = creada en la web)
+  posWebId        String?    @unique
+
   // Subcategorías (árbol recursivo)
   // parentId = null  →  categoría raíz (Ej: "Conjuntos", "Camisetas")
   // parentId = <id>  →  subcategoría   (Ej: "Conjuntos Mujer" hija de "Conjuntos")
@@ -298,6 +303,7 @@ model Product {
   isProductNewAt  DateTime?      // Timestamp cuando se activó — expira automáticamente a los 7 días
   isOnSale        Boolean        @default(false)
   isOnSaleAt      DateTime?      // Timestamp cuando se activó la oferta
+  onSaleFromPos   Boolean        @default(false) // la oferta la puso el POS (etiqueta ON_SALE); si no, es manual de la web
   isSuggested     Boolean        @default(false) // Popup "Te podría interesar"
   suggestedAt     DateTime?      // Cuándo se activó la sugerencia (orden)
 
@@ -309,6 +315,10 @@ model Product {
   videoUrl        String?
   // Portada principal del producto (URL ya subida en algún color)
   coverImageUrl   String?
+
+  // Integración POS: slug del producto en el POS (null = creado en la web)
+  posSlug         String?        @unique
+  posSyncedAt     DateTime?
 
   // Calificaciones
   rating          Float          @default(0)
@@ -328,7 +338,6 @@ model Product {
   colors          ProductColor[] // Definición de colores disponibles
   variants        ProductVariant[] // Inventario real (SKUs)
   items           ProductItem[]  // Solo cuando isSet=true
-  reviews         Review[]
 
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -396,6 +405,10 @@ model ProductVariant {
   stock         Int                @default(0)
   minStock      Int                @default(2) // Alerta de stock bajo
   reserved      Int                @default(0) // Stock temporalmente en carritos
+
+  // Integración POS: el POS no envía cantidades, solo disponibilidad
+  posAvailable  Boolean            @default(false)
+  posLowStock   Boolean            @default(false)
 
   isActive      Boolean            @default(true)
 
@@ -648,10 +661,32 @@ model CartItem {
 // RESEÑAS & CALIFICACIONES
 // ============================================================
 
+/// Lo que la web decide sobre un producto del POS (por slug, sin FK: el producto vive en el POS).
+/// Es lo único del catálogo del POS que se guarda aquí; el resto se lee de la API del POS.
+model ProductWebSettings {
+  slug            String    @id
+  metaTitle       String?
+  metaDescription String?
+  coverImageUrl   String?   // portada elegida en la web (si ya no es foto del producto, se ignora)
+  videoUrl        String?   // video propio de la web (fuera de los medios del POS)
+  isNew           Boolean   @default(false) // "Nueva colección" (bandera solo de la web)
+  isOnSale        Boolean   @default(false) // oferta manual; la etiqueta ON_SALE del POS manda sobre ella
+  isOnSaleAt      DateTime?
+  publishedAt     DateTime  @default(now()) // alta en la tienda: orden de los listados (el POS no la envía)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([publishedAt])
+  @@map("product_web_settings")
+}
+
 model Review {
-  id        String   @id @default(cuid())
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  // Producto por su slug (URL /product/<slug>): el mismo en el POS y en la web. Sin FK: los productos
+  // del POS no se guardan en esta base cuando el catálogo deja de copiarse.
+  productSlug String
+  productName String?  // nombre al momento de la reseña (admin, enlace de reseña)
+  productId   String?  // legacy: id de Neon de reseñas anteriores
 
   // Usuario registrado (null si es invitado)
   userId    String?
@@ -678,8 +713,8 @@ model Review {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([orderId, productId]) // Una reseña por producto por orden
-  @@index([productId])
+  @@unique([orderId, productSlug]) // Una reseña por producto por orden
+  @@index([productSlug])
   @@index([status])
   @@map("reviews")
 }
@@ -708,6 +743,19 @@ enum CouponScheduleMode {
   NONE
   SINGLE_DAY
   DATE_RANGE
+}
+
+// Origen del cupón: WEB = creado en el admin web; POS = promoción del POS (copia de solo lectura)
+enum CouponSource {
+  WEB
+  POS
+}
+
+// Alcance del descuento: todo el pedido, productos o categorías (las promociones del POS)
+enum CouponScope {
+  ORDER
+  PRODUCTS
+  CATEGORIES
 }
 
 model CouponBatch {
@@ -745,6 +793,16 @@ model Coupon {
   isActive           Boolean            @default(true)
   codeSource         CouponCodeSource?
   label              String?
+
+  // Integración POS (promociones creadas en el POS): la web guarda una copia y la aplica en el checkout.
+  source             CouponSource       @default(WEB)
+  posPromotionId     String?            @unique // promotionId del POS (PRM-año-número)
+  posSyncedAt        DateTime?
+  minPurchase        Int?               // subtotal mínimo en pesos para aplicar el cupón
+  scopeType          CouponScope        @default(ORDER)
+  scopeProductIds    String[]           @default([]) // ids de products (alcance PRODUCTS)
+  scopeCategoryIds   String[]           @default([]) // ids de categories (alcance CATEGORIES)
+
   usages             CouponUsage[]
   orders             Order[]
 
@@ -834,6 +892,26 @@ model WebhookLog {
   @@index([orderId])
   @@index([createdAt])
   @@map("webhook_logs")
+}
+
+// Avisos de cambios de catálogo recibidos del POS (idempotencia por eventId)
+model PosWebhookEvent {
+  id           String    @id @default(cuid())
+  eventId      String    @unique
+  event        String    // "product.upserted", "category.removed", ...
+  entityType   String    // "category" | "subcategory" | "product"
+  entityId     String    // webId (categorías) o slug (productos)
+  action       String    // "upserted" | "removed" | "stock_changed"
+  status       String    @default("RECEIVED") // RECEIVED | PROCESSED | FAILED
+  attempts     Int       @default(0)
+  errorMessage String?
+  occurredAt   DateTime?
+  receivedAt   DateTime  @default(now())
+  processedAt  DateTime?
+
+  @@index([status])
+  @@index([receivedAt])
+  @@map("pos_webhook_events")
 }
 
 // ============================================================
@@ -999,6 +1077,8 @@ model ShippingRate {
   name     String?
   price    Int               // en pesos enteros: 9000, 12500, 19000
   isActive Boolean @default(true)
+  // UUID de la tarifa en el POS (fuente de verdad); la sincronización enlaza por aquí.
+  posRateId String? @unique
 
   // Quién usa esta tarifa
   municipalities Municipality[]

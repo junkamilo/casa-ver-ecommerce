@@ -88,6 +88,32 @@ export async function updateAdminProduct(id: string, payload: ProductCreateInput
   return assertOk(response);
 }
 
+export type PosManagedProductPayload = {
+  isFeatured: boolean;
+  isNew: boolean;
+  isProductNew: boolean;
+  isProductNewAt: string | null;
+  isOnSale: boolean;
+  isOnSaleAt: string | null;
+  isSuggested: boolean;
+  suggestedAt: string | null;
+  coverImageUrl: string | null;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  garmentTypes: string[];
+};
+
+/** Productos sincronizados desde el POS: solo campos propios de la web. */
+export async function updatePosManagedProduct(id: string, payload: PosManagedProductPayload) {
+  const response = await fetch(`${PRODUCTS_API}/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  return assertOk(response);
+}
+
 export async function toggleAdminProduct(id: string, active: boolean) {
   const response = await fetch(`${PRODUCTS_API}/${id}`, {
     method: "PATCH",

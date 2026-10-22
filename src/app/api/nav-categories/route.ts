@@ -7,7 +7,8 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const categories = await prisma.category.findMany({
-      where: { isActive: true, parentId: null },
+      // Las categorías del POS (posWebId) llegan por /api/pos-categories: no se duplican.
+      where: { isActive: true, parentId: null, posWebId: null },
       orderBy: { order: "asc" },
       include: {
         subcategories: {

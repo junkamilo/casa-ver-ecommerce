@@ -7,8 +7,10 @@ import CategoriesClient from "@/app/collections/components/CategoriesClient";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
 import BackButton from "@/components/ui/BackButton";
 import { listActiveCategoriesUseCase } from "@/modules/collections/application/list-active-categories.use-case";
+import { getPosCategoryTree } from "@/modules/posIntegration/application/get-pos-categories.use-case";
+import { toPosCarouselItems } from "@/modules/posIntegration/domain/pos-category-view";
 
-export const revalidate = 3600;
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Colecciones",
@@ -22,7 +24,11 @@ export const metadata: Metadata = {
 };
 
 export default async function CollectionsPage() {
-  const collections = await listActiveCategoriesUseCase({ rootOnly: true });
+  const [posTree, webCollections] = await Promise.all([
+    getPosCategoryTree(),
+    listActiveCategoriesUseCase({ rootOnly: true }),
+  ]);
+  const collections = [...toPosCarouselItems(posTree), ...webCollections];
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFA] selection:bg-[#C19A6B]/20 relative overflow-hidden">

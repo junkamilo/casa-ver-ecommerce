@@ -12,6 +12,7 @@ import {
 import { validateCoupon } from "@/app/actions/coupons";
 import { createOrder, getShippingCostAction } from "@/app/actions/checkout";
 import { calculateCouponDiscountAmount } from "@/modules/checkout/domain/coupon.entity";
+import { minPurchaseMessage } from "@/modules/checkout/domain/coupon-scope";
 import { checkoutSchema } from "@/app/checkout/types/schema";
 import type { CheckoutFormData } from "@/app/checkout/types/schema";
 import type { CouponState } from "@/app/checkout/types";
@@ -81,10 +82,20 @@ export function useCheckout(options?: UseCheckoutOptions) {
   const cityValue = form.watch("city");
   const departmentValue = form.watch("department");
 
+  // Promociones del POS con alcance: el descuento se calcula solo sobre las prendas elegibles.
+  // Bajo la compra mínima no aplica (el servidor lo vuelve a validar al crear la orden).
+  const couponBase =
+    coupon.status === "valid" && coupon.eligibleVariantIds
+      ? checkoutItems
+          .filter((item) => coupon.eligibleVariantIds!.includes(item.variantId))
+          .reduce((sum, item) => sum + item.price * item.quantity, 0)
+      : subtotal;
+  const belowCouponMinimum =
+    coupon.status === "valid" && coupon.minPurchase != null && subtotal < coupon.minPurchase;
   const couponDiscount =
-    coupon.status === "valid"
+    coupon.status === "valid" && !belowCouponMinimum
       ? calculateCouponDiscountAmount(
-          subtotal,
+          couponBase,
           coupon.discountType ?? "PERCENTAGE",
           coupon.discountType === "FIXED"
             ? (coupon.discountValue ?? 0)
@@ -133,8 +144,10 @@ export function useCheckout(options?: UseCheckoutOptions) {
     setShowFreeShippingCelebration(true);
   }, [checkoutItems.length, shippingQuote.isFreeByThreshold]);
 
+  // Con alcance (solo algunas prendas) no se reparte el descuento visualmente en cada línea: se
+  // muestra en el resumen. Todo el pedido: igual que antes.
   const lineItemDiscountPercentage =
-    coupon.status === "valid"
+    coupon.status === "valid" && !coupon.eligibleVariantIds && !belowCouponMinimum
       ? coupon.discountType === "FIXED" && subtotal > 0
         ? Math.round((couponDiscount / subtotal) * 100)
         : coupon.discountPercentage
@@ -149,7 +162,11 @@ export function useCheckout(options?: UseCheckoutOptions) {
 
       setCoupon((prev) => ({ ...prev, code, status: "validating" }));
 
-      const result = await validateCoupon(code, hasValidEmail ? email : undefined);
+      const result = await validateCoupon(
+        code,
+        hasValidEmail ? email : undefined,
+        checkoutItems.map((item) => ({ variantId: item.variantId, price: item.price, quantity: item.quantity }))
+      );
 
       if (
         !result.valid &&
@@ -178,6 +195,8 @@ export function useCheckout(options?: UseCheckoutOptions) {
           discountPercentage:
             discountType === "PERCENTAGE" ? discountValue : 0,
           couponId: result.couponId,
+          minPurchase: result.minPurchase ?? null,
+          eligibleVariantIds: result.eligibleVariantIds,
         });
         setShowCouponCelebration(true);
       } else {
@@ -189,7 +208,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
         });
       }
     },
-    [form]
+    [form, checkoutItems]
   );
 
   const handleRemoveCoupon = useCallback(() => {
@@ -248,7 +267,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
           subtotal,
           shippingCost,
           discount: couponDiscount,
-          couponId: coupon.couponId,
+          couponId: belowCouponMinimum ? undefined : coupon.couponId,
           couponCode: coupon.status === "valid" ? coupon.code : undefined,
           captchaToken,
         });
@@ -338,7 +357,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
         }
       });
     },
-    [checkoutItems, subtotal, shippingCost, couponDiscount, coupon, captchaToken, options, closeCart, clearCart, clearBuyNow]
+    [checkoutItems, subtotal, shippingCost, couponDiscount, coupon, belowCouponMinimum, captchaToken, options, closeCart, clearCart, clearBuyNow]
   );
 
   return {
@@ -351,7 +370,10 @@ export function useCheckout(options?: UseCheckoutOptions) {
     discount,
     couponDiscount,
     total,
-    coupon,
+    // Bajo la compra mínima el cupón se muestra como no válido (vuelve a aplicar si el carrito sube).
+    coupon: belowCouponMinimum
+      ? { ...coupon, status: "invalid" as const, errorMessage: minPurchaseMessage(coupon.minPurchase ?? 0) }
+      : coupon,
     lineItemDiscountPercentage,
     handleApplyCoupon,
     handleRemoveCoupon,

@@ -2,6 +2,7 @@ import type { ProductListQueryDTO } from "../contracts/product-list.dto";
 import { productListQuerySchema } from "../contracts/product-list.schema";
 import { PrismaProductRepository } from "../infrastructure/prisma-product.repository";
 import { ProductValidationError } from "./product.errors";
+import { isPosCatalogConfigured } from "@/modules/posIntegration/infrastructure/pos-config";
 
 const productRepository = new PrismaProductRepository();
 
@@ -17,5 +18,6 @@ export async function listProductsUseCase(input: unknown) {
     limit: parsed.data.limit,
   };
 
-  return productRepository.listProducts(query);
+  const result = await productRepository.listProducts(query);
+  return { ...result, posCatalogEnabled: isPosCatalogConfigured() };
 }

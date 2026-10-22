@@ -46,6 +46,19 @@ export type AdminColorDTO = {
 export type AdminProductDetailDTO = {
   id: string;
   name: string;
+  slug?: string;
+  posManaged?: boolean;
+  posSyncedAt?: string | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  variants?: Array<{
+    id: string;
+    colorName: string;
+    size: string;
+    isActive?: boolean;
+    posAvailable?: boolean;
+    posLowStock?: boolean;
+  }>;
   description?: string | null;
   basePrice?: number | null;
   comparePrice?: number | null;

@@ -4,6 +4,7 @@ import {
   CouponConflictError,
   CouponNotFoundError,
   CouponValidationError,
+  POS_MANAGED_MESSAGE,
 } from "./coupon.errors";
 
 const couponRepository = new PrismaCouponAdminRepository();
@@ -18,6 +19,9 @@ export async function deleteCouponUseCase(input: unknown) {
   const coupon = await couponRepository.findById(parsed.data.id);
   if (!coupon) {
     throw new CouponNotFoundError("Cupón no encontrado");
+  }
+  if (coupon.source === "POS") {
+    throw new CouponConflictError(POS_MANAGED_MESSAGE);
   }
 
   if (coupon.isUsed) {

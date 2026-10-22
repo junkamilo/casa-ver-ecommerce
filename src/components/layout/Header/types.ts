@@ -21,6 +21,8 @@ export interface NavCategory {
   id: string;
   name: string;
   slug: string;
+  /** "pos": viene de la API del POS y su segundo nivel son subcategorías. */
+  source?: "pos" | "web";
   subcategories: NavSubcategory[];
   products: NavProduct[];
   garmentTypes: NavGarmentType[];

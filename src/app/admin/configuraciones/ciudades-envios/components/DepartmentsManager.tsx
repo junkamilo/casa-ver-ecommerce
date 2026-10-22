@@ -11,7 +11,8 @@ import AdminSelect from "@/components/ui/AdminSelect";
 interface Props {
   departments: DepartmentAdminDTO[];
   countries: CountryAdminDTO[];
-  onSave: (id: string | null, data: CreateDepartmentInput) => Promise<void>;
+  /** Sin onSave la pantalla es de solo consulta (geografía administrada en el POS). */
+  onSave?: (id: string | null, data: CreateDepartmentInput) => Promise<void>;
 }
 
 export default function DepartmentsManager({ departments, countries, onSave }: Props) {
@@ -50,7 +51,7 @@ export default function DepartmentsManager({ departments, countries, onSave }: P
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSave(editingDept ? editingDept.id : null, {
+    await onSave?.(editingDept ? editingDept.id : null, {
       name: formData.name,
       daneCode: formData.daneCode || undefined,
       countryId: formData.countryId,
@@ -102,10 +103,10 @@ export default function DepartmentsManager({ departments, countries, onSave }: P
           />
         </div>
         <div className="flex justify-between items-center">
-          <Button onClick={handleOpenNew} className="bg-[#154734] text-white hover:bg-[#113a29]">
+          {onSave && <Button onClick={handleOpenNew} className="bg-[#154734] text-white hover:bg-[#113a29]">
             <Plus className="w-4 h-4 mr-2" />
             Añadir Departamento
-          </Button>
+          </Button>}
         </div>
       </div>
 
@@ -141,14 +142,14 @@ export default function DepartmentsManager({ departments, countries, onSave }: P
               </span>
             )
           },
-          {
-            key: "actions", header: "Acciones", align: "right",
-            render: (d) => (
+          ...(!onSave ? [] : [{
+            key: "actions", header: "Acciones", align: "right" as const,
+            render: (d: DepartmentAdminDTO) => (
               <button onClick={() => handleOpenEdit(d)} className="p-2 text-gray-400 hover:text-[#154734] transition-colors">
                 <Edit2 className="w-4 h-4" />
               </button>
             )
-          }
+          }]),
         ]}
         footer={
           <AdminPagination

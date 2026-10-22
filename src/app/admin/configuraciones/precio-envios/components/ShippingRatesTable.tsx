@@ -13,9 +13,11 @@ export default function ShippingRatesTable({
 }: {
   rates: ShippingRateDTO[];
   defaultRateId: string | null;
-  onEdit: (rate: ShippingRateDTO) => void;
-  onDelete: (id: string) => void;
+  /** Sin onEdit ni onDelete la tabla es de solo consulta (envíos administrados en el POS). */
+  onEdit?: (rate: ShippingRateDTO) => void;
+  onDelete?: (id: string) => void;
 }) {
+  const editable = Boolean(onEdit && onDelete);
   return (
     <AdminDataTable
       data={rates}
@@ -56,25 +58,25 @@ export default function ShippingRatesTable({
             </div>
           )
         },
-        {
+        ...(!editable ? [] : [{
           key: "actions",
           header: "Acciones",
-          align: "right",
-          render: (rate) => {
+          align: "right" as const,
+          render: (rate: ShippingRateDTO) => {
             const isDefault = rate.id === defaultRateId;
             const inUse = rate.citiesCount > 0 || isDefault;
             return (
               <div className="inline-flex items-center gap-1.5 justify-end">
                 <button
                   type="button"
-                  onClick={() => onEdit(rate)}
+                  onClick={() => onEdit?.(rate)}
                   className="text-xs font-semibold px-2 py-1.5 rounded-lg bg-[#154734]/10 text-[#154734] hover:bg-[#154734]/20 mr-2 transition-colors"
                 >
                   Configurar Zonas
                 </button>
                 <button
                   type="button"
-                  onClick={() => onDelete(rate.id)}
+                  onClick={() => onDelete?.(rate.id)}
                   disabled={inUse}
                   title={inUse ? "No puedes eliminar una tarifa en uso o por defecto" : undefined}
                   className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors"
@@ -85,7 +87,7 @@ export default function ShippingRatesTable({
               </div>
             );
           }
-        }
+        }]),
       ]}
     />
   );

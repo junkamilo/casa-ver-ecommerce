@@ -11,7 +11,6 @@ export async function GET(
   const review = await prisma.review.findUnique({
     where: { reviewToken: token },
     include: {
-      product: { select: { id: true, name: true, slug: true } },
       order:   { select: { orderNumber: true } },
       user:    { select: { name: true } },
     },
@@ -29,9 +28,9 @@ export async function GET(
 
   return NextResponse.json({
     reviewId:      review.id,
-    productId:     review.product.id,
-    productName:   review.product.name,
-    productSlug:   review.product.slug,
+    productId:     review.productSlug,
+    productName:   review.productName ?? review.productSlug,
+    productSlug:   review.productSlug,
     orderNumber:   review.order.orderNumber,
     reviewerName:  review.user?.name || review.guestName || "",
   });

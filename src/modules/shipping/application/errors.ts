@@ -35,3 +35,11 @@ export class ShippingDefaultRateZoneAssignmentValidationError extends Error {
     this.name = "ShippingDefaultRateZoneAssignmentValidationError";
   }
 }
+
+/** Con el POS conectado, envíos y geografía se administran allá; la web solo los refleja. */
+export class ShippingManagedByPosConflictError extends Error {
+  constructor() {
+    super("Los envíos y la geografía se administran en el POS (Configuraciones → Precio de envíos / Ciudades de envíos)");
+    this.name = "ShippingManagedByPosConflictError";
+  }
+}

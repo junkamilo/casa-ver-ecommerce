@@ -1,6 +1,6 @@
 import { promotionalCouponIdSchema } from "../contracts/coupon.schema";
 import { PrismaCouponAdminRepository } from "../infrastructure/prisma-coupon-admin.repository";
-import { CouponConflictError, CouponNotFoundError, CouponValidationError } from "./coupon.errors";
+import { CouponConflictError, CouponNotFoundError, CouponValidationError, POS_MANAGED_MESSAGE } from "./coupon.errors";
 
 const couponRepository = new PrismaCouponAdminRepository();
 
@@ -14,6 +14,9 @@ export async function deletePromotionalCouponUseCase(input: unknown) {
   const coupon = await couponRepository.findPromotionalById(parsed.data.id);
   if (!coupon) {
     throw new CouponNotFoundError("Cupón promocional no encontrado");
+  }
+  if (coupon.source === "POS") {
+    throw new CouponConflictError(POS_MANAGED_MESSAGE);
   }
 
   if (coupon.currentGlobalUses > 0) {

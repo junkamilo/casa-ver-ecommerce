@@ -4,7 +4,6 @@ import { PrismaProductDetailRepository } from "../infrastructure/prisma-product-
 import { reviewSchema, type ReviewInput } from "../contracts/review.schema";
 import {
   InvalidProductIdError,
-  ProductInactiveError,
   ProductNotFoundError,
   ReviewNotAuthenticatedError,
   ReviewNotPurchasedError,
@@ -12,11 +11,24 @@ import {
   ProductError,
 } from "./product.errors";
 import type { ReviewActionResult } from "../contracts/product-detail.dto";
+import { resolveProductSource } from "./resolve-product-source";
 
 const repository = new PrismaProductDetailRepository();
 
 function isValidId(id: unknown): id is string {
-  return typeof id === "string" && id.length > 0 && id.length <= 50;
+  return typeof id === "string" && id.length > 0 && id.length <= 200;
+}
+
+/**
+ * Producto reseñable por su slug: activo en el POS o en la web. Devuelve su nombre (se guarda en la
+ * reseña). Los pedidos lo identifican por el mismo slug.
+ */
+async function findReviewableProduct(slug: string): Promise<{ name: string } | null> {
+  const resolved = await resolveProductSource(slug);
+  if (!resolved) return null;
+  if (resolved.source === "POS") return { name: resolved.pos.name.trim() };
+  const legacy = await repository.getProductForSeo(slug);
+  return legacy ? { name: legacy.name } : null;
 }
 
 /**
@@ -24,17 +36,18 @@ function isValidId(id: unknown): id is string {
  * Reglas de negocio:
  *   - Usuario debe estar autenticado.
  *   - Solo puede reseñar si tiene una orden PAID que contiene el producto.
- *   - El producto debe existir y estar ACTIVE.
+ *   - El producto debe existir y estar activo (en el POS o en la web).
+ *   - `productSlug`: el `id` del producto en el PDP, que es su slug.
  *   - Recálcula `rating` y `numReviews` del producto en la misma transacción.
  *
  * Devuelve el contrato legacy `{ success, error? }` que consume `ReviewForm.tsx`.
  */
 export async function saveReviewUseCase(
-  productId: string,
+  productSlug: string,
   input: ReviewInput,
 ): Promise<ReviewActionResult> {
   try {
-    if (!isValidId(productId)) throw new InvalidProductIdError();
+    if (!isValidId(productSlug)) throw new InvalidProductIdError();
 
     const session = await auth();
     if (!session?.user?.email) throw new ReviewNotAuthenticatedError("save");
@@ -47,22 +60,22 @@ export async function saveReviewUseCase(
     }
     const { rating, comment } = parsed.data;
 
-    const product = await repository.findProductForReview(productId);
+    const product = await findReviewableProduct(productSlug);
     if (!product) throw new ProductNotFoundError();
-    if (product.status !== "ACTIVE") throw new ProductInactiveError();
 
-    const order = await repository.findPaidOrderForProduct(userId, productId);
+    const order = await repository.findPaidOrderForProduct(userId, [productSlug]);
     if (!order) throw new ReviewNotPurchasedError();
 
     await repository.upsertReviewAndRecompute({
       userId,
-      productId,
+      productSlug,
+      productName: product.name,
       orderId: order.id,
       rating,
       comment,
     });
 
-    revalidatePath(`/product/${product.slug}`);
+    revalidatePath(`/product/${productSlug}`);
     return { success: true };
   } catch (err) {
     if (err instanceof ProductError) {

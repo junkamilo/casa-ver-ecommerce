@@ -1,5 +1,7 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { getPosCategoryTree } from "@/modules/posIntegration/application/get-pos-categories.use-case";
+import { toPosNavCategories } from "@/modules/posIntegration/domain/pos-category-view";
 import HeaderClient from "./HeaderClient";
 import type { NavCategory } from "../types";
 
@@ -7,7 +9,8 @@ async function getNavCategories(): Promise<NavCategory[]> {
   noStore(); // Las categorías deben reflejar la BD en tiempo real — nunca cachear
   try {
     const categories = await prisma.category.findMany({
-      where: { isActive: true, parentId: null },
+      // Las categorías del POS (posWebId) ya llegan en el árbol del POS: no se duplican.
+      where: { isActive: true, parentId: null, posWebId: null },
       orderBy: { order: "asc" },
       include: {
         subcategories: {
@@ -51,6 +54,6 @@ async function getNavCategories(): Promise<NavCategory[]> {
 }
 
 export default async function HeaderAsync() {
-  const categories = await getNavCategories();
-  return <HeaderClient categories={categories} />;
+  const [posTree, webCategories] = await Promise.all([getPosCategoryTree(), getNavCategories()]);
+  return <HeaderClient categories={[...toPosNavCategories(posTree), ...webCategories]} />;
 }

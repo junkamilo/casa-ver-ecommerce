@@ -14,6 +14,12 @@ export type CouponListItemDTO = {
   batchId: string | null;
   batchCreatedAt: string | null;
   createdAt: string;
+  /** WEB = generado en el admin web; POS = código de un lote del POS (solo lectura en la web). */
+  source: "WEB" | "POS";
+  /** promotionId del lote en el POS. */
+  posPromotionId: string | null;
+  label: string | null;
+  isActive: boolean;
 };
 
 export type CouponListPaginationDTO = {
@@ -90,6 +96,12 @@ export type PromotionalCouponListItemDTO = {
   scheduleLabel: string;
   status: "ACTIVE" | "EXHAUSTED" | "INACTIVE" | "EXPIRED" | "SCHEDULED";
   createdAt: string;
+  /** WEB = creado en el admin web; POS = promoción del POS (solo lectura en la web). */
+  source: "WEB" | "POS";
+  posPromotionId: string | null;
+  label: string | null;
+  minPurchase: number | null;
+  scopeType: "ORDER" | "PRODUCTS" | "CATEGORIES";
 };
 
 export type PromotionalCouponListResponseDTO = {

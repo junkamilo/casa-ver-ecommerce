@@ -19,18 +19,17 @@ export class PrismaReviewRepository {
               { comment: { contains: input.search, mode: "insensitive" as const } },
               { guestName: { contains: input.search, mode: "insensitive" as const } },
               { user: { name: { contains: input.search, mode: "insensitive" as const } } },
-              { product: { name: { contains: input.search, mode: "insensitive" as const } } },
+              { productName: { contains: input.search, mode: "insensitive" as const } },
             ],
           }
         : {}),
     };
 
     const skip = (input.page - 1) * input.limit;
-    const [reviews, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       this.db.review.findMany({
         where,
         include: {
-          product: { select: { id: true, name: true, slug: true } },
           order: { select: { orderNumber: true } },
           user: { select: { name: true, email: true } },
         },
@@ -41,6 +40,13 @@ export class PrismaReviewRepository {
       this.db.review.count({ where }),
     ]);
 
+    // La reseña guarda slug y nombre del producto (sin FK: el producto puede vivir solo en el POS).
+    const reviews = rows.map(
+      ({ productSlug, productName, ...review }: { productSlug: string; productName: string | null }) => ({
+        ...review,
+        product: { id: productSlug, name: productName ?? productSlug, slug: productSlug },
+      }),
+    );
     return { reviews, total, page: input.page, totalPages: Math.ceil(total / input.limit) };
   }
 
@@ -49,22 +55,23 @@ export class PrismaReviewRepository {
   }
 
   async findReviewProduct(id: string) {
-    return this.db.review.findUnique({ where: { id }, select: { productId: true } });
+    return this.db.review.findUnique({ where: { id }, select: { productSlug: true } });
   }
 
   async deleteReview(id: string) {
     return this.db.review.delete({ where: { id } });
   }
 
-  async recalcProductRating(productId: string) {
+  /** Rating de la copia en Neon del producto, si existe (el PDP lo calcula en vivo). */
+  async recalcProductRating(productSlug: string) {
     const agg = await prisma.review.aggregate({
-      where: { productId, status: "APPROVED" },
+      where: { productSlug, status: "APPROVED" },
       _avg: { rating: true },
       _count: { id: true },
     });
 
-    await prisma.product.update({
-      where: { id: productId },
+    await prisma.product.updateMany({
+      where: { slug: productSlug },
       data: {
         rating: agg._avg.rating ?? 0,
         numReviews: agg._count.id,

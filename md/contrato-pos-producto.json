@@ -1,0 +1,212 @@
+{
+  "_descripcion": "Contrato POS -> Web Casa Verde. Así debe enviar el POS categorías, subcategorías y productos (con colores, tallas, imágenes y disponibilidad) para que la web los reciba con éxito. La web valida exactamente estos campos (src/modules/posIntegration/contracts/pos-catalog.schema.ts).",
+
+  "1_flujo": {
+    "resumen": "El POS NO manda los datos del producto en el webhook. Manda un aviso corto y firmado; la web responde 200 y luego consulta el recurso en la API pública del POS.",
+    "pasos": [
+      "1. Cambia algo en el POS (producto, stock, categoría).",
+      "2. El POS hace POST a https://<web>/api/pos-webhook con el aviso firmado (sección 2).",
+      "3. La web responde 200 en menos de 5 s.",
+      "4. La web hace GET https://<pos>/api/public/catalog/products/{slug} con X-Api-Key y espera la respuesta de la sección 4.",
+      "5. Si el GET responde 404, la web oculta el producto (status INACTIVE)."
+    ]
+  },
+
+  "2_webhook_que_envia_el_pos": {
+    "metodo": "POST",
+    "url": "https://<web>/api/pos-webhook",
+    "headers": {
+      "Content-Type": "application/json",
+      "X-CasaVerde-Timestamp": "1790676000",
+      "X-CasaVerde-Signature": "sha256=<HMAC-SHA256(secreto, timestamp + '.' + cuerpoCrudo) en hexadecimal>",
+      "X-CasaVerde-Event-Id": "5b1f2c3d-7e8f-4a1b-9c2d-3e4f5a6b7c8d",
+      "X-CasaVerde-Event": "product.upserted"
+    },
+    "body": {
+      "eventId": "5b1f2c3d-7e8f-4a1b-9c2d-3e4f5a6b7c8d",
+      "event": "product.upserted",
+      "entityType": "product",
+      "id": "blusa-lino-manga-larga",
+      "action": "upserted",
+      "occurredAt": "2026-09-30T14:00:00Z"
+    },
+    "reglas": {
+      "entityType": "category | subcategory | product",
+      "id": "webId si es category/subcategory; slug si es product",
+      "action": {
+        "upserted": "Creado o modificado y visible. La web vuelve a consultarlo.",
+        "removed": "Borrado, desactivado u oculto. La web lo oculta. Si cambia el slug de un producto: enviar removed del slug viejo y upserted del nuevo.",
+        "stock_changed": "Cambió la disponibilidad de alguna variante. La web vuelve a consultar /products/{slug}."
+      },
+      "event": "Debe ser '<entityType>.<action>'.",
+      "eventId": "Debe ser igual en el body y en X-CasaVerde-Event-Id. Si se repite, la web lo trata como duplicado y no lo reprocesa.",
+      "timestamp": "Segundos Unix. Se rechaza si difiere más de 5 minutos de la hora actual.",
+      "firma": "Se calcula sobre el cuerpo crudo exacto que se envía (sin volver a serializarlo).",
+      "respuestas_de_la_web": {
+        "200": "{\"received\": true} o {\"received\": true, \"duplicate\": true}",
+        "400": "JSON inválido, campo faltante o Event-Id que no coincide",
+        "401": "Firma inválida o timestamp vencido",
+        "503": "La web no tiene configurado el secreto"
+      }
+    },
+    "otros_ejemplos_de_body": [
+      { "eventId": "a1...", "event": "product.stock_changed", "entityType": "product", "id": "blusa-lino-manga-larga", "action": "stock_changed", "occurredAt": "2026-09-30T14:05:00Z" },
+      { "eventId": "b2...", "event": "product.removed", "entityType": "product", "id": "blusa-lino-manga-larga", "action": "removed", "occurredAt": "2026-09-30T14:10:00Z" },
+      { "eventId": "c3...", "event": "category.upserted", "entityType": "category", "id": "cat-mujer-01", "action": "upserted", "occurredAt": "2026-09-30T14:15:00Z" },
+      { "eventId": "d4...", "event": "subcategory.removed", "entityType": "subcategory", "id": "sub-blusas-01", "action": "removed", "occurredAt": "2026-09-30T14:20:00Z" }
+    ]
+  },
+
+  "3_respuesta_GET_categories": {
+    "url": "GET https://<pos>/api/public/catalog/categories  (también /categories/{webId} devuelve un solo objeto)",
+    "headers_de_la_peticion": { "X-Api-Key": "<clave>", "Accept": "application/json" },
+    "respuesta": {
+      "success": true,
+      "data": [
+        {
+          "webId": "cat-mujer-01",
+          "slug": "mujer",
+          "name": "Mujer",
+          "description": "Prendas en lino y algodón para mujer.",
+          "imageUrl": "https://cdn.casaverde.com/categorias/mujer.jpg",
+          "metaTitle": "Ropa para mujer | Casa Verde",
+          "metaDescription": "Blusas, pantalones y conjuntos en lino.",
+          "sortOrder": 1,
+          "updatedAt": "2026-09-30T13:00:00Z",
+          "subcategories": [
+            {
+              "webId": "sub-blusas-01",
+              "parentWebId": "cat-mujer-01",
+              "slug": "blusas-mujer",
+              "name": "Blusas",
+              "description": null,
+              "imageUrl": null,
+              "metaTitle": null,
+              "metaDescription": null,
+              "sortOrder": 1,
+              "updatedAt": "2026-09-30T13:00:00Z"
+            },
+            {
+              "webId": "sub-pantalones-01",
+              "parentWebId": "cat-mujer-01",
+              "slug": "pantalones-mujer",
+              "name": "Pantalones",
+              "description": null,
+              "imageUrl": null,
+              "metaTitle": null,
+              "metaDescription": null,
+              "sortOrder": 2,
+              "updatedAt": "2026-09-30T13:00:00Z"
+            }
+          ]
+        }
+      ]
+    },
+    "obligatorios": ["webId", "slug", "name"],
+    "opcionales_pueden_ser_null": ["description", "imageUrl", "metaTitle", "metaDescription", "updatedAt", "parentWebId"],
+    "por_defecto": { "sortOrder": 0, "subcategories": [] }
+  },
+
+  "4_respuesta_GET_product": {
+    "url": "GET https://<pos>/api/public/catalog/products/{slug}",
+    "respuesta": {
+      "success": true,
+      "data": {
+        "slug": "blusa-lino-manga-larga",
+        "name": "Blusa Lino Manga Larga",
+        "description": "100% lino\nCorte holgado\nBotones en coco",
+        "salePrice": 129900,
+        "displayPrice": 159900,
+        "coverImageUrl": "https://cdn.casaverde.com/productos/blusa-lino/portada.jpg",
+        "videoUrl": null,
+        "categoryWebId": "cat-mujer-01",
+        "subcategoryWebId": "sub-blusas-01",
+        "available": true,
+        "colors": [
+          {
+            "colorId": 10,
+            "name": "Verde Militar",
+            "hexCode": "#4B5320",
+            "media": [
+              { "url": "https://cdn.casaverde.com/productos/blusa-lino/verde-1.jpg", "video": false, "cover": true },
+              { "url": "https://cdn.casaverde.com/productos/blusa-lino/verde-2.jpg", "video": false, "cover": false },
+              { "url": "https://cdn.casaverde.com/productos/blusa-lino/verde.mp4", "video": true, "cover": false }
+            ]
+          },
+          {
+            "colorId": 11,
+            "name": "Blanco Hueso",
+            "hexCode": "#F2EFE6",
+            "media": [
+              { "url": "https://cdn.casaverde.com/productos/blusa-lino/blanco-1.jpg", "video": false, "cover": true }
+            ]
+          }
+        ],
+        "sizes": [
+          { "sizeId": 1, "name": "S" },
+          { "sizeId": 2, "name": "M" },
+          { "sizeId": 3, "name": "L" }
+        ],
+        "variants": [
+          { "colorId": 10, "sizeId": 1, "available": true, "lowStock": false },
+          { "colorId": 10, "sizeId": 2, "available": true, "lowStock": true },
+          { "colorId": 10, "sizeId": 3, "available": false, "lowStock": false },
+          { "colorId": 11, "sizeId": 1, "available": true, "lowStock": false },
+          { "colorId": 11, "sizeId": 2, "available": true, "lowStock": false }
+        ],
+        "updatedAt": "2026-09-30T13:58:00Z"
+      }
+    },
+    "obligatorios": ["slug", "name", "salePrice", "available", "colors[].name", "media[].url", "sizes[].name", "variants[].available", "variants[].lowStock"],
+    "reglas_por_campo": {
+      "slug": "Identificador del producto. La web lo usa como slug de la URL (/product/{slug}). Debe ser único y no puede chocar con otro producto del POS.",
+      "salePrice": "Precio de venta. Número o string numérico (129900 o \"129900.00\").",
+      "displayPrice": "Precio 'antes' (tachado). Solo se muestra si es MAYOR que salePrice; si no, mandar null.",
+      "description": "Cada salto de línea (\\n) se muestra como una viñeta en la ficha del producto.",
+      "coverImageUrl": "Portada. Si llega null la web usa la media con cover=true, o la primera imagen del primer color.",
+      "videoUrl": "Si llega null la web toma la primera media con video=true.",
+      "categoryWebId / subcategoryWebId": "Un producto tiene UNA categoría y UNA subcategoría en el POS. La web asocia el producto a las categorías de la web que tengan el MISMO SLUG que esas categorías del POS. Si no existe en la web una categoría con ese slug, el producto se guarda pero queda sin esa categoría (no aparece en el menú ni en la colección).",
+      "colors[].colorId": "Número entero. Las variantes se enlazan a su color por este id.",
+      "colors[].name": "Si dos colores llegan con el mismo nombre, la web renombra el segundo ('Negro 2').",
+      "colors[].hexCode": "Formato #RRGGBB o RRGGBB. Cualquier otro valor se reemplaza por #CCCCCC (gris).",
+      "colors[].media": "Imágenes y videos de ESE color, en el orden en que se deben mostrar. Marcar una con cover=true.",
+      "sizes[].name": "Solo se aceptan: XS, S, M, L, XL, XXL, 2XL, U, UNICA, TALLA UNICA, ONESIZE, ONE SIZE, STD, ESTANDAR (sin importar mayúsculas ni tildes). Una talla con otro nombre (ej. 6, 8, 32) se DESCARTA con sus variantes.",
+      "variants": "Una por combinación color + talla. colorId debe existir en colors y sizeId en sizes; si no, la variante se descarta.",
+      "variants[].available / lowStock": "El POS no envía cantidades. La web traduce: available=false -> agotado; available=true y lowStock=true -> 'últimas unidades'; available=true y lowStock=false -> disponible.",
+      "url_de_imagenes": "Deben ser URLs públicas HTTPS. El dominio del CDN debe estar permitido en la web (src/lib/image-hosts.ts); avisar si es un dominio nuevo."
+    }
+  },
+
+  "5_respuesta_GET_products_listado": {
+    "url": "GET https://<pos>/api/public/catalog/products?categoryWebId=&subcategoryWebId=&updatedSince=&page=0&size=100",
+    "uso": "La web lo usa para la sincronización completa diaria. Los productos que ya no aparezcan se ocultan.",
+    "respuesta": {
+      "success": true,
+      "data": {
+        "items": ["<mismo objeto de producto de la sección 4>"],
+        "total": 1,
+        "page": 0,
+        "size": 100
+      }
+    }
+  },
+
+  "6_lo_que_NO_viene_del_POS": {
+    "nota": "Estos datos los administra la web y el POS no debe enviarlos (si los envía se ignoran):",
+    "campos": [
+      "Tipos de prenda (filtros ?tipo= del menú)",
+      "Etiquetas: Más Vendidos (isFeatured), Nuevos Ingresos (isNew), Producto Nuevo, En Oferta, Sugerido en popup",
+      "Conjuntos con piezas (isSet / ProductItem)",
+      "Reseñas y calificaciones",
+      "Cantidades exactas de stock"
+    ]
+  },
+
+  "7_errores_de_la_API_del_POS_que_la_web_entiende": {
+    "200": "{ \"success\": true, \"data\": ... }",
+    "304": "Sin cambios (si se usa ETag / If-None-Match)",
+    "401": "Clave X-Api-Key inválida",
+    "404": "No existe o no es visible: la web lo oculta",
+    "429": "Demasiadas peticiones: enviar header Retry-After (segundos); la web reintenta hasta 3 veces"
+  }
+}

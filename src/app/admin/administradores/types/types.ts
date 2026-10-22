@@ -26,11 +26,14 @@ export interface AdminDeleteProps {
 export interface AdminTableProps extends AdminDeleteProps {
   filteredAdmins: Admin[];
   currentUserId: string | undefined;
+  /** Con el POS conectado los admins se gestionan allá: sin revocar. */
+  readOnly?: boolean;
 }
 
 export interface AdminMobileListProps extends AdminDeleteProps {
   filteredAdmins: Admin[];
   currentUserId: string | undefined;
+  readOnly?: boolean;
 }
 
 export interface AdminStatsBarProps {

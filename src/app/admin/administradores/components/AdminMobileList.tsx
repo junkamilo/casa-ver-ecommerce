@@ -12,6 +12,7 @@ const AdminMobileList = ({
   onConfirmDelete,
   onCancelDelete,
   onDelete,
+  readOnly,
 }: AdminMobileListProps) => (
   <div className="divide-y divide-gray-100">
     {filteredAdmins.map((admin) => (
@@ -40,7 +41,7 @@ const AdminMobileList = ({
             </div>
           </div>
 
-          {admin.id !== currentUserId && (
+          {!readOnly && admin.id !== currentUserId && (
             <button
               onClick={() => onConfirmDelete(admin.id)}
               className="p-2 text-gray-400 hover:text-red-500"

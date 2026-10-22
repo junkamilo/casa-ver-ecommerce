@@ -9,9 +9,15 @@ import {
   mapUIProduct,
   resolveGalleryAndVideo,
   resolveInitialItemId,
+  type RawProductDetail,
 } from "../domain/product-detail.entity";
+import { posToRawProductDetail } from "../domain/pos-product-detail.entity";
 import type { ProductDetailResultDTO } from "../contracts/product-detail.dto";
 import { transformProduct } from "@/modules/collections/domain/product-mapper.entity";
+import { mapPosProduct } from "@/modules/posIntegration/domain/pos-mapper";
+import { getRecommendedEntries } from "@/modules/catalog/listing/application/get-catalog";
+import { toCard } from "@/modules/catalog/listing/domain/catalog-entry.entity";
+import { resolveProductSource } from "./resolve-product-source";
 
 const repository = new PrismaProductDetailRepository();
 
@@ -27,33 +33,52 @@ export interface GetProductDetailInput {
   userEmail: string | null;
 }
 
+/** Producto a pintar: del POS (+ capa web) o de Neon (productos de la web / POS sin respuesta). */
+async function loadProduct(slug: string): Promise<RawProductDetail | null> {
+  const resolved = await resolveProductSource(slug);
+  if (!resolved) return null;
+
+  if (resolved.source === "POS") {
+    console.info(`[catalog] /product/${slug} source=POS`);
+    return posToRawProductDetail(mapPosProduct(resolved.pos), resolved.overlay);
+  }
+
+  const legacy = await repository.getProductDetail(slug);
+  if (!legacy) return null;
+  console.info(`[catalog] /product/${slug} source=NEON_LEGACY`);
+  // La identidad del producto en carrito, pedidos y reseñas es el slug también para los de la web.
+  return { ...legacy, id: legacy.slug };
+}
+
 /**
  * Orquesta el render del PDP. Devuelve `null` si el producto no existe o no
  * está activo (la page usa `notFound()` en ese caso).
  *
  * Internamente:
- *   1. Lee el producto con todos sus relaciones (variants, items, reviews,
- *      category.products para recomendados).
+ *   1. Resuelve el producto: POS primero (cacheado por tag) o Neon para los
+ *      productos de la web / si el POS no responde. Su `id` es el slug.
  *   2. Mapea a `UIProduct`/`UIProductItem`/`UIColor` para el cliente.
- *   3. Mapea los recomendados con `transformProduct` del módulo `collections`
- *      (mismo mapper que BestSellers/NewCollection — fix del bug histórico
- *      del 5to mapper duplicado).
- *   4. Lee y mapea social proof (compradores reales).
+ *   3. Recomendados: productos del catálogo que comparten categoría, con
+ *      `transformProduct` del módulo `collections`.
+ *   4. Lee reseñas y social proof por slug.
  *   5. Resuelve `initialItemId` desde `?tipo=`.
  */
 export async function getProductDetailUseCase(
   input: GetProductDetailInput,
 ): Promise<ProductDetailResultDTO | null> {
-  const product = await repository.getProductDetail(input.slug);
+  const product = await loadProduct(input.slug);
   if (!product) return null;
 
-  const userId = input.userEmail
-    ? await repository.getUserIdByEmail(input.userEmail)
-    : null;
+  const [userId, productReviews, buyerOrders, recommended] = await Promise.all([
+    input.userEmail ? repository.getUserIdByEmail(input.userEmail) : null,
+    repository.getApprovedReviews(product.slug),
+    repository.getBuyerOrders([product.slug]),
+    getRecommendedEntries(product.slug),
+  ]);
 
-  const userReview = extractUserReview(product.reviews, userId);
+  const userReview = extractUserReview(productReviews, userId);
   const { allGeneralImages, resolvedVideoUrl } = resolveGalleryAndVideo(product);
-  const { liveRating, liveNumReviews } = computeReviewMetrics(product.reviews);
+  const { liveRating, liveNumReviews } = computeReviewMetrics(productReviews);
 
   const uiItems = mapUIItems(product.items ?? []);
   const initialItemId = resolveInitialItemId(
@@ -73,19 +98,12 @@ export async function getProductDetailUseCase(
     allGeneralImages,
   );
 
-  const buyerOrders = await repository.getBuyerOrders(product.id);
-  const socialProof = mapSocialProof(buyerOrders);
-
-  const recommendedRaw = await repository.getRecommendedProducts(product.id, product.slug);
-  const recommended = recommendedRaw.map(transformProduct);
-  const reviews = mapProductReviews(product.reviews);
-
   return {
     product: uiProduct,
-    recommended,
+    recommended: recommended.map((entry) => transformProduct(toCard(entry))),
     existingReview: userReview,
-    reviews,
-    socialProof,
+    reviews: mapProductReviews(productReviews),
+    socialProof: mapSocialProof(buyerOrders),
     initialItemId,
   };
 }

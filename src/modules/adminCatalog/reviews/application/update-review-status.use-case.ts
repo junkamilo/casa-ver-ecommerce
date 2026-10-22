@@ -10,6 +10,6 @@ export async function updateReviewStatusUseCase(input: { id: string; status: unk
   }
 
   const review = await reviewRepository.updateReviewStatus(input.id, input.status);
-  await reviewRepository.recalcProductRating(review.productId);
+  await reviewRepository.recalcProductRating(review.productSlug);
   return { success: true, status: review.status };
 }

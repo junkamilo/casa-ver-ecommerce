@@ -17,6 +17,8 @@ export const ERROR_MESSAGES = {
   invalidCredentials: "Correo o contraseña incorrectos. Verifica tus datos e intenta de nuevo.",
   notVerified:        "Debes verificar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada.",
   useGoogle:          "Esta cuenta fue creada con Google. Inicia sesión con el botón de Google.",
+  tooManyAttempts:    "Demasiados intentos fallidos. Espera unos minutos e intenta de nuevo.",
+  adminUnavailable:   "No pudimos verificar tu acceso de administrador en este momento. Intenta de nuevo en unos minutos o entra con Google.",
   unexpected:         "Ocurrió un error inesperado. Intenta de nuevo.",
 } as const;
 
@@ -25,4 +27,6 @@ export const CREDENTIAL_ERROR_MAP: Record<string, string> = {
   invalid_credentials: ERROR_MESSAGES.invalidCredentials,
   use_google:          ERROR_MESSAGES.useGoogle,
   email_not_verified:  ERROR_MESSAGES.notVerified,
+  too_many_attempts:   ERROR_MESSAGES.tooManyAttempts,
+  admin_unavailable:   ERROR_MESSAGES.adminUnavailable,
 };

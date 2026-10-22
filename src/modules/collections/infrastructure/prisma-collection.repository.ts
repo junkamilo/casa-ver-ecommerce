@@ -1,118 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
-import type { RawCollectionProduct } from "../domain/product-mapper.entity";
 import type {
   CategoryListItemDTO,
   CategoryDetailDTO,
-  ProductWhereFilter,
 } from "../contracts/collection-product.dto";
-
-// ── Selects compartidos ──────────────────────────────────────────────────────
-//
-// `STANDARD_SELECT`  → páginas de colección (no necesita stock).
-// `WITH_STOCK_SELECT` → BestSellers / NewCollection (badge "Agotado" depende
-//                       de stock total acumulado).
-
-const STANDARD_SELECT = {
-  name: true,
-  slug: true,
-  basePrice: true,
-  comparePrice: true,
-  isNew: true,
-  isFeatured: true,
-  isSet: true,
-  isProductNew: true,
-  isProductNewAt: true,
-  isOnSale: true,
-  coverImageUrl: true,
-  images: {
-    orderBy: { order: "asc" as const },
-    take: 8,
-    select: { url: true },
-  },
-  items: {
-    orderBy: { order: "asc" as const },
-    select: {
-      price: true,
-      comparePrice: true,
-      coverImageUrl: true,
-      isCardFeatured: true,
-      colors: {
-        select: {
-          name: true,
-          hexCode: true,
-          images: {
-            orderBy: { order: "asc" as const },
-            take: 8,
-            select: { url: true },
-          },
-        },
-      },
-    },
-  },
-  colors: {
-    select: {
-      name: true,
-      hexCode: true,
-      images: {
-        orderBy: { order: "asc" as const },
-        take: 1,
-        select: { url: true },
-      },
-    },
-  },
-} as const;
-
-const WITH_STOCK_SELECT = {
-  name: true,
-  slug: true,
-  basePrice: true,
-  comparePrice: true,
-  isSet: true,
-  isProductNew: true,
-  isProductNewAt: true,
-  isOnSale: true,
-  coverImageUrl: true,
-  images: {
-    orderBy: { order: "asc" as const },
-    take: 8,
-    select: { url: true },
-  },
-  items: {
-    orderBy: { order: "asc" as const },
-    select: {
-      price: true,
-      comparePrice: true,
-      coverImageUrl: true,
-      isCardFeatured: true,
-      colors: {
-        select: {
-          name: true,
-          hexCode: true,
-          images: {
-            orderBy: { order: "asc" as const },
-            take: 8,
-            select: { url: true },
-          },
-          variants: { select: { stock: true } },
-        },
-      },
-    },
-  },
-  colors: {
-    select: {
-      name: true,
-      hexCode: true,
-      images: {
-        orderBy: { order: "asc" as const },
-        take: 1,
-        select: { url: true },
-      },
-      variants: { select: { stock: true } },
-    },
-    orderBy: { id: "asc" as const },
-  },
-} as const;
 
 export class PrismaCollectionRepository {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -135,7 +25,8 @@ export class PrismaCollectionRepository {
     return this.db.category.findMany({
       where: {
         isActive: true,
-        ...(options?.rootOnly ? { parentId: null } : {}),
+        // En la primera capa las categorías del POS vienen de su árbol (toPosCarouselItems).
+        ...(options?.rootOnly ? { parentId: null, posWebId: null } : {}),
       },
       orderBy: { name: "asc" },
       select: {
@@ -174,85 +65,6 @@ export class PrismaCollectionRepository {
     return this.db.garmentType.findUnique({
       where: { slug },
       select: { id: true, name: true },
-    });
-  }
-
-  // ── Products ───────────────────────────────────────────────────────────────
-
-  /**
-   * Productos para `/collections/mas-vendidos` y `/collections/nueva-coleccion`.
-   * No trae variants (no se necesita stock).
-   */
-  async findProductsByFlag(
-    where: ProductWhereFilter,
-    productIds?: string[],
-  ): Promise<RawCollectionProduct[]> {
-    if (productIds && productIds.length === 0) return [];
-
-    return this.db.product.findMany({
-      where: productIds ? { ...where, id: { in: productIds } } : where,
-      select: STANDARD_SELECT,
-      orderBy: { createdAt: "desc" },
-    });
-  }
-
-  /**
-   * Productos por categoría y, opcionalmente, garmentType. No trae variants.
-   */
-  async findProductsByCategory(
-    categorySlug: string,
-    garmentTypeId?: string,
-    productIds?: string[],
-  ): Promise<RawCollectionProduct[]> {
-    if (productIds && productIds.length === 0) return [];
-
-    const where: Prisma.ProductWhereInput = {
-      categories: {
-        some: {
-          category: { slug: categorySlug, isActive: true },
-        },
-      },
-      status: "ACTIVE",
-      ...(garmentTypeId
-        ? {
-            garmentTypes: {
-              some: { garmentTypeId },
-            },
-          }
-        : {}),
-      ...(productIds ? { id: { in: productIds } } : {}),
-    };
-
-    return this.db.product.findMany({
-      where,
-      select: STANDARD_SELECT,
-      orderBy: { createdAt: "desc" },
-    });
-  }
-
-  /**
-   * Featured (BestSellers home). Trae variants.stock para badge "Agotado".
-   * Limita a 12 productos por defecto.
-   */
-  async findFeaturedProducts(take = 12): Promise<RawCollectionProduct[]> {
-    return this.db.product.findMany({
-      where: { isFeatured: true, status: "ACTIVE" },
-      select: WITH_STOCK_SELECT,
-      orderBy: { createdAt: "desc" },
-      take,
-    });
-  }
-
-  /**
-   * New (NewCollection home). Trae variants.stock para badge "Agotado".
-   * Trae `take + 1` filas para detectar si hay más sin un COUNT extra.
-   */
-  async findNewProducts(take = 8): Promise<RawCollectionProduct[]> {
-    return this.db.product.findMany({
-      where: { isNew: true, status: "ACTIVE" },
-      select: WITH_STOCK_SELECT,
-      orderBy: { createdAt: "desc" },
-      take: take + 1,
     });
   }
 }

@@ -5,6 +5,7 @@ import {
   PROMOTIONAL_MAX_USES_PER_USER,
 } from "@/modules/checkout/domain/coupon.entity";
 import { isOrderWithinPaymentGrace } from "@/modules/checkout/domain/order-payment-grace";
+import { parsePosLineId } from "@/modules/posIntegration/domain/pos-mapper";
 import { OrderPaymentGraceExpiredError } from "../application/order.errors";
 import type { PaidOrderDTO, ReleaseOrderTargetStatus } from "../contracts/order-payment.dto";
 
@@ -68,7 +69,10 @@ export class PrismaOrderRepository {
       // ProductVariant (con `stock` y `reserved`). Probamos primero
       // ProductVariant; si no existe, asumimos ProductItemVariant y NO
       // decrementamos de nuevo (ya se descontó al crear la orden).
+      // Ítems con el SKU del POS como variantId: no tienen reserva en la web; el POS descuenta su
+      // inventario al registrar la venta (postOrder).
       for (const item of order.items) {
+        if (parsePosLineId(item.variantId)) continue;
         const productVariant = await tx.productVariant.findUnique({
           where: { id: item.variantId },
           select: { id: true },
@@ -202,6 +206,21 @@ export class PrismaOrderRepository {
   //      ProductItemVariant → increment stock (re-poner lo descontado al crear).
   //   5. Liberar cupón si la orden lo tenía reservado.
   // -------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
+  // markPaidOrderRefundedByTransactionId
+  //
+  // La pasarela reembolsó un pedido YA pagado (Bold VOID_APPROVED). releaseStock no actúa sobre
+  // pedidos pagados, así que aquí se pasa a REFUNDED. Idempotente: solo cambia pedidos pagados.
+  // Devuelve true si cambió el estado.
+  // -------------------------------------------------------------------------
+  async markPaidOrderRefundedByTransactionId(transactionId: string): Promise<boolean> {
+    const result = await prisma.order.updateMany({
+      where: { transactionId, status: { in: ["PAID", "PROCESSING", "SHIPPED", "DELIVERED"] } },
+      data: { status: "REFUNDED", cancelledAt: new Date() },
+    });
+    return result.count > 0;
+  }
+
   async releaseStockByTransactionId(
     transactionId: string,
     newStatus: ReleaseOrderTargetStatus,
@@ -236,6 +255,8 @@ export class PrismaOrderRepository {
         });
 
         for (const item of order.items) {
+          // Ítem del POS (SKU como variantId): no se reservó nada en la web.
+          if (parsePosLineId(item.variantId)) continue;
           const productVariant = await tx.productVariant.findUnique({
             where: { id: item.variantId },
             select: { id: true, reserved: true },

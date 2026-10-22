@@ -4,7 +4,12 @@ import type {
   CreateOrderInputDTO,
   CreateOrderResultDTO,
 } from "../contracts/create-order.dto";
-import { toCreateOrderErrorMessage } from "./checkout.errors";
+import {
+  OutOfStockError,
+  ProductUnavailableError,
+  toCreateOrderErrorMessage,
+} from "./checkout.errors";
+import { verifyPosAvailability } from "@/modules/posIntegration/application/verify-pos-availability.use-case";
 
 const repository = new PrismaCheckoutRepository();
 
@@ -31,6 +36,23 @@ export async function createOrderUseCase(
   }
 
   try {
+    // El POS confirma que alcanza el inventario para las cantidades del carrito antes de cobrar.
+    const posIssues = await verifyPosAvailability(
+      parsed.data.items.map((item) => ({ variantId: item.variantId, quantity: item.quantity }))
+    );
+    const firstIssue = posIssues[0];
+    if (firstIssue) {
+      const item = parsed.data.items.find((i) => i.variantId === firstIssue.variantId);
+      const label = item?.name ?? "un producto";
+      const remaining = firstIssue.message?.match(/solo quedan \d+ unidad(es)?/)?.[0];
+      throw firstIssue.reason === "product_unavailable"
+        ? new ProductUnavailableError(`El producto "${label}" ya no está disponible`)
+        : new OutOfStockError(
+            `Stock insuficiente para "${label}" (${item?.colorName ?? ""} / ${item?.size ?? ""})` +
+              (remaining ? `: ${remaining}` : "")
+          );
+    }
+
     const result = await repository.createOrderTransaction(parsed.data);
 
     return {

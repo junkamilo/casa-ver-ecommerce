@@ -151,10 +151,12 @@ export async function getCategorySalesByPeriod(period: Period): Promise<Category
   const totalRevenue = currentItems.reduce((sum, i) => sum + Number(i.total), 0);
   if (totalRevenue === 0) return [];
   const allProductIds = [...new Set([...currentItems.map((i) => i.productId), ...prevItems.map((i) => i.productId)])];
+  // productId de los ítems: slug (o id de Neon en pedidos anteriores a la migración).
   const products = await prisma.product.findMany({
-    where: { id: { in: allProductIds } },
+    where: { OR: [{ id: { in: allProductIds } }, { slug: { in: allProductIds } }] },
     select: {
       id: true,
+      slug: true,
       categories: {
         select: {
           category: { select: { id: true, name: true } },
@@ -163,10 +165,13 @@ export async function getCategorySalesByPeriod(period: Period): Promise<Category
     },
   });
   const productCatMap = new Map(
-    products.map((p) => [
-      p.id,
-      p.categories.map((link) => ({ id: link.category.id, name: link.category.name })),
-    ])
+    products.flatMap((p) => {
+      const categories = p.categories.map((link) => ({ id: link.category.id, name: link.category.name }));
+      return [
+        [p.id, categories],
+        [p.slug, categories],
+      ] as const;
+    })
   );
   const categoryIds = [
     ...new Set(

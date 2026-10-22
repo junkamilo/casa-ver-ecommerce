@@ -4,7 +4,6 @@ import { PrismaProductDetailRepository } from "../infrastructure/prisma-product-
 import {
   InvalidProductIdError,
   ProductError,
-  ProductNotFoundError,
   ReviewNotAuthenticatedError,
   ReviewNotFoundError,
 } from "./product.errors";
@@ -13,39 +12,36 @@ import type { ReviewActionResult } from "../contracts/product-detail.dto";
 const repository = new PrismaProductDetailRepository();
 
 function isValidId(id: unknown): id is string {
-  return typeof id === "string" && id.length > 0 && id.length <= 50;
+  return typeof id === "string" && id.length > 0 && id.length <= 200;
 }
 
 /**
- * Elimina la reseña del usuario autenticado para un producto.
+ * Elimina la reseña del usuario autenticado para un producto (por su slug).
  * Recálcula `rating` y `numReviews` en la misma transacción.
  *
  * Devuelve `{ success, error? }` para preservar el contrato consumido por
  * `ReviewForm.tsx`.
  */
 export async function deleteReviewUseCase(
-  productId: string,
+  productSlug: string,
 ): Promise<ReviewActionResult> {
   try {
-    if (!isValidId(productId)) throw new InvalidProductIdError();
+    if (!isValidId(productSlug)) throw new InvalidProductIdError();
 
     const session = await auth();
     if (!session?.user?.email) throw new ReviewNotAuthenticatedError("delete");
     const userId = await repository.getUserIdByEmail(session.user.email);
     if (!userId) throw new ReviewNotAuthenticatedError("delete");
 
-    const product = await repository.findProductSlugById(productId);
-    if (!product) throw new ProductNotFoundError();
-
-    const existing = await repository.findOwnReview(userId, productId);
+    const existing = await repository.findOwnReview(userId, productSlug);
     if (!existing) throw new ReviewNotFoundError();
 
     await repository.deleteReviewAndRecompute({
       reviewId: existing.id,
-      productId,
+      productSlug,
     });
 
-    revalidatePath(`/product/${product.slug}`);
+    revalidatePath(`/product/${productSlug}`);
     return { success: true };
   } catch (err) {
     if (err instanceof ProductError) {

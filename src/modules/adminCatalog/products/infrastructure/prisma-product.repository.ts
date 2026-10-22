@@ -113,6 +113,7 @@ export class PrismaProductRepository {
           stock: regularStock,
           active: p.status === "ACTIVE",
           isSet: p.isSet ?? false,
+          posManaged: Boolean(p.posSlug),
           setItems,
         };
       }
@@ -425,6 +426,66 @@ export class PrismaProductRepository {
     });
   }
 
+  async findPosOwnership(id: string): Promise<{ posSlug: string | null } | null> {
+    return this.db.product.findUnique({ where: { id }, select: { posSlug: true } });
+  }
+
+  async findPosManagedContext(id: string): Promise<{
+    slug: string;
+    categoryIds: string[];
+    imageUrls: string[];
+  } | null> {
+    const product = await this.db.product.findUnique({
+      where: { id },
+      select: {
+        slug: true,
+        categories: { select: { categoryId: true } },
+        images: { select: { url: true } },
+      },
+    });
+    if (!product) return null;
+    return {
+      slug: product.slug,
+      categoryIds: product.categories.map((c: { categoryId: string }) => c.categoryId),
+      imageUrls: product.images.map((img: { url: string }) => img.url),
+    };
+  }
+
+  /** Solo campos propios de la web; lo demás lo controla el POS. */
+  async updatePosManagedFields(
+    id: string,
+    data: {
+      isFeatured?: boolean;
+      isNew?: boolean;
+      isProductNew?: boolean;
+      isProductNewAt?: Date | null;
+      isOnSale?: boolean;
+      isOnSaleAt?: Date | null;
+      isSuggested?: boolean;
+      suggestedAt?: Date | null;
+      coverImageUrl?: string | null;
+      metaTitle?: string | null;
+      metaDescription?: string | null;
+      garmentTypeIds?: string[];
+    }
+  ) {
+    const { garmentTypeIds, ...fields } = data;
+    return this.db.product.update({
+      where: { id },
+      data: {
+        ...fields,
+        ...(garmentTypeIds
+          ? {
+              garmentTypes: {
+                deleteMany: {},
+                create: garmentTypeIds.map((garmentTypeId) => ({ garmentTypeId })),
+              },
+            }
+          : {}),
+      },
+    });
+  }
+
   async findVariantById(variantId: string) {
     return this.db.productVariant.findUnique({
       where: { id: variantId },
@@ -482,6 +543,8 @@ export class PrismaProductRepository {
       id: product.id,
       name: product.name,
       slug: product.slug,
+      posManaged: Boolean(product.posSlug),
+      posSyncedAt: product.posSyncedAt ?? null,
       description: product.description,
       basePrice: Number(product.basePrice),
       comparePrice: product.comparePrice ? Number(product.comparePrice) : null,
@@ -529,6 +592,9 @@ export class PrismaProductRepository {
           colorName: c.name,
           size: v.size,
           stock: v.stock,
+          isActive: v.isActive,
+          posAvailable: v.posAvailable,
+          posLowStock: v.posLowStock,
         }))
       ),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

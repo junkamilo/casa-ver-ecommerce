@@ -23,6 +23,14 @@ export default function PromotionalCouponsTab() {
         <div className="space-y-0.5">
           <div className="flex items-center gap-2">
             <span className="font-mono text-sm font-semibold text-gray-900">{row.code}</span>
+            {row.source === "POS" ? (
+              <span
+                title={`Promoción del POS ${row.posPromotionId ?? ""}: se administra en el POS`}
+                className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#154734] text-white"
+              >
+                POS
+              </span>
+            ) : null}
             <button
               type="button"
               onClick={() => m.copyCode(row.code)}
@@ -32,7 +40,13 @@ export default function PromotionalCouponsTab() {
               <Copy className="w-3.5 h-3.5" />
             </button>
           </div>
-          {row.codeSource ? (
+          {row.source === "POS" ? (
+            <p className="text-xs text-gray-500">
+              {row.label ?? "Promoción del POS"}
+              {row.minPurchase ? ` · desde $${row.minPurchase.toLocaleString("es-CO")}` : ""}
+              {row.scopeType === "PRODUCTS" ? " · productos" : row.scopeType === "CATEGORIES" ? " · categorías" : ""}
+            </p>
+          ) : row.codeSource ? (
             <p className="text-xs text-gray-500">
               {m.codeSourceLabel[row.codeSource]}
             </p>
@@ -90,7 +104,12 @@ export default function PromotionalCouponsTab() {
           >
             <Eye className="w-4 h-4" />
           </button>
-          {row.isActive && row.status !== "EXHAUSTED" ? (
+          {row.source === "POS" ? (
+            <span className="px-2 text-xs text-gray-400" title="Esta promoción la administra el POS">
+              Administrada en el POS
+            </span>
+          ) : null}
+          {row.source !== "POS" && row.isActive && row.status !== "EXHAUSTED" ? (
             <button
               type="button"
               onClick={() => m.handleDeactivate(row)}
@@ -105,7 +124,7 @@ export default function PromotionalCouponsTab() {
               )}
             </button>
           ) : null}
-          {row.currentGlobalUses === 0 ? (
+          {row.source !== "POS" && row.currentGlobalUses === 0 ? (
             <button
               type="button"
               onClick={() => m.handleDelete(row)}
