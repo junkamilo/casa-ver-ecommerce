@@ -1,0 +1,54 @@
+name: web-qa
+
+services:
+  app:
+    build:
+      context: .
+      network: host
+      secrets:
+        - db_build_url
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-}
+        NEXT_PUBLIC_POS_MEDIA_BASE_URL: ${NEXT_PUBLIC_POS_MEDIA_BASE_URL:-}
+        NEXT_PUBLIC_WHATSAPP_NUMBER: ${NEXT_PUBLIC_WHATSAPP_NUMBER:-}
+        NEXT_PUBLIC_LAUNCH_AT: ${NEXT_PUBLIC_LAUNCH_AT:-}
+        NEXT_PUBLIC_LAUNCH_LOCK_ENABLED: ${NEXT_PUBLIC_LAUNCH_LOCK_ENABLED:-}
+        NEXT_PUBLIC_BOLD_IDENTITY_KEY: ${NEXT_PUBLIC_BOLD_IDENTITY_KEY:-}
+        NEXT_PUBLIC_BUNNY_CDN_URL: ${NEXT_PUBLIC_BUNNY_CDN_URL:-}
+        NEXT_PUBLIC_RECAPTCHA_SITE_KEY: ${NEXT_PUBLIC_RECAPTCHA_SITE_KEY:-}
+        NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+        SENTRY_ORG: ${SENTRY_ORG:-}
+        SENTRY_PROJECT: ${SENTRY_PROJECT:-}
+        EXTRA_SERVER_ACTION_ORIGINS: qa.casaverdeoficial.com
+    container_name: web-qa-app
+    env_file: .env
+    ports:
+      - "127.0.0.1:8084:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: web-qa-postgres
+    environment:
+      POSTGRES_DB: casa_verde_web
+      POSTGRES_USER: webqa
+      POSTGRES_PASSWORD: ${WEBQA_DB_PASSWORD:?falta WEBQA_DB_PASSWORD}
+    volumes:
+      - web-qa-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U webqa -d casa_verde_web"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  web-qa-postgres-data:
+    name: web-qa-postgres-data
+
+secrets:
+  db_build_url:
+    file: ./secrets/db_build_url.txt
