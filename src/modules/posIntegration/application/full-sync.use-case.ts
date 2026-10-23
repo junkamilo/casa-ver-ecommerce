@@ -1,8 +1,7 @@
-import { listCategories, listProducts, listPromotions } from "../infrastructure/pos-catalog.client";
+import { listProducts, listPromotions } from "../infrastructure/pos-catalog.client";
 import { PrismaPosSyncRepository } from "../infrastructure/prisma-pos-sync.repository";
 import { revalidateCatalogPages, revalidatePosCategories } from "./revalidate-catalog";
 import { normalizePosSlug } from "../domain/pos-mapper";
-import { syncPosCategories, type PosCategorySyncResult } from "./sync-pos-categories.use-case";
 import { upsertPosProduct } from "./sync-product.use-case";
 import { listLocalPosPromotionIds, removePromotionById, upsertPosPromotion } from "./sync-promotion.use-case";
 import { syncShippingFromPos, type PosShippingSyncResult } from "./sync-shipping.use-case";
@@ -11,7 +10,6 @@ import { syncAdminsFromPos, type PosAdminSyncResult } from "./sync-admins.use-ca
 const repository = new PrismaPosSyncRepository();
 
 export type PosFullSyncResult = {
-  categories: PosCategorySyncResult;
   products: { upserted: number; created: number; hidden: number; failed: number };
   promotions: { upserted: number; removed: number; failed: number };
   shipping: PosShippingSyncResult | null;
@@ -21,15 +19,15 @@ export type PosFullSyncResult = {
 };
 
 /**
- * Respaldo de los avisos: refleja el árbol de categorías del POS, descarga todos los productos
- * visibles, los guarda y oculta los que tengan identificador del POS y ya no aparezcan. Después hace lo
+ * Respaldo de los avisos: descarga todos los productos visibles del POS, los guarda y oculta los que
+ * tengan identificador del POS y ya no aparezcan. Las categorías no se copian (se leen del POS); solo
+ * se expira su caché al final. Después hace lo
  * mismo con las promociones del canal WEB (cupones source = POS): las que ya no aparecen se retiran.
  */
 export async function runPosFullSync(): Promise<PosFullSyncResult> {
   const startedAt = Date.now();
   const errors: string[] = [];
   const result: PosFullSyncResult = {
-    categories: { upserted: 0, deactivated: 0 },
     products: { upserted: 0, created: 0, hidden: 0, failed: 0 },
     promotions: { upserted: 0, removed: 0, failed: 0 },
     shipping: null,
@@ -38,15 +36,13 @@ export async function runPosFullSync(): Promise<PosFullSyncResult> {
     durationMs: 0,
   };
 
-  const categories = await syncPosCategories(await listCategories());
-  result.categories = categories;
   const posProducts = await listProducts();
   const seenProductSlugs = new Set<string>();
 
   for (const product of posProducts) {
     seenProductSlugs.add(normalizePosSlug(product.slug));
     try {
-      const saved = await upsertPosProduct(product, { categoriesSynced: true });
+      const saved = await upsertPosProduct(product);
       result.products.upserted++;
       if (saved.created) result.products.created++;
     } catch (error) {

@@ -7,7 +7,9 @@ export type AdminProductListItemDTO = {
   id: string;
   name: string;
   description: string;
+  /** Categorías del POS donde está (por nombre); vacío en productos creados en la web. */
   categories: Array<{ id: string; name: string }>;
+  posSlug: string | null;
   images: Array<{ url: string }>;
   videoUrl: string | null;
   price: number;

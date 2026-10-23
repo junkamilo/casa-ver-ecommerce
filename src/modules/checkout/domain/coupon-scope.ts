@@ -6,6 +6,7 @@ export type CouponScopeType = "ORDER" | "PRODUCTS" | "CATEGORIES";
 export interface CouponScope {
   scopeType: CouponScopeType;
   scopeProductIds: string[];
+  /** webIds de categorías del POS (la promoción del POS publica `scope.categoryWebIds`). */
   scopeCategoryIds: string[];
 }
 
@@ -22,8 +23,9 @@ export function isWholeOrder(scope: Partial<CouponScope> | null | undefined): bo
 }
 
 /**
- * ¿El producto entra en el alcance? Categorías: la del producto o su categoría padre (una promoción
- * de «Vestidos» incluye «Vestidos largos»).
+ * ¿El producto entra en el alcance? Categorías: alguna ubicación del producto en el POS (categoría o
+ * subcategoría, por webId) o su categoría padre. Las clasificaciones del POS ya traen la categoría de
+ * cada subcategoría, así que una promoción de «Vestidos» incluye «Vestidos largos».
  */
 export function isProductInScope(
   scope: CouponScope,

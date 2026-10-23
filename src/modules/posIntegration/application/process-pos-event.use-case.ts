@@ -1,12 +1,13 @@
 import type { PosWebhookPayload } from "../contracts/pos-catalog.schema";
 import { revalidatePosCategories, revalidatePosProduct } from "./revalidate-catalog";
-import { syncPosCategories } from "./sync-pos-categories.use-case";
 import { removeProductBySlug, syncProductBySlug } from "./sync-product.use-case";
 import { removePromotionById, syncPromotionById } from "./sync-promotion.use-case";
 import { syncOrderStatusFromPos } from "./sync-order-status.use-case";
 import { syncShippingFromPos } from "./sync-shipping.use-case";
 import { syncAdminsFromPos } from "./sync-admins.use-case";
 import { normalizePosSlug } from "../domain/pos-mapper";
+import { collectionSlugsForWebId } from "../domain/pos-category-view";
+import { getBackupCategoryTree } from "./get-pos-categories.use-case";
 import { PrismaProductWebSettingsRepository } from "@/modules/catalog/product/infrastructure/prisma-product-web-settings.repository";
 
 const webSettings = new PrismaProductWebSettingsRepository();
@@ -15,8 +16,8 @@ const webSettings = new PrismaProductWebSettingsRepository();
  * Aplica un aviso del POS. Productos: `upserted` y `stock_changed` vuelven a consultar el recurso
  * en la API (el aviso no trae datos) y `removed` lo oculta sin borrarlo. Promociones: `upserted`
  * vuelve a consultar la promoción y actualiza su cupón; `removed` la desactiva (con usos) o la borra.
- * Categorías y subcategorías: se vuelve a reflejar el árbol del POS (espejos por posWebId) y se expira
- * la caché del menú.
+ * Categorías y subcategorías: la web no las guarda; se expira la caché del árbol del POS (menú,
+ * colecciones y la ubicación de los productos) para que la próxima visita lo vuelva a leer.
  */
 export async function processPosEvent(event: Pick<PosWebhookPayload, "entityType" | "id" | "action">) {
   const { entityType, id, action } = event;
@@ -48,7 +49,13 @@ export async function processPosEvent(event: Pick<PosWebhookPayload, "entityType
     return syncAdminsFromPos();
   }
 
-  await syncPosCategories();
-  revalidatePosCategories();
-  return { status: "revalidated" as const, entityType, id };
+  // Categoría o subcategoría (id = webId, el aviso no trae el slug): además del árbol se expiran las URLs
+  // que tenía según la última copia (si cambió el slug, la nueva se lee fresca del POS en la próxima visita).
+  const collectionSlugs = collectionSlugsForWebId(getBackupCategoryTree(), id);
+  revalidatePosCategories(collectionSlugs);
+  console.info(
+    `[POS webhook] ${entityType}.${action} ${id}: tag pos-categories expirado` +
+      (collectionSlugs.length ? `; rutas ${collectionSlugs.map((s) => `/collections/${s}`).join(", ")}` : ""),
+  );
+  return { status: "revalidated" as const, entityType, id, collectionSlugs };
 }

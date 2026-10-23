@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { isPosMediaUrl } from "@/lib/image-hosts";
-import { normalizePosSlug, type MappedPosCategory, type MappedPosProduct } from "../domain/pos-mapper";
+import { normalizePosSlug, type MappedPosProduct } from "../domain/pos-mapper";
 
 type Tx = Prisma.TransactionClient;
 
@@ -15,116 +15,11 @@ export class PosSyncConflictError extends Error {
 }
 
 export class PrismaPosSyncRepository {
-  // ── Categorías del POS (espejo local, enlazado por posWebId) ──────────────
-
-  /** Categorías activas de la web enlazadas a esos webIds del POS: webId → id. */
-  async findCategoryIdsByPosWebIds(webIds: string[]): Promise<Map<string, string>> {
-    if (webIds.length === 0) return new Map();
-    const rows = await prisma.category.findMany({
-      where: { posWebId: { in: webIds }, isActive: true },
-      select: { id: true, posWebId: true },
-    });
-    return new Map(rows.map((r) => [r.posWebId as string, r.id]));
-  }
-
-  /**
-   * Crea o actualiza la categoría espejo de una categoría/subcategoría del POS. Se enlaza por posWebId;
-   * si aún no existe y en la web hay una categoría propia con el mismo slug, se adopta (conserva su
-   * contenido). El slug se ajusta si otra categoría ya lo usa.
-   */
-  async upsertPosCategory(category: MappedPosCategory, parentId: string | null): Promise<string> {
-    const linked = await prisma.category.findUnique({ where: { posWebId: category.posWebId } });
-    if (linked) {
-      const slug = linked.slug === category.slug ? linked.slug : await this.freeCategorySlug(category.slug, linked.id);
-      const updated = await prisma.category.update({
-        where: { id: linked.id },
-        data: {
-          name: category.name,
-          slug,
-          description: category.description,
-          image: category.imageUrl ?? linked.image,
-          metaTitle: category.metaTitle,
-          metaDescription: category.metaDescription,
-          order: category.order,
-          parentId,
-          isActive: true,
-        },
-        select: { id: true },
-      });
-      return updated.id;
-    }
-
-    const sameSlug = await prisma.category.findUnique({ where: { slug: category.slug } });
-    if (sameSlug && !sameSlug.posWebId) {
-      const adopted = await prisma.category.update({
-        where: { id: sameSlug.id },
-        data: { posWebId: category.posWebId, isActive: true },
-        select: { id: true },
-      });
-      return adopted.id;
-    }
-
-    const created = await prisma.category.create({
-      data: {
-        posWebId: category.posWebId,
-        name: category.name,
-        slug: await this.freeCategorySlug(category.slug, null),
-        description: category.description,
-        image: category.imageUrl,
-        metaTitle: category.metaTitle,
-        metaDescription: category.metaDescription,
-        order: category.order,
-        parentId,
-        isActive: true,
-      },
-      select: { id: true },
-    });
-    return created.id;
-  }
-
-  /** Oculta las categorías espejo cuyo webId ya no publica el POS. */
-  async deactivatePosCategoriesExcept(webIds: string[]): Promise<number> {
-    const result = await prisma.category.updateMany({
-      where: { posWebId: { not: null, notIn: webIds }, isActive: true },
-      data: { isActive: false },
-    });
-    return result.count;
-  }
-
-  private async freeCategorySlug(base: string, ownId: string | null): Promise<string> {
-    let candidate = base;
-    for (let n = 2; ; n++) {
-      const taken = await prisma.category.findUnique({ where: { slug: candidate }, select: { id: true } });
-      if (!taken || taken.id === ownId) return candidate;
-      candidate = `${base}-${n}`;
-    }
-  }
-
-  // ── Tipos de prenda ────────────────────────────────────────────────────────
-
-  /** Crea los tipos de prenda del POS que la web aún no tiene (no renombra los existentes). */
-  async ensureGarmentTypes(types: { slug: string; name: string; order: number }[]): Promise<void> {
-    for (const type of types) {
-      await prisma.garmentType.upsert({
-        where: { slug: type.slug },
-        update: {},
-        create: { slug: type.slug, name: type.name, order: type.order, isActive: true },
-      });
-    }
-  }
-
-  async findGarmentTypeIdsBySlugs(slugs: string[]): Promise<string[]> {
-    if (slugs.length === 0) return [];
-    const rows = await prisma.garmentType.findMany({ where: { slug: { in: slugs } }, select: { id: true } });
-    return rows.map((r) => r.id);
-  }
-
   // ── Productos ──────────────────────────────────────────────────────────────
 
+  /** Copia de respaldo del producto (sin categorías: esas las publica el POS y no se guardan aquí). */
   async upsertProduct(
     mapped: MappedPosProduct,
-    categoryIds: string[],
-    garmentTypeIds: string[] = [],
   ): Promise<{ productId: string; slug: string; created: boolean }> {
     return prisma.$transaction(async (tx) => {
       // Sin distinguir mayúsculas: antes el POS publicaba el slug en mayúsculas.
@@ -194,26 +89,6 @@ export class PrismaPosSyncRepository {
             },
             select: { id: true, slug: true },
           });
-
-      await tx.productCategory.deleteMany({
-        where: { productId: product.id, categoryId: { notIn: categoryIds } },
-      });
-      if (categoryIds.length > 0) {
-        await tx.productCategory.createMany({
-          data: categoryIds.map((categoryId) => ({ productId: product.id, categoryId })),
-          skipDuplicates: true,
-        });
-      }
-
-      await tx.productGarmentType.deleteMany({
-        where: { productId: product.id, garmentTypeId: { notIn: garmentTypeIds } },
-      });
-      if (garmentTypeIds.length > 0) {
-        await tx.productGarmentType.createMany({
-          data: garmentTypeIds.map((garmentTypeId) => ({ productId: product.id, garmentTypeId })),
-          skipDuplicates: true,
-        });
-      }
 
       await this.syncColorsAndVariants(tx, product.id, mapped);
 

@@ -38,7 +38,6 @@ export function useProductForm() {
   const [basePrice, setBasePrice] = useState("");
   const [comparePrice, setComparePrice] = useState("");
   const [stock, setStock] = useState("");
-  const [categoryIds, setCategoryIds] = useState<string[]>([]);
   const [status, setStatus] = useState("ACTIVE");
   const [isFeatured, setIsFeatured] = useState(false);
   const [isNew, setIsNew] = useState(false);
@@ -55,8 +54,6 @@ export function useProductForm() {
   const [videoUrl, setVideoUrl] = useState("");
   const [coverImageUrl, setCoverImageUrl] = useState("");
 
-  const [garmentTypes, setGarmentTypes] = useState<string[]>([]);
-
   // Subcategorías (conjunto)
   const [isSet, setIsSet] = useState(false);
   const [setItems, setSetItems] = useState<SetItemForm[]>([]);
@@ -68,7 +65,6 @@ export function useProductForm() {
     setBasePrice("");
     setComparePrice("");
     setStock("");
-    setCategoryIds([]);
     setStatus("ACTIVE");
     setIsFeatured(false);
     setIsNew(false);
@@ -82,7 +78,6 @@ export function useProductForm() {
     setSelectedSizes([]);
     setVideoUrl("");
     setCoverImageUrl("");
-    setGarmentTypes([]);
     setIsSet(false);
     setSetItems([]);
     colorImageCache.current = {};
@@ -103,7 +98,6 @@ export function useProductForm() {
     setBasePrice(mapped.basePrice);
     setComparePrice(mapped.comparePrice);
     setStock(mapped.stock);
-    setCategoryIds(mapped.categoryIds);
     setStatus(mapped.status);
     setIsFeatured(mapped.isFeatured);
     setIsNew(mapped.isNew);
@@ -115,7 +109,6 @@ export function useProductForm() {
     setSuggestedAt(mapped.suggestedAt);
     setVideoUrl(mapped.videoUrl);
     setCoverImageUrl(mapped.coverImageUrl || "");
-    setGarmentTypes(mapped.garmentTypes);
     setIsSet(mapped.isSet);
 
     // Parent product colors/sizes always loaded regardless of isSet
@@ -182,7 +175,6 @@ export function useProductForm() {
       basePrice,
       comparePrice,
       stock,
-      categoryIds,
       status,
       isFeatured,
       isNew,
@@ -194,7 +186,6 @@ export function useProductForm() {
       suggestedAt,
       videoUrl,
       coverImageUrl,
-      garmentTypes,
       isSet,
       selectedColors,
       selectedSizes,
@@ -364,7 +355,6 @@ export function useProductForm() {
     basePrice, setBasePrice,
     comparePrice, setComparePrice,
     stock, setStock,
-    categoryIds, setCategoryIds,
     status, setStatus,
     isFeatured, setIsFeatured,
     isNew, setIsNew,
@@ -378,7 +368,6 @@ export function useProductForm() {
     selectedSizes,
     videoUrl, setVideoUrl,
     coverImageUrl, setCoverImageUrl,
-    garmentTypes, setGarmentTypes,
     isSet, setIsSet,
     setItems,
     reset,

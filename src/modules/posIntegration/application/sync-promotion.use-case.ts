@@ -23,8 +23,9 @@ export type PosPromotionSyncResult =
 
 /**
  * Guarda una promoción ya descargada del POS. Código promocional → un cupón PROMOTIONAL `source = POS`.
- * Lote → un cupón BATCH_SINGLE por código, con su estado de uso. Sin canal WEB se retira. El alcance
- * (productos o categorías) se traduce a ids de la web; los que no existan aquí se omiten y se avisa.
+ * Lote → un cupón BATCH_SINGLE por código, con su estado de uso. Sin canal WEB se retira. Alcance por
+ * productos: se traduce a ids de la web (los que no existan aquí se omiten y se avisa). Alcance por
+ * categorías: se guardan los webIds del POS.
  */
 export async function upsertPosPromotion(pos: PosPromotion): Promise<PosPromotionSyncResult> {
   const mapped = mapPosPromotion(pos);
@@ -42,18 +43,12 @@ export async function upsertPosPromotion(pos: PosPromotion): Promise<PosPromotio
   }
 
   const productIds = await repository.findProductIdsByPosSlugs(mapped.scopeProductSlugs);
-  const categoryIds = await repository.findCategoryIdsByPosWebIds(mapped.scopeCategoryWebIds);
   if (productIds.length < mapped.scopeProductSlugs.length) {
     console.warn(
       `[POS promociones] ${mapped.posPromotionId}: ${mapped.scopeProductSlugs.length - productIds.length} producto(s) del alcance no existen en la web`,
     );
   }
-  if (categoryIds.length < mapped.scopeCategoryWebIds.length) {
-    console.warn(
-      `[POS promociones] ${mapped.posPromotionId}: ${mapped.scopeCategoryWebIds.length - categoryIds.length} categoría(s) del alcance no existen en la web`,
-    );
-  }
-  const saved = await repository.upsert(mapped, productIds, categoryIds);
+  const saved = await repository.upsert(mapped, productIds);
   return { ...saved, status: "upserted", posPromotionId: mapped.posPromotionId };
 }
 

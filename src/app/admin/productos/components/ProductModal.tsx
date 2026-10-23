@@ -23,7 +23,6 @@ export default function ProductModal({
   editingId,
   formLoading,
   submitting,
-  categories,
   presetColors,
   onClose,
   onSubmit,
@@ -32,7 +31,6 @@ export default function ProductModal({
   basePrice, setBasePrice,
   comparePrice, setComparePrice,
   stock,
-  categoryIds, setCategoryIds,
   status, setStatus,
   isFeatured, setIsFeatured,
   isNew, setIsNew,
@@ -42,7 +40,6 @@ export default function ProductModal({
   isOnSaleAt, setIsOnSaleAt,
   isSuggested, setIsSuggested,
   suggestedAt, setSuggestedAt,
-  garmentTypes, setGarmentTypes,
   selectedColors,
   selectedSizes,
   videoUrl, setVideoUrl,
@@ -95,7 +92,6 @@ export default function ProductModal({
       basePrice: basePrice || undefined,
       comparePrice: comparePrice || undefined,
       stock: shouldShowStockTable ? "0" : (stock || undefined),
-      categoryIds,
       videoUrl: videoUrl || undefined,
     });
 
@@ -256,12 +252,11 @@ export default function ProductModal({
                 <BlockHeader
                   icon={Info}
                   title="Información General"
-                  subtitle="Nombre, descripción y categoría — aplican para todo el producto"
+                  subtitle="Nombre y descripción — aplican para todo el producto (las categorías se asignan en el POS)"
                 />
                 <GeneralInfoSection
                   name={name} onName={setName}
                   description={description} onDescription={setDescription}
-                  categoryIds={categoryIds} onCategories={setCategoryIds}
                   status={status} onStatus={setStatus}
                   isFeatured={isFeatured} onFeatured={setIsFeatured}
                   isNew={isNew} onNew={setIsNew}
@@ -271,8 +266,6 @@ export default function ProductModal({
                   isOnSaleAt={isOnSaleAt} onOnSaleAt={setIsOnSaleAt}
                   isSuggested={isSuggested} onSuggested={setIsSuggested}
                   suggestedAt={suggestedAt} onSuggestedAt={setSuggestedAt}
-                  garmentTypes={garmentTypes} onGarmentType={setGarmentTypes}
-                  categories={categories}
                   errors={errors}
                   isSet={isSet}
                 />

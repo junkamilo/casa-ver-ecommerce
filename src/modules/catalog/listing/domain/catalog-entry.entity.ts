@@ -1,5 +1,6 @@
 import type { PosProduct } from "@/modules/posIntegration/contracts/pos-catalog.schema";
 import { mapPosProduct } from "@/modules/posIntegration/domain/pos-mapper";
+import type { PosCollection, PosTaxonomy } from "@/modules/posIntegration/domain/pos-category-view";
 import type { RawCollectionProduct } from "@/modules/collections/domain/product-mapper.entity";
 import {
   resolveWebCover,
@@ -30,17 +31,14 @@ export interface CatalogEntry {
   isNew: boolean;
   isSuggested: boolean;
   suggestedAt: Date | null;
-  /** Slugs de las categorías de la web donde aparece (principal y subcategorías). */
+  /** Slugs de las colecciones del POS donde aparece (categorías y subcategorías). */
   categorySlugs: string[];
   garmentTypeSlugs: string[];
   search: Required<SearchRelevanceFields>;
 }
 
-export interface CatalogTaxonomy {
-  /** Categoría de la web por webId del POS (solo activas). */
-  categoryByWebId: Map<string, { slug: string; name: string }>;
-  garmentTypeNameBySlug: Map<string, string>;
-}
+/** Categorías y tipos de prenda de la tienda: los del árbol publicado por el POS. */
+export type CatalogTaxonomy = Pick<PosTaxonomy, "byWebId" | "garmentTypes">;
 
 export type WebSettings = ProductWebOverlay & { isNew: boolean; publishedAt: Date };
 
@@ -57,11 +55,12 @@ export function posToCatalogEntry(
   taxonomy: CatalogTaxonomy,
 ): CatalogEntry {
   const mapped = mapPosProduct(pos);
+  // Solo las colecciones que el POS publica (una categoría oculta no lleva productos a la tienda).
   const categories = mapped.categoryWebIds
-    .map((webId) => taxonomy.categoryByWebId.get(webId))
-    .filter((c): c is { slug: string; name: string } => Boolean(c));
+    .map((webId) => taxonomy.byWebId.get(webId))
+    .filter((c): c is PosCollection => Boolean(c));
   const garmentTypeNames = mapped.garmentTypeSlugs
-    .map((slug) => taxonomy.garmentTypeNameBySlug.get(slug))
+    .map((slug) => taxonomy.garmentTypes.get(slug)?.name)
     .filter((name): name is string => Boolean(name));
 
   return {
@@ -107,7 +106,10 @@ export function posToCatalogEntry(
   };
 }
 
-/** Fila de Neon (producto de la web, o copia de uno del POS si el POS no responde). */
+/**
+ * Fila de Neon (producto de la web, o copia de uno del POS si el POS no responde). No trae categorías
+ * ni tipos de prenda: esos los publica el POS, así que un producto de Neon no aparece en colecciones.
+ */
 export interface NeonCatalogRow extends RawCollectionProduct {
   description: string;
   metaTitle: string | null;
@@ -117,13 +119,10 @@ export interface NeonCatalogRow extends RawCollectionProduct {
   isSuggested: boolean;
   suggestedAt: Date | null;
   createdAt: Date;
-  categories: { category: { slug: string; name: string; isActive: boolean } }[];
-  garmentTypes: { garmentType: { slug: string; name: string } }[];
   items: (RawCollectionProduct["items"][number] & { name: string })[];
 }
 
 export function neonToCatalogEntry(row: NeonCatalogRow): CatalogEntry {
-  const categories = row.categories.map((link) => link.category).filter((c) => c.isActive);
   const { description, metaTitle, metaDescription, isFeatured, isNew, isSuggested, suggestedAt, createdAt } = row;
   const card: RawCollectionProduct = {
     name: row.name,
@@ -148,16 +147,16 @@ export function neonToCatalogEntry(row: NeonCatalogRow): CatalogEntry {
     isNew,
     isSuggested,
     suggestedAt,
-    categorySlugs: [...new Set(categories.map((c) => c.slug))],
-    garmentTypeSlugs: row.garmentTypes.map((link) => link.garmentType.slug.toLowerCase()),
+    categorySlugs: [],
+    garmentTypeSlugs: [],
     search: {
       name: row.name,
       slug: row.slug,
       metaTitle,
       metaDescription,
       description,
-      garmentTypeNames: row.garmentTypes.map((link) => link.garmentType.name),
-      categoryNames: categories.map((c) => c.name),
+      garmentTypeNames: [],
+      categoryNames: [],
       itemNames: row.items.map((item) => item.name),
     },
   };

@@ -1,6 +1,5 @@
 export { BadgePercent } from "./BadgePercent";
 export { BannerIcon } from "./BannerIcon";
-export { CategoryIcon } from "./CategoryIcon";
 export { ChevronLeft } from "./ChevronLeft";
 export { ChevronRight } from "./ChevronRight";
 export { CircleXIcon } from "./CircleXIcon";
@@ -22,7 +21,7 @@ export { ReportsIcon } from "./ReportsIcon";
 export { ReviewsIcon } from "./ReviewsIcon";
 export { SaveIcon } from "./SaveIcon";
 export { SearchIcon } from "./SearchIcon";
-export { ShirtIcon, StackedShirtIcon } from "./ShirtIcon";
+export { ShirtIcon } from "./ShirtIcon";
 export { ShoppingCart } from "./ShoppingCart";
 export { SparklesIcon } from "./SparklesIcon";
 export { StoreIcon } from "./StoreIcon";

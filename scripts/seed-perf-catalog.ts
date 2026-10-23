@@ -1,7 +1,8 @@
 /**
  * Seed de catálogo para benchmarks de /tienda (Fase 0).
  *
- * Genera 500 productos ACTIVE con prefijo slug `seed-perf-` (idempotente).
+ * Genera 500 productos ACTIVE con prefijo slug `seed-perf-` (idempotente). Sin categorías ni tipos de
+ * prenda: esos los publica el POS y la web no los guarda.
  *
  * Uso:
  *   CONFIRM_SEED_PERF=1 npx tsx scripts/seed-perf-catalog.ts
@@ -96,60 +97,6 @@ async function cleanupSeedProducts() {
     where: { slug: { startsWith: SLUG_PREFIX } },
   });
   console.log(`Cleanup productos: ${deleted.count} eliminados (slug ${SLUG_PREFIX}*).`);
-
-  await prisma.category.deleteMany({
-    where: { slug: { startsWith: SLUG_PREFIX } },
-  });
-  await prisma.garmentType.deleteMany({
-    where: { slug: { startsWith: SLUG_PREFIX } },
-  });
-  console.log("Cleanup categorías y tipos de prenda seed-perf-* listo.");
-}
-
-async function ensureTaxonomy() {
-  const garmentTypes = await Promise.all(
-    [
-      { name: "Pantalón Perf", slug: `${SLUG_PREFIX}pantalon`, order: 1 },
-      { name: "Blusa Perf", slug: `${SLUG_PREFIX}blusa`, order: 2 },
-      { name: "Vestido Perf", slug: `${SLUG_PREFIX}vestido`, order: 3 },
-    ].map((gt) =>
-      prisma.garmentType.upsert({
-        where: { slug: gt.slug },
-        update: { name: gt.name, isActive: true, order: gt.order },
-        create: { ...gt, isActive: true },
-      }),
-    ),
-  );
-
-  const categories = await Promise.all(
-    [
-      { name: "Colección Perf A", slug: `${SLUG_PREFIX}cat-a`, order: 1 },
-      { name: "Colección Perf B", slug: `${SLUG_PREFIX}cat-b`, order: 2 },
-    ].map((cat) =>
-      prisma.category.upsert({
-        where: { slug: cat.slug },
-        update: { name: cat.name, isActive: true, order: cat.order },
-        create: { ...cat, isActive: true },
-      }),
-    ),
-  );
-
-  for (const cat of categories) {
-    for (const gt of garmentTypes) {
-      await prisma.categoryGarmentType.upsert({
-        where: {
-          categoryId_garmentTypeId: {
-            categoryId: cat.id,
-            garmentTypeId: gt.id,
-          },
-        },
-        update: {},
-        create: { categoryId: cat.id, garmentTypeId: gt.id },
-      });
-    }
-  }
-
-  return { categories, garmentTypes };
 }
 
 function pickColors(index: number) {
@@ -161,11 +108,7 @@ function imageFor(i: number, j: number) {
   return IMAGE_URLS[(i + j) % IMAGE_URLS.length];
 }
 
-async function createSimpleProductSafe(
-  index: number,
-  categoryId: string,
-  garmentTypeId: string,
-) {
+async function createSimpleProductSafe(index: number) {
   const slug = `${SLUG_PREFIX}simple-${String(index).padStart(4, "0")}`;
   const colors = pickColors(index);
   const cover = imageFor(index, 0);
@@ -181,8 +124,6 @@ async function createSimpleProductSafe(
       status: "ACTIVE",
       isSet: false,
       coverImageUrl: cover,
-      categories: { create: [{ categoryId }] },
-      garmentTypes: { create: [{ garmentTypeId }] },
       images: {
         create: [
           { url: cover, order: 0, isCover: true },
@@ -222,11 +163,7 @@ async function createSimpleProductSafe(
   }
 }
 
-async function createSetProductSafe(
-  index: number,
-  categoryId: string,
-  garmentTypeId: string,
-) {
+async function createSetProductSafe(index: number) {
   const slug = `${SLUG_PREFIX}set-${String(index).padStart(4, "0")}`;
   const cover = imageFor(index, 0);
 
@@ -239,8 +176,6 @@ async function createSetProductSafe(
       status: "ACTIVE",
       isSet: true,
       coverImageUrl: cover,
-      categories: { create: [{ categoryId }] },
-      garmentTypes: { create: [{ garmentTypeId }] },
       images: {
         create: [{ url: cover, order: 0, isCover: true }],
       },
@@ -287,10 +222,7 @@ async function createSetProductSafe(
   }
 }
 
-async function seedProducts(
-  categoryIds: string[],
-  garmentTypeIds: string[],
-) {
+async function seedProducts() {
   const setCount = Math.round(TOTAL_PRODUCTS * SET_RATIO);
   const simpleCount = TOTAL_PRODUCTS - setCount;
 
@@ -302,13 +234,7 @@ async function seedProducts(
     const end = Math.min(start + BATCH_SIZE, simpleCount);
     const batch = [];
     for (let i = start; i < end; i++) {
-      batch.push(
-        createSimpleProductSafe(
-          i,
-          categoryIds[i % categoryIds.length],
-          garmentTypeIds[i % garmentTypeIds.length],
-        ),
-      );
+      batch.push(createSimpleProductSafe(i));
     }
     await Promise.all(batch);
     console.log(`  simples ${end}/${simpleCount}`);
@@ -319,13 +245,7 @@ async function seedProducts(
     const batch = [];
     for (let i = start; i < end; i++) {
       const idx = simpleCount + i;
-      batch.push(
-        createSetProductSafe(
-          idx,
-          categoryIds[idx % categoryIds.length],
-          garmentTypeIds[idx % garmentTypeIds.length],
-        ),
-      );
+      batch.push(createSetProductSafe(idx));
     }
     await Promise.all(batch);
     console.log(`  sets ${end}/${setCount}`);
@@ -344,11 +264,7 @@ async function main() {
   console.log("Cleanup previo (idempotente)...");
   await cleanupSeedProducts();
 
-  const { categories, garmentTypes } = await ensureTaxonomy();
-  await seedProducts(
-    categories.map((c) => c.id),
-    garmentTypes.map((g) => g.id),
-  );
+  await seedProducts();
 
   const count = await prisma.product.count({
     where: { slug: { startsWith: SLUG_PREFIX }, status: "ACTIVE" },

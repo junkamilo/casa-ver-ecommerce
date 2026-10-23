@@ -1,4 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { getCatalog } from "@/modules/catalog/listing/application/get-catalog";
+import { parsePosLineId } from "@/modules/posIntegration/domain/pos-mapper";
+import { getPosCategoriesBySlug } from "@/modules/posIntegration/application/get-pos-product-categories.use-case";
 import type {
   CancellationData,
   CategorySale,
@@ -140,58 +143,42 @@ export async function getCategorySalesByPeriod(period: Period): Promise<Category
   const [currentItems, prevItems] = await Promise.all([
     prisma.orderItem.findMany({
       where: buildRevenueOrderItemWhere(start, end),
-      select: { total: true, productId: true, quantity: true, orderId: true, name: true },
+      select: { total: true, productId: true, variantId: true, quantity: true, orderId: true, name: true },
     }),
     prisma.orderItem.findMany({
       where: buildRevenueOrderItemWhere(prevStart, prevEnd),
-      select: { total: true, productId: true },
+      select: { total: true, productId: true, variantId: true },
     }),
   ]);
   if (currentItems.length === 0) return [];
   const totalRevenue = currentItems.reduce((sum, i) => sum + Number(i.total), 0);
   if (totalRevenue === 0) return [];
-  const allProductIds = [...new Set([...currentItems.map((i) => i.productId), ...prevItems.map((i) => i.productId)])];
-  // productId de los ítems: slug (o id de Neon en pedidos anteriores a la migración).
-  const products = await prisma.product.findMany({
-    where: { OR: [{ id: { in: allProductIds } }, { slug: { in: allProductIds } }] },
-    select: {
-      id: true,
-      slug: true,
-      categories: {
-        select: {
-          category: { select: { id: true, name: true } },
-        },
-      },
-    },
-  });
-  const productCatMap = new Map(
-    products.flatMap((p) => {
-      const categories = p.categories.map((link) => ({ id: link.category.id, name: link.category.name }));
-      return [
-        [p.id, categories],
-        [p.slug, categories],
-      ] as const;
-    })
-  );
-  const categoryIds = [
-    ...new Set(
-      currentItems.flatMap((item) =>
-        (productCatMap.get(item.productId) ?? []).map((category) => category.id)
-      )
+
+  // Categorías principales del POS de cada ítem (los productos creados en la web no tienen categoría:
+  // la web ya no guarda categorías). Clave = slug del POS del ítem.
+  const posSlugOf = (variantId: string) => parsePosLineId(variantId)?.slug ?? null;
+  const [collectionsBySlug, catalog] = await Promise.all([
+    getPosCategoriesBySlug(
+      [...currentItems, ...prevItems]
+        .map((item) => posSlugOf(item.variantId))
+        .filter((slug): slug is string => Boolean(slug)),
     ),
-  ];
-  const activeCountsRaw = await prisma.productCategory.groupBy({
-    by: ["categoryId"],
-    where: {
-      categoryId: { in: categoryIds },
-      product: { status: "ACTIVE" },
-    },
-    _count: { productId: true },
-  });
-  const activeMap = new Map(activeCountsRaw.map((r) => [r.categoryId, r._count.productId]));
+    getCatalog(),
+  ]);
+  const categoriesOf = (variantId: string): { id: string; name: string }[] => {
+    const slug = posSlugOf(variantId);
+    return (slug ? collectionsBySlug.get(slug) ?? [] : [])
+      .filter((c) => c.kind === "category")
+      .map((c) => ({ id: c.slug, name: c.name }));
+  };
+  // Productos visibles hoy en cada categoría (por slug de la colección).
+  const activeMap = new Map<string, number>();
+  for (const entry of catalog) {
+    for (const slug of entry.categorySlugs) activeMap.set(slug, (activeMap.get(slug) ?? 0) + 1);
+  }
   const prevRevMap = new Map<string, number>();
   for (const item of prevItems) {
-    for (const cat of productCatMap.get(item.productId) ?? []) {
+    for (const cat of categoriesOf(item.variantId)) {
       prevRevMap.set(cat.id, (prevRevMap.get(cat.id) ?? 0) + Number(item.total));
     }
   }
@@ -199,7 +186,7 @@ export async function getCategorySalesByPeriod(period: Period): Promise<Category
   type CatAgg = { name: string; revenue: number; units: number; orderIds: Set<string>; productUnits: Map<string, { name: string; units: number }> };
   const catMap = new Map<string, CatAgg>();
   for (const item of currentItems) {
-    const productCategories = productCatMap.get(item.productId) ?? [];
+    const productCategories = categoriesOf(item.variantId);
     if (productCategories.length === 0) continue;
     for (const cat of productCategories) {
       const entry: CatAgg = catMap.get(cat.id) ?? { name: cat.name, revenue: 0, units: 0, orderIds: new Set(), productUnits: new Map() };

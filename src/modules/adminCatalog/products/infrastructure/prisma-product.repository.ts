@@ -27,11 +27,6 @@ export class PrismaProductRepository {
       take: query.limit,
       skip,
       include: {
-        categories: {
-          include: {
-            category: { select: { id: true, name: true } },
-          },
-        },
         images: { where: { colorId: null }, orderBy: [{ isCover: "desc" }, { order: "asc" }], take: 1, select: { url: true } },
         colors: { take: 1, include: { images: { orderBy: [{ isCover: "desc" }, { order: "asc" }], take: 1, select: { url: true } } } },
         variants: { select: { stock: true } },
@@ -94,9 +89,9 @@ export class PrismaProductRepository {
           id: p.id,
           name: p.name,
           description: p.description,
-          categories: (p.categories ?? []).map(
-            (relation: { category: { id: string; name: string } }) => relation.category
-          ),
+          // Las categorías las publica el POS: el caso de uso las agrega (vacías en productos de la web).
+          categories: [],
+          posSlug: p.posSlug ?? null,
           images: coverImg
             ? [{ url: coverImg }]
             : generalImg
@@ -133,55 +128,9 @@ export class PrismaProductRepository {
     };
   }
 
-  async findCategoriesByIds(
-    categoryIds: string[]
-  ): Promise<Array<{ id: string; isActive: boolean; name: string }>> {
-    if (categoryIds.length === 0) return [];
-    return this.db.category.findMany({
-      where: { id: { in: categoryIds } },
-      select: { id: true, isActive: true, name: true },
-    });
-  }
-
-  async findCategoryById(categoryId: string) {
-    return this.db.category.findUnique({
-      where: { id: categoryId },
-      select: { id: true, isActive: true, name: true },
-    });
-  }
-
-  async countValidGarmentTypesForCategories(
-    garmentTypeIds: string[],
-    categoryIds: string[]
-  ): Promise<number> {
-    const rows = await this.db.garmentType.findMany({
-      where: {
-        id: { in: garmentTypeIds },
-        isActive: true,
-        categories: { some: { categoryId: { in: categoryIds } } },
-      },
-      select: { id: true },
-    });
-    return rows.length;
-  }
-
-  async countValidGarmentTypesForCategory(garmentTypeIds: string[], categoryId: string): Promise<number> {
-    const rows = await this.db.garmentType.findMany({
-      where: {
-        id: { in: garmentTypeIds },
-        isActive: true,
-        categories: { some: { categoryId } },
-      },
-      select: { id: true },
-    });
-    return rows.length;
-  }
-
   async createProductWithRelations(input: {
     dto: ProductCreateInputDTO;
     slug: string;
-    resolvedCategoryIds: string[];
-    resolvedGarmentTypeIds: string[];
     resolvedProductNewAt: Date | null;
     resolvedOnSaleAt: Date | null;
     resolvedSuggestedAt: Date | null;
@@ -189,8 +138,6 @@ export class PrismaProductRepository {
     const {
       dto,
       slug,
-      resolvedCategoryIds,
-      resolvedGarmentTypeIds,
       resolvedProductNewAt,
       resolvedOnSaleAt,
       resolvedSuggestedAt,
@@ -217,14 +164,6 @@ export class PrismaProductRepository {
           suggestedAt: resolvedSuggestedAt,
           videoUrl: dto.videoUrl || null,
           coverImageUrl: resolveCoverImageUrl(dto.coverImageUrl, (dto.colors as ColorInput[]) || []),
-          categories: {
-            create: resolvedCategoryIds.map((categoryId) => ({ categoryId })),
-          },
-          garmentTypes: resolvedGarmentTypeIds.length
-            ? {
-                create: resolvedGarmentTypeIds.map((garmentTypeId) => ({ garmentTypeId })),
-              }
-            : undefined,
           isSet: dto.isSet || false,
           metaTitle: dto.name.trim().slice(0, 60),
           metaDescription: dto.description
@@ -272,8 +211,6 @@ export class PrismaProductRepository {
   async updateProductWithRelations(input: {
     id: string;
     dto: ProductCreateInputDTO;
-    resolvedCategoryIds: string[];
-    resolvedGarmentTypeIds: string[];
     resolvedProductNewAt: Date | null;
     resolvedOnSaleAt: Date | null;
     resolvedSuggestedAt: Date | null;
@@ -281,8 +218,6 @@ export class PrismaProductRepository {
     const {
       id,
       dto,
-      resolvedCategoryIds,
-      resolvedGarmentTypeIds,
       resolvedProductNewAt,
       resolvedOnSaleAt,
       resolvedSuggestedAt,
@@ -343,14 +278,6 @@ export class PrismaProductRepository {
           suggestedAt: resolvedSuggestedAt,
           videoUrl: dto.videoUrl !== undefined ? (dto.videoUrl || null) : undefined,
           coverImageUrl: resolveCoverImageUrl(dto.coverImageUrl, (dto.colors as ColorInput[]) || []),
-          categories: {
-            deleteMany: {},
-            create: resolvedCategoryIds.map((categoryId) => ({ categoryId })),
-          },
-          garmentTypes: {
-            deleteMany: {},
-            create: resolvedGarmentTypeIds.map((garmentTypeId) => ({ garmentTypeId })),
-          },
           isSet: dto.isSet ?? false,
           metaTitle: dto.name.trim().slice(0, 60),
           metaDescription: dto.description
@@ -432,21 +359,18 @@ export class PrismaProductRepository {
 
   async findPosManagedContext(id: string): Promise<{
     slug: string;
-    categoryIds: string[];
     imageUrls: string[];
   } | null> {
     const product = await this.db.product.findUnique({
       where: { id },
       select: {
         slug: true,
-        categories: { select: { categoryId: true } },
         images: { select: { url: true } },
       },
     });
     if (!product) return null;
     return {
       slug: product.slug,
-      categoryIds: product.categories.map((c: { categoryId: string }) => c.categoryId),
       imageUrls: product.images.map((img: { url: string }) => img.url),
     };
   }
@@ -466,24 +390,9 @@ export class PrismaProductRepository {
       coverImageUrl?: string | null;
       metaTitle?: string | null;
       metaDescription?: string | null;
-      garmentTypeIds?: string[];
     }
   ) {
-    const { garmentTypeIds, ...fields } = data;
-    return this.db.product.update({
-      where: { id },
-      data: {
-        ...fields,
-        ...(garmentTypeIds
-          ? {
-              garmentTypes: {
-                deleteMany: {},
-                create: garmentTypeIds.map((garmentTypeId) => ({ garmentTypeId })),
-              },
-            }
-          : {}),
-      },
-    });
+    return this.db.product.update({ where: { id }, data });
   }
 
   async findVariantById(variantId: string) {
@@ -505,18 +414,8 @@ export class PrismaProductRepository {
     const product = await this.db.product.findUnique({
       where: { id },
       include: {
-        categories: {
-          include: {
-            category: { select: { id: true, name: true } },
-          },
-        },
         images: { orderBy: { order: "asc" } },
         colors: { include: { images: { orderBy: { order: "asc" } }, variants: true } },
-        garmentTypes: {
-          include: {
-            garmentType: { select: { id: true, name: true } },
-          },
-        },
         items: {
           orderBy: { order: "asc" },
           include: {
@@ -544,14 +443,12 @@ export class PrismaProductRepository {
       name: product.name,
       slug: product.slug,
       posManaged: Boolean(product.posSlug),
+      posSlug: product.posSlug ?? null,
       posSyncedAt: product.posSyncedAt ?? null,
       description: product.description,
       basePrice: Number(product.basePrice),
       comparePrice: product.comparePrice ? Number(product.comparePrice) : null,
       stock: totalStock,
-      categoryIds: product.categories.map(
-        (relation: { category: { id: string } }) => relation.category.id
-      ),
       status: product.status,
       isFeatured: product.isFeatured,
       isNew: product.isNew,
@@ -566,7 +463,6 @@ export class PrismaProductRepository {
       metaDescription: product.metaDescription,
       videoUrl: product.videoUrl,
       coverImageUrl: product.coverImageUrl ?? null,
-      garmentTypes: product.garmentTypes.map((relation: { garmentType: { id: string } }) => relation.garmentType.id),
       generalImages: product.images
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .filter((img: any) => !img.colorId)

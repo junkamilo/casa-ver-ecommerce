@@ -1,16 +1,13 @@
 import type { AdminProductListItemDTO } from "@/modules/adminCatalog/products/contracts/product-list.dto";
-import type { GarmentTypeDTO } from "@/modules/adminCatalog/categories/contracts/category.dto";
 
 // ── Domain Types ─────────────────────────────────────────────────────────────
 
 export type ProductListItem = AdminProductListItemDTO;
 
-export type GarmentTypeOption = GarmentTypeDTO;
-
+/** Categoría del POS (solo para filtrar el listado): las categorías se crean y asignan en el POS. */
 export interface Category {
   id: string;
   name: string;
-  garmentTypes: GarmentTypeOption[];
 }
 
 export interface SelectedColor {
@@ -41,7 +38,7 @@ export type ToastState = { type: "success" | "error"; message: string } | null;
 
 export type ProductFormErrors = Partial<
   Record<
-    "name" | "description" | "basePrice" | "comparePrice" | "stock" | "categoryIds" | "videoUrl" | "coverImageUrl",
+    "name" | "description" | "basePrice" | "comparePrice" | "stock" | "videoUrl" | "coverImageUrl",
     string
   >
 >;
@@ -70,7 +67,6 @@ export interface ProductModalProps {
   editingId: string | null;
   formLoading: boolean;
   submitting: boolean;
-  categories: Category[];
   presetColors: PresetColor[];
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -79,7 +75,6 @@ export interface ProductModalProps {
   basePrice: string; setBasePrice: (v: string) => void;
   comparePrice: string; setComparePrice: (v: string) => void;
   stock: string; setStock: (v: string) => void;
-  categoryIds: string[]; setCategoryIds: (v: string[]) => void;
   status: string; setStatus: (v: string) => void;
   isFeatured: boolean; setIsFeatured: (v: boolean) => void;
   isNew: boolean; setIsNew: (v: boolean) => void;
@@ -97,7 +92,6 @@ export interface ProductModalProps {
   toggleSize: (size: string) => void;
   setColorImages: (colorName: string, images: string[]) => void;
   updateVariantStock: (colorName: string, size: string, stock: number) => void;
-  garmentTypes: string[]; setGarmentTypes: (v: string[]) => void;
   isSet: boolean; setIsSet: (v: boolean) => void;
   setItems: SetItemForm[];
   addSetItem: () => void;
@@ -152,7 +146,6 @@ export interface LabelToggleProps {
 export interface GeneralInfoSectionProps {
   name: string; onName: (v: string) => void;
   description: string; onDescription: (v: string) => void;
-  categoryIds: string[]; onCategories: (v: string[]) => void;
   status: string; onStatus: (v: string) => void;
   isFeatured: boolean; onFeatured: (v: boolean) => void;
   isNew: boolean; onNew: (v: boolean) => void;
@@ -162,8 +155,6 @@ export interface GeneralInfoSectionProps {
   isOnSaleAt: string | null; onOnSaleAt: (v: string | null) => void;
   isSuggested: boolean; onSuggested: (v: boolean) => void;
   suggestedAt: string | null; onSuggestedAt: (v: string | null) => void;
-  garmentTypes: string[]; onGarmentType: (v: string[]) => void;
-  categories: Category[];
   errors?: ProductFormErrors;
   isSet?: boolean;
 }

@@ -1,4 +1,4 @@
-import { BadgePercent, BannerIcon, CategoryIcon, ColorIcon, ConfigIcon, DashboardIcon, InventoryIcon, MapIcon, OrdersIcon, PerfilIcon, ReportsIcon, ReviewsIcon, StackedShirtIcon, TruckIcon } from "@/components/icons";
+import { BadgePercent, BannerIcon, ColorIcon, ConfigIcon, DashboardIcon, InventoryIcon, MapIcon, OrdersIcon, PerfilIcon, ReportsIcon, ReviewsIcon, TruckIcon } from "@/components/icons";
 import {
   Package,
   ClipboardList,
@@ -11,8 +11,6 @@ import type { NavItem, AdminNavItem } from "../types";
 export const ADMIN_NAV: AdminNavItem[] = [
   { label: "Dashboard",  href: "/admin",                  icon: DashboardIcon },
   { label: "Inventario", href: "/admin/productos",         icon: InventoryIcon },
-  { label: "Categorías",      href: "/admin/categorias",        icon: CategoryIcon },
-  { label: "Tipos de Prenda", href: "/admin/tipos-de-prenda",  icon: StackedShirtIcon },
   { label: "Colores",         href: "/admin/colores",           icon: ColorIcon },
   { label: "Promociones",     href: "/admin/promociones",       icon: BadgePercent },
   { label: "Pedidos",    href: "/admin/pedidos",           icon: OrdersIcon },

@@ -53,24 +53,9 @@ async function buildPayload(orderId) {
   });
   if (!order) return null;
 
-  const productIds = [...new Set(order.items.map((i) => i.productId))];
-  const categoryLinks =
-    productIds.length > 0
-      ? await prisma.productCategory.findMany({
-          where: { productId: { in: productIds } },
-          select: {
-            productId: true,
-            category: { select: { name: true } },
-          },
-        })
-      : [];
-
+  // Las categorías viven en el POS (la web ya no las guarda): el backfill las deja vacías; los
+  // pedidos nuevos las toman del POS al exportarse (build-accounting-sale-payload.ts).
   const categoriesByProduct = new Map();
-  for (const link of categoryLinks) {
-    const list = categoriesByProduct.get(link.productId) ?? [];
-    list.push(link.category.name);
-    categoriesByProduct.set(link.productId, list);
-  }
 
   return {
     order: {

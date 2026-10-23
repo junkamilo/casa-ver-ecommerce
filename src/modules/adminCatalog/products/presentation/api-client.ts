@@ -100,7 +100,6 @@ export type PosManagedProductPayload = {
   coverImageUrl: string | null;
   metaTitle: string | null;
   metaDescription: string | null;
-  garmentTypes: string[];
 };
 
 /** Productos sincronizados desde el POS: solo campos propios de la web. */
@@ -140,11 +139,6 @@ export async function updateVariantStock(productId: string, variantId: string, s
   });
 
   return (await assertOk(response)) as ProductVariantStockDTO;
-}
-
-export async function fetchAdminCategories() {
-  const response = await fetch("/api/admin/categories");
-  return assertOk(response);
 }
 
 export async function fetchActivePresetColors() {

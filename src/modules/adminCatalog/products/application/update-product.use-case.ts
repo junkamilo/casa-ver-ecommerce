@@ -2,8 +2,6 @@ import type { ProductCreateInputDTO } from "../contracts/product-create.dto";
 import { PrismaProductRepository } from "../infrastructure/prisma-product.repository";
 import { ProductNotFoundError, ProductValidationError } from "./product.errors";
 import {
-  parseCategoryIds,
-  parseGarmentTypeIds,
   parseSafeDate,
   validateProductCreateBody,
 } from "./create-product.validation";
@@ -47,29 +45,6 @@ export async function updateProductUseCase(input: { id: string; body: unknown })
   }
 
   const dto = payload as ProductCreateInputDTO;
-  const resolvedCategoryIds = parseCategoryIds(payload);
-  const categories = await productRepository.findCategoriesByIds(resolvedCategoryIds);
-  if (categories.length !== resolvedCategoryIds.length) {
-    throw new ProductValidationError("Una o más categorías seleccionadas no existen");
-  }
-  const inactive = categories.find((category) => !category.isActive);
-  if (inactive) {
-    throw new ProductValidationError(`La categoría "${inactive.name}" está inactiva`);
-  }
-
-  const resolvedGarmentTypeIds = parseGarmentTypeIds(payload);
-  if (resolvedGarmentTypeIds.length > 0) {
-    const validCount = await productRepository.countValidGarmentTypesForCategories(
-      resolvedGarmentTypeIds,
-      resolvedCategoryIds
-    );
-    if (validCount !== resolvedGarmentTypeIds.length) {
-      throw new ProductValidationError(
-        "Uno o más tipos de prenda no existen, están inactivos o no pertenecen a las categorías seleccionadas"
-      );
-    }
-  }
-
   const resolvedProductNewAt = dto.isProductNew
     ? (parseSafeDate(dto.isProductNewAt) ?? new Date())
     : null;
@@ -84,8 +59,6 @@ export async function updateProductUseCase(input: { id: string; body: unknown })
   const { product, previousAssetUrls } = await productRepository.updateProductWithRelations({
     id,
     dto,
-    resolvedCategoryIds,
-    resolvedGarmentTypeIds,
     resolvedProductNewAt,
     resolvedOnSaleAt,
     resolvedSuggestedAt,

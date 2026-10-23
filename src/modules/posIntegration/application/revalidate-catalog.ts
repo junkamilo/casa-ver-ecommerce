@@ -14,11 +14,16 @@ export function revalidateCatalogPages(input: { productSlugs?: string[]; categor
   }
 }
 
-/** Expira la caché de `/api/pos-categories` y del header para que la próxima visita consulte al POS. */
-export function revalidatePosCategories() {
+/**
+ * Expira la caché de `/api/pos-categories` y del header para que la próxima visita consulte al POS, y
+ * además las páginas `/collections/<slug>` indicadas (las de la colección que cambió). Sin slugs, la
+ * expiración del tag y de `/collections` cubre igual todo el árbol.
+ */
+export function revalidatePosCategories(collectionSlugs: string[] = []) {
   try {
     revalidateTag(POS_CATEGORIES_CACHE_TAG, { expire: 0 });
     revalidatePath("/collections");
+    for (const slug of new Set(collectionSlugs)) revalidatePath(`/collections/${slug}`);
   } catch (error) {
     console.warn("[POS sync] No se pudo revalidar categorías:", error instanceof Error ? error.message : error);
   }

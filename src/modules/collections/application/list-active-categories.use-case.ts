@@ -1,18 +1,9 @@
-import { PrismaCollectionRepository } from "../infrastructure/prisma-collection.repository";
+import { PosCollectionRepository } from "../infrastructure/pos-collection.repository";
 import type { CategoryListItemDTO } from "../contracts/collection-product.dto";
 
-const repository = new PrismaCollectionRepository();
+const repository = new PosCollectionRepository();
 
-export interface ListActiveCategoriesOptions {
-  /**
-   * Si es true, solo devuelve categorías raíz (parentId === null).
-   * Usado por la página `/collections` que lista la primera capa.
-   */
-  rootOnly?: boolean;
-}
-
-export async function listActiveCategoriesUseCase(
-  options?: ListActiveCategoriesOptions,
-): Promise<CategoryListItemDTO[]> {
-  return repository.listActiveCategories({ rootOnly: options?.rootOnly });
+/** Categorías principales publicadas por el POS (página `/collections` y carrusel del home). */
+export async function listActiveCategoriesUseCase(): Promise<CategoryListItemDTO[]> {
+  return repository.listRootCategories();
 }

@@ -1,57 +1,11 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getPosCategoryTree } from "@/modules/posIntegration/application/get-pos-categories.use-case";
+import { toPosNavCategories } from "@/modules/posIntegration/domain/pos-category-view";
+import { NAV_CATEGORIES_CACHE_CONTROL } from "./cache-control";
 
-// Payload mínimo para el polling del header — no cachear
-export const dynamic = "force-dynamic";
-
+// Árbol del menú del header (polling): sale del POS, cacheado por tag y purgado por su webhook.
+// Caché perimetral corta (ver ./cache-control.ts); el menú cambia poco.
 export async function GET() {
-  try {
-    const categories = await prisma.category.findMany({
-      // Las categorías del POS (posWebId) llegan por /api/pos-categories: no se duplican.
-      where: { isActive: true, parentId: null, posWebId: null },
-      orderBy: { order: "asc" },
-      include: {
-        subcategories: {
-          where: { isActive: true },
-          orderBy: { name: "asc" },
-          select: { id: true, name: true, slug: true },
-        },
-        products: {
-          where: { product: { status: "ACTIVE" } },
-          orderBy: { product: { name: "asc" } },
-          select: {
-            product: { select: { id: true, name: true, slug: true } },
-          },
-          take: 20,
-        },
-        garmentTypes: {
-          orderBy: { garmentType: { order: "asc" } },
-          include: { garmentType: { select: { id: true, name: true, slug: true, isActive: true } } },
-        },
-      },
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const payload = (categories as any[]).map((cat) => ({
-      id: cat.id,
-      name: cat.name,
-      slug: cat.slug,
-      subcategories: cat.subcategories,
-      products: (cat.products ?? []).map(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (link: any) => link.product
-      ),
-      garmentTypes: (cat.garmentTypes ?? [])
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .filter((cgt: any) => cgt.garmentType?.isActive)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .map((cgt: any) => ({ id: cgt.garmentType.id, name: cgt.garmentType.name, slug: cgt.garmentType.slug })),
-    }));
-
-    return NextResponse.json(payload, {
-      headers: { "Cache-Control": "no-store" },
-    });
-  } catch {
-    return NextResponse.json([], { status: 500 });
-  }
+  const tree = await getPosCategoryTree();
+  return NextResponse.json(toPosNavCategories(tree), { headers: { "Cache-Control": NAV_CATEGORIES_CACHE_CONTROL } });
 }

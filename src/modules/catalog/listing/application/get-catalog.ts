@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { isPosCatalogConfigured } from "@/modules/posIntegration/infrastructure/pos-config";
 import { fetchCatalogForRender } from "@/modules/posIntegration/infrastructure/pos-catalog.read";
+import { getPosTaxonomy } from "@/modules/posIntegration/application/get-pos-taxonomy.use-case";
 import { normalizePosSlug } from "@/modules/posIntegration/domain/pos-mapper";
 import { PrismaProductWebSettingsRepository } from "@/modules/catalog/product/infrastructure/prisma-product-web-settings.repository";
 import { PrismaCatalogListingRepository } from "../infrastructure/prisma-catalog-listing.repository";
@@ -20,7 +21,8 @@ async function catalogFromNeon(): Promise<CatalogEntry[]> {
 
 /**
  * Catálogo visible de la tienda, más nuevo primero (ARQUITECTURA-DEFINITIVA-WEB.md, Fase 3):
- *   - Productos del POS: API del POS (Data Cache, tag `pos-products`) + capa web (`product_web_settings`).
+ *   - Productos del POS: API del POS (Data Cache, tag `pos-products`) + capa web (`product_web_settings`),
+ *     ubicados en las categorías/subcategorías que publica el POS (tag `pos-categories`).
  *   - Productos creados en la web: Neon.
  *   - Si el POS no responde: la copia de Neon de todo el catálogo, para no dejar la tienda vacía.
  * Memoizado por request: los bloques de una misma página comparten la lectura.
@@ -33,7 +35,7 @@ export const getCatalog = cache(async (): Promise<CatalogEntry[]> => {
       fetchCatalogForRender(),
       webSettings.findAll(),
       repository.findActiveProducts(true),
-      repository.findTaxonomy(),
+      getPosTaxonomy(),
     ]);
     const entries = [
       ...posProducts.map((pos) => posToCatalogEntry(pos, settings.get(normalizePosSlug(pos.slug)) ?? null, taxonomy)),

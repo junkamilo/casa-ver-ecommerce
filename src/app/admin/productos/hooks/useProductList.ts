@@ -1,19 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { ProductListItem, Category, PresetColor } from "../types";
 import {
   AdminProductsApiError,
   deleteAdminProduct,
   fetchActivePresetColors,
-  fetchAdminCategories,
   fetchAdminProducts,
   toggleAdminProduct,
 } from "@/modules/adminCatalog/products/presentation/api-client";
 import {
-  AdminCategoryDTO,
   AdminColorDTO,
-  mapAdminCategoriesToUi,
   mapAdminProductsResponseToUi,
   mapPresetColorsToUi,
 } from "@/modules/adminCatalog/products/presentation/mappers";
@@ -22,7 +19,6 @@ import { DEFAULT_ADMIN_PAGE_SIZE } from "@/components/ui/AdminPagination";
 export function useProductList() {
   const [products, setProducts] = useState<ProductListItem[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<ProductListItem[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [presetColors, setPresetColors] = useState<PresetColor[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -70,15 +66,6 @@ export function useProductList() {
     }
   }, []);
 
-  const fetchCategories = useCallback(async () => {
-    try {
-      const response = await fetchAdminCategories();
-      setCategories(mapAdminCategoriesToUi(response as AdminCategoryDTO[]));
-    } catch {
-      console.error("Error al cargar categorías");
-    }
-  }, []);
-
   const fetchPresetColors = useCallback(async () => {
     try {
       const response = await fetchActivePresetColors();
@@ -90,9 +77,15 @@ export function useProductList() {
 
   useEffect(() => {
     fetchProducts();
-    fetchCategories();
     fetchPresetColors();
-  }, [fetchProducts, fetchCategories, fetchPresetColors]);
+  }, [fetchProducts, fetchPresetColors]);
+
+  // Filtro por categoría: las del POS que tienen los productos listados (la web no guarda categorías).
+  const categories = useMemo<Category[]>(() => {
+    const byName = new Map<string, Category>();
+    for (const product of products) for (const c of product.categories) byName.set(c.name, c);
+    return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name, "es"));
+  }, [products]);
 
   // Resetea a página 1 solo cuando el usuario cambia filtros, no cuando se recargan datos
   useEffect(() => {

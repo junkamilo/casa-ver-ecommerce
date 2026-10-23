@@ -6,11 +6,6 @@ import type {
 import type { ProductCreateInputDTO } from "../contracts/product-create.dto";
 
 type ProductListItem = AdminProductListItemDTO;
-type Category = {
-  id: string;
-  name: string;
-  garmentTypes: Array<{ id: string; name: string }>;
-};
 type PresetColor = { name: string; hex: string };
 type SelectedColor = {
   name: string;
@@ -32,12 +27,6 @@ type SetItemForm = {
   sizes: string[];
 };
 
-export type AdminCategoryDTO = {
-  id: string;
-  name: string;
-  garmentTypes?: Array<{ id: string; name: string }>;
-};
-
 export type AdminColorDTO = {
   name: string;
   hexCode: string;
@@ -48,6 +37,9 @@ export type AdminProductDetailDTO = {
   name: string;
   slug?: string;
   posManaged?: boolean;
+  posSlug?: string | null;
+  /** Categorías del POS (solo consulta). */
+  categoryNames?: string[];
   posSyncedAt?: string | null;
   metaTitle?: string | null;
   metaDescription?: string | null;
@@ -63,9 +55,6 @@ export type AdminProductDetailDTO = {
   basePrice?: number | null;
   comparePrice?: number | null;
   stock?: number | null;
-  categoryIds: string[];
-  /** @deprecated usar categoryIds */
-  categoryId?: string;
   status: string;
   isFeatured?: boolean;
   isNew?: boolean;
@@ -77,7 +66,6 @@ export type AdminProductDetailDTO = {
   suggestedAt?: string | null;
   videoUrl?: string | null;
   coverImageUrl?: string | null;
-  garmentTypes?: string[];
   isSet?: boolean;
   colors?: SelectedColor[];
   sizes?: string[];
@@ -101,9 +89,6 @@ export type ProductFormInitialValues = {
   basePrice: string;
   comparePrice: string;
   stock: string;
-  categoryIds: string[];
-  /** @deprecated usar categoryIds */
-  categoryId?: string;
   status: string;
   isFeatured: boolean;
   isNew: boolean;
@@ -115,7 +100,6 @@ export type ProductFormInitialValues = {
   suggestedAt: string | null;
   videoUrl: string;
   coverImageUrl: string;
-  garmentTypes: string[];
   isSet: boolean;
   selectedColors: SelectedColor[];
   selectedSizes: string[];
@@ -136,14 +120,6 @@ export function mapAdminProductsResponseToUi(response: AdminProductListResponseD
   };
 }
 
-export function mapAdminCategoriesToUi(categories: AdminCategoryDTO[]): Category[] {
-  return categories.map((category) => ({
-    id: category.id,
-    name: category.name,
-    garmentTypes: category.garmentTypes ?? [],
-  }));
-}
-
 export function mapPresetColorsToUi(colors: AdminColorDTO[]): PresetColor[] {
   return colors.map((color) => ({
     name: color.name,
@@ -160,7 +136,6 @@ export function mapAdminProductDetailToFormInitialValues(
     basePrice: product.basePrice?.toString() || "",
     comparePrice: product.comparePrice?.toString() || "",
     stock: product.stock?.toString() || "",
-    categoryIds: product.categoryIds,
     status: product.status,
     isFeatured: product.isFeatured || false,
     isNew: product.isNew || false,
@@ -172,7 +147,6 @@ export function mapAdminProductDetailToFormInitialValues(
     suggestedAt: product.suggestedAt ? new Date(product.suggestedAt).toISOString() : null,
     videoUrl: product.videoUrl || "",
     coverImageUrl: product.coverImageUrl || "",
-    garmentTypes: product.garmentTypes ?? [],
     isSet: product.isSet || false,
     selectedColors: product.colors || [],
     selectedSizes: product.sizes || [],
@@ -201,9 +175,6 @@ export function mapProductFormToCreatePayload(input: {
   basePrice: string;
   comparePrice: string;
   stock: string;
-  categoryIds: string[];
-  /** @deprecated usar categoryIds */
-  categoryId?: string;
   status: string;
   isFeatured: boolean;
   isNew: boolean;
@@ -215,7 +186,6 @@ export function mapProductFormToCreatePayload(input: {
   suggestedAt: string | null;
   videoUrl: string;
   coverImageUrl: string;
-  garmentTypes: string[];
   isSet: boolean;
   selectedColors: SelectedColor[];
   selectedSizes: string[];
@@ -239,7 +209,6 @@ export function mapProductFormToCreatePayload(input: {
     basePrice: input.basePrice ? parseFloat(input.basePrice) : 0,
     comparePrice: input.comparePrice ? parseFloat(input.comparePrice) : null,
     stock: calcEffectiveStock(input.selectedColors, input.stock),
-    categoryIds: input.categoryIds,
     status: input.status === "INACTIVE" ? "INACTIVE" : "ACTIVE",
     isFeatured: input.isFeatured,
     isNew: input.isNew,
@@ -251,7 +220,6 @@ export function mapProductFormToCreatePayload(input: {
     suggestedAt: input.suggestedAt ?? null,
     videoUrl: input.videoUrl || null,
     coverImageUrl: input.coverImageUrl || null,
-    garmentTypes: input.garmentTypes,
     isSet: input.isSet,
     colors: input.selectedColors,
     sizes: input.selectedSizes,

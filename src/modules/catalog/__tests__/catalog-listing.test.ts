@@ -8,16 +8,20 @@ jest.mock("../product/infrastructure/prisma-product-web-settings.repository", ()
   return { PrismaProductWebSettingsRepository: jest.fn(() => repo), __settings: repo };
 });
 jest.mock("../listing/infrastructure/prisma-catalog-listing.repository", () => {
-  const repo = { findActiveProducts: jest.fn(), findTaxonomy: jest.fn() };
+  const repo = { findActiveProducts: jest.fn() };
   return { PrismaCatalogListingRepository: jest.fn(() => repo), __repo: repo };
 });
-jest.mock("@/modules/collections/infrastructure/prisma-collection.repository", () => {
+// Categorías y tipos de prenda: el árbol del POS (la web no los guarda).
+jest.mock("@/modules/posIntegration/application/get-pos-taxonomy.use-case", () => ({ getPosTaxonomy: jest.fn() }));
+jest.mock("@/modules/collections/infrastructure/pos-collection.repository", () => {
   const repo = { getCategoryBasicBySlug: jest.fn(), getGarmentTypeBySlug: jest.fn() };
-  return { PrismaCollectionRepository: jest.fn(() => repo), __collections: repo };
+  return { PosCollectionRepository: jest.fn(() => repo), __collections: repo };
 });
 
 import { posProductSchema } from "@/modules/posIntegration/contracts/pos-catalog.schema";
 import { fetchCatalogForRender } from "@/modules/posIntegration/infrastructure/pos-catalog.read";
+import { getPosTaxonomy } from "@/modules/posIntegration/application/get-pos-taxonomy.use-case";
+import { buildPosTaxonomy } from "@/modules/posIntegration/domain/pos-category-view";
 import {
   posToCatalogEntry,
   rankBySearch,
@@ -34,9 +38,10 @@ import { getNewProductsUseCase } from "@/modules/collections/application/get-new
 /* eslint-disable @typescript-eslint/no-require-imports */
 const repo = require("../listing/infrastructure/prisma-catalog-listing.repository").__repo;
 const settingsRepo = require("../product/infrastructure/prisma-product-web-settings.repository").__settings;
-const collections = require("@/modules/collections/infrastructure/prisma-collection.repository").__collections;
+const collections = require("@/modules/collections/infrastructure/pos-collection.repository").__collections;
 /* eslint-enable @typescript-eslint/no-require-imports */
 const mockFetchCatalog = fetchCatalogForRender as jest.Mock;
+const mockTaxonomy = getPosTaxonomy as jest.Mock;
 
 function pos(slug: string, overrides: Record<string, unknown> = {}) {
   return posProductSchema.parse({
@@ -57,13 +62,35 @@ function pos(slug: string, overrides: Record<string, unknown> = {}) {
   });
 }
 
-const taxonomy: CatalogTaxonomy = {
-  categoryByWebId: new Map([
-    ["CAT-MUJER", { slug: "mujer", name: "Mujer" }],
-    ["SUB-BLUSAS", { slug: "blusas", name: "Blusas" }],
-  ]),
-  garmentTypeNameBySlug: new Map([["blusa", "Blusa"]]),
-};
+const sub = (webId: string, slug: string, name: string, garmentType: { slug: string; name: string } | null = null) => ({
+  webId,
+  parentWebId: "CAT-MUJER",
+  slug,
+  name,
+  description: null,
+  imageUrl: null,
+  metaTitle: null,
+  metaDescription: null,
+  sortOrder: 0,
+  updatedAt: null,
+  garmentType: garmentType ? { ...garmentType, sortOrder: 0 } : null,
+});
+
+/** Árbol publicado por el POS: Mujer › Blusas (tipo de prenda «Blusa»). */
+const taxonomy: CatalogTaxonomy = buildPosTaxonomy([
+  {
+    webId: "CAT-MUJER",
+    slug: "mujer",
+    name: "Mujer",
+    description: null,
+    imageUrl: null,
+    metaTitle: null,
+    metaDescription: null,
+    sortOrder: 0,
+    updatedAt: null,
+    subcategories: [sub("SUB-BLUSAS", "blusas", "Blusas", { slug: "blusa", name: "Blusa" })],
+  },
+]);
 
 function settings(slug: string, overrides: Partial<WebSettings> = {}): WebSettings {
   return {
@@ -99,8 +126,6 @@ function webRow(slug: string, overrides: Partial<NeonCatalogRow> = {}): NeonCata
     coverImageUrl: null,
     createdAt: new Date("2026-08-01T00:00:00Z"),
     images: [{ url: "/set.jpg" }],
-    categories: [{ category: { slug: "mujer", name: "Mujer", isActive: true } }],
-    garmentTypes: [{ garmentType: { slug: "Conjunto", name: "Conjunto" } }],
     items: [{ name: "Short", price: 70000, comparePrice: null, colors: [] }],
     colors: [],
     ...overrides,
@@ -108,7 +133,7 @@ function webRow(slug: string, overrides: Partial<NeonCatalogRow> = {}): NeonCata
 }
 
 describe("posToCatalogEntry", () => {
-  it("ubica el producto en las categorías de la web por webId y toma la capa web", () => {
+  it("ubica el producto en las categorías del POS por webId y toma la capa web", () => {
     const entry = posToCatalogEntry(
       pos("blusa-lino", { labels: [{ code: "BEST_SELLER" }] }),
       settings("blusa-lino", { isNew: true, isOnSale: true, metaTitle: "Blusa fresca" }),
@@ -138,6 +163,25 @@ describe("posToCatalogEntry", () => {
     expect(toCard(entry).colors[0].variants).toBeUndefined();
   });
 
+  it("una categoría que el POS no publica (oculta o borrada) no ubica el producto", () => {
+    const entry = posToCatalogEntry(
+      pos("vestido", {
+        categoryWebId: "CAT-OCULTA",
+        subcategoryWebId: null,
+        classifications: [{ categoryWebId: "CAT-OCULTA", subcategoryWebId: null, garmentTypeSlug: null }],
+      }),
+      null,
+      taxonomy,
+    );
+    expect(entry.categorySlugs).toEqual([]);
+  });
+
+  it("sin categorías en el POS ningún producto queda en una colección", () => {
+    const entry = posToCatalogEntry(pos("blusa-lino"), null, buildPosTaxonomy([]));
+    expect(entry.categorySlugs).toEqual([]);
+    expect(entry.search.categoryNames).toEqual([]);
+  });
+
   it("la búsqueda encuentra por categoría y tipo de prenda", () => {
     const entry = posToCatalogEntry(pos("lino-arena"), null, taxonomy);
     expect(rankBySearch([entry], "blusas")).toHaveLength(1);
@@ -148,7 +192,7 @@ describe("posToCatalogEntry", () => {
 describe("getCatalog", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    repo.findTaxonomy.mockResolvedValue(taxonomy);
+    mockTaxonomy.mockResolvedValue(taxonomy);
     settingsRepo.findAll.mockResolvedValue(
       new Map([
         ["blusa-lino", settings("blusa-lino", { publishedAt: new Date("2026-10-10T00:00:00Z") })],
@@ -186,14 +230,15 @@ describe("getCatalog", () => {
     mockFetchCatalog.mockResolvedValue([pos("falda-midi"), pos("blusa-lino")]);
     repo.findActiveProducts.mockResolvedValue([webRow("conjunto-venus")]);
     const recommended = await getRecommendedEntries("blusa-lino");
-    expect(recommended.map((e) => e.slug)).toEqual(["conjunto-venus", "falda-midi"]);
+    // Los productos creados en la web no tienen categoría (las categorías son del POS).
+    expect(recommended.map((e) => e.slug)).toEqual(["falda-midi"]);
   });
 });
 
 describe("listados sobre el catálogo", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    repo.findTaxonomy.mockResolvedValue(taxonomy);
+    mockTaxonomy.mockResolvedValue(taxonomy);
     settingsRepo.findAll.mockResolvedValue(new Map([["blusa-lino", settings("blusa-lino", { isNew: true })]]));
     mockFetchCatalog.mockResolvedValue([
       pos("blusa-lino"),
@@ -208,7 +253,7 @@ describe("listados sobre el catálogo", () => {
 
   it("colección por categoría y tipo de prenda", async () => {
     collections.getCategoryBasicBySlug.mockResolvedValue({ name: "Blusas" });
-    collections.getGarmentTypeBySlug.mockResolvedValue({ id: "g1", name: "Blusa" });
+    collections.getGarmentTypeBySlug.mockResolvedValue({ slug: "blusa", name: "Blusa" });
 
     const blusas = await getCollectionProductsUseCase("blusas");
     expect(blusas.products.map((p) => p.slug)).toEqual(["blusa-lino"]);
@@ -222,7 +267,13 @@ describe("listados sobre el catálogo", () => {
     collections.getCategoryBasicBySlug.mockResolvedValue({ name: "Mujer" });
     collections.getGarmentTypeBySlug.mockResolvedValue(null);
     const result = await getCollectionProductsUseCase("mujer", "no-existe");
-    expect(result.products).toHaveLength(3);
+    expect(result.products.map((p) => p.slug).sort()).toEqual(["blusa-lino", "pantalon-lino"]);
+  });
+
+  it("una colección que el POS no publica responde vacía", async () => {
+    collections.getCategoryBasicBySlug.mockResolvedValue(null);
+    const result = await getCollectionProductsUseCase("no-existe");
+    expect(result).toEqual(expect.objectContaining({ category: null, products: [] }));
   });
 
   it("más vendidos por etiqueta del POS y nueva colección por la bandera de la web", async () => {

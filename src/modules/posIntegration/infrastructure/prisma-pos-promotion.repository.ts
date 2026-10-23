@@ -24,13 +24,6 @@ export class PrismaPosPromotionRepository {
     return rows.map((r) => r.id);
   }
 
-  /** Categorías espejo por webId del POS. */
-  async findCategoryIdsByPosWebIds(webIds: string[]): Promise<string[]> {
-    if (webIds.length === 0) return [];
-    const rows = await prisma.category.findMany({ where: { posWebId: { in: webIds } }, select: { id: true } });
-    return rows.map((r) => r.id);
-  }
-
   /**
    * Crea o actualiza el cupón de una promoción del POS. Nunca toca `currentGlobalUses` ni los usos.
    * - Ya enlazado (mismo posPromotionId): se actualiza; si cambió el código y choca con otro cupón → conflicto.
@@ -39,7 +32,7 @@ export class PrismaPosPromotionRepository {
    *   conserva su historial). Así se migra un cupón de la web al POS sin perder sus usos.
    * - Nuevo con el código de un cupón de la web activo o de otro tipo: conflicto; el cupón de la web no cambia.
    */
-  async upsert(mapped: MappedPosPromotion, scopeProductIds: string[], scopeCategoryIds: string[]): Promise<PosPromotionUpsertResult> {
+  async upsert(mapped: MappedPosPromotion, scopeProductIds: string[]): Promise<PosPromotionUpsertResult> {
     const data = {
       code: mapped.code,
       label: mapped.label,
@@ -59,7 +52,8 @@ export class PrismaPosPromotionRepository {
       minPurchase: mapped.minPurchase,
       scopeType: mapped.scopeType,
       scopeProductIds,
-      scopeCategoryIds,
+      // Alcance por categorías: los webIds del POS tal cual (la web no guarda categorías).
+      scopeCategoryIds: mapped.scopeCategoryWebIds,
       posPromotionId: mapped.posPromotionId,
       posSyncedAt: new Date(),
     };

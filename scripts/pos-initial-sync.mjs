@@ -63,15 +63,10 @@ async function report() {
     }
 
     const allCategories = categories.flatMap((c) => [c, ...(c.subcategories ?? [])]);
-    const localCategories = await prisma.category.findMany({
-      where: { slug: { in: allCategories.map((c) => c.slug) } },
-      select: { slug: true },
-    });
     const localProducts = await prisma.product.findMany({
       where: { slug: { in: products.map((p) => p.slug) } },
       select: { slug: true, posSlug: true },
     });
-    const catBySlug = new Map(localCategories.map((c) => [c.slug, c]));
     const prodBySlug = new Map(localProducts.map((p) => [p.slug, p]));
 
     const summarize = (items, bySlug, linkedKey, idKey) => {
@@ -87,11 +82,8 @@ async function report() {
     };
 
     console.log(`POS: ${allCategories.length} categorías/subcategorías, ${products.length} productos`);
-    // Las categorías no se guardan en la web; solo se usa su slug para asociar productos.
-    console.log("Categorías (no se modifican):", {
-      conCategoriaWeb: allCategories.filter((c) => catBySlug.has(c.slug)).map((c) => c.slug),
-      sinCategoriaWeb: allCategories.filter((c) => !catBySlug.has(c.slug)).map((c) => c.slug),
-    });
+    // Las categorías no se guardan en la web: la tienda las lee del POS en cada visita (con caché).
+    console.log("Colecciones publicadas por el POS:", allCategories.map((c) => `/collections/${c.slug}`));
     console.log("Productos:", summarize(products, prodBySlug, "posSlug", "slug"));
     console.log("\nEjecute con --apply para sincronizar.");
   } finally {

@@ -11,62 +11,17 @@ export function parseSafeDate(v: unknown): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
-export function parseCategoryIds(body: Record<string, unknown>): string[] {
-  const raw = Array.isArray(body.categoryIds)
-    ? body.categoryIds
-    : body.categoryId
-      ? [body.categoryId]
-      : [];
-
-  const normalized = raw
-    .filter((id): id is string => typeof id === "string")
-    .map((id) => id.trim())
-    .filter(Boolean);
-
-  return [...new Set(normalized)];
-}
-
-export function parseGarmentTypeIds(body: Record<string, unknown>): string[] {
-  const raw = Array.isArray(body.garmentTypes)
-    ? body.garmentTypes
-    : body.garmentType
-      ? [body.garmentType]
-      : [];
-
-  const normalized = raw
-    .filter((id): id is string => typeof id === "string")
-    .map((id) => id.trim())
-    .filter(Boolean);
-
-  return [...new Set(normalized)];
-}
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function validateProductCreateBody(body: any): string | null {
   const {
-    name, categoryIds, categoryId, description, basePrice, comparePrice,
-    stock, status, sizes, colors, items, videoUrl, isSet, garmentTypes,
-  } = body as ProductCreateInputDTO & { categoryId?: string };
-
-  const resolvedCategoryIds = parseCategoryIds(body as Record<string, unknown>);
+    name, description, basePrice, comparePrice,
+    stock, status, sizes, colors, items, videoUrl, isSet,
+  } = body as ProductCreateInputDTO;
 
   if (!name || typeof name !== "string" || name.trim().length < 3)
     return "El nombre debe tener al menos 3 caracteres";
   if (name.trim().length > 200)
     return "El nombre no puede superar 200 caracteres";
-
-  if (resolvedCategoryIds.length === 0)
-    return "Selecciona al menos una categoría";
-  if (resolvedCategoryIds.length > 10)
-    return "Demasiadas categorías (máximo 10)";
-  for (const id of resolvedCategoryIds) {
-    if (id.length > 50) return "ID de categoría inválido";
-  }
-
-  if (categoryIds !== undefined && !Array.isArray(categoryIds))
-    return "Las categorías deben enviarse como lista";
-  if (categoryId !== undefined && typeof categoryId !== "string" && !Array.isArray(categoryIds))
-    return "La categoría es requerida";
 
   if (!isSet) {
     if (!description || typeof description !== "string" || description.trim().length < 10)
@@ -93,10 +48,6 @@ export function validateProductCreateBody(body: any): string | null {
   if (status && !ALLOWED_STATUSES.includes(status as never))
     return `Estado inválido: ${status}`;
 
-  if (garmentTypes !== undefined && !Array.isArray(garmentTypes))
-    return "Los tipos de prenda deben enviarse como lista";
-  if (Array.isArray(garmentTypes) && garmentTypes.length > 20)
-    return "Demasiados tipos de prenda (máximo 20)";
 
   if (Array.isArray(sizes)) {
     if (sizes.length > 20) return "Demasiadas tallas (máximo 20)";

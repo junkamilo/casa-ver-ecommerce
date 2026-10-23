@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import type { CatalogTaxonomy, NeonCatalogRow } from "../domain/catalog-entry.entity";
+import type { NeonCatalogRow } from "../domain/catalog-entry.entity";
 
 // Lo que el catálogo de lectura toma de Neon: los productos creados en la web (y, si el POS no responde,
-// la copia de los del POS) y la taxonomía de la web (categorías por webId del POS, tipos de prenda).
+// la copia de los del POS). Las categorías y los tipos de prenda ya no viven aquí: los publica el POS.
 
 const IMAGES = (take: number) => ({
   orderBy: { order: "asc" as const },
@@ -29,8 +29,6 @@ const CATALOG_SELECT = {
   coverImageUrl: true,
   createdAt: true,
   images: IMAGES(8),
-  categories: { select: { category: { select: { slug: true, name: true, isActive: true } } } },
-  garmentTypes: { select: { garmentType: { select: { slug: true, name: true } } } },
   items: {
     orderBy: { order: "asc" as const },
     select: {
@@ -61,19 +59,5 @@ export class PrismaCatalogListingRepository {
       select: CATALOG_SELECT,
     });
     return rows as unknown as NeonCatalogRow[];
-  }
-
-  async findTaxonomy(): Promise<CatalogTaxonomy> {
-    const [categories, garmentTypes] = await Promise.all([
-      prisma.category.findMany({
-        where: { posWebId: { not: null }, isActive: true },
-        select: { posWebId: true, slug: true, name: true },
-      }),
-      prisma.garmentType.findMany({ select: { slug: true, name: true } }),
-    ]);
-    return {
-      categoryByWebId: new Map(categories.map((c) => [c.posWebId as string, { slug: c.slug, name: c.name }])),
-      garmentTypeNameBySlug: new Map(garmentTypes.map((g) => [g.slug.toLowerCase(), g.name])),
-    };
   }
 }

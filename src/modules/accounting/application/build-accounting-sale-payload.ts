@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { neonProductIdsOf } from "@/modules/checkout/infrastructure/coupon-eligibility";
+import { parsePosLineId } from "@/modules/posIntegration/domain/pos-mapper";
+import { getPosCategoriesBySlug } from "@/modules/posIntegration/application/get-pos-product-categories.use-case";
 import type { AccountingSalePayloadDTO } from "../contracts/accounting-sale.dto";
 
 const EXPORTABLE_STATUSES = [
@@ -41,26 +42,16 @@ export async function buildAccountingSalePayload(
     return null;
   }
 
-  // Ítems del POS (SKU del POS como variantId): sus categorías son las de su espejo en Neon.
-  const neonIdOf = await neonProductIdsOf(prisma, order.items);
-  const productIds = [...new Set(neonIdOf.values())];
-  const categoryLinks =
-    productIds.length > 0
-      ? await prisma.productCategory.findMany({
-          where: { productId: { in: productIds } },
-          select: {
-            productId: true,
-            category: { select: { name: true } },
-          },
-        })
-      : [];
-
-  const categoriesByProduct = new Map<string, string[]>();
-  for (const link of categoryLinks) {
-    const list = categoriesByProduct.get(link.productId) ?? [];
-    list.push(link.category.name);
-    categoriesByProduct.set(link.productId, list);
-  }
+  // Ítems del POS (SKU del POS como variantId): sus categorías son las que publica el POS hoy.
+  // Los productos creados en la web no tienen categorías (la web ya no guarda categorías).
+  const posSlugOf = (variantId: string) => parsePosLineId(variantId)?.slug ?? null;
+  const categoriesBySlug = await getPosCategoriesBySlug(
+    order.items.map((item) => posSlugOf(item.variantId)).filter((slug): slug is string => Boolean(slug)),
+  );
+  const categoriesOf = (variantId: string) => {
+    const slug = posSlugOf(variantId);
+    return slug ? (categoriesBySlug.get(slug) ?? []).map((c) => c.name) : [];
+  };
 
   const paidAtIso = order.paidAt ? order.paidAt.toISOString() : null;
 
@@ -93,7 +84,7 @@ export async function buildAccountingSalePayload(
       variantId: item.variantId,
       sku: item.sku,
       name: item.name,
-      categories: categoriesByProduct.get(neonIdOf.get(item.productId) ?? item.productId) ?? [],
+      categories: categoriesOf(item.variantId),
       colorName: item.colorName,
       size: item.size,
       price: toNumber(item.price),

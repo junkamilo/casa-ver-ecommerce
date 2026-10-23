@@ -27,7 +27,6 @@ export const posManagedProductSchema = z
       .trim()
       .max(170, "La descripción SEO no puede superar 170 caracteres")
       .nullish(),
-    garmentTypes: z.array(z.string()).max(20).optional(),
   })
   .strict();
 
@@ -64,25 +63,14 @@ export async function updatePosManagedProductUseCase(id: string, body: Record<st
     throw new ProductPosManagedConflictError("La portada debe ser una de las imágenes del producto");
   }
 
-  if (dto.garmentTypes && dto.garmentTypes.length > 0) {
-    const validCount = await productRepository.countValidGarmentTypesForCategories(
-      dto.garmentTypes,
-      context.categoryIds
-    );
-    if (validCount !== dto.garmentTypes.length) {
-      throw new ProductPosManagedConflictError(
-        "Uno o más tipos de prenda no existen, están inactivos o no pertenecen a las categorías del producto"
-      );
-    }
-  }
-
   const isOnSaleAt = resolveFlagDate(dto.isOnSale, dto.isOnSaleAt);
   const coverImageUrl = dto.coverImageUrl === undefined ? undefined : dto.coverImageUrl || null;
   const metaTitle = dto.metaTitle === undefined ? undefined : dto.metaTitle || null;
   const metaDescription = dto.metaDescription === undefined ? undefined : dto.metaDescription || null;
 
   // La tienda lee la capa web (product_web_settings); la copia en Neon se sigue actualizando porque el
-  // admin la muestra. Destacado, nuevo con fecha, sugerido y tipos de prenda los vuelve a poner el POS.
+  // admin la muestra. Destacado, nuevo con fecha y sugerido los vuelve a poner el POS; las categorías y los
+  // tipos de prenda solo se editan en el POS.
   await webSettingsRepository.save(context.slug, {
     isNew: dto.isNew,
     isOnSale: dto.isOnSale,
@@ -104,6 +92,5 @@ export async function updatePosManagedProductUseCase(id: string, body: Record<st
     coverImageUrl,
     metaTitle,
     metaDescription,
-    garmentTypeIds: dto.garmentTypes,
   });
 }

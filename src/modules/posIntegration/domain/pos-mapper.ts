@@ -1,4 +1,4 @@
-import type { PosCategory, PosOrderPayload, PosProduct, PosSubcategory } from "../contracts/pos-catalog.schema";
+import type { PosOrderPayload, PosProduct } from "../contracts/pos-catalog.schema";
 
 export type WebSize = "XS" | "S" | "M" | "L" | "XL" | "XXL" | "ONESIZE";
 
@@ -388,31 +388,5 @@ export function buildPosOrderPayload(
           posDiscount,
         }
       : null,
-  };
-}
-
-// ── Categorías ───────────────────────────────────────────────────────────────
-
-export interface MappedPosCategory {
-  posWebId: string;
-  slug: string;
-  name: string;
-  description: string | null;
-  imageUrl: string | null;
-  metaTitle: string | null;
-  metaDescription: string | null;
-  order: number;
-}
-
-export function mapPosCategory(pos: PosCategory | PosSubcategory): MappedPosCategory {
-  return {
-    posWebId: pos.webId,
-    slug: pos.slug.trim().toLowerCase(),
-    name: pos.name.trim(),
-    description: pos.description,
-    imageUrl: pos.imageUrl,
-    metaTitle: pos.metaTitle,
-    metaDescription: pos.metaDescription,
-    order: pos.sortOrder,
   };
 }

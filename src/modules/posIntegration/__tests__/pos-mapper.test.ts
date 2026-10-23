@@ -6,7 +6,6 @@ import {
   buildPosOrderPayload,
   parsePosLineId,
   parsePosVariantSku,
-  mapPosCategory,
   mapPosProduct,
   mapPosSize,
   normalizeHex,
@@ -346,24 +345,5 @@ describe("pedidos hacia el POS", () => {
     );
     expect(payload?.discount).toBe(5000);
     expect(payload?.shipping).toBe(11000);
-  });
-});
-
-describe("mapPosCategory", () => {
-  it("normaliza el slug y conserva el orden", () => {
-    expect(
-      mapPosCategory({
-        webId: "cat-1",
-        slug: " Mujer ",
-        name: "Mujer",
-        description: null,
-        imageUrl: null,
-        metaTitle: null,
-        metaDescription: null,
-        sortOrder: 3,
-        updatedAt: null,
-        subcategories: [],
-      }),
-    ).toEqual(expect.objectContaining({ posWebId: "cat-1", slug: "mujer", order: 3 }));
   });
 });

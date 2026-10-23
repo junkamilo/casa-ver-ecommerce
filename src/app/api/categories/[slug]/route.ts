@@ -1,29 +1,23 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getCategoryBySlugUseCase } from "@/modules/collections/application/get-category-by-slug.use-case";
 
+// GET /api/categories/[slug] — colección (categoría o subcategoría) del POS por slug.
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  try {
-    const { slug } = await params;
+  const { slug } = await params;
+  const category = await getCategoryBySlugUseCase(slug);
+  if (!category) return new NextResponse("Not found", { status: 404 });
 
-    const category = await prisma.category.findUnique({
-      where: { slug },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        image: true,
-        isActive: true,
-      },
-    });
-
-    if (!category) return new NextResponse("Not found", { status: 404 });
-
-    return NextResponse.json(category);
-  } catch (error) {
-    console.error("[CATEGORY_SLUG_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
-  }
+  return NextResponse.json(
+    {
+      name: category.name,
+      slug: slug.trim().toLowerCase(),
+      description: category.description,
+      image: category.image,
+      isActive: true,
+    },
+    { headers: { "Cache-Control": "no-store" } },
+  );
 }

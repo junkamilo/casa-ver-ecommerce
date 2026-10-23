@@ -28,16 +28,3 @@ export function ShirtIcon({ size = 24, className = "", ...props }: IconProps) {
     </span>
   );
 }
-
-export function StackedShirtIcon({ className = "" }: IconProps) {
-  return (
-    <span className={cn("relative inline-block shrink-0", className)}>
-      <span className="absolute left-0 top-0 opacity-45">
-        <ShirtIcon size={14} />
-      </span>
-      <span className="absolute left-1.5 top-1.5">
-        <ShirtIcon size={14} />
-      </span>
-    </span>
-  );
-}

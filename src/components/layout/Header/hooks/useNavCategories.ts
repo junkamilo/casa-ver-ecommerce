@@ -10,8 +10,8 @@ const FINGERPRINT_POLL_MS = 5 * 60 * 1000; // 5 minutos
  * Mantiene las categorías de navegación actualizadas en background.
  *
  * Estrategia en dos pasos para minimizar el impacto en rendimiento:
- *  1. Cada 5 min consulta /api/nav-categories/fingerprint — solo 2 agregados SQL,
- *     sin joins, sin arrays. Es extremadamente barato.
+ *  1. Cada 5 min consulta /api/nav-categories/fingerprint — firma del árbol de categorías del POS
+ *     (cacheado en el servidor). Es extremadamente barato.
  *  2. Solo si la firma cambió se trae el payload completo desde /api/nav-categories.
  *
  * Resultado: en condiciones normales (sin cambios) → 0 KB de datos transferidos.
@@ -26,7 +26,7 @@ export function useNavCategories(initialCategories: NavCategory[]): NavCategory[
   useEffect(() => {
     const poll = async () => {
       try {
-        // Paso 1: consulta ultraliviana (solo 2 agregados)
+        // Paso 1: consulta ultraliviana (solo la firma)
         const sigRes = await fetch("/api/nav-categories/fingerprint", {
           cache: "no-store",
         });
@@ -37,15 +37,10 @@ export function useNavCategories(initialCategories: NavCategory[]): NavCategory[
         if (sig === sigRef.current) return;
         sigRef.current = sig;
 
-        // Paso 2: traer datos completos solo cuando algo cambió (POS primero, luego la web)
-        const [posRes, webRes] = await Promise.all([
-          fetch("/api/pos-categories?format=nav", { cache: "no-store" }).catch(() => null),
-          fetch("/api/nav-categories", { cache: "no-store" }),
-        ]);
-        if (!webRes.ok) return;
-        const web: NavCategory[] = await webRes.json();
-        const pos: NavCategory[] = posRes?.ok ? await posRes.json() : [];
-        setCategories([...pos, ...web]);
+        // Paso 2: traer el menú completo (árbol del POS) solo cuando algo cambió
+        const res = await fetch("/api/nav-categories", { cache: "no-store" });
+        if (!res.ok) return;
+        setCategories((await res.json()) as NavCategory[]);
       } catch {
         // Silencioso: si falla el poll se mantienen los datos del SSR
       }

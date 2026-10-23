@@ -6,9 +6,6 @@ export type ProductCreateInputDTO = {
   basePrice: number;
   comparePrice?: number | null;
   stock?: number;
-  categoryIds: string[];
-  /** @deprecated usar categoryIds */
-  categoryId?: string;
   status?: "ACTIVE" | "INACTIVE";
   isFeatured?: boolean;
   isNew?: boolean;
@@ -24,6 +21,4 @@ export type ProductCreateInputDTO = {
   colors: ColorInput[];
   sizes: string[];
   items?: SetItemInput[];
-  garmentTypes?: string[] | string;
-  garmentType?: string;
 };

@@ -83,9 +83,9 @@ export default function AdminProductos() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const missingRequired = !form.name || form.categoryIds.length === 0 || (!form.isSet && !form.basePrice);
+    const missingRequired = !form.name || (!form.isSet && !form.basePrice);
     if (missingRequired) {
-      showToast("error", form.isSet ? "Completa nombre y categoría" : "Completa nombre, precio y categoría");
+      showToast("error", form.isSet ? "Completa el nombre" : "Completa nombre y precio");
       return;
     }
     // Para isSet=true los colores/tallas viven en las subcategorías, no en el padre
@@ -186,7 +186,6 @@ export default function AdminProductos() {
           editingId={editingId}
           formLoading={formLoading}
           submitting={submitting}
-          categories={list.categories}
           presetColors={list.presetColors}
           onClose={() => setShowModal(false)}
           onSubmit={handleSubmit}
@@ -198,7 +197,6 @@ export default function AdminProductos() {
         <PosProductModal
           product={posProduct}
           loading={posLoading}
-          categories={list.categories}
           onClose={() => setPosModalOpen(false)}
           onSaved={async (message) => {
             showToast("success", message);

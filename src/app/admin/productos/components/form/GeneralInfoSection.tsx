@@ -17,33 +17,18 @@ import LabelToggle from "./LabelToggle";
 export default function GeneralInfoSection({
   name, onName,
   description, onDescription,
-  categoryIds, onCategories,
   status, onStatus,
   isFeatured, onFeatured,
   isNew, onNew,
   isProductNew, onProductNew, onProductNewAt,
   isOnSale, onOnSale, onOnSaleAt,
   isSuggested, onSuggested, onSuggestedAt,
-  garmentTypes, onGarmentType,
-  categories,
   errors = {},
   isSet = false,
 }: GeneralInfoSectionProps) {
-  const { open: catOpen, setOpen: setCatOpen, ref: catRef } = useDropdown();
   const { open: estOpen, setOpen: setEstOpen, ref: estRef } = useDropdown();
-  const { open: gtOpen, setOpen: setGtOpen, ref: gtRef } = useDropdown();
 
-  const selectedCategoryNames = categories
-    .filter((c) => categoryIds.includes(c.id))
-    .map((c) => c.name);
   const selectedStatus = STATUS_OPTIONS.find((s) => s.value === status) ?? STATUS_OPTIONS[0];
-
-  const toggleCategory = (id: string) => {
-    const next = categoryIds.includes(id)
-      ? categoryIds.filter((value) => value !== id)
-      : [...categoryIds, id];
-    onCategories(next);
-  };
 
   const handleProductNewToggle = () => {
     const next = !isProductNew;
@@ -106,80 +91,15 @@ export default function GeneralInfoSection({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* ── Categorías ── */}
+        {/* ── Categorías: las asigna el POS ── */}
         <div className="space-y-1.5">
           <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
-            Categorías *
+            Categorías
           </label>
-          <div className="relative" ref={catRef}>
-            <button
-              type="button"
-              onClick={() => setCatOpen((v) => !v)}
-              className={`w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg border text-sm transition-colors bg-white ${
-                errors.categoryIds
-                  ? "border-red-400"
-                  : "border-gray-200 hover:border-[#C19A6B]"
-              }`}
-            >
-              <span className={selectedCategoryNames.length > 0 ? "text-gray-800 font-medium truncate" : "text-gray-400"}>
-                {selectedCategoryNames.length > 0
-                  ? selectedCategoryNames.length === 1
-                    ? selectedCategoryNames[0]
-                    : `${selectedCategoryNames.length} categorías seleccionadas`
-                  : "Seleccionar categorías…"}
-              </span>
-              {catOpen
-                ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" />
-                : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
-            </button>
-
-            {catOpen && (
-              <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                <div className="px-4 py-2.5 border-b border-gray-100 bg-[#154734]/5 flex items-center justify-between">
-                  <p className="text-[11px] font-bold text-[#154734] uppercase tracking-widest">
-                    Categorías
-                  </p>
-                  {categoryIds.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => onCategories([])}
-                      className="text-[11px] text-gray-400 hover:text-red-500 transition-colors"
-                    >
-                      Limpiar
-                    </button>
-                  )}
-                </div>
-                <div className="overflow-y-auto max-h-52 p-1.5 space-y-0.5">
-                  {categories.map((c) => {
-                    const active = categoryIds.includes(c.id);
-                    return (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => toggleCategory(c.id)}
-                        className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                          active
-                            ? "bg-[#154734] text-white"
-                            : "text-gray-700 hover:bg-gray-50"
-                        }`}
-                      >
-                        <span className="font-medium">{c.name}</span>
-                        {active && <Check className="w-4 h-4 shrink-0" />}
-                      </button>
-                    );
-                  })}
-                </div>
-                {selectedCategoryNames.length > 0 && (
-                  <div className="px-4 py-2 border-t border-gray-100 bg-gray-50">
-                    <p className="text-[11px] text-gray-500">
-                      {selectedCategoryNames.join(", ")}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-          <FieldError msg={errors.categoryIds} />
+          <p className="flex items-start gap-2 px-4 py-2.5 rounded-lg border border-gray-100 bg-gray-50 text-[11px] text-gray-500">
+            <Tag className="w-3.5 h-3.5 mt-0.5 text-gray-400 shrink-0" />
+            Las categorías, subcategorías y tipos de prenda se crean y asignan en el POS (Tienda → Categorías).
+          </p>
         </div>
 
         {/* ── Estado ── */}
@@ -237,112 +157,6 @@ export default function GeneralInfoSection({
           </div>
         </div>
       </div>
-
-      {/* ── Tipos de Prenda (multi-select) ── */}
-      {(() => {
-        const catGarmentTypes = categories
-          .filter((c) => categoryIds.includes(c.id))
-          .flatMap((c) => c.garmentTypes)
-          .filter((garmentType, index, list) =>
-            list.findIndex((item) => item.id === garmentType.id) === index
-          );
-        const toggle = (id: string) => {
-          const next = garmentTypes.includes(id)
-            ? garmentTypes.filter((x) => x !== id)
-            : [...garmentTypes, id];
-          onGarmentType(next);
-        };
-        const selectedNames = catGarmentTypes
-          .filter((g) => garmentTypes.includes(g.id))
-          .map((g) => g.name);
-        return (
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-700 uppercase tracking-wide flex items-center gap-1.5">
-              <Tag className="w-3.5 h-3.5 text-gray-400" />
-              Tipos de Prenda
-              <span className="font-normal text-gray-400 normal-case tracking-normal">(para filtros del menú)</span>
-            </label>
-            {!categoryIds.length ? (
-              <p className="text-[11px] text-gray-400 px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-100">
-                Selecciona al menos una categoría para ver los tipos disponibles.
-              </p>
-            ) : catGarmentTypes.length === 0 ? (
-              <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-100 rounded-lg">
-                <Tag className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                <p className="text-[11px] text-amber-700">
-                  Esta categoría no tiene tipos de prenda asignados en las categorías seleccionadas.
-                  <a href="/admin/categorias" className="font-bold underline ml-1" target="_blank">Asignar →</a>
-                </p>
-              </div>
-            ) : (
-              <div className="relative" ref={gtRef}>
-                <button
-                  type="button"
-                  onClick={() => setGtOpen((v) => !v)}
-                  className="w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg border border-gray-200 hover:border-[#C19A6B] text-sm transition-colors bg-white"
-                >
-                  <span className={selectedNames.length > 0 ? "text-gray-800 font-medium truncate" : "text-gray-400"}>
-                    {selectedNames.length > 0
-                      ? selectedNames.length === 1
-                        ? selectedNames[0]
-                        : `${selectedNames.length} tipos seleccionados`
-                      : "Sin clasificar…"}
-                  </span>
-                  {gtOpen
-                    ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" />
-                    : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
-                </button>
-
-                {gtOpen && (
-                  <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                    <div className="px-4 py-2.5 border-b border-gray-100 bg-[#154734]/5 flex items-center justify-between">
-                      <p className="text-[11px] font-bold text-[#154734] uppercase tracking-widest">
-                        Tipos de Prenda
-                      </p>
-                      {garmentTypes.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => onGarmentType([])}
-                          className="text-[11px] text-gray-400 hover:text-red-500 transition-colors"
-                        >
-                          Limpiar
-                        </button>
-                      )}
-                    </div>
-                    <div className="overflow-y-auto max-h-52 p-1.5 space-y-0.5">
-                      {catGarmentTypes.map((g) => {
-                        const active = garmentTypes.includes(g.id);
-                        return (
-                          <button
-                            key={g.id}
-                            type="button"
-                            onClick={() => toggle(g.id)}
-                            className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                              active
-                                ? "bg-[#154734] text-white"
-                                : "text-gray-700 hover:bg-gray-50"
-                            }`}
-                          >
-                            <span className="font-medium">{g.name}</span>
-                            {active && <Check className="w-4 h-4 shrink-0" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {selectedNames.length > 0 && (
-                      <div className="px-4 py-2 border-t border-gray-100 bg-gray-50">
-                        <p className="text-[11px] text-gray-500">
-                          {selectedNames.join(", ")}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })()}
 
       {/* ── Etiquetas / Colecciones ── */}
       <div className="space-y-2.5 pt-1">

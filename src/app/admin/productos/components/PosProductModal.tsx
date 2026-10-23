@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { X, Loader2, Info, Check, Tag } from "lucide-react";
+import { X, Loader2, Info } from "lucide-react";
 import {
   BadgePercent,
   FlameIcon,
@@ -15,7 +15,6 @@ import {
   AdminProductsApiError,
   updatePosManagedProduct,
 } from "@/modules/adminCatalog/products/presentation/api-client";
-import type { Category } from "../types";
 import { formatPrice, inputCls } from "../constants";
 import LabelToggle from "./form/LabelToggle";
 import ProductCoverPicker from "./form/ProductCoverPicker";
@@ -23,7 +22,6 @@ import ProductCoverPicker from "./form/ProductCoverPicker";
 interface PosProductModalProps {
   product: AdminProductDetailDTO | null;
   loading: boolean;
-  categories: Category[];
   onClose: () => void;
   onSaved: (message: string) => void;
   onError: (message: string) => void;
@@ -32,13 +30,12 @@ interface PosProductModalProps {
 const nowIso = () => new Date().toISOString();
 
 /**
- * Edición de un producto sincronizado desde el POS. Nombre, precio, categorías, colores, tallas y
- * disponibilidad vienen del POS y se muestran solo como referencia.
+ * Edición de un producto sincronizado desde el POS. Nombre, precio, categorías, tipos de prenda,
+ * colores, tallas y disponibilidad vienen del POS y se muestran solo como referencia.
  */
 export default function PosProductModal({
   product,
   loading,
-  categories,
   onClose,
   onSaved,
   onError,
@@ -55,7 +52,6 @@ export default function PosProductModal({
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
-  const [garmentTypes, setGarmentTypes] = useState<string[]>([]);
 
   useEffect(() => {
     if (!product) return;
@@ -70,18 +66,7 @@ export default function PosProductModal({
     setCoverImageUrl(product.coverImageUrl ?? "");
     setMetaTitle(product.metaTitle ?? "");
     setMetaDescription(product.metaDescription ?? "");
-    setGarmentTypes(product.garmentTypes ?? []);
   }, [product]);
-
-  const productCategories = useMemo(
-    () => categories.filter((c) => product?.categoryIds.includes(c.id)),
-    [categories, product]
-  );
-  const garmentOptions = useMemo(() => {
-    const seen = new Map<string, string>();
-    productCategories.forEach((c) => c.garmentTypes.forEach((gt) => seen.set(gt.id, gt.name)));
-    return [...seen.entries()].map(([id, name]) => ({ id, name }));
-  }, [productCategories]);
 
   const variantsByColor = useMemo(() => {
     const map = new Map<string, NonNullable<AdminProductDetailDTO["variants"]>>();
@@ -109,7 +94,6 @@ export default function PosProductModal({
         coverImageUrl: coverImageUrl || null,
         metaTitle: metaTitle.trim() || null,
         metaDescription: metaDescription.trim() || null,
-        garmentTypes,
       });
       onSaved("Producto actualizado");
     } catch (err: unknown) {
@@ -179,7 +163,7 @@ export default function PosProductModal({
               <div className="sm:col-span-2">
                 <p className="text-xs font-semibold text-gray-500 uppercase">Categorías</p>
                 <p className="text-gray-700">
-                  {productCategories.map((c) => c.name).join(", ") || "Sin categoría"}
+                  {product.categoryNames?.join(", ") || "Sin categoría en el POS"}
                 </p>
               </div>
               <div className="sm:col-span-2 space-y-2">
@@ -280,39 +264,6 @@ export default function PosProductModal({
                 />
               </div>
             </section>
-
-            {garmentOptions.length > 0 && (
-              <section className="space-y-2.5">
-                <p className="text-xs font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-[#C19A6B]" />
-                  Tipos de prenda
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {garmentOptions.map((gt) => {
-                    const selected = garmentTypes.includes(gt.id);
-                    return (
-                      <button
-                        key={gt.id}
-                        type="button"
-                        onClick={() =>
-                          setGarmentTypes(
-                            selected ? garmentTypes.filter((id) => id !== gt.id) : [...garmentTypes, gt.id]
-                          )
-                        }
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                          selected
-                            ? "bg-[#154734] text-white border-[#154734]"
-                            : "bg-white text-gray-600 border-gray-200 hover:border-[#154734]"
-                        }`}
-                      >
-                        {selected && <Check className="w-3 h-3" />}
-                        {gt.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
 
             <ProductCoverPicker
               title="Portada del producto"

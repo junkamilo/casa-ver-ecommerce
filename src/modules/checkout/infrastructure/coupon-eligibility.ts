@@ -1,13 +1,14 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { isProductInScope, isWholeOrder, type CouponScope } from "../domain/coupon-scope";
-import { parsePosLineId } from "@/modules/posIntegration/domain/pos-mapper";
+import { mapPosProduct, normalizePosSlug, parsePosLineId } from "@/modules/posIntegration/domain/pos-mapper";
+import { fetchProductForRender } from "@/modules/posIntegration/infrastructure/pos-catalog.read";
 import { findProductsByKeys } from "@/lib/product-keys";
 
 type Client = PrismaClient | Prisma.TransactionClient;
 
 /**
- * Producto de Neon (espejo, por posSlug) de cada slug del POS. Los alcances de cupón y las categorías
- * aún guardan ids de Neon; cuando el catálogo deje de copiarse se guardarán slugs y webIds del POS.
+ * Producto de Neon (espejo, por posSlug) de cada slug del POS. El alcance por productos aún guarda ids
+ * de Neon; el alcance por categorías ya guarda los webIds del POS (la web no guarda categorías).
  */
 async function neonProductIdsBySlug(client: Client, slugs: string[]): Promise<Map<string, string>> {
   if (slugs.length === 0) return new Map();
@@ -79,6 +80,42 @@ export async function productIdsByVariant(client: Client, variantIds: string[]):
 }
 
 /**
+ * Categorías y subcategorías del POS (webIds) donde está cada producto, leídas de la API del POS
+ * (Data Cache por producto). Un producto que el POS no publica, o el POS sin responder, queda sin
+ * categorías: no entra en un cupón con alcance por categorías.
+ */
+async function posCategoryWebIdsBySlug(slugs: string[]): Promise<Map<string, ScopeCategory[]>> {
+  const result = new Map<string, ScopeCategory[]>();
+  await Promise.all(
+    [...new Set(slugs.map(normalizePosSlug))].map(async (slug) => {
+      try {
+        const pos = await fetchProductForRender(slug);
+        if (pos) result.set(slug, mapPosProduct(pos).categoryWebIds.map((id) => ({ id, parentId: null })));
+      } catch (error) {
+        console.warn(
+          `[cupones] POS sin respuesta para las categorías de ${slug}:`,
+          error instanceof Error ? error.message : error,
+        );
+      }
+    }),
+  );
+  return result;
+}
+
+type ScopeCategory = { id: string; parentId: string | null };
+
+/** Categorías del POS de cada producto de Neon (los creados en la web no tienen posSlug ni categorías). */
+async function categoriesByProductId(client: Client, productIds: string[]): Promise<Map<string, ScopeCategory[]>> {
+  if (productIds.length === 0) return new Map();
+  const rows = await client.product.findMany({
+    where: { id: { in: productIds }, posSlug: { not: null } },
+    select: { id: true, posSlug: true },
+  });
+  const webIdsBySlug = await posCategoryWebIdsBySlug(rows.map((r) => r.posSlug as string));
+  return new Map(rows.map((r) => [r.id, webIdsBySlug.get(normalizePosSlug(r.posSlug as string)) ?? []]));
+}
+
+/**
  * Variantes del carrito a las que aplica el cupón. Sin alcance (todo el pedido) son todas.
  */
 export async function eligibleVariantIds(
@@ -89,19 +126,8 @@ export async function eligibleVariantIds(
   if (isWholeOrder(scope)) return new Set(variantIds);
   const productByVariant = await productIdsByVariant(client, variantIds);
   const productIds = [...new Set(productByVariant.values())];
-
-  const categoriesByProduct = new Map<string, { id: string; parentId: string | null }[]>();
-  if (scope.scopeType === "CATEGORIES" && productIds.length > 0) {
-    const rows = await client.productCategory.findMany({
-      where: { productId: { in: productIds } },
-      select: { productId: true, category: { select: { id: true, parentId: true } } },
-    });
-    for (const row of rows) {
-      const list = categoriesByProduct.get(row.productId) ?? [];
-      list.push(row.category);
-      categoriesByProduct.set(row.productId, list);
-    }
-  }
+  const categoriesByProduct =
+    scope.scopeType === "CATEGORIES" ? await categoriesByProductId(client, productIds) : new Map<string, ScopeCategory[]>();
 
   const eligible = new Set<string>();
   for (const variantId of variantIds) {
@@ -117,13 +143,6 @@ export async function eligibleVariantIds(
 export async function eligibleProductIds(client: Client, scope: CouponScope, productIds: string[]): Promise<Set<string>> {
   if (isWholeOrder(scope)) return new Set(productIds);
   if (scope.scopeType === "PRODUCTS") return new Set(productIds.filter((id) => scope.scopeProductIds.includes(id)));
-  const rows = await client.productCategory.findMany({
-    where: { productId: { in: productIds } },
-    select: { productId: true, category: { select: { id: true, parentId: true } } },
-  });
-  const eligible = new Set<string>();
-  for (const row of rows) {
-    if (isProductInScope(scope, row.productId, [row.category])) eligible.add(row.productId);
-  }
-  return eligible;
+  const categoriesByProduct = await categoriesByProductId(client, productIds);
+  return new Set(productIds.filter((id) => isProductInScope(scope, id, categoriesByProduct.get(id) ?? [])));
 }
