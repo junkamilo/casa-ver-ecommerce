@@ -8,6 +8,8 @@ import SectionEmptyState from "@/components/ui/SectionEmptyState";
 import BackButton from "@/components/ui/BackButton";
 import { listActiveCategoriesUseCase } from "@/modules/collections/application/list-active-categories.use-case";
 
+export const dynamic = "force-dynamic";
+
 export const revalidate = 300;
 
 export const metadata: Metadata = {
