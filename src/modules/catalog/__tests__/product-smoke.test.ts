@@ -150,8 +150,8 @@ describe("computeTotalStock", () => {
     const total = computeTotalStock(
       { isSet: true, colors: [] },
       [
-        { id: "i1", name: "A", description: null, price: 1, comparePrice: null, videoUrl: null, stock: 10, colors: [] },
-        { id: "i2", name: "B", description: null, price: 2, comparePrice: null, videoUrl: null, stock: 5, colors: [] },
+        { id: "i1", name: "A", description: null, price: 1, comparePrice: null, videoUrl: null, coverImageUrl: "", stock: 10, colors: [] },
+        { id: "i2", name: "B", description: null, price: 2, comparePrice: null, videoUrl: null, coverImageUrl: "", stock: 5, colors: [] },
       ],
     );
     expect(total).toBe(15);
@@ -412,8 +412,8 @@ describe("resolveGalleryAndVideo", () => {
 
 describe("resolveInitialItemId", () => {
   const items = [
-    { id: "i1", name: "Camisa", description: null, price: 1, comparePrice: null, videoUrl: null, stock: 0, colors: [] },
-    { id: "i2", name: "Pantal\u00f3n Largo", description: null, price: 1, comparePrice: null, videoUrl: null, stock: 0, colors: [] },
+    { id: "i1", name: "Camisa", description: null, price: 1, comparePrice: null, videoUrl: null, coverImageUrl: "", stock: 0, colors: [] },
+    { id: "i2", name: "Pantal\u00f3n Largo", description: null, price: 1, comparePrice: null, videoUrl: null, coverImageUrl: "", stock: 0, colors: [] },
   ];
 
   it("devuelve null si no es set o falta tipo", () => {
