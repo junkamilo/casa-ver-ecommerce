@@ -47,7 +47,7 @@ export function posToRawProductDetail(
     id: `${mapped.posSlug}-color-${index}`,
     name: color.name,
     hexCode: color.hexCode,
-    images: color.images.map((img) => ({ url: img.url })),
+    images: color.images.map((img) => ({ url: img.url, altText: img.altText })),
     variants: color.variants.map((v) => ({ id: v.sku, sku: v.sku, size: v.size, stock: v.stock })),
   }));
 

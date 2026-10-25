@@ -127,7 +127,7 @@ export class PrismaPosSyncRepository {
             productId,
             colorId: savedColor.id,
             url: img.url,
-            altText: color.name,
+            altText: img.altText ?? color.name,
             order: img.order,
             isCover: img.isCover,
           })),

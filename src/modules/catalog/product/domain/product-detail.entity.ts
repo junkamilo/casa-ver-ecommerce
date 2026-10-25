@@ -61,7 +61,7 @@ export interface RawColor {
   id: string;
   name: string;
   hexCode: string;
-  images: { url: string; colorId?: string | null }[];
+  images: { url: string; colorId?: string | null; altText?: string | null }[];
   variants: RawVariant[];
 }
 
@@ -114,6 +114,9 @@ export function mapUIColor(color: RawColor): UIColor {
     name: color.name,
     hex: color.hexCode,
     images: color.images.map((img) => img.url),
+    imageAlts: Object.fromEntries(
+      color.images.flatMap((img) => (img.altText?.trim() ? [[img.url, img.altText.trim()]] : [])),
+    ),
     availableSizes: activeVariants.map((v) => normalizeSize(v.size)),
     variants: activeVariants.map((v) => ({
       size: normalizeSize(v.size),

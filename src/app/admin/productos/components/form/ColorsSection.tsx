@@ -135,11 +135,7 @@ export default function ColorsSection({
               <div className="overflow-y-auto max-h-52 p-2 space-y-0.5">
                 {presetColors.length === 0 && (
                   <p className="text-xs text-gray-400 text-center py-4 px-2">
-                    No hay colores activos. Ve a{" "}
-                    <a href="/admin/colores" className="underline text-[#154734]" target="_blank">
-                      Admin → Colores
-                    </a>{" "}
-                    para crear colores.
+                    No hay colores en el POS. Los colores se crean en el POS (Catálogo → Colores) y aparecen aquí solos.
                   </p>
                 )}
                 {presetColors.map((preset) => {

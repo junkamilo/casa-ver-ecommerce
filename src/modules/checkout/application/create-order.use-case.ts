@@ -10,6 +10,7 @@ import {
   toCreateOrderErrorMessage,
 } from "./checkout.errors";
 import { verifyPosAvailability } from "@/modules/posIntegration/application/verify-pos-availability.use-case";
+import { getPosColorPalette } from "@/modules/posIntegration/application/get-pos-colors.use-case";
 
 const repository = new PrismaCheckoutRepository();
 
@@ -53,7 +54,8 @@ export async function createOrderUseCase(
           );
     }
 
-    const result = await repository.createOrderTransaction(parsed.data);
+    // Los productos de la web solo se venden en colores que existen en el POS (los que la tienda muestra).
+    const result = await repository.createOrderTransaction(parsed.data, await getPosColorPalette());
 
     return {
       success: true,

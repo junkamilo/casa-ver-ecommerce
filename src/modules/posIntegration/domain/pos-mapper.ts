@@ -64,6 +64,8 @@ export interface MappedPosImage {
   url: string;
   isCover: boolean;
   order: number;
+  /** Texto alternativo publicado por el POS; `null` en respuestas de un POS anterior a V106. */
+  altText: string | null;
 }
 
 export interface MappedPosVariant {
@@ -164,7 +166,7 @@ export function mapPosProduct(pos: PosProduct): MappedPosProduct {
   for (const color of pos.colors) {
     const images = color.media
       .filter((m) => !m.video)
-      .map((m, index) => ({ url: m.url, isCover: m.cover, order: index }));
+      .map((m, index) => ({ url: m.url, isCover: m.cover, order: index, altText: m.alt?.trim() || null }));
     const mapped: MappedPosColor = {
       name: uniqueColorName(color.name, usedNames),
       hexCode: normalizeHex(color.hexCode),

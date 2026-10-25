@@ -3,6 +3,7 @@ import { revalidateProductListings } from "@/lib/revalidate-product-pages";
 import { POS_PRODUCTS_CACHE_TAG, posProductCacheTag } from "../infrastructure/pos-catalog.read";
 
 export const POS_CATEGORIES_CACHE_TAG = "pos-categories";
+export const POS_COLORS_CACHE_TAG = "pos-colors";
 
 export function revalidateCatalogPages(input: { productSlugs?: string[]; categorySlugs?: string[] } = {}) {
   try {
@@ -26,6 +27,21 @@ export function revalidatePosCategories(collectionSlugs: string[] = []) {
     for (const slug of new Set(collectionSlugs)) revalidatePath(`/collections/${slug}`);
   } catch (error) {
     console.warn("[POS sync] No se pudo revalidar categorías:", error instanceof Error ? error.message : error);
+  }
+}
+
+/**
+ * Expira la paleta de colores del POS y las páginas que la usan: los listados (tarjetas y filtro por color) y
+ * todas las fichas de producto, porque los productos de la web solo muestran los colores que el POS tiene.
+ * Los productos del POS que cambian llegan además con su propio aviso `product.upserted`.
+ */
+export function revalidatePosColors() {
+  try {
+    revalidateTag(POS_COLORS_CACHE_TAG, { expire: 0 });
+    revalidateProductListings();
+    revalidatePath("/product/[slug]", "page");
+  } catch (error) {
+    console.warn("[POS sync] No se pudo revalidar colores:", error instanceof Error ? error.message : error);
   }
 }
 

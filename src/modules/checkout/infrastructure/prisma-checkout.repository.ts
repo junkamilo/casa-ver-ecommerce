@@ -25,6 +25,8 @@ import { eligibleVariantIds } from "./coupon-eligibility";
 import { resolvePosLinePrices } from "./pos-line-prices";
 import { productSlugsByKeys } from "@/lib/product-keys";
 import { parsePosLineId } from "@/modules/posIntegration/domain/pos-mapper";
+import type { PosColorPalette } from "@/modules/posIntegration/domain/pos-color-palette";
+import { assertWebColorSellable } from "../domain/web-color-guard";
 import {
   CouponAlreadyUsedError,
   CouponExhaustedError,
@@ -53,7 +55,14 @@ export interface CreatedOrderRecord {
 // Encapsula la transacción atómica completa de creación de orden.
 // ---------------------------------------------------------------------------
 export class PrismaCheckoutRepository {
-  async createOrderTransaction(input: CreateOrderInputDTO): Promise<CreatedOrderRecord> {
+  /**
+   * `palette`: colores del POS. Un producto creado en la web solo se vende en los colores que el POS tiene
+   * (los demás ya no se muestran en la tienda); `null` = sin integración con el POS, no se restringe.
+   */
+  async createOrderTransaction(
+    input: CreateOrderInputDTO,
+    palette: PosColorPalette | null = null,
+  ): Promise<CreatedOrderRecord> {
     // Lecturas de envío ANTES del $transaction: getShippingCost usa el cliente
     // Prisma global. Dentro del tx (connection_limit=1) eso deadlockea el pool.
     const municipality = await prisma.municipality.findFirst({
@@ -118,7 +127,8 @@ export class PrismaCheckoutRepository {
             select: {
               isActive: true,
               priceOverride: true,
-              product: { select: { basePrice: true } },
+              color: { select: { name: true } },
+              product: { select: { basePrice: true, posSlug: true } },
             },
           });
 
@@ -126,6 +136,11 @@ export class PrismaCheckoutRepository {
             if (!productVariant.isActive) {
               throw new ProductUnavailableError(`El producto "${item.name}" ya no está disponible`);
             }
+            assertWebColorSellable(
+              palette,
+              { posSlug: productVariant.product.posSlug, colorName: productVariant.color.name },
+              item.name
+            );
 
             const reserved = await tx.$queryRaw<{ id: string }[]>`
               UPDATE product_variants
@@ -155,10 +170,11 @@ export class PrismaCheckoutRepository {
                 isActive: true,
                 color: {
                   select: {
+                    name: true,
                     item: {
                       select: {
                         price: true,
-                        product: { select: { basePrice: true } },
+                        product: { select: { basePrice: true, posSlug: true } },
                       },
                     },
                   },
@@ -171,6 +187,11 @@ export class PrismaCheckoutRepository {
             if (!itemVariant.isActive) {
               throw new ProductUnavailableError(`El producto "${item.name}" ya no está disponible`);
             }
+            assertWebColorSellable(
+              palette,
+              { posSlug: itemVariant.color?.item?.product?.posSlug, colorName: itemVariant.color?.name },
+              item.name
+            );
 
             const reservedItem = await tx.$queryRaw<{ id: string }[]>`
               UPDATE product_item_variants

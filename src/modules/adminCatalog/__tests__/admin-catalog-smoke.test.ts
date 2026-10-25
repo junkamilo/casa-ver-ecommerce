@@ -1,10 +1,6 @@
 /** @jest-environment node */
 
 import { prisma } from "@/lib/prisma";
-import { listColorsUseCase } from "@/modules/adminCatalog/colors/application/list-colors.use-case";
-import { createColorUseCase } from "@/modules/adminCatalog/colors/application/create-color.use-case";
-import { updateColorUseCase } from "@/modules/adminCatalog/colors/application/update-color.use-case";
-import { deleteColorUseCase } from "@/modules/adminCatalog/colors/application/delete-color.use-case";
 import { listProductsUseCase } from "@/modules/adminCatalog/products/application/list-products.use-case";
 import { createProductUseCase } from "@/modules/adminCatalog/products/application/create-product.use-case";
 import { updateProductUseCase } from "@/modules/adminCatalog/products/application/update-product.use-case";
@@ -15,40 +11,17 @@ import { updateProductVariantStockUseCase } from "@/modules/adminCatalog/product
 const suffix = `smk${Date.now()}`;
 const SMOKE_TIMEOUT_MS = 60_000;
 
-let colorId = "";
 let simpleProductId = "";
 let setProductId = "";
 
-// Categorías y tipos de prenda ya no se administran en la web (los publica el POS).
+// Categorías, tipos de prenda y colores ya no se administran en la web (los publica el POS).
 describe("Admin Catalog Smoke Tests", () => {
   jest.setTimeout(SMOKE_TIMEOUT_MS);
 
   afterAll(async () => {
     if (simpleProductId) await deleteProductUseCase({ id: simpleProductId });
     if (setProductId) await deleteProductUseCase({ id: setProductId });
-    if (colorId) await deleteColorUseCase({ id: colorId });
     await prisma.$disconnect();
-  });
-
-  it("colors: list(active)/create/edit/toggle/delete", async () => {
-    const active = await listColorsUseCase({ onlyActive: true });
-    expect(Array.isArray(active)).toBe(true);
-
-    const created = await createColorUseCase({
-      name: `Color ${suffix}`,
-      hexCode: "#123ABC",
-    });
-    colorId = created.id;
-
-    const edited = await updateColorUseCase({
-      id: colorId,
-      name: `Color Edit ${suffix}`,
-      hexCode: "#ABC123",
-    });
-    expect(edited.name).toContain("Edit");
-
-    const toggled = await updateColorUseCase({ id: colorId, action: "toggle" });
-    expect(typeof toggled.isActive).toBe("boolean");
   });
 
   it("products: list/create simple/create set/edit/toggle/delete/update variant stock", async () => {

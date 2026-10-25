@@ -25,6 +25,8 @@ export interface UIColor {
   name: string;
   hex: string;
   images: string[];
+  /** Texto alternativo por URL de foto (del POS); la galería usa el nombre del producto si falta. */
+  imageAlts?: Record<string, string>;
   availableSizes: string[];
   variants: UIColorVariant[];
   isOutOfStock: boolean;

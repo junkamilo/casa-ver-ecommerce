@@ -15,6 +15,8 @@ import { posToRawProductDetail } from "../domain/pos-product-detail.entity";
 import type { ProductDetailResultDTO } from "../contracts/product-detail.dto";
 import { transformProduct } from "@/modules/collections/domain/product-mapper.entity";
 import { mapPosProduct } from "@/modules/posIntegration/domain/pos-mapper";
+import { restrictToPosPalette } from "@/modules/posIntegration/domain/pos-color-palette";
+import { getPosColorPalette } from "@/modules/posIntegration/application/get-pos-colors.use-case";
 import { getRecommendedEntries } from "@/modules/catalog/listing/application/get-catalog";
 import { toCard } from "@/modules/catalog/listing/domain/catalog-entry.entity";
 import { resolveProductSource } from "./resolve-product-source";
@@ -47,7 +49,15 @@ async function loadProduct(slug: string): Promise<RawProductDetail | null> {
   if (!legacy) return null;
   console.info(`[catalog] /product/${slug} source=NEON_LEGACY`);
   // La identidad del producto en carrito, pedidos y reseñas es el slug también para los de la web.
-  return { ...legacy, id: legacy.slug };
+  const product: RawProductDetail = { ...legacy, id: legacy.slug };
+  // Producto creado en la web: solo los colores que existen en el POS (la web no tiene colores propios).
+  const palette = legacy.posSlug ? null : await getPosColorPalette();
+  if (!palette) return product;
+  return {
+    ...product,
+    colors: restrictToPosPalette(product.colors, palette),
+    items: (product.items ?? []).map((item) => ({ ...item, colors: restrictToPosPalette(item.colors, palette) })),
+  };
 }
 
 /**

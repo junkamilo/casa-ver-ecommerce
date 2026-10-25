@@ -845,22 +845,8 @@ model AdminNotification {
   @@map("admin_notifications")
 }
 
-// ============================================================
-// CATÁLOGO GLOBAL DE COLORES (Administrable por el admin)
-// ============================================================
-
-model Color {
-  id        String   @id @default(cuid())
-  name      String   @unique           // Ej: "Verde Militar"
-  hexCode   String                     // Ej: "#4B5320"
-  isActive  Boolean  @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([isActive])
-  @@map("colors")
-}
+// Colores: la tienda usa la paleta del POS (GET /api/public/catalog/colors). La tabla "colors" se
+// renombró a "_legacy_colors" (migración 20261024000000_colors_from_pos) y ya no tiene modelo.
 
 // ============================================================
 // HERO / BANNER PRINCIPAL

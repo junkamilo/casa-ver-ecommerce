@@ -1,5 +1,5 @@
 import type { PosWebhookPayload } from "../contracts/pos-catalog.schema";
-import { revalidatePosCategories, revalidatePosProduct } from "./revalidate-catalog";
+import { revalidatePosCategories, revalidatePosColors, revalidatePosProduct } from "./revalidate-catalog";
 import { removeProductBySlug, syncProductBySlug } from "./sync-product.use-case";
 import { removePromotionById, syncPromotionById } from "./sync-promotion.use-case";
 import { syncOrderStatusFromPos } from "./sync-order-status.use-case";
@@ -16,8 +16,8 @@ const webSettings = new PrismaProductWebSettingsRepository();
  * Aplica un aviso del POS. Productos: `upserted` y `stock_changed` vuelven a consultar el recurso
  * en la API (el aviso no trae datos) y `removed` lo oculta sin borrarlo. Promociones: `upserted`
  * vuelve a consultar la promoción y actualiza su cupón; `removed` la desactiva (con usos) o la borra.
- * Categorías y subcategorías: la web no las guarda; se expira la caché del árbol del POS (menú,
- * colecciones y la ubicación de los productos) para que la próxima visita lo vuelva a leer.
+ * Categorías, subcategorías y colores: la web no los guarda; se expira la caché del POS (menú, colecciones,
+ * ubicación de los productos y paleta de colores) para que la próxima visita la vuelva a leer.
  */
 export async function processPosEvent(event: Pick<PosWebhookPayload, "entityType" | "id" | "action">) {
   const { entityType, id, action } = event;
@@ -42,6 +42,13 @@ export async function processPosEvent(event: Pick<PosWebhookPayload, "entityType
   // Envíos: cambió una tarifa, el envío gratis o la geografía; se vuelve a copiar la foto completa.
   if (entityType === "shipping") {
     return syncShippingFromPos();
+  }
+
+  // Colores (id = colorId): la web no los guarda; se expira la paleta del POS y las páginas que la pintan.
+  if (entityType === "color") {
+    revalidatePosColors();
+    console.info(`[POS webhook] color.${action} ${id}: tag pos-colors expirado`);
+    return { status: "revalidated" as const, entityType, id };
   }
 
   // Administradores: el POS cambió quién administra la web; se vuelve a copiar la lista.

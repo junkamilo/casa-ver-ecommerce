@@ -48,6 +48,16 @@ export const posMediaSchema = z.object({
   url: z.string().min(1),
   video: z.boolean().default(false),
   cover: z.boolean().default(false),
+  /** Texto alternativo de la foto (V106); el POS publica «<producto> - <color>» si no se cargó. */
+  alt: nullableString,
+});
+
+/** Color del catálogo del POS (`GET /colors`): la paleta de la web. `totalProducts` = productos publicados. */
+export const posColorFacetSchema = z.object({
+  colorId: z.number().int(),
+  name: z.string().min(1),
+  hexCode: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+  totalProducts: z.number().int().nonnegative().default(0),
 });
 
 export const posColorSchema = z.object({
@@ -107,7 +117,8 @@ export const posWebhookPayloadSchema = z.object({
   event: z.string().min(1),
   // shipping: cambió la geografía o el precio de envíos (id = "shipping"); se vuelve a sincronizar todo.
   // admin: cambiaron los administradores de la web en el POS (id = "admin"); se vuelve a sincronizar la lista.
-  entityType: z.enum(["category", "subcategory", "product", "promotion", "order", "shipping", "admin"]),
+  // color: se creó, cambió o desactivó un color del catálogo (id = colorId); se vuelve a leer GET /colors.
+  entityType: z.enum(["category", "subcategory", "product", "color", "promotion", "order", "shipping", "admin"]),
   id: z.string().min(1),
   // status_changed: el POS cambió el estado logístico de un pedido (id = número del pedido).
   action: z.enum(["upserted", "removed", "stock_changed", "status_changed"]),
@@ -237,6 +248,7 @@ export const posOrderCancelResultSchema = z.object({
 export type PosCategory = z.infer<typeof posCategorySchema>;
 export type PosProduct = z.infer<typeof posProductSchema>;
 export type PosColor = z.infer<typeof posColorSchema>;
+export type PosColorFacet = z.infer<typeof posColorFacetSchema>;
 export type PosVariant = z.infer<typeof posVariantSchema>;
 export type PosWebhookPayload = z.infer<typeof posWebhookPayloadSchema>;
 

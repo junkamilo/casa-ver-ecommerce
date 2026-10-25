@@ -2,6 +2,7 @@ import "server-only";
 import type { z } from "zod";
 import {
   posCategorySchema,
+  posColorFacetSchema,
   posEnvelopeSchema,
   posOrderCancelResultSchema,
   posOrderResultSchema,
@@ -11,6 +12,7 @@ import {
   posPromotionSchema,
   posStockCheckSchema,
   type PosCategory,
+  type PosColorFacet,
   type PosPromotion,
   type PosPromotionQuery,
   type PosOrderLine,
@@ -120,6 +122,12 @@ async function request<T extends z.ZodTypeAny>(
 
 export async function listCategories(updatedSince?: string): Promise<PosCategory[]> {
   const data = await request("/categories", posCategorySchema.array(), { updatedSince });
+  return data ?? [];
+}
+
+/** Colores activos del POS (`GET /colors`). Lanza si el POS falla (el caso de uso decide el respaldo). */
+export async function listColors(): Promise<PosColorFacet[]> {
+  const data = await request("/colors", posColorFacetSchema.array());
   return data ?? [];
 }
 

@@ -77,6 +77,7 @@ export default function ProductClient({
               onSelect={handleImageSelect}
               activeColorHex={selectedColor?.hex}
               isColorOutOfStock={selectedColor?.isOutOfStock ?? false}
+              altByUrl={selectedColor?.imageAlts}
             />
           </div>
 

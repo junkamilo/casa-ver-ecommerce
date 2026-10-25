@@ -1,6 +1,7 @@
 import type { PosProduct } from "@/modules/posIntegration/contracts/pos-catalog.schema";
 import { mapPosProduct } from "@/modules/posIntegration/domain/pos-mapper";
 import type { PosCollection, PosTaxonomy } from "@/modules/posIntegration/domain/pos-category-view";
+import { restrictToPosPalette, type PosColorPalette } from "@/modules/posIntegration/domain/pos-color-palette";
 import type { RawCollectionProduct } from "@/modules/collections/domain/product-mapper.entity";
 import {
   resolveWebCover,
@@ -119,7 +120,22 @@ export interface NeonCatalogRow extends RawCollectionProduct {
   isSuggested: boolean;
   suggestedAt: Date | null;
   createdAt: Date;
+  /** Slug del POS si es la copia de un producto del POS; `null` = creado en la web. */
+  posSlug: string | null;
   items: (RawCollectionProduct["items"][number] & { name: string })[];
+}
+
+/**
+ * Colores de un producto creado en la web limitados a la paleta del POS (la web ya no tiene colores propios).
+ * La copia de un producto del POS ya trae los colores del POS y no se toca; sin integración (`null`) tampoco.
+ */
+export function restrictWebRowColors(row: NeonCatalogRow, palette: PosColorPalette | null): NeonCatalogRow {
+  if (!palette || row.posSlug) return row;
+  return {
+    ...row,
+    colors: restrictToPosPalette(row.colors, palette),
+    items: row.items.map((item) => ({ ...item, colors: restrictToPosPalette(item.colors, palette) })),
+  };
 }
 
 export function neonToCatalogEntry(row: NeonCatalogRow): CatalogEntry {

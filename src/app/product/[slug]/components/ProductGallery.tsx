@@ -14,6 +14,8 @@ interface Props {
   onSelect: (index: number) => void;
   activeColorHex?: string;
   isColorOutOfStock?: boolean;
+  /** Texto alternativo por URL (fotos del color elegido, cargado en el POS). */
+  altByUrl?: Record<string, string>;
 }
 
 export default function ProductGallery({
@@ -22,6 +24,7 @@ export default function ProductGallery({
   productName,
   onSelect,
   isColorOutOfStock = false,
+  altByUrl,
 }: Props) {
   const {
     media,
@@ -78,7 +81,7 @@ export default function ProductGallery({
                 ) : (
                   <Image
                     src={url}
-                    alt={`Miniatura ${i + 1} de ${productName}`}
+                    alt={altByUrl?.[url] ?? `Miniatura ${i + 1} de ${productName}`}
                     fill
                     className="object-cover"
                     sizes="(max-width: 640px) 56px, (max-width: 768px) 80px, 120px"
@@ -135,7 +138,7 @@ export default function ProductGallery({
                   ) : (
                     <Image
                       src={url}
-                      alt={isCurrent ? productName : `${productName} — imagen ${i + 1}`}
+                      alt={altByUrl?.[url] ?? (isCurrent ? productName : `${productName} — imagen ${i + 1}`)}
                       fill
                       priority={i === 0}
                       className={`object-cover transition-transform duration-700 ease-out z-10 ${
@@ -221,7 +224,7 @@ export default function ProductGallery({
           >
             <Image
               src={currentMedia}
-              alt={productName}
+              alt={altByUrl?.[currentMedia] ?? productName}
               fill
               className="object-contain"
               sizes="95vw"

@@ -28,6 +28,7 @@ const CATALOG_SELECT = {
   isOnSale: true,
   coverImageUrl: true,
   createdAt: true,
+  posSlug: true,
   images: IMAGES(8),
   items: {
     orderBy: { order: "asc" as const },
