@@ -276,17 +276,13 @@ export interface PaidOrderForPos {
   /** Total cobrado del pedido completo. */
   total?: number | null;
   couponCode?: string | null;
-  /** Cupón aplicado: para el bloque `promotion` y el reparto del descuento entre productos del POS. */
+  /** Cupón aplicado (foto de la orden): para el bloque `promotion`. */
   coupon?: {
     code: string;
-    source: "WEB" | "POS";
+    /** promotionId del POS; null solo en pedidos viejos con cupones creados en la web. */
     posPromotionId: string | null;
     discountType: "PERCENTAGE" | "FIXED";
     discountValue: number;
-    /** Sin alcance: el descuento se prorratea por subtotal (como antes). */
-    wholeOrder: boolean;
-    /** Con alcance: productos del pedido a los que aplicó el cupón. */
-    eligibleProductIds: Set<string>;
   } | null;
   payment?: {
     method: string | null;
@@ -302,6 +298,8 @@ export interface PaidOrderForPos {
     name?: string | null;
     colorName?: string | null;
     size?: string | null;
+    /** Parte del descuento del cupón en esta línea, calculada por el POS al crear la orden. */
+    couponDiscount?: number;
   }[];
 }
 
@@ -312,8 +310,9 @@ function pesos(value: number): number {
 
 /**
  * Arma el pedido para el POS con los ítems que vienen del POS (los demás se venden solo en la web).
- * En un pedido mixto el descuento y el envío se reparten según la parte del subtotal que corresponde
- * a los productos del POS, para que la venta del POS cuadre con lo que se cobró por ellos.
+ * En un pedido mixto el envío se reparte según la parte del subtotal que corresponde a los productos del
+ * POS; el descuento del cupón es la suma de lo que el POS calculó para sus líneas (pedidos viejos sin ese
+ * reparto: por subtotal). Así la venta del POS cuadra con lo que se cobró por ellos.
  * Devuelve null si el pedido no tiene ningún ítem del POS.
  */
 export function buildPosOrderPayload(
@@ -323,19 +322,16 @@ export function buildPosOrderPayload(
   const lines: PosOrderPayload["lines"] = [];
   let posSubtotal = 0;
   let allSubtotal = 0;
-  // Cupón con alcance: base elegible del pedido y de los productos del POS.
-  const scoped = order.coupon && !order.coupon.wholeOrder ? order.coupon : null;
-  let eligibleAll = 0;
-  let eligiblePos = 0;
+  // Reparto del descuento por línea que hizo el POS al validar el cupón.
+  const byLine = order.items.some((item) => (item.couponDiscount ?? 0) > 0);
+  let posLineDiscount = 0;
   for (const item of order.items) {
     allSubtotal += item.price * item.quantity;
-    const eligible = scoped ? scoped.eligibleProductIds.has(item.productId) : false;
-    if (eligible) eligibleAll += item.price * item.quantity;
     const slug = posSlugByProductId.get(item.productId);
     const combo = parsePosVariantSku(item.sku);
     if (!slug || !combo) continue;
     posSubtotal += item.price * item.quantity;
-    if (eligible) eligiblePos += item.price * item.quantity;
+    posLineDiscount += item.couponDiscount ?? 0;
     lines.push({
       productSlug: normalizePosSlug(slug),
       colorId: combo.colorId,
@@ -351,9 +347,7 @@ export function buildPosOrderPayload(
   if (lines.length === 0) return null;
 
   const share = allSubtotal > 0 ? Math.min(1, posSubtotal / allSubtotal) : 1;
-  // Con alcance el descuento es de las prendas elegibles: el POS recibe la parte de las suyas.
-  const discountShare = scoped ? (eligibleAll > 0 ? Math.min(1, eligiblePos / eligibleAll) : 0) : share;
-  const posDiscount = pesos(order.discount * discountShare);
+  const posDiscount = byLine ? pesos(Math.min(posLineDiscount, order.discount)) : pesos(order.discount * share);
   const paidAt = order.payment?.paidAt;
   return {
     orderNumber: order.orderNumber,
@@ -381,9 +375,9 @@ export function buildPosOrderPayload(
     couponCode: order.couponCode ?? null,
     promotion: order.coupon
       ? {
-          promotionId: order.coupon.source === "POS" ? order.coupon.posPromotionId : null,
+          promotionId: order.coupon.posPromotionId,
           code: order.coupon.code,
-          source: order.coupon.source,
+          source: order.coupon.posPromotionId ? "POS" : "WEB",
           discountType: order.coupon.discountType,
           discountValue: order.coupon.discountValue,
           orderDiscount: pesos(order.discount),

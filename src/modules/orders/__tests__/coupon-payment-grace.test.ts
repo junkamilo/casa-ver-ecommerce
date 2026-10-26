@@ -2,56 +2,13 @@
 
 import { readFileSync } from "fs";
 import { join } from "path";
-import { bogotaInstant } from "@/modules/checkout/domain/coupon-schedule";
 import {
   computeOrderPaymentExpiresAt,
   isOrderWithinPaymentGrace,
   ORDER_PAYMENT_GRACE_MS,
 } from "@/modules/checkout/domain/order-payment-grace";
-import { validateCouponTimeWindow } from "@/modules/checkout/domain/validate-coupon-time-window";
-import {
-  CouponExpiredError,
-  CouponNotYetValidError,
-} from "@/modules/checkout/application/checkout.errors";
 import { OrderPaymentGraceExpiredError } from "@/modules/orders/application/order.errors";
 
-describe("validateCouponTimeWindow — orquestador temporal", () => {
-  const window = {
-    scheduleMode: "SINGLE_DAY" as const,
-    validFrom: bogotaInstant("2026-06-15", "09:00"),
-    validTo: bogotaInstant("2026-06-15", "18:00"),
-    expiresAt: null,
-  };
-
-  it("no lanza cuando la ventana es válida", () => {
-    expect(() =>
-      validateCouponTimeWindow(window, bogotaInstant("2026-06-15", "12:00"))
-    ).not.toThrow();
-  });
-
-  it("lanza CouponNotYetValidError antes de validFrom", () => {
-    expect(() =>
-      validateCouponTimeWindow(window, bogotaInstant("2026-06-15", "08:00"))
-    ).toThrow(CouponNotYetValidError);
-  });
-
-  it("lanza CouponExpiredError después de validTo", () => {
-    expect(() =>
-      validateCouponTimeWindow(window, bogotaInstant("2026-06-15", "19:00"))
-    ).toThrow(CouponExpiredError);
-  });
-
-  it("acepta cupón sin ventana (scheduleMode NONE)", () => {
-    expect(() =>
-      validateCouponTimeWindow({
-        scheduleMode: "NONE",
-        validFrom: null,
-        validTo: null,
-        expiresAt: null,
-      })
-    ).not.toThrow();
-  });
-});
 
 describe("order payment grace — Flash Sale snapshot", () => {
   it("computeOrderPaymentExpiresAt suma 30 minutos", () => {
@@ -77,33 +34,18 @@ describe("order payment grace — Flash Sale snapshot", () => {
     expect(isOrderWithinPaymentGrace(undefined)).toBe(true);
   });
 
-  it("cupón expirado en ventana pero orden en grace: validateCouponTimeWindow fallaría en Fase 1, no en webhook", () => {
-    const expiredCoupon = {
-      scheduleMode: "SINGLE_DAY" as const,
-      validFrom: bogotaInstant("2026-06-15", "09:00"),
-      validTo: bogotaInstant("2026-06-15", "10:00"),
-      expiresAt: null,
-    };
-    const orderCreatedAt = bogotaInstant("2026-06-15", "09:45");
-    const afterCouponEnd = bogotaInstant("2026-06-15", "10:10");
-    expect(() => validateCouponTimeWindow(expiredCoupon, afterCouponEnd)).toThrow(
-      CouponExpiredError
-    );
-
-    const paymentExpiresAt = computeOrderPaymentExpiresAt(orderCreatedAt);
-    expect(isOrderWithinPaymentGrace(paymentExpiresAt, afterCouponEnd)).toBe(true);
-  });
 });
 
-describe("markPaid — sin revalidación temporal del cupón", () => {
+describe("markPaid — sin cupones locales", () => {
   const repoPath = join(
     process.cwd(),
     "src/modules/orders/infrastructure/prisma-order.repository.ts"
   );
   const source = readFileSync(repoPath, "utf8");
 
-  it("consolidatePromotionalCouponUsage no importa validateCouponTimeWindow", () => {
-    expect(source).not.toContain("validateCouponTimeWindow");
+
+  it("markPaid no consulta ni consolida cupones en Neon (el uso lo registra el POS)", () => {
+    expect(source).not.toMatch(/\.coupon\.|couponUsage|"coupons"/);
   });
 
   it("markPaid valida paymentExpiresAt con isOrderWithinPaymentGrace", () => {

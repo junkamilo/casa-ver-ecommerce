@@ -346,16 +346,15 @@ export async function getRetentionByPeriod(period: Period): Promise<RetentionDat
 
 export async function getDiscountImpactByPeriod(period: Period): Promise<DiscountData> {
   const { start, end } = getPeriodDateRange(period);
-  const [orders, couponsUsed] = await Promise.all([
-    prisma.order.findMany({
-      where: {
-        ...buildRevenueOrderWhere(start, end),
-        discount: { gt: 0 },
-      },
-      select: { discount: true, total: true },
-    }),
-    prisma.coupon.count({ where: { isUsed: true, usedAt: { gte: start, lte: end } } }),
-  ]);
+  const orders = await prisma.order.findMany({
+    where: {
+      ...buildRevenueOrderWhere(start, end),
+      discount: { gt: 0 },
+    },
+    select: { discount: true, total: true, couponCode: true },
+  });
+  // Cupones usados = pedidos del periodo pagados con un cupón (el POS lleva el detalle de cada uso).
+  const couponsUsed = orders.filter((o) => o.couponCode).length;
   const totalDiscount = orders.reduce((sum, o) => sum + Number(o.discount), 0);
   const grossRevenue = orders.reduce((sum, o) => sum + Number(o.total) + Number(o.discount), 0);
   return { totalDiscount: formatPrice(totalDiscount), discountedOrders: orders.length, couponsUsed, percentageOfRevenue: grossRevenue > 0 ? `${Math.round((totalDiscount / grossRevenue) * 100)}%` : "0%" };

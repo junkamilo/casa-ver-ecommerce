@@ -46,7 +46,7 @@ export interface CreateOrderInput {
   shippingCost: number;
   discount: number;
 
-  couponId?: string;
+  /** Cupón del POS: se vuelve a validar contra el POS al crear la orden. */
   couponCode?: string;
 
   captchaToken?: string;

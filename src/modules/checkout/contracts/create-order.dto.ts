@@ -41,7 +41,7 @@ export interface CreateOrderInputDTO {
   shippingCost: number;
   discount: number;
 
-  couponId?: string;
+  /** Cupón del POS: el use case lo vuelve a validar contra el POS con los precios reales. */
   couponCode?: string;
 }
 

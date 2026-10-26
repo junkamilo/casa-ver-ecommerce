@@ -117,8 +117,6 @@ model User {
   verificationTokens    EmailVerificationToken[]
   passwordResetTokens   PasswordResetToken[]
   cart                  Cart?
-  couponBatches         CouponBatch[]
-  couponUsages          CouponUsage[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -466,11 +464,13 @@ model Order {
   webhookLogs        WebhookLog[]
   notifications      AdminNotification[]
   reviews            Review[]
-  couponUsages       CouponUsage[]
   accountingSaleExport AccountingSaleExport?
 
-  appliedCouponId    String?
-  appliedCoupon      Coupon?       @relation(fields: [appliedCouponId], references: [id], onDelete: SetNull)
+  // Cupón del POS aplicado (snapshot): el POS lo validó y calculó el descuento al crear la orden.
+  couponCode          String?       // código que escribió el cliente (normalizado)
+  posPromotionId      String?       // promotionId del POS (PRM-año-número); nulo en cupones viejos de la web
+  couponDiscountType  String?       // PERCENTAGE | FIXED
+  couponDiscountValue Int?          // % entero o pesos enteros
 
   paidAt             DateTime?
   shippedAt          DateTime?
@@ -528,6 +528,7 @@ model OrderItem {
   price       Decimal        @db.Decimal(10, 2)
   quantity    Int
   total       Decimal        @db.Decimal(10, 2)
+  couponDiscount Decimal     @db.Decimal(10, 2) @default(0) // parte del descuento del cupón en esta línea (la calcula el POS)
   imageUrl    String?        // Foto principal de la variante
 
   @@map("order_items")
@@ -631,118 +632,15 @@ model Review {
 }
 
 // ============================================================
-// CUPONES DE DESCUENTO
+// VIGENCIA (popups de publicidad)
+// Los cupones viven en el POS (sales.promotions): la web los valida con POST /api/public/promotions/validate.
+// Las tablas coupons, coupon_batches y coupon_usages quedaron como _legacy_* (20261026000000_coupons_from_pos).
 // ============================================================
-
-enum CouponKind {
-  BATCH_SINGLE
-  EMAIL_SINGLE
-  PROMOTIONAL
-}
-
-enum CouponDiscountType {
-  PERCENTAGE
-  FIXED
-}
-
-enum CouponCodeSource {
-  RANDOM
-  CUSTOM
-}
 
 enum CouponScheduleMode {
   NONE
   SINGLE_DAY
   DATE_RANGE
-}
-
-// Origen del cupón: WEB = creado en el admin web; POS = promoción del POS (copia de solo lectura)
-enum CouponSource {
-  WEB
-  POS
-}
-
-// Alcance del descuento: todo el pedido, productos o categorías (las promociones del POS)
-enum CouponScope {
-  ORDER
-  PRODUCTS
-  CATEGORIES
-}
-
-model CouponBatch {
-  id                 String   @id @default(cuid())
-  discountPercentage Int
-  quantity           Int
-  createdById        String?
-  createdBy          User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  coupons            Coupon[]
-  createdAt          DateTime @default(now())
-
-  @@map("coupon_batches")
-}
-
-model Coupon {
-  id                 String             @id @default(cuid())
-  code               String             @unique
-  kind               CouponKind         @default(BATCH_SINGLE)
-  discountType       CouponDiscountType @default(PERCENTAGE)
-  discountValue      Int                @default(10)
-  discountPercentage Int                @default(10)
-  assignedEmail      String?            // null = cupón masivo admin (requiere usuario registrado)
-  isUsed             Boolean            @default(false)
-  usedAt             DateTime?
-  usedByOrderId      String?
-  batchId            String?
-  batch              CouponBatch?       @relation(fields: [batchId], references: [id], onDelete: SetNull)
-  maxGlobalUses      Int?
-  maxUsesPerUser     Int                @default(1)
-  currentGlobalUses  Int                @default(0)
-  expiresAt          DateTime?          // legacy; solo fallback si scheduleMode=NONE
-  scheduleMode       CouponScheduleMode @default(NONE) // capa admin (NONE | SINGLE_DAY | DATE_RANGE)
-  validFrom          DateTime?          // inicio ventana temporal — almacenado en UTC
-  validTo            DateTime?          // fin ventana temporal (equiv. validUntil) — almacenado en UTC
-  isActive           Boolean            @default(true)
-  codeSource         CouponCodeSource?
-  label              String?
-
-  // Integración POS (promociones creadas en el POS): la web guarda una copia y la aplica en el checkout.
-  source             CouponSource       @default(WEB)
-  posPromotionId     String?            @unique // promotionId del POS (PRM-año-número)
-  posSyncedAt        DateTime?
-  minPurchase        Int?               // subtotal mínimo en pesos para aplicar el cupón
-  scopeType          CouponScope        @default(ORDER)
-  scopeProductIds    String[]           @default([]) // ids de products (alcance PRODUCTS)
-  scopeCategoryIds   String[]           @default([]) // ids de categories (alcance CATEGORIES)
-
-  usages             CouponUsage[]
-  orders             Order[]
-
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-
-  @@index([code])
-  @@index([assignedEmail])
-  @@index([batchId])
-  @@index([kind])
-  @@map("coupons")
-}
-
-model CouponUsage {
-  id         String   @id @default(cuid())
-  couponId   String
-  coupon     Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
-  orderId    String   @unique
-  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  userId     String?
-  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  email      String
-  documentId String
-  usedAt     DateTime @default(now())
-
-  @@index([couponId, email])
-  @@index([couponId, documentId])
-  @@index([couponId, userId])
-  @@map("coupon_usages")
 }
 
 // ============================================================

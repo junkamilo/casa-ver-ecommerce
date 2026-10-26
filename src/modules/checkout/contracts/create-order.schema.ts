@@ -53,8 +53,7 @@ export const createOrderInputSchema = z
     shippingCost: z.number().nonnegative(),
     discount: z.number().nonnegative(),
 
-    couponId: z.string().optional(),
-    couponCode: z.string().optional(),
+    couponCode: z.string().max(60).optional(),
   })
   .superRefine((data, ctx) => {
     // Refinamientos extra que ya validaba el código original como ifs separados.

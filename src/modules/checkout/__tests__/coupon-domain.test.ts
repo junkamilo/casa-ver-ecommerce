@@ -10,21 +10,15 @@ import {
 
   getCouponScheduleStatus,
 
-  getPromotionalCouponStatus,
 
-  hasUserExceededCouponLimit,
 
-  isCouponEligibleForEmail,
 
   isCouponExpired,
 
-  isCouponGloballyAvailable,
 
   isCouponWithinSchedule,
 
-  isPromotionalCoupon,
 
-  PROMOTIONAL_MAX_USES_PER_USER,
 
 } from "@/modules/checkout/domain/coupon.entity";
 
@@ -42,73 +36,8 @@ import {
 
 } from "@/modules/checkout/domain/coupon-schedule";
 
-import { validateCouponTimeWindow } from "@/modules/checkout/domain/validate-coupon-time-window";
 
-import {
-
-  CouponExpiredError,
-
-  CouponNotYetValidError,
-
-} from "@/modules/checkout/application/checkout.errors";
-
-
-
-describe("Coupon domain — promotional predicates", () => {
-
-  const activePromo = {
-
-    kind: "PROMOTIONAL" as const,
-
-    isUsed: false,
-
-    assignedEmail: null,
-
-    isActive: true,
-
-    scheduleMode: "NONE" as const,
-
-    validFrom: null,
-
-    validTo: null,
-
-    expiresAt: null,
-
-    maxGlobalUses: 10,
-
-    currentGlobalUses: 3,
-
-    maxUsesPerUser: 1,
-
-  };
-
-
-
-  it("isPromotionalCoupon discrimina tipo", () => {
-
-    expect(isPromotionalCoupon("PROMOTIONAL")).toBe(true);
-
-    expect(isPromotionalCoupon("BATCH_SINGLE")).toBe(false);
-
-  });
-
-
-
-  it("isCouponGloballyAvailable valida cupo global", () => {
-
-    expect(isCouponGloballyAvailable(activePromo)).toBe(true);
-
-    expect(
-
-      isCouponGloballyAvailable({ ...activePromo, currentGlobalUses: 10 })
-
-    ).toBe(false);
-
-    expect(isCouponGloballyAvailable({ ...activePromo, isActive: false })).toBe(false);
-
-  });
-
-
+describe("Coupon domain — vigencia", () => {
 
   it("isCouponExpired detecta expiración legacy", () => {
 
@@ -124,75 +53,15 @@ describe("Coupon domain — promotional predicates", () => {
 
 
 
-  it("isCouponEligibleForEmail acepta promocional sin email asignado", () => {
-
-    expect(isCouponEligibleForEmail(activePromo, "guest@example.com")).toBe(true);
-
-  });
 
 
 
-  it("hasUserExceededCouponLimit: 1 uso por persona en promocionales", () => {
-
-    expect(hasUserExceededCouponLimit(0, PROMOTIONAL_MAX_USES_PER_USER)).toBe(false);
-
-    expect(hasUserExceededCouponLimit(1, PROMOTIONAL_MAX_USES_PER_USER)).toBe(true);
-
-  });
 
 
 
-  it("getPromotionalCouponStatus devuelve estado correcto", () => {
-
-    expect(getPromotionalCouponStatus(activePromo)).toBe("ACTIVE");
-
-    expect(getPromotionalCouponStatus({ ...activePromo, currentGlobalUses: 10 })).toBe(
-
-      "EXHAUSTED"
-
-    );
-
-    expect(getPromotionalCouponStatus({ ...activePromo, isActive: false })).toBe("INACTIVE");
-
-    expect(
-
-      getPromotionalCouponStatus({
-
-        ...activePromo,
-
-        expiresAt: new Date("2020-01-01"),
-
-      })
-
-    ).toBe("EXPIRED");
-
-  });
 
 
 
-  it("getPromotionalCouponStatus devuelve SCHEDULED antes de validFrom", () => {
-
-    const futureFrom = bogotaInstant("2099-06-15", "09:00");
-
-    const futureTo = bogotaInstant("2099-06-15", "18:00");
-
-    expect(
-
-      getPromotionalCouponStatus({
-
-        ...activePromo,
-
-        scheduleMode: "SINGLE_DAY",
-
-        validFrom: futureFrom,
-
-        validTo: futureTo,
-
-      })
-
-    ).toBe("SCHEDULED");
-
-  });
 
 
 
@@ -358,57 +227,6 @@ describe("Coupon schedule — build and format", () => {
 
 
 
-describe("validateCouponTimeWindow — orquestador", () => {
-
-  const window = {
-
-    scheduleMode: "SINGLE_DAY" as const,
-
-    validFrom: bogotaInstant("2026-06-15", "09:00"),
-
-    validTo: bogotaInstant("2026-06-15", "18:00"),
-
-    expiresAt: null,
-
-  };
-
-
-
-  it("lanza CouponNotYetValidError si aún no inicia", () => {
-
-    expect(() =>
-
-      validateCouponTimeWindow(window, bogotaInstant("2026-06-15", "08:00"))
-
-    ).toThrow(CouponNotYetValidError);
-
-  });
-
-
-
-  it("lanza CouponExpiredError si ya expiró", () => {
-
-    expect(() =>
-
-      validateCouponTimeWindow(window, bogotaInstant("2026-06-15", "19:00"))
-
-    ).toThrow(CouponExpiredError);
-
-  });
-
-
-
-  it("no lanza dentro de la ventana", () => {
-
-    expect(() =>
-
-      validateCouponTimeWindow(window, bogotaInstant("2026-06-15", "12:00"))
-
-    ).not.toThrow();
-
-  });
-
-});
 
 
 

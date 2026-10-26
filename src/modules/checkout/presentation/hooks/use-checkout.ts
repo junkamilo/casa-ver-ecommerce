@@ -82,8 +82,8 @@ export function useCheckout(options?: UseCheckoutOptions) {
   const cityValue = form.watch("city");
   const departmentValue = form.watch("department");
 
-  // Promociones del POS con alcance: el descuento se calcula solo sobre las prendas elegibles.
-  // Bajo la compra mínima no aplica (el servidor lo vuelve a validar al crear la orden).
+  // Vista previa del descuento con la regla del POS (que lo validó): con alcance, solo sobre las prendas
+  // elegibles; bajo la compra mínima no aplica. Al crear la orden el POS lo valida y calcula de nuevo.
   const couponBase =
     coupon.status === "valid" && coupon.eligibleVariantIds
       ? checkoutItems
@@ -162,16 +162,20 @@ export function useCheckout(options?: UseCheckoutOptions) {
 
       setCoupon((prev) => ({ ...prev, code, status: "validating" }));
 
+      const cedula = form.getValues("cedula")?.trim();
       const result = await validateCoupon(
         code,
         hasValidEmail ? email : undefined,
-        checkoutItems.map((item) => ({ variantId: item.variantId, price: item.price, quantity: item.quantity }))
+        checkoutItems.map((item) => ({
+          variantId: item.variantId,
+          productId: item.productId,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+        cedula || undefined
       );
 
-      if (
-        !result.valid &&
-        result.error === "Correo requerido para validar este cupón"
-      ) {
+      if (!result.valid && result.reason === "EMAIL_REQUIRED") {
         form.setError("email", {
           message: "Ingresa un correo válido antes de aplicar este cupón",
         });
@@ -188,13 +192,13 @@ export function useCheckout(options?: UseCheckoutOptions) {
         const discountType = result.discountType ?? "PERCENTAGE";
         const discountValue = result.discountValue ?? result.discountPercentage ?? 0;
         setCoupon({
-          code,
+          code: result.code ?? code,
           status: "valid",
           discountType,
           discountValue,
           discountPercentage:
             discountType === "PERCENTAGE" ? discountValue : 0,
-          couponId: result.couponId,
+          promotionId: result.promotionId,
           minPurchase: result.minPurchase ?? null,
           eligibleVariantIds: result.eligibleVariantIds,
         });
@@ -267,8 +271,7 @@ export function useCheckout(options?: UseCheckoutOptions) {
           subtotal,
           shippingCost,
           discount: couponDiscount,
-          couponId: belowCouponMinimum ? undefined : coupon.couponId,
-          couponCode: coupon.status === "valid" ? coupon.code : undefined,
+          couponCode: coupon.status === "valid" && !belowCouponMinimum ? coupon.code : undefined,
           captchaToken,
         });
 

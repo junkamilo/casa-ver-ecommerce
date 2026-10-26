@@ -28,9 +28,10 @@ export interface CouponState {
   discountPercentage: number;
   discountType?: "PERCENTAGE" | "FIXED";
   discountValue?: number;
-  couponId?: string;
+  /** promotionId del POS (PRM-año-número) que validó el cupón. */
+  promotionId?: string;
   errorMessage?: string;
-  /** Promociones del POS: subtotal mínimo para que el cupón aplique. */
+  /** Subtotal mínimo para que el cupón aplique (lo define la promoción del POS). */
   minPurchase?: number | null;
   /** Variantes del carrito a las que aplica (alcance por productos o categorías); sin valor = todo el pedido. */
   eligibleVariantIds?: string[];

@@ -4,9 +4,7 @@
 // calculators de UI). NO ejecuta llamadas a DB ni HTTP.
 
 import {
-  calculateCouponDiscount,
   calculateCouponDiscountAmount,
-  isCouponEligibleForEmail,
 } from "@/modules/checkout/domain/coupon.entity";
 import { createOrderInputSchema } from "@/modules/checkout/contracts/create-order.schema";
 import {
@@ -22,42 +20,13 @@ import {
 } from "@/modules/checkout/presentation/calculators/line-item-totals";
 
 describe("Checkout — coupon domain", () => {
-  const legacyCoupon = { isUsed: false, assignedEmail: "Test@Example.com" };
-  const openCoupon = { isUsed: false, assignedEmail: null };
 
-  it("isCouponEligibleForEmail acepta email case-insensitive (legacy)", () => {
-    expect(isCouponEligibleForEmail(legacyCoupon, "test@example.com")).toBe(true);
-    expect(isCouponEligibleForEmail(legacyCoupon, "TEST@example.com")).toBe(true);
-  });
 
-  it("isCouponEligibleForEmail rechaza si está usado", () => {
-    const used = { isUsed: true, assignedEmail: "test@example.com" };
-    expect(isCouponEligibleForEmail(used, "test@example.com")).toBe(false);
-  });
 
-  it("isCouponEligibleForEmail rechaza legacy si el email no coincide", () => {
-    expect(isCouponEligibleForEmail(legacyCoupon, "other@example.com")).toBe(false);
-  });
 
-  it("isCouponEligibleForEmail acepta cupón abierto si no está usado", () => {
-    expect(isCouponEligibleForEmail(openCoupon, "any@example.com")).toBe(true);
-  });
 
-  it("isCouponEligibleForEmail rechaza cupón abierto usado", () => {
-    expect(isCouponEligibleForEmail({ isUsed: true, assignedEmail: null }, "any@example.com")).toBe(false);
-  });
 
-  it("isCouponEligibleForEmail rechaza coupons null/undefined", () => {
-    expect(isCouponEligibleForEmail(null, "test@example.com")).toBe(false);
-    expect(isCouponEligibleForEmail(undefined, "test@example.com")).toBe(false);
-  });
 
-  it("calculateCouponDiscount aplica porcentaje y redondea", () => {
-    expect(calculateCouponDiscount(100000, 15)).toBe(15000);
-    expect(calculateCouponDiscount(33333, 10)).toBe(3333);
-    expect(calculateCouponDiscount(12345, 15)).toBe(1852);
-    expect(calculateCouponDiscount(100000, 0)).toBe(0);
-  });
 
   it("calculateCouponDiscountAmount soporta monto fijo", () => {
     expect(calculateCouponDiscountAmount(80000, "FIXED", 25000)).toBe(25000);

@@ -1,65 +1,40 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
-import { randomBytes } from "crypto";
+import type { CouponDiscountType } from "@/modules/checkout/domain/coupon.entity";
+import { quoteCouponWithPos } from "@/modules/checkout/infrastructure/pos-coupon";
 import {
-  calculateCouponDiscountAmount,
-  isCouponEligibleForEmail,
-  isCouponGloballyAvailable,
-  isPromotionalCoupon,
-  type CouponDiscountType,
-  type CouponKind,
-} from "@/modules/checkout/domain/coupon.entity";
-import { validateCouponTimeWindow } from "@/modules/checkout/domain/validate-coupon-time-window";
-import {
-  eligibleSubtotal,
-  isWholeOrder,
-  minPurchaseMessage,
-  OUT_OF_SCOPE_MESSAGE,
-  type CouponScopeType,
-} from "@/modules/checkout/domain/coupon-scope";
-import { eligibleVariantIds } from "@/modules/checkout/infrastructure/coupon-eligibility";
+  isPosCatalogConfigured,
+  issuePosPromotionCode,
+} from "@/modules/posIntegration/infrastructure/pos-catalog.client";
+
+/**
+ * Cupones de la tienda: 100 % del POS (md/COMPARACION-TABLAS-PROMOCIONES-POS-vs-WEB.md). La web no guarda
+ * cupones: el POS los crea, los valida y calcula el descuento; aquí solo se le pregunta.
+ */
 
 /** Línea del carrito para validar compra mínima y alcance (precio mostrado; el servidor recalcula al pagar). */
-export type CouponCartLine = { variantId: string; price: number; quantity: number };
+export type CouponCartLine = { variantId: string; productId?: string; price: number; quantity: number };
+
+/** Promoción de bienvenida del POS (V107 la crea como PRM-WELCOME-10); se puede cambiar por entorno. */
+const WELCOME_PROMOTION_ID = process.env.POS_WELCOME_PROMOTION_ID?.trim() || "PRM-WELCOME-10";
 
 // ---------------------------------------------------------------------------
 // generateFirstPurchaseCoupon
-// Se llama cuando un email se registra por primera vez (en register o newsletter).
-// Crea un cupón único del 10% vinculado a ese email. Idempotente.
+// Se llama cuando un email se registra por primera vez (en register o newsletter). El POS emite un cupón
+// único del 10 % ligado a ese email (POST /api/public/promotions/{promotionId}/codes). Idempotente: si el
+// correo ya tenía cupón, el POS devuelve el mismo.
 // ---------------------------------------------------------------------------
 export async function generateFirstPurchaseCoupon(email: string): Promise<{ success: boolean; code?: string; error?: string }> {
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { success: false, error: "Email inválido" };
   }
-
-  const normalizedEmail = email.toLowerCase().trim();
+  if (!isPosCatalogConfigured()) {
+    return { success: false, error: "Error al generar el cupón" };
+  }
 
   try {
-    const existing = await prisma.coupon.findFirst({
-      where: { assignedEmail: normalizedEmail, isUsed: false, kind: "EMAIL_SINGLE" },
-    });
-
-    if (existing) {
-      return { success: true, code: existing.code };
-    }
-
-    const code = `CV-${randomBytes(5).toString("hex").toUpperCase()}`;
-
-    const coupon = await prisma.coupon.create({
-      data: {
-        code,
-        kind: "EMAIL_SINGLE",
-        discountType: "PERCENTAGE",
-        discountValue: 10,
-        discountPercentage: 10,
-        assignedEmail: normalizedEmail,
-        isUsed: false,
-        maxGlobalUses: 1,
-      },
-    });
-
-    return { success: true, code: coupon.code };
+    const issued = await issuePosPromotionCode(WELCOME_PROMOTION_ID, email.toLowerCase().trim());
+    return { success: true, code: issued.code };
   } catch (err) {
     console.error("[generateFirstPurchaseCoupon] Error:", err);
     return { success: false, error: "Error al generar el cupón" };
@@ -68,142 +43,58 @@ export async function generateFirstPurchaseCoupon(email: string): Promise<{ succ
 
 export type ValidateCouponResult = {
   valid: boolean;
+  /** Código normalizado (el que se envía al crear la orden). */
+  code?: string;
   discountPercentage?: number;
   discountType?: CouponDiscountType;
   discountValue?: number;
-  couponId?: string;
-  kind?: CouponKind;
+  /** Descuento calculado por el POS para el carrito enviado. */
+  discountAmount?: number;
+  /** promotionId del POS (PRM-año-número). */
+  promotionId?: string;
   error?: string;
-  /** Promociones del POS: subtotal mínimo y alcance. */
+  /** Motivo estable del POS cuando no aplica (COUPON_EXPIRED, EMAIL_REQUIRED, ...). */
+  reason?: string;
   minPurchase?: number | null;
-  scopeType?: CouponScopeType;
   /** Variantes del carrito a las que aplica (solo si el cupón tiene alcance); el descuento se calcula sobre ellas. */
   eligibleVariantIds?: string[];
-  /** Cupón administrado por el POS. */
-  source?: "WEB" | "POS";
 };
 
 // ---------------------------------------------------------------------------
-// validateCoupon — Fase 1 (aplicar código en checkout)
+// validateCoupon — aplicar código en el checkout
+// El POS valida vigencia, cupo, uso por persona, dueño (bienvenida), compra mínima y alcance, y calcula el
+// descuento. Al crear la orden se vuelve a validar con los precios reales.
 // ---------------------------------------------------------------------------
 export async function validateCoupon(
   code: string,
   email?: string,
-  items?: CouponCartLine[]
+  items?: CouponCartLine[],
+  document?: string
 ): Promise<ValidateCouponResult> {
   if (!code) {
     return { valid: false, error: "Código requerido" };
   }
 
-  const normalizedCode = code.toUpperCase().trim();
+  const lines = (items ?? []).map((item) => ({
+    variantId: item.variantId,
+    productId: item.productId ?? item.variantId,
+    price: item.price,
+    quantity: item.quantity,
+  }));
+  const quote = await quoteCouponWithPos({ code, email, document, lines });
 
-  try {
-    const coupon = await prisma.coupon.findUnique({
-      where: { code: normalizedCode },
-    });
-
-    if (!coupon) {
-      return { valid: false, error: "El cupón no existe" };
-    }
-
-    if (isPromotionalCoupon(coupon.kind)) {
-      if (coupon.isActive === false) {
-        return { valid: false, error: "El cupón no está activo" };
-      }
-      try {
-        validateCouponTimeWindow(coupon);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Cupón no válido";
-        return { valid: false, error: message };
-      }
-      if (!isCouponGloballyAvailable(coupon)) {
-        return { valid: false, error: "El cupón ya no tiene usos disponibles" };
-      }
-
-      // Compra mínima y alcance (promociones del POS). Con el carrito se valida aquí; sin él, al pagar.
-      let eligible: string[] | undefined;
-      if (items && items.length > 0) {
-        const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-        if (coupon.minPurchase && subtotal < coupon.minPurchase) {
-          return { valid: false, error: minPurchaseMessage(coupon.minPurchase) };
-        }
-        if (!isWholeOrder(coupon)) {
-          const ids = await eligibleVariantIds(
-            prisma,
-            {
-              scopeType: coupon.scopeType as CouponScopeType,
-              scopeProductIds: coupon.scopeProductIds ?? [],
-              scopeCategoryIds: coupon.scopeCategoryIds ?? [],
-            },
-            items.map((item) => item.variantId)
-          );
-          if (eligibleSubtotal(items.map((i) => ({ ...i, productId: null })), ids) <= 0) {
-            return { valid: false, error: OUT_OF_SCOPE_MESSAGE };
-          }
-          eligible = [...ids];
-        }
-      }
-
-      return {
-        valid: true,
-        discountType: coupon.discountType as CouponDiscountType,
-        discountValue: coupon.discountValue,
-        discountPercentage:
-          coupon.discountType === "PERCENTAGE" ? coupon.discountValue : undefined,
-        couponId: coupon.id,
-        kind: coupon.kind as CouponKind,
-        minPurchase: coupon.minPurchase ?? null,
-        scopeType: coupon.scopeType as CouponScopeType,
-        eligibleVariantIds: eligible,
-        source: coupon.source,
-      };
-    }
-
-    // Cupones de un solo uso: los de un lote del POS se pueden desactivar desde el POS.
-    if (coupon.isActive === false) {
-      return { valid: false, error: "El cupón no está activo" };
-    }
-
-    if (!email) {
-      return { valid: false, error: "Correo requerido para validar este cupón" };
-    }
-
-    const normalizedEmail = email.toLowerCase().trim();
-
-    if (coupon.isUsed) {
-      return { valid: false, error: "El cupón ya fue utilizado" };
-    }
-
-    if (!isCouponEligibleForEmail(coupon, normalizedEmail)) {
-      return { valid: false, error: "El cupón no pertenece a este correo" };
-    }
-
-    if (coupon.assignedEmail) {
-      if (coupon.assignedEmail !== normalizedEmail) {
-        return { valid: false, error: "El cupón no pertenece a este correo" };
-      }
-    } else {
-      const user = await prisma.user.findUnique({
-        where: { email: normalizedEmail },
-        select: { id: true },
-      });
-      if (!user) {
-        return { valid: false, error: "Debes registrarte para usar este cupón" };
-      }
-    }
-
-    return {
-      valid: true,
-      discountType: "PERCENTAGE",
-      discountValue: coupon.discountValue ?? coupon.discountPercentage,
-      discountPercentage: coupon.discountPercentage,
-      couponId: coupon.id,
-      kind: (coupon.kind ?? "BATCH_SINGLE") as CouponKind,
-    };
-  } catch (err) {
-    console.error("[validateCoupon] Error:", err);
-    return { valid: false, error: "Error al validar el cupón" };
+  if (!quote.valid) {
+    return { valid: false, error: quote.message, reason: quote.reason };
   }
+  return {
+    valid: true,
+    code: quote.code,
+    discountType: quote.discountType,
+    discountValue: quote.discountValue,
+    discountPercentage: quote.discountType === "PERCENTAGE" ? quote.discountValue : undefined,
+    discountAmount: quote.discountAmount,
+    promotionId: quote.promotionId,
+    minPurchase: quote.minPurchase,
+    eligibleVariantIds: quote.eligibleVariantIds ?? undefined,
+  };
 }
-
-export { calculateCouponDiscountAmount };

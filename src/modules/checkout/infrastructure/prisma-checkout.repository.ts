@@ -2,26 +2,8 @@ import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { getShippingCost } from "@/modules/shipping/application/use-cases/get-shipping-cost.use-case";
 import { applyFreeShipping } from "@/modules/shipping/domain/resolve-shipping-price";
-import {
-  calculateCouponDiscount,
-  calculateCouponDiscountAmount,
-  hasUserExceededCouponLimit,
-  isCouponEligibleForEmail,
-  isCouponGloballyAvailable,
-  isPromotionalCoupon,
-  PROMOTIONAL_MAX_USES_PER_USER,
-  type CouponDiscountType,
-} from "../domain/coupon.entity";
 import { computeOrderPaymentExpiresAt } from "../domain/order-payment-grace";
-import { validateCouponTimeWindow } from "../domain/validate-coupon-time-window";
-import {
-  eligibleSubtotal,
-  isWholeOrder,
-  minPurchaseMessage,
-  OUT_OF_SCOPE_MESSAGE,
-  type CouponScopeType,
-} from "../domain/coupon-scope";
-import { eligibleVariantIds } from "./coupon-eligibility";
+import { quoteCouponWithPos, type CouponQuote } from "./pos-coupon";
 import { resolvePosLinePrices } from "./pos-line-prices";
 import { productSlugsByKeys } from "@/lib/product-keys";
 import { parsePosLineId } from "@/modules/posIntegration/domain/pos-mapper";
@@ -30,8 +12,10 @@ import { assertWebColorSellable } from "../domain/web-color-guard";
 import {
   CouponAlreadyUsedError,
   CouponExhaustedError,
+  CouponExpiredError,
   CouponInactiveError,
   CouponNotApplicableError,
+  CouponNotYetValidError,
   InvalidAddressError,
   OutOfStockError,
   ProductUnavailableError,
@@ -47,6 +31,44 @@ function generateOrderNumber(): string {
 
 export interface CreatedOrderRecord {
   order: { id: string; orderNumber: string; transactionId: string };
+}
+
+/** Cupón rechazado por el POS → error del checkout con el mensaje del POS. */
+export function couponRejection(reason: string, message: string): Error {
+  switch (reason) {
+    case "COUPON_ALREADY_USED":
+      return new CouponAlreadyUsedError(message);
+    case "COUPON_EXHAUSTED":
+      return new CouponExhaustedError(message);
+    case "COUPON_EXPIRED":
+      return new CouponExpiredError(message);
+    case "COUPON_NOT_YET_VALID":
+      return new CouponNotYetValidError(message);
+    case "COUPON_NOT_FOUND":
+    case "COUPON_INACTIVE":
+    case "CHANNEL_NOT_ALLOWED":
+      return new CouponInactiveError(message);
+    default:
+      return new CouponNotApplicableError(message);
+  }
+}
+
+/**
+ * Precio de lista de un ítem de Neon (sin reservar nada), para validar el cupón con el POS antes de la
+ * transacción. Dentro de la transacción se vuelve a leer: si cambió entre tanto, el cupón se rechaza.
+ */
+async function neonListPrice(variantId: string, fallback: number): Promise<number> {
+  const variant = await prisma.productVariant.findUnique({
+    where: { id: variantId },
+    select: { priceOverride: true, product: { select: { basePrice: true } } },
+  });
+  if (variant) return Number(variant.priceOverride ?? variant.product.basePrice);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const itemVariant = await (prisma as any).productItemVariant.findUnique({
+    where: { id: variantId },
+    select: { color: { select: { item: { select: { price: true, product: { select: { basePrice: true } } } } } } },
+  });
+  return Number(itemVariant?.color?.item?.price ?? itemVariant?.color?.item?.product?.basePrice ?? fallback);
 }
 
 // ---------------------------------------------------------------------------
@@ -96,6 +118,29 @@ export class PrismaCheckoutRepository {
     const slugByKey = await productSlugsByKeys(prisma, input.items.map((item) => item.productId));
     const productSlugOf = (item: { productId: string; variantId: string }) =>
       parsePosLineId(item.variantId)?.slug ?? slugByKey.get(item.productId) ?? item.productId;
+
+    // Cupón: lo valida el POS con los precios reales (red ANTES del $transaction). El POS calcula el
+    // descuento y su reparto por línea; la web no lo recalcula.
+    let couponQuote: Extract<CouponQuote, { valid: true }> | null = null;
+    const quotedPrices: number[] = [];
+    if (input.couponCode?.trim()) {
+      for (const item of input.items) {
+        quotedPrices.push(posPrices.get(item.variantId) ?? (await neonListPrice(item.variantId, item.price)));
+      }
+      const quote = await quoteCouponWithPos({
+        code: input.couponCode,
+        email: input.email,
+        document: input.cedula,
+        lines: input.items.map((item, index) => ({
+          variantId: item.variantId,
+          productId: item.productId,
+          price: quotedPrices[index],
+          quantity: item.quantity,
+        })),
+      });
+      if (!quote.valid) throw couponRejection(quote.reason, quote.message);
+      couponQuote = quote;
+    }
 
     return prisma.$transaction(
       async (tx) => {
@@ -224,129 +269,18 @@ export class PrismaCheckoutRepository {
           0
         );
 
-        // 3. Re-validar el cupón contra la BD (Fase 2)
+        // 3. Cupón validado por el POS: se aplica solo si los precios no cambiaron desde la validación.
         let couponDiscountAmount = 0;
-        let appliedCouponId: string | undefined;
-
-        if (input.couponId) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const coupon = await (tx as any).coupon.findUnique({
-            where: { id: input.couponId },
-            select: {
-              id: true,
-              kind: true,
-              discountType: true,
-              discountValue: true,
-              discountPercentage: true,
-              isUsed: true,
-              assignedEmail: true,
-              isActive: true,
-              scheduleMode: true,
-              validFrom: true,
-              validTo: true,
-              expiresAt: true,
-              maxGlobalUses: true,
-              currentGlobalUses: true,
-              maxUsesPerUser: true,
-              minPurchase: true,
-              scopeType: true,
-              scopeProductIds: true,
-              scopeCategoryIds: true,
-            },
-          });
-
-          if (!coupon) {
-            throw new CouponExhaustedError("El cupón no existe");
-          }
-
-          if (isPromotionalCoupon(coupon.kind)) {
-            if (coupon.isActive === false) {
-              throw new CouponInactiveError();
-            }
-            validateCouponTimeWindow(coupon);
-            if (!isCouponGloballyAvailable(coupon)) {
-              throw new CouponExhaustedError();
-            }
-
-            const normalizedEmail = input.email.toLowerCase().trim();
-            const normalizedDocumentId = input.cedula.trim();
-
-            const previousUsageCount = await tx.couponUsage.count({
-              where: {
-                couponId: coupon.id,
-                OR: [
-                  { email: normalizedEmail },
-                  { documentId: normalizedDocumentId },
-                  ...(user.id ? [{ userId: user.id }] : []),
-                ],
-              },
-            });
-
-            if (
-              hasUserExceededCouponLimit(
-                previousUsageCount,
-                PROMOTIONAL_MAX_USES_PER_USER
-              )
-            ) {
-              throw new CouponAlreadyUsedError();
-            }
-
-            // Promociones del POS: compra mínima y alcance por productos o categorías (B.9).
-            if (coupon.minPurchase && realSubtotal < coupon.minPurchase) {
-              throw new CouponNotApplicableError(minPurchaseMessage(coupon.minPurchase));
-            }
-            let discountBase = realSubtotal;
-            if (!isWholeOrder(coupon)) {
-              const eligible = await eligibleVariantIds(
-                tx,
-                {
-                  scopeType: coupon.scopeType as CouponScopeType,
-                  scopeProductIds: coupon.scopeProductIds ?? [],
-                  scopeCategoryIds: coupon.scopeCategoryIds ?? [],
-                },
-                input.items.map((item) => item.variantId)
-              );
-              discountBase = eligibleSubtotal(
-                input.items.map((item) => ({
-                  variantId: item.variantId,
-                  productId: null,
-                  price: realPriceMap.get(item.variantId) ?? item.price,
-                  quantity: item.quantity,
-                })),
-                eligible
-              );
-              if (discountBase <= 0) {
-                throw new CouponNotApplicableError(OUT_OF_SCOPE_MESSAGE);
-              }
-            }
-
-            couponDiscountAmount = calculateCouponDiscountAmount(
-              discountBase,
-              coupon.discountType as CouponDiscountType,
-              coupon.discountValue
+        if (couponQuote) {
+          const changed = input.items.some(
+            (item, index) => (realPriceMap.get(item.variantId) ?? item.price) !== quotedPrices[index]
+          );
+          if (changed) {
+            throw new CouponNotApplicableError(
+              "El precio de un producto cambió mientras pagabas. Vuelve a aplicar el cupón."
             );
-            appliedCouponId = coupon.id;
-          } else if (coupon.isActive === false) {
-            // Cupón de un solo uso desactivado (p. ej. un lote del POS desactivado en el POS).
-            throw new CouponInactiveError();
-          } else if (isCouponEligibleForEmail(coupon, input.email)) {
-            let canRedeem = true;
-            if (coupon && !coupon.assignedEmail) {
-              const normalizedEmail = input.email.toLowerCase().trim();
-              const registeredUser = await tx.user.findUnique({
-                where: { email: normalizedEmail },
-                select: { id: true },
-              });
-              canRedeem = !!registeredUser;
-            }
-            if (canRedeem) {
-              couponDiscountAmount = calculateCouponDiscount(
-                realSubtotal,
-                coupon.discountPercentage
-              );
-              appliedCouponId = coupon.id;
-            }
           }
+          couponDiscountAmount = Math.min(couponQuote.discountAmount, realSubtotal);
         }
 
         const finalDiscount = couponDiscountAmount;
@@ -391,9 +325,16 @@ export class PrismaCheckoutRepository {
             status: "PENDING",
             paymentMethod: input.paymentMethod,
             paymentExpiresAt,
-            ...(appliedCouponId ? { appliedCouponId } : {}),
+            ...(couponQuote
+              ? {
+                  couponCode: couponQuote.code,
+                  posPromotionId: couponQuote.promotionId,
+                  couponDiscountType: couponQuote.discountType,
+                  couponDiscountValue: couponQuote.discountValue,
+                }
+              : {}),
             items: {
-              create: input.items.map((item) => {
+              create: input.items.map((item, index) => {
                 const realPrice = realPriceMap.get(item.variantId) ?? item.price;
                 return {
                   productId: productSlugOf(item),
@@ -406,6 +347,7 @@ export class PrismaCheckoutRepository {
                   price: realPrice,
                   quantity: item.quantity,
                   total: realPrice * item.quantity,
+                  couponDiscount: couponQuote?.lineDiscounts[index] ?? 0,
                   imageUrl: item.imageUrl ?? null,
                 };
               }),
@@ -418,26 +360,6 @@ export class PrismaCheckoutRepository {
             UPDATE "orders" SET "shippingCedula" = ${input.cedula}
             WHERE "orderNumber" = ${orderNumber}
           `;
-        }
-
-        if (input.couponId && couponDiscountAmount > 0) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const coupon = await (tx as any).coupon.findUnique({
-            where: { id: input.couponId },
-            select: { kind: true },
-          });
-
-          if (coupon && !isPromotionalCoupon(coupon.kind)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await (tx as any).coupon.update({
-              where: { id: input.couponId },
-              data: {
-                isUsed: true,
-                usedAt: new Date(),
-                usedByOrderId: order.id,
-              },
-            });
-          }
         }
 
         void variantTypeMap;

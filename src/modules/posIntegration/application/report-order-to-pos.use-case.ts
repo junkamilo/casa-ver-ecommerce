@@ -1,8 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { findProductsByKeys } from "@/lib/product-keys";
 import { buildPosOrderPayload, parsePosLineId } from "../domain/pos-mapper";
-import { posPromotionIdOf } from "../domain/pos-promotion-mapper";
-import { eligibleProductIds, neonProductIdsOf } from "@/modules/checkout/infrastructure/coupon-eligibility";
 import { isPosCatalogConfigured, postOrder, postOrderCancellation } from "../infrastructure/pos-catalog.client";
 
 export type ReportOrderToPosResult =
@@ -41,20 +39,10 @@ async function posSlugsOf(items: OrderLineIds[]): Promise<Map<string, string>> {
   return slugs;
 }
 
-/** Productos del pedido (productId tal como está en el ítem) a los que aplica el cupón con alcance. */
-async function couponEligibleProductIds(
-  scope: Parameters<typeof eligibleProductIds>[1],
-  items: OrderLineIds[],
-): Promise<Set<string>> {
-  const neonIdOf = await neonProductIdsOf(prisma, items);
-  const eligible = await eligibleProductIds(prisma, scope, [...new Set(neonIdOf.values())]);
-  return new Set(items.map((i) => i.productId).filter((id) => eligible.has(neonIdOf.get(id) ?? "")));
-}
-
 /**
  * Reporta un pedido pagado al POS para que lo registre como venta y descuente inventario (telas en
  * los compuestos). Solo viajan los ítems que vienen del POS, con el pago (pasarela, ids, fecha), el
- * cupón y el descuento y envío prorrateados. Es idempotente en el POS, así que el cron puede
+ * cupón (con su promotionId el POS registra el uso del canal WEB) y el descuento y envío que les tocan. Es idempotente en el POS, así que el cron puede
  * reenviarlo. Si el POS lo rechaza (sin stock) se avisa al admin una vez para reembolsar al cliente.
  */
 export async function reportPaidOrderToPos(orderId: string): Promise<ReportOrderToPosResult> {
@@ -65,35 +53,10 @@ export async function reportPaidOrderToPos(orderId: string): Promise<ReportOrder
     include: {
       items: true,
       user: { select: { email: true } },
-      appliedCoupon: {
-        select: {
-          code: true,
-          source: true,
-          posPromotionId: true,
-          discountType: true,
-          discountValue: true,
-          scopeType: true,
-          scopeProductIds: true,
-          scopeCategoryIds: true,
-        },
-      },
     },
   });
   if (!order) return { status: "skipped", reason: "pedido inexistente" };
   if (!order.paidAt) return { status: "skipped", reason: "pedido sin pagar" };
-
-  // Cupón con alcance: el descuento del POS es la parte de sus productos elegibles (no por subtotal).
-  const coupon = order.appliedCoupon;
-  const couponEligible = coupon
-    ? await couponEligibleProductIds(
-        {
-          scopeType: coupon.scopeType,
-          scopeProductIds: coupon.scopeProductIds ?? [],
-          scopeCategoryIds: coupon.scopeCategoryIds ?? [],
-        },
-        order.items,
-      )
-    : null;
 
   const payload = buildPosOrderPayload(
     {
@@ -108,17 +71,13 @@ export async function reportPaidOrderToPos(orderId: string): Promise<ReportOrder
       shippingCost: Number(order.shippingCost),
       discount: Number(order.discount),
       total: Number(order.total),
-      couponCode: order.appliedCoupon?.code ?? null,
-      coupon: coupon
+      couponCode: order.couponCode,
+      coupon: order.couponCode
         ? {
-            code: coupon.code,
-            source: coupon.source,
-            // Lote: el cupón guarda "<promotionId>:<código>"; al POS va el promotionId y el código usado.
-            posPromotionId: posPromotionIdOf(coupon.posPromotionId),
-            discountType: coupon.discountType,
-            discountValue: coupon.discountValue,
-            wholeOrder: coupon.scopeType === "ORDER",
-            eligibleProductIds: couponEligible ?? new Set<string>(),
+            code: order.couponCode,
+            posPromotionId: order.posPromotionId,
+            discountType: order.couponDiscountType === "FIXED" ? "FIXED" : "PERCENTAGE",
+            discountValue: order.couponDiscountValue ?? 0,
           }
         : null,
       payment: {
@@ -135,6 +94,7 @@ export async function reportPaidOrderToPos(orderId: string): Promise<ReportOrder
         name: i.name,
         colorName: i.colorName,
         size: i.size,
+        couponDiscount: Number(i.couponDiscount),
       })),
     },
     await posSlugsOf(order.items),

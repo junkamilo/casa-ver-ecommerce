@@ -203,12 +203,12 @@ export type PosOrderPayload = {
   } | null;
   orderTotal?: number | null;
   couponCode?: string | null;
-  /** Cupón aplicado (B.8): con promotionId el POS suma un uso del canal WEB a esa promoción. */
+  /** Cupón aplicado: con promotionId el POS registra el uso del canal WEB en esa promoción. */
   promotion?: PosOrderPromotion | null;
 };
 
 export type PosOrderPromotion = {
-  /** promotionId del POS; null si el cupón se creó en la web. */
+  /** promotionId del POS; null solo en pedidos viejos con cupones creados en la web. */
   promotionId: string | null;
   code: string;
   source: "POS" | "WEB";
@@ -260,71 +260,63 @@ export type PosProductQuery = {
   size?: number;
 };
 
-// ── Promociones del POS (docs/promociones-web-y-pos.md, B.5) ─────────────────
+// ── Cupones del POS en el checkout (md/COMPARACION-TABLAS-PROMOCIONES-POS-vs-WEB.md, §4) ─────────────
+// La web no guarda cupones: valida cada código contra el POS y le pide los cupones de bienvenida.
 
-export const POS_PROMOTION_CODE = /^[A-Z0-9-]{4,20}$/;
-
-export const posPromotionScopeSchema = z.object({
-  type: z.enum(["ORDER", "PRODUCTS", "CATEGORIES"]).default("ORDER"),
-  productSlugs: z.array(z.string()).nullish().transform((v) => v ?? []),
-  categoryWebIds: z.array(z.string()).nullish().transform((v) => v ?? []),
-});
-
-/** Espejo de `PublicPromotion` del POS (contrato-pos-promocion.json). */
-const posPromotionCodeSchema = z
-  .string()
-  .trim()
-  .transform((v) => v.toUpperCase())
-  .pipe(z.string().regex(POS_PROMOTION_CODE, "Código inválido"));
-
-/** Código de un lote (BATCH): `used` = ya se usó en la tienda o en la web. */
-export const posPromotionBatchCodeSchema = z.object({
-  code: posPromotionCodeSchema,
-  used: z.boolean().default(false),
-});
-
-export const posPromotionSchema = z
-  .object({
-    promotionId: z.string().min(1),
-    /** PROMOTIONAL: un código compartido. BATCH: lote de códigos de un solo uso (como BATCH_SINGLE). */
-    kind: z.enum(["PROMOTIONAL", "BATCH"]).default("PROMOTIONAL"),
-    code: posPromotionCodeSchema.nullish().transform((v) => v ?? null),
-    codes: z.array(posPromotionBatchCodeSchema).nullish().transform((v) => v ?? []),
-    name: nullableString,
-    discountType: z.enum(["PERCENTAGE", "FIXED"]),
-    discountValue: z.number().int().positive(),
-    minPurchase: z.number().int().nonnegative().nullish().transform((v) => v ?? null),
-    maxUses: z.number().int().min(1).max(10000),
-    maxUsesPerCustomer: z.number().int().default(1),
-    startsAt: nullableString,
-    endsAt: nullableString,
-    active: z.boolean(),
-    channels: z.array(z.enum(["WEB", "STORE"])).default(["WEB"]),
-    scope: posPromotionScopeSchema
-      .nullish()
-      .transform((v) => v ?? { type: "ORDER" as const, productSlugs: [], categoryWebIds: [] }),
-    updatedAt: nullableString,
-  })
-  .superRefine((p, ctx) => {
-    if (p.kind === "PROMOTIONAL" && !p.code) {
-      ctx.addIssue({ code: "custom", message: "Falta el código", path: ["code"] });
-    }
-    if (p.kind === "BATCH" && p.discountType !== "PERCENTAGE") {
-      ctx.addIssue({ code: "custom", message: "Los lotes solo son por porcentaje", path: ["discountType"] });
-    }
-    if (p.discountType === "PERCENTAGE" && p.discountValue > 100) {
-      ctx.addIssue({ code: "custom", message: "Porcentaje > 100", path: ["discountValue"] });
-    }
-    if (p.discountType === "FIXED" && p.discountValue > 5_000_000) {
-      ctx.addIssue({ code: "custom", message: "Fijo > 5.000.000", path: ["discountValue"] });
-    }
-  });
-
-export type PosPromotion = z.infer<typeof posPromotionSchema>;
-
-export type PosPromotionQuery = {
-  updatedSince?: string;
-  channel?: "WEB" | "STORE";
-  page?: number;
-  size?: number;
+/** Línea del carrito para POST /api/public/promotions/validate. `productSlug` nulo: producto solo de la web. */
+export type PosPromotionValidateLine = {
+  index: number;
+  productSlug: string | null;
+  colorId?: number | null;
+  sizeId?: number | null;
+  quantity: number;
+  unitPrice: number;
 };
+
+export type PosPromotionValidateRequest = {
+  code: string;
+  customerEmail?: string | null;
+  customerDocument?: string | null;
+  subtotal?: number | null;
+  lines: PosPromotionValidateLine[];
+};
+
+/**
+ * Respuesta de POST /api/public/promotions/validate (`WebQuoteResult` del POS). Con `valid = false` solo
+ * vienen `code`, `reason` y `message` (texto para el cliente).
+ */
+export const posPromotionValidationSchema = z.object({
+  valid: z.boolean(),
+  promotionId: nullableString,
+  code: nullableString,
+  kind: z.enum(["PROMOTIONAL", "BATCH", "EMAIL"]).nullish().transform((v) => v ?? null),
+  name: nullableString,
+  discountType: z.enum(["PERCENTAGE", "FIXED"]).nullish().transform((v) => v ?? null),
+  discountValue: z.number().int().nullish().transform((v) => v ?? null),
+  minPurchase: decimal.nullish().transform((v) => v ?? null),
+  scopeType: z.enum(["ORDER", "PRODUCTS", "CATEGORIES"]).nullish().transform((v) => v ?? null),
+  eligibleBase: decimal.default(0),
+  discountAmount: decimal.default(0),
+  lineDiscounts: z
+    .array(z.object({ index: z.number().int(), productSlug: nullableString, discount: decimal }))
+    .nullish()
+    .transform((v) => v ?? []),
+  reason: nullableString,
+  message: nullableString,
+});
+
+export type PosPromotionValidation = z.infer<typeof posPromotionValidationSchema>;
+
+/** Cupón de bienvenida emitido por el POS (POST /api/public/promotions/{promotionId}/codes). */
+export const posIssuedCodeSchema = z.object({
+  promotionId: z.string().min(1),
+  code: z.string().min(1),
+  assignedEmail: z.string().min(1),
+  discountType: z.enum(["PERCENTAGE", "FIXED"]),
+  discountValue: z.number().int(),
+  expiresAt: nullableString,
+  used: z.boolean().default(false),
+  reused: z.boolean().default(false),
+});
+
+export type PosIssuedCode = z.infer<typeof posIssuedCodeSchema>;

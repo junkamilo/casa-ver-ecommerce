@@ -29,7 +29,6 @@ export async function buildAccountingSalePayload(
     where: { id: orderId },
     include: {
       items: { orderBy: { id: "asc" } },
-      appliedCoupon: { select: { code: true } },
     },
   });
 
@@ -76,7 +75,7 @@ export async function buildAccountingSalePayload(
         discount: toNumber(order.discount),
         total: toNumber(order.total),
       },
-      couponCode: order.appliedCoupon?.code ?? null,
+      couponCode: order.couponCode ?? null,
     },
     items: order.items.map((item) => ({
       id: item.id,

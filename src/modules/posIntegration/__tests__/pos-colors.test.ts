@@ -17,7 +17,6 @@ jest.mock("../infrastructure/pos-catalog.client", () => ({
   listCategories: jest.fn(),
 }));
 jest.mock("../application/sync-product.use-case", () => ({}));
-jest.mock("../application/sync-promotion.use-case", () => ({}));
 jest.mock("../application/sync-order-status.use-case", () => ({}));
 jest.mock("../application/sync-shipping.use-case", () => ({}));
 jest.mock("../application/sync-admins.use-case", () => ({}));

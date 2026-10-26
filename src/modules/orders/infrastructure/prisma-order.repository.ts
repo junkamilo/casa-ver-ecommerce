@@ -1,9 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import {
-  hasUserExceededCouponLimit,
-  isPromotionalCoupon,
-  PROMOTIONAL_MAX_USES_PER_USER,
-} from "@/modules/checkout/domain/coupon.entity";
 import { isOrderWithinPaymentGrace } from "@/modules/checkout/domain/order-payment-grace";
 import { parsePosLineId } from "@/modules/posIntegration/domain/pos-mapper";
 import { OrderPaymentGraceExpiredError } from "../application/order.errors";
@@ -32,6 +27,9 @@ export class PrismaOrderRepository {
   //   4. Por cada item: si existe ProductVariant → decrementar stock y reserved.
   //      (ProductItemVariant ya descontó stock al crear la orden — no se toca)
   //   5. Crear notificación de admin "Pedido pagado".
+  //
+  // El uso del cupón no se registra aquí: lo registra el POS (sales.promotion_redemptions) cuando la web
+  // le reporta el pedido pagado (reportPaidOrderToPos), y lo revierte si se anula.
   // -------------------------------------------------------------------------
   async markPaidByTransactionId(
     transactionId: string,
@@ -47,7 +45,6 @@ export class PrismaOrderRepository {
         throw new Error(`Orden no encontrada: ${transactionId}`);
       }
       if (order.status === "PAID") {
-        await this.consolidatePromotionalCouponUsage(tx, order);
         return { order: order as PaidOrderDTO, newlyPaid: false };
       }
 
@@ -98,104 +95,15 @@ export class PrismaOrderRepository {
         },
       });
 
-      await this.consolidatePromotionalCouponUsage(tx, updatedOrder);
-
       return { order: updatedOrder as PaidOrderDTO, newlyPaid: true };
-    });
-  }
-
-  private async consolidatePromotionalCouponUsage(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    tx: any,
-    order: {
-      id: string;
-      appliedCouponId: string | null;
-      userId: string;
-      user: { email: string | null } | null;
-      shippingCedula: string | null;
-    }
-  ): Promise<void> {
-    // Flash Sale grace: NO revalidar validFrom/validTo del cupón aquí.
-    // La ventana temporal se congela al crear la orden; el webhook honra el
-    // snapshot aunque validTo ya haya pasado mientras la orden esté en grace.
-    if (!order.appliedCouponId) return;
-
-    const coupon = await tx.coupon.findUnique({
-      where: { id: order.appliedCouponId },
-      select: {
-        id: true,
-        kind: true,
-        maxUsesPerUser: true,
-        maxGlobalUses: true,
-      },
-    });
-
-    if (!coupon || !isPromotionalCoupon(coupon.kind)) return;
-
-    const existingUsage = await tx.couponUsage.findUnique({
-      where: { orderId: order.id },
-    });
-    if (existingUsage) return;
-
-    const email = (order.user?.email ?? "").toLowerCase().trim();
-    const documentId = (order.shippingCedula ?? "").trim();
-    if (!email || !documentId) {
-      console.warn(
-        `[markPaid] Orden ${order.id} con cupón promocional sin email/cédula — omitiendo consolidación`
-      );
-      return;
-    }
-
-    const previousUsageCount = await tx.couponUsage.count({
-      where: {
-        couponId: coupon.id,
-        OR: [
-          { email },
-          { documentId },
-          { userId: order.userId },
-        ],
-      },
-    });
-
-    if (
-      hasUserExceededCouponLimit(previousUsageCount, PROMOTIONAL_MAX_USES_PER_USER)
-    ) {
-      console.warn(
-        `[markPaid] Cupón ${coupon.id} ya usado por usuario de orden ${order.id} — omitiendo consolidación`
-      );
-      return;
-    }
-
-    const incremented = await tx.$executeRaw`
-      UPDATE "coupons"
-      SET "currentGlobalUses" = "currentGlobalUses" + 1
-      WHERE "id" = ${coupon.id}
-        AND "currentGlobalUses" < ${coupon.maxGlobalUses ?? 0}
-    `;
-
-    if (Number(incremented) === 0) {
-      console.warn(
-        `[markPaid] Cupón ${coupon.id} agotado al consolidar orden ${order.id}`
-      );
-      return;
-    }
-
-    await tx.couponUsage.create({
-      data: {
-        couponId: coupon.id,
-        orderId: order.id,
-        userId: order.userId,
-        email,
-        documentId,
-      },
     });
   }
 
   // -------------------------------------------------------------------------
   // releaseStockByTransactionId
   //
-  // Libera reservas de stock + cupón cuando el pago falla, se cancela o se
-  // reembolsa. Idempotente: si la orden no existe o ya está en estado terminal
+  // Libera reservas de stock cuando el pago falla, se cancela o se reembolsa
+  // (el cupón no se consumió: el POS solo registra el uso de pedidos pagados). Idempotente: si la orden no existe o ya está en estado terminal
   // (no PENDING/PROCESSING), no hace nada.
   //
   // Pasos dentro de la transacción:
@@ -204,7 +112,6 @@ export class PrismaOrderRepository {
   //   3. Update status (+ cancelledAt si CANCELLED).
   //   4. Por cada item: ProductVariant → decrement reserved (clamp);
   //      ProductItemVariant → increment stock (re-poner lo descontado al crear).
-  //   5. Liberar cupón si la orden lo tenía reservado.
   // -------------------------------------------------------------------------
   // -------------------------------------------------------------------------
   // markPaidOrderRefundedByTransactionId
@@ -281,22 +188,8 @@ export class PrismaOrderRepository {
           }
         }
 
-        // Liberar cupón si aplica (para que el usuario pueda reintentarlo)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (tx as any).coupon.updateMany({
-          where: {
-            usedByOrderId: order.id,
-            isUsed: true,
-          },
-          data: {
-            isUsed: false,
-            usedAt: null,
-            usedByOrderId: null,
-          },
-        });
-
         console.log(
-          `[releaseOrderStock] ✓ Stock y cupón liberados — orden ${order.orderNumber} → ${newStatus}`
+          `[releaseOrderStock] ✓ Stock liberado — orden ${order.orderNumber} → ${newStatus}`
         );
       });
     } catch (err) {

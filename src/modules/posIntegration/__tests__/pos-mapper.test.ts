@@ -282,22 +282,15 @@ describe("pedidos hacia el POS", () => {
     );
   });
 
-  it("envía el bloque promotion con el promotionId del POS (B.8)", () => {
+  it("envía el bloque promotion con el promotionId del POS", () => {
     const payload = buildPosOrderPayload(
       {
         ...order,
-        coupon: {
-          code: "BF25",
-          source: "POS",
-          posPromotionId: "PRM-2026-0042",
-          discountType: "PERCENTAGE",
-          discountValue: 25,
-          wholeOrder: true,
-          eligibleProductIds: new Set(),
-        },
+        coupon: { code: "BF25", posPromotionId: "PRM-2026-0042", discountType: "PERCENTAGE", discountValue: 25 },
       },
       new Map([["p-pos", "SET-VENUS"]]),
     );
+    // Pedido sin reparto por línea (viejo): el descuento se prorratea por subtotal.
     expect(payload?.promotion).toEqual({
       promotionId: "PRM-2026-0042",
       code: "BF25",
@@ -309,33 +302,46 @@ describe("pedidos hacia el POS", () => {
     });
   });
 
-  it("cupón de la web: promotionId null; cupón con alcance: el POS recibe la parte de sus prendas elegibles", () => {
-    const web = buildPosOrderPayload(
+  it("con el reparto por línea del POS, al POS va la suma de las líneas de sus productos", () => {
+    const coupon = { code: "WEBONLY", posPromotionId: "PRM-2026-0050", discountType: "FIXED" as const, discountValue: 5000 };
+    // Solo el producto de la web era elegible: al POS no le corresponde descuento.
+    const webOnly = buildPosOrderPayload(
       {
         ...order,
-        coupon: {
-          code: "VERANO10", source: "WEB", posPromotionId: null, discountType: "PERCENTAGE", discountValue: 10,
-          wholeOrder: true, eligibleProductIds: new Set(),
-        },
+        coupon,
+        items: [
+          { ...order.items[0], couponDiscount: 0 },
+          { ...order.items[1], couponDiscount: 5000 },
+        ],
       },
+      new Map([["p-pos", "SET-VENUS"]]),
+    );
+    expect(webOnly?.discount).toBe(0);
+    expect(webOnly?.promotion?.posDiscount).toBe(0);
+    expect(webOnly?.shipping).toBe(7765);
+
+    const posOnly = buildPosOrderPayload(
+      {
+        ...order,
+        coupon,
+        items: [
+          { ...order.items[0], couponDiscount: 5000 },
+          { ...order.items[1], couponDiscount: 0 },
+        ],
+      },
+      new Map([["p-pos", "SET-VENUS"]]),
+    );
+    expect(posOnly?.discount).toBe(5000);
+    expect(posOnly?.promotion?.posDiscount).toBe(5000);
+  });
+
+  it("cupón viejo de la web (sin promotionId): el POS solo guarda el código", () => {
+    const web = buildPosOrderPayload(
+      { ...order, coupon: { code: "VERANO10", posPromotionId: null, discountType: "PERCENTAGE", discountValue: 10 } },
       new Map([["p-pos", "SET-VENUS"]]),
     );
     expect(web?.promotion?.promotionId).toBeNull();
-
-    // Solo el producto de la web era elegible: al POS no le corresponde descuento.
-    const scoped = buildPosOrderPayload(
-      {
-        ...order,
-        coupon: {
-          code: "WEBONLY", source: "POS", posPromotionId: "PRM-2026-0050", discountType: "FIXED", discountValue: 5000,
-          wholeOrder: false, eligibleProductIds: new Set(["p-web"]),
-        },
-      },
-      new Map([["p-pos", "SET-VENUS"]]),
-    );
-    expect(scoped?.discount).toBe(0);
-    expect(scoped?.promotion?.posDiscount).toBe(0);
-    expect(scoped?.shipping).toBe(7765);
+    expect(web?.promotion?.source).toBe("WEB");
   });
 
   it("si todo el pedido es del POS, el descuento y el envío van completos", () => {

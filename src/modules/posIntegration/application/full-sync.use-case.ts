@@ -1,9 +1,8 @@
-import { listProducts, listPromotions } from "../infrastructure/pos-catalog.client";
+import { listProducts } from "../infrastructure/pos-catalog.client";
 import { PrismaPosSyncRepository } from "../infrastructure/prisma-pos-sync.repository";
 import { revalidateCatalogPages, revalidatePosCategories } from "./revalidate-catalog";
 import { normalizePosSlug } from "../domain/pos-mapper";
 import { upsertPosProduct } from "./sync-product.use-case";
-import { listLocalPosPromotionIds, removePromotionById, upsertPosPromotion } from "./sync-promotion.use-case";
 import { syncShippingFromPos, type PosShippingSyncResult } from "./sync-shipping.use-case";
 import { syncAdminsFromPos, type PosAdminSyncResult } from "./sync-admins.use-case";
 
@@ -11,7 +10,6 @@ const repository = new PrismaPosSyncRepository();
 
 export type PosFullSyncResult = {
   products: { upserted: number; created: number; hidden: number; failed: number };
-  promotions: { upserted: number; removed: number; failed: number };
   shipping: PosShippingSyncResult | null;
   admins: PosAdminSyncResult | null;
   errors: string[];
@@ -21,15 +19,13 @@ export type PosFullSyncResult = {
 /**
  * Respaldo de los avisos: descarga todos los productos visibles del POS, los guarda y oculta los que
  * tengan identificador del POS y ya no aparezcan. Las categorías no se copian (se leen del POS); solo
- * se expira su caché al final. Después hace lo
- * mismo con las promociones del canal WEB (cupones source = POS): las que ya no aparecen se retiran.
+ * se expira su caché al final. Las promociones tampoco: el checkout valida cada cupón contra el POS.
  */
 export async function runPosFullSync(): Promise<PosFullSyncResult> {
   const startedAt = Date.now();
   const errors: string[] = [];
   const result: PosFullSyncResult = {
     products: { upserted: 0, created: 0, hidden: 0, failed: 0 },
-    promotions: { upserted: 0, removed: 0, failed: 0 },
     shipping: null,
     admins: null,
     errors,
@@ -61,13 +57,6 @@ export async function runPosFullSync(): Promise<PosFullSyncResult> {
     errors.push("El POS no devolvió productos; no se ocultó ninguno");
   }
 
-  // Promociones: después de los productos, para que su alcance encuentre los productos ya sincronizados.
-  try {
-    await syncPromotions(result, errors);
-  } catch (error) {
-    errors.push(`promociones: ${error instanceof Error ? error.message : error}`);
-  }
-
   // Envíos: independiente del catálogo; un fallo aquí no detiene lo demás.
   try {
     result.shipping = await syncShippingFromPos();
@@ -89,29 +78,4 @@ export async function runPosFullSync(): Promise<PosFullSyncResult> {
   revalidatePosCategories();
   result.durationMs = Date.now() - startedAt;
   return result;
-}
-
-async function syncPromotions(result: PosFullSyncResult, errors: string[]) {
-  const posPromotions = await listPromotions({ channel: "WEB" });
-  if (posPromotions === null) {
-    errors.push("El POS no publica promociones (sin endpoint); no se retiró ninguna");
-    return;
-  }
-  const seen = new Set<string>();
-  for (const promotion of posPromotions) {
-    seen.add(promotion.promotionId);
-    try {
-      const saved = await upsertPosPromotion(promotion);
-      if (saved.status === "removed") result.promotions.removed++;
-      else result.promotions.upserted++;
-    } catch (error) {
-      result.promotions.failed++;
-      errors.push(`promoción ${promotion.promotionId}: ${error instanceof Error ? error.message : error}`);
-    }
-  }
-  for (const id of await listLocalPosPromotionIds()) {
-    if (seen.has(id)) continue;
-    await removePromotionById(id);
-    result.promotions.removed++;
-  }
 }

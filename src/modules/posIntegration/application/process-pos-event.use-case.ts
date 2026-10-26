@@ -1,7 +1,6 @@
 import type { PosWebhookPayload } from "../contracts/pos-catalog.schema";
 import { revalidatePosCategories, revalidatePosColors, revalidatePosProduct } from "./revalidate-catalog";
 import { removeProductBySlug, syncProductBySlug } from "./sync-product.use-case";
-import { removePromotionById, syncPromotionById } from "./sync-promotion.use-case";
 import { syncOrderStatusFromPos } from "./sync-order-status.use-case";
 import { syncShippingFromPos } from "./sync-shipping.use-case";
 import { syncAdminsFromPos } from "./sync-admins.use-case";
@@ -14,8 +13,8 @@ const webSettings = new PrismaProductWebSettingsRepository();
 
 /**
  * Aplica un aviso del POS. Productos: `upserted` y `stock_changed` vuelven a consultar el recurso
- * en la API (el aviso no trae datos) y `removed` lo oculta sin borrarlo. Promociones: `upserted`
- * vuelve a consultar la promoción y actualiza su cupón; `removed` la desactiva (con usos) o la borra.
+ * en la API (el aviso no trae datos) y `removed` lo oculta sin borrarlo. Promociones: la web no guarda
+ * cupones (cada código se valida contra el POS en el checkout), así que el aviso solo se registra.
  * Categorías, subcategorías y colores: la web no los guarda; se expira la caché del POS (menú, colecciones,
  * ubicación de los productos y paleta de colores) para que la próxima visita la vuelva a leer.
  */
@@ -31,7 +30,8 @@ export async function processPosEvent(event: Pick<PosWebhookPayload, "entityType
   }
 
   if (entityType === "promotion") {
-    return action === "removed" ? removePromotionById(id) : syncPromotionById(id);
+    console.info(`[POS webhook] promotion.${action} ${id}: la web valida los cupones contra el POS; nada que copiar`);
+    return { status: "ignored" as const, entityType, id };
   }
 
   // Pedidos: el POS cambió el estado logístico (Tienda → Pedidos); se consulta y se aplica en la web.

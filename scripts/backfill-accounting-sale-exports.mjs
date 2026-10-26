@@ -48,7 +48,6 @@ async function buildPayload(orderId) {
     where: { id: orderId },
     include: {
       items: { orderBy: { id: "asc" } },
-      appliedCoupon: { select: { code: true } },
     },
   });
   if (!order) return null;
@@ -78,7 +77,7 @@ async function buildPayload(orderId) {
         discount: toNumber(order.discount),
         total: toNumber(order.total),
       },
-      couponCode: order.appliedCoupon?.code ?? null,
+      couponCode: order.couponCode ?? null,
     },
     items: order.items.map((item) => ({
       id: item.id,

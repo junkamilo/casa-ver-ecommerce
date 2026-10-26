@@ -11,7 +11,7 @@ import type { NavItem, AdminNavItem } from "../types";
 export const ADMIN_NAV: AdminNavItem[] = [
   { label: "Dashboard",  href: "/admin",                  icon: DashboardIcon },
   { label: "Inventario", href: "/admin/productos",         icon: InventoryIcon },
-  { label: "Promociones",     href: "/admin/promociones",       icon: BadgePercent },
+  { label: "Popups",     href: "/admin/popups",       icon: BadgePercent },
   { label: "Pedidos",    href: "/admin/pedidos",           icon: OrdersIcon },
   { label: "Reseñas",   href: "/admin/resenas",           icon: ReviewsIcon },
   { label: "Reportes",   href: "/admin/estadisticas",      icon: ReportsIcon },

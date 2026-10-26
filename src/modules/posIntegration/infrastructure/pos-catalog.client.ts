@@ -7,14 +7,16 @@ import {
   posOrderCancelResultSchema,
   posOrderResultSchema,
   posOrderStatusSchema,
+  posIssuedCodeSchema,
   posPageSchema,
   posProductSchema,
-  posPromotionSchema,
+  posPromotionValidationSchema,
   posStockCheckSchema,
   type PosCategory,
   type PosColorFacet,
-  type PosPromotion,
-  type PosPromotionQuery,
+  type PosIssuedCode,
+  type PosPromotionValidateRequest,
+  type PosPromotionValidation,
   type PosOrderLine,
   type PosOrderPayload,
   type PosOrderStatus,
@@ -163,34 +165,6 @@ export async function getProduct(slug: string): Promise<PosProduct | null> {
   return request(`/products/${encodeURIComponent(slug)}`, posProductSchema);
 }
 
-/** Una promoción del POS; `null` si no existe o ya no es para la web (se trata como removed). */
-export async function getPromotion(promotionId: string): Promise<PosPromotion | null> {
-  return request(`/promotions/${encodeURIComponent(promotionId)}`, posPromotionSchema);
-}
-
-/**
- * Recorre todas las páginas de `/promotions?channel=WEB` (activas, programadas e inactivas).
- * `null` si el POS no tiene el endpoint (404): quien llama no debe retirar nada en ese caso.
- */
-export async function listPromotions(
-  query: Omit<PosPromotionQuery, "page" | "size"> = {},
-): Promise<PosPromotion[] | null> {
-  const all: PosPromotion[] = [];
-  for (let page = 0; ; page++) {
-    const result = await request("/promotions", posPageSchema(posPromotionSchema), {
-      updatedSince: query.updatedSince,
-      channel: query.channel ?? "WEB",
-      page,
-      size: PAGE_SIZE,
-    });
-    if (result === null && page === 0) return null;
-    const items = result?.items ?? [];
-    all.push(...items);
-    if (items.length === 0 || all.length >= (result?.total ?? 0)) break;
-  }
-  return all;
-}
-
 /**
  * Foto completa de envíos del POS: configuración, tarifas y geografía con la tarifa de cada municipio.
  * `null` si el POS aún no publica envíos (404): quien llama no debe tocar nada en ese caso.
@@ -246,13 +220,13 @@ type PosPostResult =
   | { ok: false; httpStatus: number; message: string };
 
 /**
- * POST a /api/public/orders/... con reintentos ante 429. 2xx y 4xx (rechazo definitivo) se devuelven;
- * 401, 5xx y errores de red se lanzan para reintentar después.
+ * POST a /api/public/... (pedidos, cupones) con reintentos ante 429. 2xx y 4xx (rechazo definitivo) se
+ * devuelven; 401, 5xx y errores de red se lanzan para reintentar después.
  */
-async function postToOrders(path: string, body: unknown): Promise<PosPostResult> {
+async function postToPublic(path: string, body: unknown): Promise<PosPostResult> {
   const { baseUrl, apiKey } = getPosApiConfig();
-  // POS_API_BASE_URL apunta a /api/public/catalog; los pedidos van en /api/public/orders.
-  const url = `${baseUrl.replace(/\/catalog$/, "")}/orders${path}`;
+  // POS_API_BASE_URL apunta a /api/public/catalog; pedidos y cupones van en /api/public/orders y /promotions.
+  const url = `${baseUrl.replace(/\/catalog$/, "")}${path}`;
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     const response = await fetch(url, {
@@ -279,10 +253,37 @@ async function postToOrders(path: string, body: unknown): Promise<PosPostResult>
         message: `${json?.message ?? `POS respondió ${response.status}`}${details}`,
       };
     }
-    throw new PosApiError(`POS respondió ${response.status} en /orders${path}`, response.status);
+    throw new PosApiError(`POS respondió ${response.status} en ${path}`, response.status);
   }
 
-  throw new PosApiError(`POS limitó las peticiones en /orders${path}`, 429);
+  throw new PosApiError(`POS limitó las peticiones en ${path}`, 429);
+}
+
+const postToOrders = (path: string, body: unknown) => postToPublic(`/orders${path}`, body);
+
+/**
+ * Valida un cupón para el carrito (POST /api/public/promotions/validate): el POS calcula el descuento y
+ * dice a qué líneas aplica. No registra el uso (eso pasa con el pedido pagado). Un cupón que no aplica
+ * vuelve con `valid = false` y su mensaje; lanza si el POS no responde.
+ */
+export async function validatePosPromotion(body: PosPromotionValidateRequest): Promise<PosPromotionValidation> {
+  const result = await postToPublic("/promotions/validate", body);
+  if (!result.ok) throw new PosApiError(result.message, result.httpStatus);
+  const parsed = posPromotionValidationSchema.safeParse(result.data);
+  if (!parsed.success) throw new PosApiError("Respuesta inesperada del POS en /promotions/validate", 502);
+  return parsed.data;
+}
+
+/**
+ * Pide al POS el cupón de bienvenida de un correo (POST /api/public/promotions/{promotionId}/codes). Si el
+ * correo ya tenía uno, el POS devuelve el mismo. Lanza si el POS lo rechaza o no responde.
+ */
+export async function issuePosPromotionCode(promotionId: string, email: string): Promise<PosIssuedCode> {
+  const result = await postToPublic(`/promotions/${encodeURIComponent(promotionId)}/codes`, { email });
+  if (!result.ok) throw new PosApiError(result.message, result.httpStatus);
+  const parsed = posIssuedCodeSchema.safeParse(result.data);
+  if (!parsed.success) throw new PosApiError("Respuesta inesperada del POS en /promotions/{id}/codes", 502);
+  return parsed.data;
 }
 
 /**
