@@ -7,6 +7,7 @@ import { quoteCouponWithPos, type CouponQuote } from "./pos-coupon";
 import { resolvePosLinePrices } from "./pos-line-prices";
 import { productSlugsByKeys } from "@/lib/product-keys";
 import { parsePosLineId } from "@/modules/posIntegration/domain/pos-mapper";
+import { isPosCatalogConfigured } from "@/modules/posIntegration/infrastructure/pos-config";
 import type { PosColorPalette } from "@/modules/posIntegration/domain/pos-color-palette";
 import { assertWebColorSellable } from "../domain/web-color-guard";
 import {
@@ -142,6 +143,8 @@ export class PrismaCheckoutRepository {
       couponQuote = quote;
     }
 
+    const posIntegrated = isPosCatalogConfigured();
+
     return prisma.$transaction(
       async (tx) => {
         // 1. Buscar o crear usuario guest/registrado
@@ -178,7 +181,9 @@ export class PrismaCheckoutRepository {
           });
 
           if (productVariant) {
-            if (!productVariant.isActive) {
+            // Solo se venden productos del POS: el pedido de uno creado solo en la web no llegaría al POS,
+            // que es quien despacha (p. ej. un carrito guardado antes de retirarlos).
+            if (!productVariant.isActive || (posIntegrated && !productVariant.product.posSlug)) {
               throw new ProductUnavailableError(`El producto "${item.name}" ya no está disponible`);
             }
             assertWebColorSellable(
@@ -229,7 +234,7 @@ export class PrismaCheckoutRepository {
             if (!itemVariant) {
               throw new VariantNotFoundError(`Variante ${item.variantId} no encontrada`);
             }
-            if (!itemVariant.isActive) {
+            if (!itemVariant.isActive || (posIntegrated && !itemVariant.color?.item?.product?.posSlug)) {
               throw new ProductUnavailableError(`El producto "${item.name}" ya no está disponible`);
             }
             assertWebColorSellable(

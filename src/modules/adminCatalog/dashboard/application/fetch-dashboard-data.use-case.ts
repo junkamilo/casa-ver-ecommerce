@@ -7,6 +7,8 @@ import type {
   DashboardStatDTO,
 } from "../contracts/dashboard.dto";
 import { buildSlaQueueItem, sortSlaQueue } from "../domain/dashboard-sla";
+import { getPosOrderSummary, isPosCatalogConfigured, listPosOrders } from "@/modules/posIntegration/infrastructure/pos-catalog.client";
+import type { PosCustomerOrder } from "@/modules/posIntegration/contracts/pos-catalog.schema";
 
 const INCIDENT_WINDOW_MINUTES = 60;
 const SLA_QUEUE_LIMIT = 12;
@@ -90,6 +92,28 @@ function buildPaymentIncidentsFromLogs(
   };
 }
 
+/**
+ * Logística de los pedidos web: vive en el POS (Tienda → Pedidos). Pedidos por despachar, en preparación y en
+ * camino para la cola SLA, y conteos por estado. Si el POS no responde, la cola queda vacía.
+ */
+async function fetchPosFulfillment(): Promise<{ open: PosCustomerOrder[]; paid: number; processing: number }> {
+  if (!isPosCatalogConfigured()) return { open: [], paid: 0, processing: 0 };
+  try {
+    const [open, summary] = await Promise.all([
+      listPosOrders({ fulfillmentStatuses: ["PAID", "PROCESSING", "SHIPPED"], size: 100 }),
+      getPosOrderSummary(),
+    ]);
+    return { open: open.items, paid: summary?.counts.PAID ?? 0, processing: summary?.counts.PROCESSING ?? 0 };
+  } catch (error) {
+    console.warn("[Dashboard] El POS no respondió; cola SLA vacía:", error);
+    return { open: [], paid: 0, processing: 0 };
+  }
+}
+
+function toDate(value: string | null): Date | null {
+  return value ? new Date(value) : null;
+}
+
 export async function fetchDashboardDataUseCase(): Promise<DashboardDataDTO> {
   const now = new Date();
   const incidentWindowStart = new Date(now.getTime() - INCIDENT_WINDOW_MINUTES * 60_000);
@@ -102,12 +126,9 @@ export async function fetchDashboardDataUseCase(): Promise<DashboardDataDTO> {
     activeProductsCount,
     newCustomersCount,
     rawOrders,
-    slaCandidates,
     pendingReviews,
     unreadNotifications,
     pendingOrders,
-    paidAwaitingFulfillment,
-    processingOrders,
     webhookLogs,
   ] = await prisma.$transaction([
     prisma.order.aggregate({
@@ -137,27 +158,9 @@ export async function fetchDashboardDataUseCase(): Promise<DashboardDataDTO> {
       orderBy: { createdAt: "desc" },
       take: 5,
     }),
-    prisma.order.findMany({
-      where: { status: { in: ["PAID", "PROCESSING", "SHIPPED"] } },
-      select: {
-        id: true,
-        orderNumber: true,
-        status: true,
-        total: true,
-        paidAt: true,
-        shippedAt: true,
-        updatedAt: true,
-        createdAt: true,
-        user: { select: { name: true } },
-      },
-      orderBy: { updatedAt: "asc" },
-      take: 50,
-    }),
     prisma.review.count({ where: { status: "PENDING" } }),
     prisma.adminNotification.count({ where: { isRead: false } }),
     prisma.order.count({ where: { status: "PENDING" } }),
-    prisma.order.count({ where: { status: "PAID" } }),
-    prisma.order.count({ where: { status: "PROCESSING" } }),
     prisma.webhookLog.findMany({
       where: { createdAt: { gte: incidentWindowStart } },
       orderBy: { createdAt: "desc" },
@@ -220,9 +223,28 @@ export async function fetchDashboardDataUseCase(): Promise<DashboardDataDTO> {
     total: Number(order.total),
   }));
 
+  const fulfillment = await fetchPosFulfillment();
+  const paidAwaitingFulfillment = fulfillment.paid;
+  const processingOrders = fulfillment.processing;
   const slaQueue = sortSlaQueue(
-    slaCandidates
-      .map((order) => buildSlaQueueItem(order, now))
+    fulfillment.open
+      .map((order) => {
+        const updatedAt = toDate(order.updatedAt) ?? toDate(order.paidAt) ?? now;
+        return buildSlaQueueItem(
+          {
+            id: order.orderNumber,
+            orderNumber: order.orderNumber,
+            status: order.fulfillmentStatus ?? "",
+            total: order.total,
+            paidAt: toDate(order.paidAt),
+            shippedAt: toDate(order.shippedAt),
+            updatedAt,
+            createdAt: toDate(order.paidAt) ?? updatedAt,
+            user: { name: order.customerName },
+          },
+          now
+        );
+      })
       .filter((item): item is NonNullable<typeof item> => item !== null)
   ).slice(0, SLA_QUEUE_LIMIT);
 

@@ -224,6 +224,16 @@ export function OrderDetailModal({ order, onClose, onDelivered }: OrderDetailMod
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl text-xs">
                   <Truck className="w-4 h-4 text-gray-400 shrink-0" />
                   <span className="font-mono tracking-wide text-gray-700">{order.trackingCode}</span>
+                  {order.trackingUrl && (
+                    <a
+                      href={order.trackingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-auto font-semibold text-[#154734] hover:underline"
+                    >
+                      Rastrear envío
+                    </a>
+                  )}
                 </div>
               </div>
             )}

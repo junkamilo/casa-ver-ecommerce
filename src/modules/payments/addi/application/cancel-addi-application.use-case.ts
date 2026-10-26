@@ -13,8 +13,9 @@ const client = new AddiHttpClient();
 
 // cancelAddiApplicationUseCase — Cancela un crédito Addi aprobado.
 //
-// Solo para cancelaciones manuales del admin; el flujo normal pasa por
-// updateOrderStatus. La autorización admin se valida en el route handler.
+// Solo para cancelaciones manuales del admin; el flujo normal es anular el
+// pedido en el POS (Tienda → Pedidos), que avisa a la web y cancela el crédito
+// (sync-order-status.use-case). La autorización admin se valida en el route handler.
 //
 // Reglas:
 //   - orderId requerido
@@ -55,8 +56,8 @@ export async function cancelAddiApplicationUseCase(
 }
 
 // Re-export para preservar la API pública de services/addi/cancel.ts.
-// Mantiene la firma exacta { success, error } que orders.use-case y
-// app/actions/orders esperan.
+// Mantiene la firma exacta { success, error } que usa la sincronización de
+// anulaciones del POS.
 export async function cancelAddiApplication(
   externalOrderId: string,
   amount: number

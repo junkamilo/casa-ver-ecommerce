@@ -210,67 +210,39 @@ describe("getCatalog", () => {
     );
   });
 
-  it("une POS y productos de la web, más nuevo primero", async () => {
+  it("solo vende productos del POS, más nuevo primero (los creados solo en la web no se listan)", async () => {
     mockFetchCatalog.mockResolvedValue([pos("falda-midi"), pos("blusa-lino")]);
     repo.findActiveProducts.mockResolvedValue([webRow("conjunto-venus")]);
 
     const catalog = await getCatalog();
 
-    expect(repo.findActiveProducts).toHaveBeenCalledWith(true);
+    expect(repo.findActiveProducts).not.toHaveBeenCalled();
     expect(catalog.map((e) => [e.slug, e.source])).toEqual([
       ["blusa-lino", "POS"],
-      ["conjunto-venus", "NEON"],
       ["falda-midi", "POS"],
     ]);
   });
 
-  it("si el POS no responde usa la copia en Neon de todo el catálogo", async () => {
+  it("si el POS no responde usa la copia en Neon de los productos del POS", async () => {
     mockFetchCatalog.mockRejectedValue(new Error("timeout"));
-    repo.findActiveProducts.mockResolvedValue([webRow("conjunto-venus")]);
+    repo.findActiveProducts.mockResolvedValue([webRow("blusa-pos", { posSlug: "blusa-pos" })]);
     jest.spyOn(console, "warn").mockImplementation(() => undefined);
 
     const catalog = await getCatalog();
 
-    expect(repo.findActiveProducts).toHaveBeenLastCalledWith(false);
-    expect(catalog.map((e) => e.slug)).toEqual(["conjunto-venus"]);
+    expect(repo.findActiveProducts).toHaveBeenLastCalledWith("POS_MIRROR");
+    expect(catalog.map((e) => e.slug)).toEqual(["blusa-pos"]);
   });
 
-  it("los productos de la web solo muestran los colores del POS, con su nombre y hex", async () => {
-    mockFetchCatalog.mockResolvedValue([pos("blusa-lino")]);
-    repo.findActiveProducts.mockResolvedValue([
-      webRow("conjunto-venus", {
-        colors: [webColor("verde militar", "#000000"), webColor("Rosa", "#FFC0CB")],
-        items: [{ name: "Short", price: 70000, comparePrice: null, colors: [webColor("Rosa", "#FFC0CB")] }],
-      }),
-    ]);
-    mockPalette.mockResolvedValue(buildPosColorPalette([VERDE]));
-
-    const venus = (await getCatalog()).find((e) => e.slug === "conjunto-venus")!;
-    expect(venus.card.colors.map((c) => [c.name, c.hexCode])).toEqual([["Verde Militar", "#4B5320"]]);
-    expect(venus.card.items[0].colors).toEqual([]);
-    // Los productos del POS traen sus colores del POS y no se tocan.
-    expect((await getCatalog()).find((e) => e.slug === "blusa-lino")!.card.colors.map((c) => c.name)).toEqual(["Arena"]);
-  });
-
-  it("sin colores creados en el POS, los productos de la web quedan sin colores", async () => {
-    mockFetchCatalog.mockResolvedValue([]);
-    repo.findActiveProducts.mockResolvedValue([webRow("conjunto-venus", { colors: [webColor("Verde Militar", "#4B5320")] })]);
-
-    const [venus] = await getCatalog();
-    expect(venus.card.colors).toEqual([]);
-  });
-
-  it("con el POS caído la copia de Neon también se limita, salvo la copia de productos del POS", async () => {
+  it("con el POS caído la copia de Neon solo muestra los colores del POS", async () => {
     mockFetchCatalog.mockRejectedValue(new Error("timeout"));
     jest.spyOn(console, "warn").mockImplementation(() => undefined);
     mockPalette.mockResolvedValue(buildPosColorPalette([VERDE]));
     repo.findActiveProducts.mockResolvedValue([
-      webRow("conjunto-venus", { colors: [webColor("Rosa", "#FFC0CB")] }),
       webRow("blusa-pos", { posSlug: "blusa-pos", colors: [webColor("Arena", "#D2B48C")] }),
     ]);
 
     const catalog = await getCatalog();
-    expect(catalog.find((e) => e.slug === "conjunto-venus")!.card.colors).toEqual([]);
     expect(catalog.find((e) => e.slug === "blusa-pos")!.card.colors.map((c) => c.name)).toEqual(["Arena"]);
   });
 
@@ -278,7 +250,6 @@ describe("getCatalog", () => {
     mockFetchCatalog.mockResolvedValue([pos("falda-midi"), pos("blusa-lino")]);
     repo.findActiveProducts.mockResolvedValue([webRow("conjunto-venus")]);
     const recommended = await getRecommendedEntries("blusa-lino");
-    // Los productos creados en la web no tienen categoría (las categorías son del POS).
     expect(recommended.map((e) => e.slug)).toEqual(["falda-midi"]);
   });
 });
@@ -329,8 +300,9 @@ describe("listados sobre el catálogo", () => {
     const featured = await getProductsByFlagUseCase({ isFeatured: true, status: "ACTIVE" });
     expect(featured.products.map((p) => p.slug)).toEqual(["pantalon-lino"]);
 
+    // Solo «blusa-lino» es nueva: los productos creados solo en la web ya no se listan.
     const fresh = await getNewProductsUseCase(1);
     expect(fresh.items).toHaveLength(1);
-    expect(fresh.hasMore).toBe(true);
+    expect(fresh.hasMore).toBe(false);
   });
 });

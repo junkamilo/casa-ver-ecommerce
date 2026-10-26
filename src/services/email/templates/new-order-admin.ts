@@ -1,8 +1,9 @@
 import { emailLayout } from "./components/layout";
 import { emailHeader } from "./components/header";
 import { emailFooter } from "./components/footer";
-import { BASE_URL, BRAND_GOLD } from "../constants";
+import { BRAND_GOLD } from "../constants";
 import type { OrderItemEmailData } from "../types";
+import { posOrdersUrl } from "@/lib/pos-links";
 
 function formatCOP(n: number): string {
   return new Intl.NumberFormat("es-CO", {
@@ -51,7 +52,8 @@ export function newOrderAdminTemplate(data: NewOrderAdminTemplateData): string {
   } = data;
 
   const paymentLabel = PAYMENT_LABELS[paymentMethod] ?? paymentMethod;
-  const adminOrderUrl = `${BASE_URL}/admin/pedidos?abrir=${encodeURIComponent(orderNumber)}`;
+  // El pedido se despacha en el POS (Tienda → Pedidos).
+  const adminOrderUrl = posOrdersUrl(orderNumber);
 
   const itemRows = items
     .map(

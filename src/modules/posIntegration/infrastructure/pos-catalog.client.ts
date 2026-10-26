@@ -7,14 +7,19 @@ import {
   posOrderCancelResultSchema,
   posOrderResultSchema,
   posOrderStatusSchema,
+  posCustomerOrderSchema,
   posIssuedCodeSchema,
+  posOrderSummarySchema,
   posPageSchema,
   posProductSchema,
   posPromotionValidationSchema,
   posStockCheckSchema,
   type PosCategory,
   type PosColorFacet,
+  type PosCustomerOrder,
   type PosIssuedCode,
+  type PosOrderQuery,
+  type PosOrderSummary,
   type PosPromotionValidateRequest,
   type PosPromotionValidation,
   type PosOrderLine,
@@ -71,14 +76,15 @@ function parseRetryAfter(header: string | null): number {
 async function request<T extends z.ZodTypeAny>(
   path: string,
   dataSchema: T,
-  query?: Record<string, string | number | undefined>,
+  query?: Record<string, string | number | string[] | undefined>,
   root: "catalog" | "public" = "catalog",
 ): Promise<z.infer<T> | null> {
   const { baseUrl, apiKey } = getPosApiConfig();
   const base = root === "public" ? baseUrl.replace(/\/catalog$/, "") : baseUrl;
   const url = new URL(`${base}${path}`);
   for (const [key, value] of Object.entries(query ?? {})) {
-    if (value !== undefined && value !== "") url.searchParams.set(key, String(value));
+    if (Array.isArray(value)) value.forEach((v) => url.searchParams.append(key, v));
+    else if (value !== undefined && value !== "") url.searchParams.set(key, String(value));
   }
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
@@ -163,6 +169,35 @@ export async function listProducts(
 
 export async function getProduct(slug: string): Promise<PosProduct | null> {
   return request(`/products/${encodeURIComponent(slug)}`, posProductSchema);
+}
+
+/**
+ * Pedidos web del POS (GET /api/public/orders): estado logístico, guía, fechas, destinatario y prendas.
+ * El POS es la única fuente de verdad de la logística; la web no la guarda. Lanza si el POS no responde.
+ */
+export async function listPosOrders(query: PosOrderQuery = {}): Promise<{ items: PosCustomerOrder[]; total: number }> {
+  const data = await request(
+    "/orders",
+    posPageSchema(posCustomerOrderSchema),
+    {
+      customerEmail: query.customerEmail,
+      documentNumber: query.documentNumber,
+      orderNumber: query.orderNumbers,
+      fulfillmentStatus: query.fulfillmentStatuses?.join(","),
+      deliveredBefore: query.deliveredBefore,
+      from: query.from,
+      to: query.to,
+      page: query.page ?? 0,
+      size: query.size ?? PAGE_SIZE,
+    },
+    "public",
+  );
+  return { items: data?.items ?? [], total: data?.total ?? 0 };
+}
+
+/** Pedidos por estado logístico y días entre el pago y la entrega (fechas `YYYY-MM-DD`, opcionales). */
+export async function getPosOrderSummary(from?: string, to?: string): Promise<PosOrderSummary | null> {
+  return request("/orders/summary", posOrderSummarySchema, { from, to }, "public");
 }
 
 /**

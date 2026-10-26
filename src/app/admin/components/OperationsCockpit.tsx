@@ -3,6 +3,7 @@ import { AlertTriangle, ArrowUpRight, ClipboardList, MessageSquare, Bell } from 
 import type { DashboardBacklogDTO, DashboardSlaItemDTO } from "@/modules/adminCatalog/dashboard/contracts/dashboard.dto";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
 import { formatCOP } from "../utils";
+import { posOrdersUrl } from "@/lib/pos-links";
 
 interface Props {
   slaQueue: DashboardSlaItemDTO[];
@@ -62,7 +63,7 @@ export default function OperationsCockpit({ slaQueue, backlog }: Props) {
             </div>
           </div>
           <Link
-            href="/admin/pedidos"
+            href={posOrdersUrl()}
             className="text-xs font-semibold text-[#154734] flex items-center gap-0.5 shrink-0"
           >
             Ver pedidos <ArrowUpRight className="w-3.5 h-3.5" />
@@ -76,7 +77,7 @@ export default function OperationsCockpit({ slaQueue, backlog }: Props) {
             slaQueue.map((item) => (
               <Link
                 key={item.orderId}
-                href={`/admin/pedidos?abrir=${encodeURIComponent(item.orderNumber)}`}
+                href={posOrdersUrl(item.orderNumber)}
                 className="flex items-start gap-3 px-4 sm:px-5 py-3 hover:bg-gray-50/80 transition-colors"
               >
                 <span
@@ -122,7 +123,7 @@ export default function OperationsCockpit({ slaQueue, backlog }: Props) {
           <BacklogTile
             label="Pedidos por atender"
             value={backlog.ordersNeedingAttention}
-            href="/admin/pedidos"
+            href={posOrdersUrl()}
             icon={ClipboardList}
             accent="bg-blue-50 text-blue-600"
           />
@@ -136,7 +137,7 @@ export default function OperationsCockpit({ slaQueue, backlog }: Props) {
           <BacklogTile
             label="Notificaciones sin leer"
             value={backlog.unreadNotifications}
-            href="/admin/pedidos"
+            href={posOrdersUrl()}
             icon={Bell}
             accent="bg-amber-50 text-amber-600"
           />

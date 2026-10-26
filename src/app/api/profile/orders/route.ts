@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { getCustomerOrders } from "@/modules/orders/application/customer-orders";
 
-const ORDER_PAGE_LIMIT = 50;
-
+/** «Mis pedidos»: el pago sale de la web y la logística (estado, guía, fechas y prendas) del POS. */
 export async function GET() {
   try {
     const session = await auth();
@@ -19,76 +18,8 @@ export async function GET() {
       );
     }
 
-    const orders = await prisma.order.findMany({
-      where: { userId },
-      select: {
-        id:                true,
-        orderNumber:       true,
-        status:            true,
-        createdAt:         true,
-        updatedAt:         true,
-        total:             true,
-        subtotal:          true,
-        shippingCost:      true,
-        discount:          true,
-        paymentMethod:     true,
-        paidAt:            true,
-        shippedAt:         true,
-        deliveredAt:       true,
-        trackingNumber:    true,
-        shippingName:      true,
-        shippingAddress:   true,
-        shippingCity:      true,
-        shippingDepartment: true,
-        items: {
-          select: {
-            id:        true,
-            name:      true,
-            imageUrl:  true,
-            colorName: true,
-            size:      true,
-            quantity:  true,
-            price:     true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-      take: ORDER_PAGE_LIMIT,
-    });
-
-    const result = orders.map((o) => ({
-      id:            o.id,
-      orderNumber:   o.orderNumber,
-      status:        o.status,
-      createdAt:     o.createdAt.toISOString(),
-      updatedAt:     o.updatedAt.toISOString(),
-      total:         Number(o.total),
-      subtotal:      Number(o.subtotal ?? 0),
-      shippingCost:  Number(o.shippingCost ?? 0),
-      discount:      Number(o.discount ?? 0),
-      paymentMethod: o.paymentMethod ?? null,
-      paidAt:        o.paidAt?.toISOString() ?? null,
-      shippedAt:     o.shippedAt?.toISOString() ?? null,
-      deliveredAt:   o.deliveredAt?.toISOString() ?? null,
-      trackingCode:  o.trackingNumber ?? undefined,
-      shippingAddress: {
-        fullName:   o.shippingName,
-        address:    o.shippingAddress,
-        city:       o.shippingCity,
-        department: o.shippingDepartment,
-      },
-      items: o.items.map((item) => ({
-        id:           item.id,
-        productName:  item.name,
-        productImage: item.imageUrl ?? "",
-        color:        item.colorName,
-        size:         item.size,
-        quantity:     item.quantity,
-        unitPrice:    Number(item.price),
-      })),
-    }));
-
-    return NextResponse.json(result);
+    const { orders } = await getCustomerOrders(userId);
+    return NextResponse.json(orders);
   } catch (err) {
     console.error("[GET /api/profile/orders]", err);
     return NextResponse.json({ message: "Error interno del servidor" }, { status: 500 });

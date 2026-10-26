@@ -344,6 +344,18 @@ describe("pedidos hacia el POS", () => {
     expect(web?.promotion?.source).toBe("WEB");
   });
 
+  it("envía el destinatario, la tarifa y al comprador como cliente del POS", () => {
+    const payload = buildPosOrderPayload(
+      { ...order, buyerName: "Juan Pérez", shippingRateName: "Metropolitana Bucaramanga" },
+      new Map([["p-pos", "SET-VENUS"]]),
+    );
+    expect(payload?.customer?.fullName).toBe("Juan Pérez");
+    expect(payload?.shippingName).toBe("Laura Gómez");
+    expect(payload?.shippingRateName).toBe("Metropolitana Bucaramanga");
+    // Sin comprador conocido, el cliente es el destinatario.
+    expect(buildPosOrderPayload(order, new Map([["p-pos", "SET-VENUS"]]))?.customer?.fullName).toBe("Laura Gómez");
+  });
+
   it("si todo el pedido es del POS, el descuento y el envío van completos", () => {
     const payload = buildPosOrderPayload(
       { ...order, items: [order.items[0]] },

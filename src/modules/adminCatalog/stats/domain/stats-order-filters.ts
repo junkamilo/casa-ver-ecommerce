@@ -1,5 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
+// Pedidos pagados. La web solo guarda PAID; PROCESSING, SHIPPED y DELIVERED quedan en pedidos viejos (la
+// logística vive en el POS).
 export const REVENUE_ORDER_STATUSES = [
   "PAID",
   "PROCESSING",
@@ -20,12 +22,5 @@ export function buildRevenueOrderItemWhere(
 ): Prisma.OrderItemWhereInput {
   return {
     order: buildRevenueOrderWhere(start, end),
-  };
-}
-
-export function buildDeliveredOrderWhere(start: Date, end: Date): Prisma.OrderWhereInput {
-  return {
-    status: "DELIVERED",
-    createdAt: { gte: start, lte: end },
   };
 }

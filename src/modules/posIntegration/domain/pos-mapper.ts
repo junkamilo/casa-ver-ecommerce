@@ -264,7 +264,12 @@ export function parsePosLineId(id: string): PosLineRef | null {
 
 export interface PaidOrderForPos {
   orderNumber: string;
+  /** Destinatario del paquete. */
   shippingName: string;
+  /** Quien compra (titular de la cuenta); sin él, el cliente del POS es el destinatario. */
+  buyerName?: string | null;
+  /** Tarifa de envío cobrada (foto del checkout). */
+  shippingRateName?: string | null;
   shippingCedula: string | null;
   shippingPhone: string | null;
   shippingCity: string | null;
@@ -352,7 +357,7 @@ export function buildPosOrderPayload(
   return {
     orderNumber: order.orderNumber,
     customer: {
-      fullName: order.shippingName,
+      fullName: order.buyerName?.trim() || order.shippingName,
       documentNumber: order.shippingCedula,
       email: order.email,
       phone: order.shippingPhone,
@@ -373,6 +378,8 @@ export function buildPosOrderPayload(
       : null,
     orderTotal: order.total ?? null,
     couponCode: order.couponCode ?? null,
+    shippingName: order.shippingName,
+    shippingRateName: order.shippingRateName ?? null,
     promotion: order.coupon
       ? {
           promotionId: order.coupon.posPromotionId,

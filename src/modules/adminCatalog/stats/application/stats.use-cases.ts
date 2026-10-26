@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getCatalog } from "@/modules/catalog/listing/application/get-catalog";
 import { parsePosLineId } from "@/modules/posIntegration/domain/pos-mapper";
 import { getPosCategoriesBySlug } from "@/modules/posIntegration/application/get-pos-product-categories.use-case";
+import { getPosOrderSummary, isPosCatalogConfigured } from "@/modules/posIntegration/infrastructure/pos-catalog.client";
 import type {
   CancellationData,
   CategorySale,
@@ -22,7 +23,6 @@ import type {
   TopProduct,
 } from "../contracts/stats.dto";
 import {
-  buildDeliveredOrderWhere,
   buildRevenueOrderItemWhere,
   buildRevenueOrderWhere,
   REVENUE_ORDER_STATUSES,
@@ -382,24 +382,28 @@ export async function getReviewsByPeriod(period: Period): Promise<ReviewsData> {
   };
 }
 
+/** Fecha de Bogotá (YYYY-MM-DD) de un instante, para los filtros del POS. */
+function bogotaDay(date: Date): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota" }).format(date);
+}
+
+/** Días entre el pago y la entrega: la entrega la registra el POS (Tienda → Pedidos). */
 export async function getAvgDeliveryTime(period: Period): Promise<DeliveryTimeData> {
   const { start, end } = getPeriodDateRange(period);
-  const orders = await prisma.order.findMany({
-    where: {
-      ...buildDeliveredOrderWhere(start, end),
-      paidAt: { not: null },
-      deliveredAt: { not: null },
-    },
-    select: { paidAt: true, deliveredAt: true },
-  });
-  if (orders.length === 0) return { avgDays: 0, minDays: 0, maxDays: 0, count: 0 };
-  const diffs = orders.map((o) => (new Date(o.deliveredAt!).getTime() - new Date(o.paidAt!).getTime()) / (1000 * 60 * 60 * 24));
-  return {
-    avgDays: Math.round((diffs.reduce((a, b) => a + b, 0) / diffs.length) * 10) / 10,
-    minDays: Math.round(Math.min(...diffs) * 10) / 10,
-    maxDays: Math.round(Math.max(...diffs) * 10) / 10,
-    count: orders.length,
-  };
+  if (!isPosCatalogConfigured()) return { avgDays: 0, minDays: 0, maxDays: 0, count: 0 };
+  try {
+    const summary = await getPosOrderSummary(bogotaDay(start), bogotaDay(end));
+    if (!summary || summary.delivered === 0) return { avgDays: 0, minDays: 0, maxDays: 0, count: 0 };
+    return {
+      avgDays: summary.avgDeliveryDays,
+      minDays: summary.minDeliveryDays,
+      maxDays: summary.maxDeliveryDays,
+      count: summary.delivered,
+    };
+  } catch (error) {
+    console.warn("[Stats] El POS no respondió (tiempo de entrega):", error);
+    return { avgDays: 0, minDays: 0, maxDays: 0, count: 0 };
+  }
 }
 
 export async function getPeakHoursByPeriod(period: Period): Promise<PeakHourData[]> {
@@ -425,14 +429,38 @@ export async function getPeakHoursByPeriod(period: Period): Promise<PeakHourData
   }));
 }
 
+/**
+ * Embudo de pedidos: los que no se pagaron (pendientes y fallidos) salen de la web; los pagados, con su estado
+ * logístico (por enviar, procesando, en camino, entregados, cancelados, reembolsados), del POS.
+ */
 export async function getOrdersFunnel(): Promise<FunnelItem[]> {
-  const counts = await prisma.order.groupBy({ by: ["status"], _count: { id: true }, _sum: { total: true } });
-  return counts
+  const unpaid = await prisma.order.groupBy({
+    by: ["status"],
+    where: { status: { in: ["PENDING", "FAILED"] } },
+    _count: { id: true },
+    _sum: { total: true },
+  });
+  const rows: { status: string; count: number; total: number }[] = unpaid.map((c) => ({
+    status: c.status,
+    count: c._count.id,
+    total: Number(c._sum.total ?? 0),
+  }));
+  if (isPosCatalogConfigured()) {
+    try {
+      const summary = await getPosOrderSummary();
+      for (const [status, count] of Object.entries(summary?.counts ?? {})) {
+        if (count > 0) rows.push({ status, count, total: summary?.totals[status] ?? 0 });
+      }
+    } catch (error) {
+      console.warn("[Stats] El POS no respondió (embudo de pedidos):", error);
+    }
+  }
+  return rows
     .map((c) => ({
       status: c.status,
       label: FUNNEL_CONFIG[c.status]?.label ?? c.status,
-      count: c._count.id,
-      revenue: formatPrice(Number(c._sum.total ?? 0)),
+      count: c.count,
+      revenue: formatPrice(c.total),
       color: FUNNEL_CONFIG[c.status]?.color ?? "gray",
       actionable: FUNNEL_CONFIG[c.status]?.actionable ?? false,
       order: FUNNEL_CONFIG[c.status]?.order ?? 99,

@@ -52,7 +52,7 @@ export async function reportPaidOrderToPos(orderId: string): Promise<ReportOrder
     where: { id: orderId },
     include: {
       items: true,
-      user: { select: { email: true } },
+      user: { select: { email: true, name: true } },
     },
   });
   if (!order) return { status: "skipped", reason: "pedido inexistente" };
@@ -62,6 +62,8 @@ export async function reportPaidOrderToPos(orderId: string): Promise<ReportOrder
     {
       orderNumber: order.orderNumber,
       shippingName: order.shippingName,
+      buyerName: order.user?.name ?? null,
+      shippingRateName: order.shippingRateName,
       shippingCedula: order.shippingCedula,
       shippingPhone: order.shippingPhone,
       shippingCity: order.shippingCity,

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
-import { reportOrderStatusQuietly } from "@/modules/posIntegration/application/sync-order-status.use-case";
+import { confirmCustomerDelivery } from "@/modules/orders/application/customer-orders";
 import type { NextRequest } from "next/server";
 
+/** «Ya recibí mi pedido»: el POS lo marca entregado y confirmado por el cliente (la web no lo guarda). */
 export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -20,42 +20,14 @@ export async function POST(
     }
 
     const { id } = await params;
-
-    // Valida que el id sea un string no vacío
     if (!id || typeof id !== "string") {
       return NextResponse.json({ message: "ID de pedido inválido" }, { status: 400 });
     }
 
-    // Consulta sólo los campos necesarios para la validación
-    const order = await prisma.order.findUnique({
-      where: { id },
-      select: { userId: true, status: true },
-    });
-
-    if (!order) {
-      return NextResponse.json({ message: "Pedido no encontrado" }, { status: 404 });
+    const result = await confirmCustomerDelivery(userId, id);
+    if (!result.ok) {
+      return NextResponse.json({ message: result.message }, { status: result.status });
     }
-
-    // Verifica que el pedido pertenezca al usuario autenticado
-    if (order.userId !== userId) {
-      return NextResponse.json({ message: "No autorizado" }, { status: 403 });
-    }
-
-    if (order.status !== "SHIPPED") {
-      return NextResponse.json(
-        { message: "Solo puedes confirmar un pedido que esté en camino" },
-        { status: 400 }
-      );
-    }
-
-    await prisma.order.update({
-      where: { id },
-      data: { status: "DELIVERED", deliveredAt: new Date() },
-    });
-
-    // El POS (Tienda → Pedidos) marca el pedido entregado y confirmado por el cliente.
-    void reportOrderStatusQuietly({ id }, { confirmedByCustomer: true });
-
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[POST /api/profile/orders/[id]/confirm-delivery]", err);

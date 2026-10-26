@@ -18,17 +18,22 @@ import type { PosColorPalette } from "@/modules/posIntegration/domain/pos-color-
 const repository = new PrismaCatalogListingRepository();
 const webSettings = new PrismaProductWebSettingsRepository();
 
-/** `palette`: colores del POS para los productos de la web; `null` = sin integración (no se restringe). */
+/**
+ * Catálogo desde Neon. `palette`: colores del POS (respaldo con el POS caído: solo la copia de sus productos);
+ * `null` = tienda sin integración con el POS (todo Neon, sin restringir colores).
+ */
 async function catalogFromNeon(palette: PosColorPalette | null): Promise<CatalogEntry[]> {
-  return (await repository.findActiveProducts(false)).map((row) => neonToCatalogEntry(restrictWebRowColors(row, palette)));
+  const rows = await repository.findActiveProducts(palette ? "POS_MIRROR" : "ALL");
+  return rows.map((row) => neonToCatalogEntry(restrictWebRowColors(row, palette)));
 }
 
 /**
  * Catálogo visible de la tienda, más nuevo primero (ARQUITECTURA-DEFINITIVA-WEB.md, Fase 3):
  *   - Productos del POS: API del POS (Data Cache, tag `pos-products`) + capa web (`product_web_settings`),
  *     ubicados en las categorías/subcategorías que publica el POS (tag `pos-categories`).
- *   - Productos creados en la web: Neon, con solo los colores que existen en el POS (tag `pos-colors`).
- *   - Si el POS no responde: la copia de Neon de todo el catálogo, para no dejar la tienda vacía.
+ *   - Los productos creados solo en la web ya no se venden: todo pedido debe llegar al POS, que es quien lo
+ *     despacha (md/COMPARACION-TABLAS-PEDIDOS-POS-vs-WEB.md). Para venderlos hay que crearlos en el POS.
+ *   - Si el POS no responde: la copia en Neon de los productos del POS, para no dejar la tienda vacía.
  * Memoizado por request: los bloques de una misma página comparten la lectura.
  */
 export const getCatalog = cache(async (): Promise<CatalogEntry[]> => {
@@ -37,17 +42,14 @@ export const getCatalog = cache(async (): Promise<CatalogEntry[]> => {
   // Nunca lanza: si el POS cae sirve su último respaldo (o una paleta vacía).
   const palettePromise = getPosColorPalette();
   try {
-    const [posProducts, settings, webProducts, taxonomy, palette] = await Promise.all([
+    const [posProducts, settings, taxonomy] = await Promise.all([
       fetchCatalogForRender(),
       webSettings.findAll(),
-      repository.findActiveProducts(true),
       getPosTaxonomy(),
-      palettePromise,
     ]);
-    const entries = [
-      ...posProducts.map((pos) => posToCatalogEntry(pos, settings.get(normalizePosSlug(pos.slug)) ?? null, taxonomy)),
-      ...webProducts.map((row) => neonToCatalogEntry(restrictWebRowColors(row, palette))),
-    ];
+    const entries = posProducts.map((pos) =>
+      posToCatalogEntry(pos, settings.get(normalizePosSlug(pos.slug)) ?? null, taxonomy),
+    );
     // Un slug no puede estar en ambos lados; si pasara, gana el del POS.
     const seen = new Set<string>();
     return sortByPublished(entries.filter((e) => !seen.has(e.slug) && seen.add(e.slug)));

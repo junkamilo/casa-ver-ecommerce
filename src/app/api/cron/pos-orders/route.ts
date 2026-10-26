@@ -5,7 +5,6 @@ import {
   reportOrderCancellationToPos,
   reportPaidOrderToPos,
 } from "@/modules/posIntegration/application/report-order-to-pos.use-case";
-import { reportOrderStatusToPos } from "@/modules/posIntegration/application/sync-order-status.use-case";
 import { isPosCatalogConfigured } from "@/modules/posIntegration/infrastructure/pos-catalog.client";
 
 export const maxDuration = 300;
@@ -21,7 +20,8 @@ function verifyCronSecret(request: Request): boolean {
 
 /**
  * Reintenta reportar al POS los pedidos pagados que no llegaron cuando se confirmó el pago, y las
- * cancelaciones o reembolsos de pedidos pagados. Ambas operaciones son idempotentes en el POS.
+ * cancelaciones o reembolsos de pedidos pagados. Ambas operaciones son idempotentes en el POS. La logística
+ * (Procesando, Enviado, Entregado) se maneja solo en el POS: la web no tiene estados que reportarle.
  */
 export async function GET(request: Request) {
   if (!verifyCronSecret(request)) {
@@ -33,16 +33,12 @@ export async function GET(request: Request) {
 
   const summary = { registered: 0, replayed: 0, skipped: 0, rejected: 0, failed: 0 };
   const errors: string[] = [];
-  const statuses = { reported: 0 };
   for (const orderId of await listRecentPaidOrderIds(LOOKBACK_DAYS)) {
     try {
       const result = await reportPaidOrderToPos(orderId);
       if (result.status === "registered") {
         if (result.replay) summary.replayed++;
         else summary.registered++;
-        // Estado logístico (Procesando / Enviado / Entregado) que no llegó al POS en su momento.
-        const statusResult = await reportOrderStatusToPos({ id: orderId });
-        if (statusResult.status === "reported") statuses.reported++;
       } else if (result.status === "rejected") {
         summary.rejected++;
       } else {
@@ -71,7 +67,7 @@ export async function GET(request: Request) {
     }
   }
 
-  console.log("[Cron/PosOrders]", JSON.stringify({ ...summary, cancellations, statuses }));
+  console.log("[Cron/PosOrders]", JSON.stringify({ ...summary, cancellations }));
   if (errors.length > 0) console.warn("[Cron/PosOrders] Errores:", errors);
-  return NextResponse.json({ ...summary, cancellations, statuses, errors });
+  return NextResponse.json({ ...summary, cancellations, errors });
 }

@@ -100,9 +100,9 @@ describe("resolveProductSource", () => {
     settingsRepo.findBySlug.mockResolvedValue(null);
   });
 
-  it("un producto creado en la web se lee de Neon sin consultar al POS", async () => {
+  it("un producto creado solo en la web ya no se vende (404) y no consulta al POS", async () => {
     repo.findNeonProduct.mockResolvedValue({ id: "clxweb", status: "ACTIVE", posSlug: null });
-    await expect(resolveProductSource("vestido-web")).resolves.toEqual({ source: "NEON_LEGACY" });
+    await expect(resolveProductSource("vestido-web")).resolves.toBeNull();
     expect(mockFetch).not.toHaveBeenCalled();
   });
 

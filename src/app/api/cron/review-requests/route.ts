@@ -2,11 +2,15 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendReviewRequestEmail } from "@/services/email/client";
 import { randomBytes } from "crypto";
+import { isPosCatalogConfigured, listPosOrders } from "@/modules/posIntegration/infrastructure/pos-catalog.client";
 
 // Envía solicitudes de reseña 7 días después de la entrega
 const DAYS_AFTER_DELIVERY = 7;
 const MS = DAYS_AFTER_DELIVERY * 24 * 60 * 60 * 1000;
 const TOKEN_TTL_DAYS = 30;
+/** Ventas de los últimos días que se revisan en el POS (las más viejas ya recibieron su solicitud). */
+const LOOKBACK_DAYS = 60;
+const MAX_PAGES = 5;
 
 function verifyCronSecret(request: Request): boolean {
   const secret = process.env.CRON_SECRET;
@@ -22,11 +26,29 @@ export async function GET(request: Request) {
   const cutoff = new Date(Date.now() - MS);
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://casaverdeoficial.com";
 
-  // Órdenes DELIVERED hace ≥ 7 días, sin solicitud de reseña enviada aún
+  // La entrega la registra el POS (Tienda → Pedidos): pedidos entregados hace ≥ 7 días.
+  if (!isPosCatalogConfigured()) {
+    return NextResponse.json({ error: "Integración POS no configurada" }, { status: 503 });
+  }
+  const from = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota" })
+    .format(new Date(Date.now() - LOOKBACK_DAYS * 24 * 60 * 60 * 1000));
+  const delivered: string[] = [];
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const result = await listPosOrders({
+      fulfillmentStatuses: ["DELIVERED"],
+      deliveredBefore: cutoff.toISOString(),
+      from,
+      page,
+      size: 100,
+    });
+    delivered.push(...result.items.map((o) => o.orderNumber));
+    if (result.items.length < 100) break;
+  }
+
+  // De esos, los que aún no recibieron la solicitud de reseña.
   const orders = await prisma.order.findMany({
     where: {
-      status:                   "DELIVERED",
-      deliveredAt:              { lt: cutoff },
+      orderNumber:              { in: delivered },
       reviewRequestEmailSentAt: null,
       user: {
         email: { not: null },
@@ -39,7 +61,7 @@ export async function GET(request: Request) {
         orderBy: { id: "asc" },
       },
     },
-    orderBy: { deliveredAt: "asc" },
+    orderBy: { paidAt: "asc" },
     take: 50,
   });
 

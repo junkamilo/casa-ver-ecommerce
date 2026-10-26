@@ -144,6 +144,83 @@ export const posOrderStatusSchema = z.object({
 });
 export type PosOrderStatus = z.infer<typeof posOrderStatusSchema>;
 
+/** Prenda de un pedido en el POS, con la foto de la venta (nombre, color, talla y SKU al vender). */
+export const posCustomerOrderLineSchema = z.object({
+  productSlug: nullableString,
+  name: z.string().nullish().transform((v) => v ?? ""),
+  colorId: z.number().int().nullish().transform((v) => v ?? null),
+  colorName: nullableString,
+  sizeId: z.number().int().nullish().transform((v) => v ?? null),
+  sizeName: nullableString,
+  sku: nullableString,
+  quantity: z.number().int(),
+  unitPrice: decimal,
+  discount: decimal.nullish().transform((v) => v ?? 0),
+  lineTotal: decimal,
+});
+
+/**
+ * Pedido web tal como lo guarda el POS (GET /api/public/orders): estado logístico, guía, fechas, destinatario
+ * y prendas. La web no guarda nada de esto; «Mis pedidos» y el panel lo leen aquí.
+ */
+export const posCustomerOrderSchema = z.object({
+  orderNumber: z.string(),
+  saleNumber: nullableString,
+  status: z.string(),
+  fulfillmentStatus: z.enum(POS_FULFILLMENT_STATUSES).nullish().transform((v) => v ?? null),
+  fulfillmentLabel: nullableString,
+  trackingNumber: nullableString,
+  trackingUrl: nullableString,
+  paidAt: nullableString,
+  processingAt: nullableString,
+  shippedAt: nullableString,
+  deliveredAt: nullableString,
+  deliveryConfirmedByCustomer: z.boolean().default(false),
+  cancelledAt: nullableString,
+  updatedAt: nullableString,
+  subtotal: decimal.nullish().transform((v) => v ?? 0),
+  discount: decimal.nullish().transform((v) => v ?? 0),
+  shipping: decimal.nullish().transform((v) => v ?? 0),
+  total: decimal.nullish().transform((v) => v ?? 0),
+  paymentMethod: nullableString,
+  couponCode: nullableString,
+  customerName: nullableString,
+  customerDocument: nullableString,
+  customerEmail: nullableString,
+  phone: nullableString,
+  shippingName: nullableString,
+  shippingRateName: nullableString,
+  address: nullableString,
+  city: nullableString,
+  department: nullableString,
+  lines: z.array(posCustomerOrderLineSchema).default([]),
+});
+export type PosCustomerOrder = z.infer<typeof posCustomerOrderSchema>;
+
+/** Filtros de GET /api/public/orders (combinables). */
+export type PosOrderQuery = {
+  customerEmail?: string;
+  documentNumber?: string;
+  orderNumbers?: string[];
+  fulfillmentStatuses?: PosFulfillmentStatus[];
+  deliveredBefore?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  size?: number;
+};
+
+/** GET /api/public/orders/summary: pedidos por estado logístico y días entre el pago y la entrega. */
+export const posOrderSummarySchema = z.object({
+  counts: z.record(z.string(), z.number()).default({}),
+  totals: z.record(z.string(), decimal).default({}),
+  delivered: z.number().default(0),
+  avgDeliveryDays: z.number().default(0),
+  minDeliveryDays: z.number().default(0),
+  maxDeliveryDays: z.number().default(0),
+});
+export type PosOrderSummary = z.infer<typeof posOrderSummarySchema>;
+
 /** Cambio de estado hecho en la web que se reporta al POS (POST /orders/{orderNumber}/status). */
 export type PosOrderStatusUpdate = {
   status: "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED" | "REFUNDED";
@@ -203,6 +280,9 @@ export type PosOrderPayload = {
   } | null;
   orderTotal?: number | null;
   couponCode?: string | null;
+  /** Destinatario del paquete (puede no ser quien compra) y tarifa de envío cobrada. */
+  shippingName?: string | null;
+  shippingRateName?: string | null;
   /** Cupón aplicado: con promotionId el POS registra el uso del canal WEB en esa promoción. */
   promotion?: PosOrderPromotion | null;
 };

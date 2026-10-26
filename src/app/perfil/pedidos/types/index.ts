@@ -45,7 +45,11 @@ export interface Order {
   deliveredAt: string | null;
   items: OrderItem[];
   shippingAddress: OrderShippingAddress;
+  /** Guía y enlace de rastreo que registra el POS (Tienda → Pedidos). */
   trackingCode?: string;
+  trackingUrl?: string;
+  /** Tarifa de envío cobrada. */
+  shippingRateName?: string;
 }
 
 // ── Constantes ────────────────────────────────────────────────────────────────

@@ -17,6 +17,7 @@ import AdminConfirmModal from "@/app/admin/components/AdminConfirmModal";
 import { DeleteIcon, NotificationIcon } from "@/components/icons";
 import { timeAgo } from "../../utils";
 import type { StockAlertDTO as StockAlert } from "@/modules/adminCatalog/stockAlerts/contracts/stock-alert.dto";
+import { posOrdersUrl } from "@/lib/pos-links";
 
 interface AdminNotification {
   id: string;
@@ -164,7 +165,7 @@ export default function NotificationsBell() {
               Eliminar historial
             </button>
             <Link
-              href="/admin/pedidos"
+              href={posOrdersUrl()}
               onClick={() => setOpen(false)}
               className="text-xs font-semibold text-[#154734] flex items-center gap-0.5 hover:opacity-80 transition-opacity"
             >

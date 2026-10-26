@@ -15,7 +15,8 @@ export type ProductSource =
 
 /**
  * De dónde se pinta un producto (ARQUITECTURA-DEFINITIVA-WEB.md §2.2):
- *   - Producto creado en la web (fila de Neon sin posSlug) → Neon.
+ *   - Producto creado solo en la web (fila de Neon sin posSlug): con el POS integrado ya no se vende (404),
+ *     porque su pedido no llegaría al POS; sin integración → Neon.
  *   - Producto del POS → API del POS (Data Cache, se purga por tag desde el webhook) + capa web
  *     (`product_web_settings`).
  *   - Si el POS no responde → su copia en Neon mientras exista, para no tumbar la página.
@@ -24,8 +25,8 @@ export type ProductSource =
  */
 export const resolveProductSource = cache(async (slug: string): Promise<ProductSource | null> => {
   const [neon, overlay] = await Promise.all([repository.findNeonProduct(slug), webSettings.findBySlug(slug)]);
-  if (neon && !neon.posSlug) return neon.status === "ACTIVE" ? { source: "NEON_LEGACY" } : null;
   if (!isPosCatalogConfigured()) return neon?.status === "ACTIVE" ? { source: "NEON_LEGACY" } : null;
+  if (neon && !neon.posSlug) return null;
 
   try {
     const pos = await fetchProductForRender(slug);

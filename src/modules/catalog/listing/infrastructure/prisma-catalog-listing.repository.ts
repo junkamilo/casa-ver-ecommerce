@@ -51,12 +51,12 @@ const CATALOG_SELECT = {
 
 export class PrismaCatalogListingRepository {
   /**
-   * Productos activos de Neon. `onlyWeb`: solo los creados en la web (los del POS se leen del POS);
-   * sin él, también la copia de los del POS (respaldo cuando el POS no responde).
+   * Productos activos de Neon. `POS_MIRROR`: solo la copia de los del POS (respaldo cuando el POS no
+   * responde); `ALL`: todos (tienda sin integración con el POS).
    */
-  async findActiveProducts(onlyWeb: boolean): Promise<NeonCatalogRow[]> {
+  async findActiveProducts(scope: "POS_MIRROR" | "ALL"): Promise<NeonCatalogRow[]> {
     const rows = await prisma.product.findMany({
-      where: { status: "ACTIVE", ...(onlyWeb ? { posSlug: null } : {}) },
+      where: { status: "ACTIVE", ...(scope === "POS_MIRROR" ? { posSlug: { not: null } } : {}) },
       select: CATALOG_SELECT,
     });
     return rows as unknown as NeonCatalogRow[];
