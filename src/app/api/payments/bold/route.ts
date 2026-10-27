@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { createBoldPaymentLinkUseCase } from "@/modules/payments/bold/application/create-bold-payment-link.use-case";
 import { toErrorResponse } from "@/server/http/error-response";
+import { customerUserId } from "@/server/auth/customer-session";
 
 // ---------------------------------------------------------------------------
 // POST /api/payments/bold
@@ -27,8 +28,8 @@ export async function POST(req: NextRequest) {
   }
 
   const session = await auth();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sessionUserId = (session?.user as any)?.id as string | undefined;
+  // Solo una sesión de cliente identifica al dueño del pedido (la de admin lleva el id del POS).
+  const sessionUserId = customerUserId(session) ?? undefined;
 
   try {
     const result = await createBoldPaymentLinkUseCase({ orderId, sessionUserId });

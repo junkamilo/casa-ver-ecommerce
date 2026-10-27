@@ -4,7 +4,14 @@ import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { compare } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { verifyPosAdminPassword } from "@/modules/posIntegration/application/verify-pos-admin.use-case";
+import {
+  isActivePosAdmin,
+  isPosAdminEmail,
+  verifyPosAdminLogin,
+} from "@/modules/posIntegration/application/verify-pos-admin.use-case";
+
+/** Cada cuánto la sesión de un admin confirma con el POS que sigue siendo admin activo de la web. */
+const ADMIN_RECHECK_MS = 5 * 60 * 1000;
 
 class InvalidCredentials extends CredentialsSignin {
   code = "invalid_credentials";
@@ -55,19 +62,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!email || !password) return null;
 
+        // Administradores: 100 % del POS (Configuraciones → Usuarios). El POS verifica la contraseña (la
+        // misma del POS), que siga siendo admin de la web y activo, y limita los intentos. La sesión lleva el
+        // id del POS y no se crea ninguna fila en Neon. `null` = no se sabe si es admin (POS caído).
+        const isAdmin = await isPosAdminEmail(email);
+        if (isAdmin !== false) {
+          const login = await verifyPosAdminLogin(email, password, clientIpOf(request));
+          if (login.outcome === "valid") {
+            return { id: login.admin.userId, name: login.admin.fullName, email: login.admin.email, role: "ADMIN" };
+          }
+          if (login.outcome === "too_many_attempts") throw new TooManyAttempts();
+          if (isAdmin && login.outcome === "unavailable") throw new AdminUnavailable();
+          // Contraseña de admin incorrecta o POS sin respuesta: puede ser su cuenta de cliente.
+        }
+
+        // Clientes de la tienda: viven en Neon.
         const user = await prisma.user.findUnique({ where: { email } });
 
         if (!user) throw new InvalidCredentials();
-
-        // Admin gestionado por el POS (Configuraciones → Usuarios): la contraseña es la del POS y la
-        // verifica el POS. Nunca se usa la contraseña guardada en la web para estas cuentas.
-        if (user.posUserId) {
-          const outcome = await verifyPosAdminPassword(email, password, clientIpOf(request));
-          if (outcome === "too_many_attempts") throw new TooManyAttempts();
-          if (outcome === "unavailable") throw new AdminUnavailable();
-          if (outcome !== "valid") throw new InvalidCredentials();
-          return { id: user.id, name: user.name, email: user.email, role: user.role };
-        }
 
         if (!user.password) throw new UseGoogleSignIn();
 
@@ -76,7 +88,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!user.emailVerified) throw new EmailNotVerified();
 
-        return { id: user.id, name: user.name, email: user.email, role: user.role };
+        return { id: user.id, name: user.name, email: user.email, role: "USER" };
       },
     }),
   ],
@@ -102,7 +114,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as { role?: string }).role;
+        // Google y clientes: siempre USER. ADMIN solo lo da el POS en el login con contraseña.
+        token.role = (user as { role?: string }).role === "ADMIN" ? "ADMIN" : "USER";
+        token.roleCheckedAt = Date.now();
       }
 
       // Sesiones JWT antiguas pueden no tener id — NextAuth lo guarda en sub
@@ -119,19 +133,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
       }
 
-      // Refrescar role desde DB (evita ADMIN demoted con JWT stale hasta 30 días)
+      // Admin: cada 5 minutos se confirma con el POS que siga siendo admin activo de la web. Si el POS le
+      // quitó el acceso (o la sesión es de antes de esta migración, con un id de Neon) se cierra la sesión.
+      // Si el POS no responde, la sesión sigue hasta que vuelva.
       const userId = (token.id ?? token.sub) as string | undefined;
-      if (userId) {
-        const lastRefresh = typeof token.roleCheckedAt === "number" ? token.roleCheckedAt : 0;
-        const now = Date.now();
-        if (user || now - lastRefresh > 5 * 60 * 1000) {
-          const dbUser = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { role: true },
-          });
-          token.role = dbUser?.role ?? "USER";
-          token.roleCheckedAt = now;
+      if (token.role === "ADMIN" && userId) {
+        const lastCheck = typeof token.roleCheckedAt === "number" ? token.roleCheckedAt : 0;
+        if (Date.now() - lastCheck > ADMIN_RECHECK_MS) {
+          const active = await isActivePosAdmin(userId);
+          if (active === false) return null;
+          if (active) token.roleCheckedAt = Date.now();
         }
+      } else if (token.role !== "USER") {
+        token.role = "USER";
       }
 
       return token;

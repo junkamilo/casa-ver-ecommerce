@@ -243,7 +243,7 @@ export async function listPosMunicipalities(departmentDane: string): Promise<Pos
 
 /**
  * Administradores de la web según el POS (Configuraciones → Usuarios). `null` si el POS aún no publica
- * administradores (404): quien llama no debe quitar ningún rol en ese caso.
+ * administradores (404). El login usa esta lista para saber si un correo es de un admin.
  */
 export async function listWebAdmins(): Promise<PosWebAdmin[] | null> {
   return request("/admins", posWebAdminSchema.array(), undefined, "public");

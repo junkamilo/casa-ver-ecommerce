@@ -14,3 +14,8 @@ export function posOrdersUrl(orderNumber?: string | null): string {
 export function posShippingUrl(section: "prices" | "cities" = "prices"): string {
   return `${POS_APP_URL}/settings/${section === "cities" ? "shipping-cities" : "shipping-prices"}`;
 }
+
+/** Configuraciones → Usuarios del POS: ahí se crean los admins de la web y se cambian sus contraseñas. */
+export function posUsersUrl(): string {
+  return `${POS_APP_URL}/settings/users`;
+}

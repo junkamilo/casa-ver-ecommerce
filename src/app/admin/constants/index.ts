@@ -3,7 +3,6 @@ import {
   Package,
   ClipboardList,
   BarChart3,
-  Shield,
 } from "lucide-react";
 import type { NavItem, AdminNavItem } from "../types";
 
@@ -15,7 +14,6 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { label: "Reseñas",   href: "/admin/resenas",           icon: ReviewsIcon },
   { label: "Reportes",   href: "/admin/estadisticas",      icon: ReportsIcon },
   { label: "Banners",    href: "/admin/hero",               icon: BannerIcon },
-  { label: "Admins",     href: "/admin/administradores",   icon: Shield },
   { label: "Mi Perfil",  href: "/admin/perfil",            icon: PerfilIcon },
 ];
 

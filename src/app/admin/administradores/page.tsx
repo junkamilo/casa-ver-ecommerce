@@ -1,6 +1,7 @@
-import { areAdminsManagedByPos } from "@/modules/adminCatalog/users/application/admins-editable";
-import AdministradoresView from "./AdministradoresView";
+import { redirect } from "next/navigation";
+import { posUsersUrl } from "@/lib/pos-links";
 
-export default function AdminAdministradoresPage() {
-  return <AdministradoresView readOnly={areAdminsManagedByPos()} />;
+/** Ruta vieja: los administradores de la web se gestionan en el POS (Configuraciones → Usuarios). */
+export default function AdministradoresPage() {
+  redirect(posUsersUrl());
 }

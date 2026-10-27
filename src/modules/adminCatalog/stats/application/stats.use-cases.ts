@@ -73,7 +73,7 @@ export async function getStatsByPeriod(period: Period): Promise<SalesPeriodData>
       where: buildRevenueOrderWhere(prevStart, prevEnd),
       select: { total: true },
     }),
-    prisma.user.count({ where: { role: "USER", createdAt: { gte: start, lte: end } } }),
+    prisma.user.count({ where: { createdAt: { gte: start, lte: end } } }),
   ]);
 
   const totalRevenue = ordersInPeriod.reduce((sum, o) => sum + Number(o.total), 0);

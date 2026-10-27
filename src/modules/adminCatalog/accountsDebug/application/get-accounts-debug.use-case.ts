@@ -32,7 +32,7 @@ export async function getAccountsDebugUseCase(userRole?: string): Promise<Accoun
         id: acc.user.id,
         email: acc.user.email,
         nombre: acc.user.name,
-        rol: acc.user.role,
+        rol: "USER",
         email_verificado: !!acc.user.emailVerified,
         registrado_el: acc.user.createdAt,
       },

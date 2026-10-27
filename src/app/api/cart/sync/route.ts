@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { rateLimit, getClientIP, RATE_LIMIT_CONFIGS } from "@/lib/ratelimit";
 import { isValidMediaUrl } from "@/lib/media-url";
+import { customerUserId } from "@/server/auth/customer-session";
 
 const cartItemSchema = z.object({
   variantId: z.string().min(1),
@@ -48,6 +49,9 @@ export async function POST(request: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
+  // Admin (id del POS): su carrito queda solo en el navegador.
+  const userId = customerUserId(session);
+  if (!userId) return NextResponse.json({ ok: true, skipped: true });
 
   const body = await request.json().catch(() => null);
   const parsed = syncSchema.safeParse(body);
@@ -55,7 +59,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, message: "Datos inválidos" }, { status: 400 });
   }
 
-  const userId = session.user.id;
   const { items } = parsed.data;
 
   await prisma.$transaction(async (tx) => {
@@ -97,6 +100,7 @@ export async function DELETE() {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 
-  await prisma.cart.deleteMany({ where: { userId: session.user.id } });
+  const customerId = customerUserId(session);
+  if (customerId) await prisma.cart.deleteMany({ where: { userId: customerId } });
   return NextResponse.json({ ok: true });
 }

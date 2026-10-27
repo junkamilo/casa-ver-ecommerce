@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { ADMIN_NOT_CUSTOMER_MESSAGE, isAdminSession } from "@/server/auth/customer-session";
 
 // Campos que el cliente puede leer — userId nunca se devuelve
 const ADDRESS_SELECT = {
@@ -106,6 +107,9 @@ export async function PUT(
     if (!session?.user) {
       return NextResponse.json({ message: "No autorizado" }, { status: 401 });
     }
+    if (isAdminSession(session)) {
+      return NextResponse.json({ message: ADMIN_NOT_CUSTOMER_MESSAGE }, { status: 403 });
+    }
     const userId = (session.user as { id?: string }).id as string;
     const { id } = await params;
 
@@ -167,6 +171,9 @@ export async function DELETE(
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ message: "No autorizado" }, { status: 401 });
+    }
+    if (isAdminSession(session)) {
+      return NextResponse.json({ message: ADMIN_NOT_CUSTOMER_MESSAGE }, { status: 403 });
     }
     const userId = (session.user as { id?: string }).id as string;
     const { id } = await params;

@@ -3,7 +3,7 @@ import { revalidatePosCategories, revalidatePosColors, revalidatePosProduct } fr
 import { removeProductBySlug, syncProductBySlug } from "./sync-product.use-case";
 import { syncOrderStatusFromPos } from "./sync-order-status.use-case";
 import { clearShippingCache } from "@/modules/shipping/application/pos-shipping";
-import { syncAdminsFromPos } from "./sync-admins.use-case";
+import { clearPosAdminCache } from "./verify-pos-admin.use-case";
 import { normalizePosSlug } from "../domain/pos-mapper";
 import { collectionSlugsForWebId } from "../domain/pos-category-view";
 import { getBackupCategoryTree } from "./get-pos-categories.use-case";
@@ -54,9 +54,12 @@ export async function processPosEvent(event: Pick<PosWebhookPayload, "entityType
     return { status: "revalidated" as const, entityType, id };
   }
 
-  // Administradores: el POS cambió quién administra la web; se vuelve a copiar la lista.
+  // Administradores: el POS cambió quién administra la web. La web no los copia (el login los verifica en
+  // el POS): se limpia la lista en memoria para que el cambio aplique de inmediato.
   if (entityType === "admin") {
-    return syncAdminsFromPos();
+    clearPosAdminCache();
+    console.info(`[POS webhook] admin.${action}: lista de admins limpiada`);
+    return { status: "revalidated" as const, entityType, id };
   }
 
   // Categoría o subcategoría (id = webId, el aviso no trae el slug): además del árbol se expiran las URLs

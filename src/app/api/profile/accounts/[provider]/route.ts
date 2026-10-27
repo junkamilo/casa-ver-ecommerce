@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { ADMIN_NOT_CUSTOMER_MESSAGE, isAdminSession } from "@/server/auth/customer-session";
 
 // Proveedores OAuth soportados por la aplicación
 const SUPPORTED_PROVIDERS = ["google"] as const;
@@ -26,6 +27,10 @@ export async function DELETE(
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ message: "No autorizado" }, { status: 401 });
+  }
+
+  if (isAdminSession(session)) {
+    return NextResponse.json({ message: ADMIN_NOT_CUSTOMER_MESSAGE }, { status: 403 });
   }
 
   const { provider } = await params;

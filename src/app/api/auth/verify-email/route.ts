@@ -78,7 +78,6 @@ export async function POST(request: Request) {
             name:          pending.name,
             email:         pending.email,
             password:      pending.passwordHash,
-            role:          "USER",
             phone:         pending.phone,
             recoveryEmail: pending.recoveryEmail,
             emailVerified: new Date(),

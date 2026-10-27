@@ -142,7 +142,8 @@ export async function fetchDashboardDataUseCase(): Promise<DashboardDataDTO> {
       where: { status: "ACTIVE" },
     }),
     prisma.user.count({
-      where: { role: "USER", createdAt: { gte: thirtyDaysAgo } },
+      // La tabla users es solo de clientes (los admins viven en el POS).
+      where: { createdAt: { gte: thirtyDaysAgo } },
     }),
     prisma.order.findMany({
       where: { status: "PAID" },

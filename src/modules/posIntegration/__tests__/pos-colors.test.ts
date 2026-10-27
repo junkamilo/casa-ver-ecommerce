@@ -19,7 +19,7 @@ jest.mock("../infrastructure/pos-catalog.client", () => ({
 jest.mock("../application/sync-product.use-case", () => ({}));
 jest.mock("../application/sync-order-status.use-case", () => ({}));
 jest.mock("@/modules/shipping/application/pos-shipping", () => ({ clearShippingCache: jest.fn() }));
-jest.mock("../application/sync-admins.use-case", () => ({}));
+jest.mock("../application/verify-pos-admin.use-case", () => ({ clearPosAdminCache: jest.fn() }));
 jest.mock("@/modules/catalog/product/infrastructure/prisma-product-web-settings.repository", () => ({
   PrismaProductWebSettingsRepository: jest.fn(),
 }));

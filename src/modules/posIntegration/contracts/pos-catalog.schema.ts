@@ -116,7 +116,7 @@ export const posWebhookPayloadSchema = z.object({
   eventId: z.string().min(1),
   event: z.string().min(1),
   // shipping: cambió la geografía o el precio de envíos (id = "shipping"); se vuelve a sincronizar todo.
-  // admin: cambiaron los administradores de la web en el POS (id = "admin"); se vuelve a sincronizar la lista.
+  // admin: cambiaron los administradores de la web en el POS (id = "admin"); la web limpia su lista en memoria.
   // color: se creó, cambió o desactivó un color del catálogo (id = colorId); se vuelve a leer GET /colors.
   entityType: z.enum(["category", "subcategory", "product", "color", "promotion", "order", "shipping", "admin"]),
   id: z.string().min(1),
