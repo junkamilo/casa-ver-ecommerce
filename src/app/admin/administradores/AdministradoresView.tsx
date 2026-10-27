@@ -13,7 +13,7 @@ import AdminModal from "./components/AdminModal";
 import AdminPageHeader from "@/components/ui/AdminPageHeader";
 import AdminPagination from "@/components/ui/AdminPagination";
 import { UserPlus } from "lucide-react";
-import PosManagedNotice from "../configuraciones/components/PosManagedNotice";
+import PosManagedNotice from "../components/PosManagedNotice";
 
 export default function AdministradoresView({ readOnly }: { readOnly: boolean }) {
   const { data: session } = useSession();

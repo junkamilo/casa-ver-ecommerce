@@ -1,8 +1,8 @@
 // ---------------------------------------------------------------------------
 // Locale
 // ---------------------------------------------------------------------------
-// Costo de envío + umbral de envío gratis: getShippingCostAction → DB
-// (ShippingConfig.freeShippingThreshold / tarifas por municipio).
+// Costo de envío + umbral de envío gratis: getShippingCostAction → API del POS
+// (GET /api/public/shipping/quote).
 export const LOCALE = "es-CO";
 
 // ---------------------------------------------------------------------------

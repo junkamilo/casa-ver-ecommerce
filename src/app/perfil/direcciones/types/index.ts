@@ -59,9 +59,13 @@ export interface UseAddressFormResult {
   deptField: ReturnType<typeof useController<AddressFormValues, "department">>["field"];
   cityField: ReturnType<typeof useController<AddressFormValues, "city">>["field"];
   selectedDepartment: string;
+  /** Departamentos y municipios con cobertura según el POS. */
+  departamentos: string[];
   municipios: string[];
   /** Costo de envío calculado para la ciudad seleccionada (0 si no hay ciudad elegida) */
+  /** Tarifa de envío a la ciudad elegida (POS); 0 = sin calcular. */
   shippingCost: number;
+  shippingRateName: string | null;
 }
 
 // ── Hook useAddressCard ───────────────────────────────────────────────────────

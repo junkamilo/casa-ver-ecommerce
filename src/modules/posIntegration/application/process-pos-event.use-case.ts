@@ -2,7 +2,7 @@ import type { PosWebhookPayload } from "../contracts/pos-catalog.schema";
 import { revalidatePosCategories, revalidatePosColors, revalidatePosProduct } from "./revalidate-catalog";
 import { removeProductBySlug, syncProductBySlug } from "./sync-product.use-case";
 import { syncOrderStatusFromPos } from "./sync-order-status.use-case";
-import { syncShippingFromPos } from "./sync-shipping.use-case";
+import { clearShippingCache } from "@/modules/shipping/application/pos-shipping";
 import { syncAdminsFromPos } from "./sync-admins.use-case";
 import { normalizePosSlug } from "../domain/pos-mapper";
 import { collectionSlugsForWebId } from "../domain/pos-category-view";
@@ -39,9 +39,12 @@ export async function processPosEvent(event: Pick<PosWebhookPayload, "entityType
     return syncOrderStatusFromPos(id);
   }
 
-  // Envíos: cambió una tarifa, el envío gratis o la geografía; se vuelve a copiar la foto completa.
+  // Envíos: cambió una tarifa, el envío gratis o la geografía. La web no los copia (los consulta al POS):
+  // solo se limpia la caché de listas y condiciones de envío gratis.
   if (entityType === "shipping") {
-    return syncShippingFromPos();
+    clearShippingCache();
+    console.info(`[POS webhook] shipping.${action} ${id}: caché de envíos limpiada`);
+    return { status: "revalidated" as const, entityType, id };
   }
 
   // Colores (id = colorId): la web no los guarda; se expira la paleta del POS y las páginas que la pintan.

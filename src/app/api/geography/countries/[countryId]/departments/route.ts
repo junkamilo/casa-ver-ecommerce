@@ -1,22 +1,15 @@
 import { NextResponse } from "next/server";
-import { listDepartmentsByCountryUseCase } from "@/modules/geography/application/public/list-departments-by-country.use-case";
+import { listPosDepartments } from "@/modules/posIntegration/infrastructure/pos-catalog.client";
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ countryId: string }> },
-) {
+/** Departamentos con cobertura del país (`countryId` = ISO alpha-2, p. ej. CO), según el POS. */
+export async function GET(_req: Request, { params }: { params: Promise<{ countryId: string }> }) {
   try {
     const { countryId } = await params;
-    const data = await listDepartmentsByCountryUseCase(countryId);
+    const data = await listPosDepartments(countryId.toUpperCase());
     return NextResponse.json(data, {
-      headers: {
-        "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=3600",
-      },
+      headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=3600" },
     });
   } catch {
-    return NextResponse.json(
-      { message: "Error al obtener departamentos" },
-      { status: 500 },
-    );
+    return NextResponse.json({ message: "Error al obtener departamentos" }, { status: 502 });
   }
 }

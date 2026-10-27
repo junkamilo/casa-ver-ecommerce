@@ -31,7 +31,12 @@ import {
   type PosProduct,
   type PosProductQuery,
 } from "../contracts/pos-catalog.schema";
-import { posShippingSnapshotSchema, type PosShippingSnapshot } from "../contracts/pos-shipping.schema";
+import {
+  posGeoItemSchema,
+  posShippingQuoteSchema,
+  type PosGeoItem,
+  type PosShippingQuote,
+} from "../contracts/pos-shipping.schema";
 import {
   posWebAdminSchema,
   posWebAdminVerificationSchema,
@@ -201,11 +206,39 @@ export async function getPosOrderSummary(from?: string, to?: string): Promise<Po
 }
 
 /**
- * Foto completa de envíos del POS: configuración, tarifas y geografía con la tarifa de cada municipio.
- * `null` si el POS aún no publica envíos (404): quien llama no debe tocar nada en ese caso.
+ * Precio de envío (GET /api/public/shipping/quote) por código DANE del municipio o por ciudad y departamento.
+ * `subtotal`: subtotal neto (después del cupón) para el envío gratis. El POS es la única fuente de las
+ * tarifas, la cobertura y el envío gratis. Lanza si el POS no responde.
  */
-export async function getShippingSnapshot(): Promise<PosShippingSnapshot | null> {
-  return request("/shipping", posShippingSnapshotSchema, undefined, "public");
+export async function quotePosShipping(query: {
+  municipality?: string;
+  city?: string;
+  department?: string;
+  subtotal: number;
+}): Promise<PosShippingQuote> {
+  const data = await request(
+    "/shipping/quote",
+    posShippingQuoteSchema,
+    {
+      municipality: query.municipality,
+      city: query.city,
+      department: query.department,
+      subtotal: Math.max(0, Math.round(query.subtotal)),
+    },
+    "public",
+  );
+  if (!data) throw new PosApiError("El POS no publica el precio de envío", 404);
+  return data;
+}
+
+/** Departamentos activos de un país (ISO alpha-2), con su código DANE. */
+export async function listPosDepartments(countryIso = "CO"): Promise<PosGeoItem[]> {
+  return (await request(`/geography/countries/${encodeURIComponent(countryIso)}/departments`, posGeoItemSchema.array(), undefined, "public")) ?? [];
+}
+
+/** Municipios con cobertura de un departamento (código DANE de 2 dígitos). */
+export async function listPosMunicipalities(departmentDane: string): Promise<PosGeoItem[]> {
+  return (await request(`/geography/departments/${encodeURIComponent(departmentDane)}/municipalities`, posGeoItemSchema.array(), undefined, "public")) ?? [];
 }
 
 /**

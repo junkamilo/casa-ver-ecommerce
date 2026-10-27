@@ -21,7 +21,7 @@ import {
   CouponNotApplicableError,
 } from "../application/checkout.errors";
 
-jest.mock("@/modules/shipping/application/use-cases/get-shipping-cost.use-case", () => ({}));
+jest.mock("@/modules/shipping/application/pos-shipping", () => ({}));
 jest.mock("../infrastructure/pos-line-prices", () => ({}));
 
 const mockValidate = validatePosPromotion as jest.Mock;

@@ -20,13 +20,16 @@ function buildFreeShippingAnnouncement(threshold: number): Announcement {
 
 export default function AnnouncementBar() {
   const [threshold, setThreshold] = useState(FREE_SHIPPING_MIN_NET_SUBTOTAL);
+  // El POS puede pausar el envío gratis: entonces no se anuncia.
+  const [freeShippingActive, setFreeShippingActive] = useState(true);
 
   useEffect(() => {
     let active = true;
     fetch("/api/shipping-config", { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
-      .then((data: { freeShippingThreshold?: number } | null) => {
+      .then((data: { freeShippingThreshold?: number; freeShippingActive?: boolean } | null) => {
         if (!active) return;
+        if (data?.freeShippingActive === false) setFreeShippingActive(false);
         const value = data?.freeShippingThreshold;
         if (typeof value === "number" && value > 0) {
           setThreshold(value);
@@ -44,6 +47,8 @@ export default function AnnouncementBar() {
     () => [buildFreeShippingAnnouncement(threshold)],
     [threshold]
   );
+
+  if (!freeShippingActive) return null;
 
   return (
     <div className="relative w-full select-none">

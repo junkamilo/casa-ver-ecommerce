@@ -1,6 +1,7 @@
-import { isShippingManagedByPos } from "@/modules/shipping/application/shipping-editable";
-import PrecioEnviosView from "./PrecioEnviosView";
+import { redirect } from "next/navigation";
+import { posShippingUrl } from "@/lib/pos-links";
 
+/** Ruta vieja: las tarifas y el envío gratis se administran en el POS (Configuración → Precio de envíos). */
 export default function PrecioEnviosPage() {
-  return <PrecioEnviosView readOnly={isShippingManagedByPos()} />;
+  redirect(posShippingUrl("prices"));
 }

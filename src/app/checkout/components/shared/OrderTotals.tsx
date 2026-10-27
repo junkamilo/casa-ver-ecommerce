@@ -23,7 +23,9 @@ export default function OrderTotals({
   compact = false,
 }: OrderTotalsProps) {
   const hasDiscount = couponDiscount > 0;
-  const isFreeByThreshold = shippingQuote?.isFreeByThreshold ?? false;
+  // El POS no despacha a esa ciudad: no se puede pagar (el pedido se rechaza al crearlo).
+  const noCoverage = shippingQuote?.noCoverage ?? false;
+  const isFreeByThreshold = !noCoverage && (shippingQuote?.isFreeByThreshold ?? false);
   const isPendingAddress = shippingQuote?.isPendingAddress ?? shippingCost === 0;
   const baseShippingCost = shippingQuote?.baseCost;
 
@@ -70,6 +72,10 @@ export default function OrderTotals({
               </span>
             )}
             <span className="text-[#154734] font-bold">Gratis</span>
+          </span>
+        ) : noCoverage ? (
+          <span className="text-red-600 font-semibold text-xs text-right">
+            Sin envíos a este municipio
           </span>
         ) : isPendingAddress ? (
           <span className="text-gray-400 italic text-xs">por calcular</span>

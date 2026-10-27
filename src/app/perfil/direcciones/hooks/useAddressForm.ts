@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useController } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { getMunicipiosForDepartment } from "@/lib/constants/colombia";
-import { getShippingCost } from "@/lib/shipping";
+import {
+  getAddressShippingPreviewAction,
+  getPublicDepartmentsAction,
+  getPublicMunicipalitiesAction,
+} from "@/app/actions/geography";
 import { AddressFormValues, UseAddressFormOptions, UseAddressFormResult } from "../types";
 import { addressSchema, ADDRESS_FORM_DEFAULTS } from "../constants";
 
@@ -31,13 +34,49 @@ export function useAddressForm({ open, editing }: UseAddressFormOptions): UseAdd
 
   const selectedDepartment = deptField.value;
   const selectedCity = cityField.value;
-  const municipios = selectedDepartment
-    ? getMunicipiosForDepartment(selectedDepartment)
-    : [];
-  const shippingCost =
-    selectedDepartment && selectedCity
-      ? getShippingCost(selectedCity, selectedDepartment)
-      : 0;
+  // Departamentos, municipios y tarifa de envío: los publica el POS.
+  const [departamentos, setDepartamentos] = useState<string[]>([]);
+  const [municipiosByDept, setMunicipiosByDept] = useState<{ dept: string; list: string[] } | null>(null);
+  const [preview, setPreview] = useState<{ key: string; cost: number; rateName: string | null } | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    getPublicDepartmentsAction().then((list) => {
+      if (active) setDepartamentos(list);
+    });
+    return () => {
+      active = false;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!selectedDepartment) return;
+    let active = true;
+    getPublicMunicipalitiesAction(selectedDepartment).then((list) => {
+      if (active) setMunicipiosByDept({ dept: selectedDepartment, list });
+    });
+    return () => {
+      active = false;
+    };
+  }, [selectedDepartment]);
+
+  const previewKey = selectedDepartment && selectedCity ? `${selectedDepartment}|${selectedCity}` : "";
+  useEffect(() => {
+    if (!previewKey) return;
+    let active = true;
+    const [dept, city] = previewKey.split("|");
+    getAddressShippingPreviewAction(city, dept).then((quote) => {
+      if (active) setPreview(quote ? { key: previewKey, ...quote } : null);
+    });
+    return () => {
+      active = false;
+    };
+  }, [previewKey]);
+
+  const municipios = selectedDepartment && municipiosByDept?.dept === selectedDepartment ? municipiosByDept.list : [];
+  const shippingCost = preview && preview.key === previewKey ? preview.cost : 0;
+  const shippingRateName = preview && preview.key === previewKey ? preview.rateName : null;
 
   // Rellena o limpia el formulario cuando se abre el modal
   useEffect(() => {
@@ -66,7 +105,9 @@ export function useAddressForm({ open, editing }: UseAddressFormOptions): UseAdd
     deptField,
     cityField,
     selectedDepartment,
+    departamentos,
     municipios,
     shippingCost,
+    shippingRateName,
   };
 }

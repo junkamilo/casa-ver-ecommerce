@@ -3,14 +3,12 @@ import { PrismaPosSyncRepository } from "../infrastructure/prisma-pos-sync.repos
 import { revalidateCatalogPages, revalidatePosCategories } from "./revalidate-catalog";
 import { normalizePosSlug } from "../domain/pos-mapper";
 import { upsertPosProduct } from "./sync-product.use-case";
-import { syncShippingFromPos, type PosShippingSyncResult } from "./sync-shipping.use-case";
 import { syncAdminsFromPos, type PosAdminSyncResult } from "./sync-admins.use-case";
 
 const repository = new PrismaPosSyncRepository();
 
 export type PosFullSyncResult = {
   products: { upserted: number; created: number; hidden: number; failed: number };
-  shipping: PosShippingSyncResult | null;
   admins: PosAdminSyncResult | null;
   errors: string[];
   durationMs: number;
@@ -26,7 +24,6 @@ export async function runPosFullSync(): Promise<PosFullSyncResult> {
   const errors: string[] = [];
   const result: PosFullSyncResult = {
     products: { upserted: 0, created: 0, hidden: 0, failed: 0 },
-    shipping: null,
     admins: null,
     errors,
     durationMs: 0,
@@ -55,14 +52,6 @@ export async function runPosFullSync(): Promise<PosFullSyncResult> {
     );
   } else {
     errors.push("El POS no devolvió productos; no se ocultó ninguno");
-  }
-
-  // Envíos: independiente del catálogo; un fallo aquí no detiene lo demás.
-  try {
-    result.shipping = await syncShippingFromPos();
-    if (result.shipping.status === "skipped") errors.push(`envíos: ${result.shipping.reason}`);
-  } catch (error) {
-    errors.push(`envíos: ${error instanceof Error ? error.message : error}`);
   }
 
   // Administradores de la web (Configuraciones → Usuarios del POS).

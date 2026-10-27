@@ -3,7 +3,7 @@ import type { Announcement } from "../types";
 
 /**
  * Anuncios estáticos de respaldo. El texto de envío gratis en la barra
- * se construye en runtime con ShippingConfig.freeShippingThreshold.
+ * se construye en runtime con las condiciones de envío gratis del POS (/api/shipping-config).
  */
 export const ANNOUNCEMENTS: Announcement[] = [
   {

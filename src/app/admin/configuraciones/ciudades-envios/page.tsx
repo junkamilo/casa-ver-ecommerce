@@ -1,6 +1,7 @@
-import { isShippingManagedByPos } from "@/modules/shipping/application/shipping-editable";
-import CiudadesEnviosView from "./CiudadesEnviosView";
+import { redirect } from "next/navigation";
+import { posShippingUrl } from "@/lib/pos-links";
 
+/** Ruta vieja: la cobertura por municipio se administra en el POS (Configuración → Ciudades de envíos). */
 export default function CiudadesEnviosPage() {
-  return <CiudadesEnviosView readOnly={isShippingManagedByPos()} />;
+  redirect(posShippingUrl("cities"));
 }

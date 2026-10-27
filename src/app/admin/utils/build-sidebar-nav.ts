@@ -54,9 +54,6 @@ export function buildAdminSidebarNav(
 
 export function getAdminPageLabel(pathname: string): string {
   if (pathname === "/admin") return "Dashboard";
-  if (pathname.includes("/configuraciones/precio-envios")) return "Precio envíos";
-  if (pathname.includes("/configuraciones/ciudades-envios")) return "Ciudades de envío";
-  if (pathname.startsWith("/admin/configuraciones")) return "Configuraciones";
   if (pathname.startsWith("/admin/hero")) return "Banners";
   const segment = pathname.split("/").pop() ?? "Panel";
   return segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ");

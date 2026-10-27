@@ -1,38 +1,43 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
-import { listActiveDepartmentsByCountry } from "@/modules/geography/infrastructure/prisma-department.repository";
-import { listActiveMunicipalitiesByDepartment } from "@/modules/geography/infrastructure/prisma-municipality.repository";
+import {
+  listDepartmentNames,
+  listMunicipalityNames,
+  quoteShippingForAddress,
+} from "@/modules/shipping/application/pos-shipping";
 
-// Helper to get Colombia's ID
-async function getColombiaId() {
-  const co = await prisma.country.findFirst({ where: { isoCode2: "CO" } });
-  return co?.id;
-}
-
-export async function getPublicDepartmentsAction() {
+/**
+ * Selectores de dirección (checkout y perfil): departamentos y municipios con cobertura según el POS
+ * (GET /api/public/geography/**). La web no guarda geografía.
+ */
+export async function getPublicDepartmentsAction(): Promise<string[]> {
   try {
-    const countryId = await getColombiaId();
-    if (!countryId) return [];
-    const depts = await listActiveDepartmentsByCountry(countryId);
-    // Sort alphabetically and return only names
-    return depts.map(d => d.name).sort((a, b) => a.localeCompare(b, "es"));
+    return await listDepartmentNames();
   } catch (error) {
     console.error("Error fetching departments:", error);
     return [];
   }
 }
 
-export async function getPublicMunicipalitiesAction(departmentName: string) {
+export async function getPublicMunicipalitiesAction(departmentName: string): Promise<string[]> {
   try {
-    if (!departmentName) return [];
-    const dept = await prisma.department.findFirst({ where: { name: departmentName } });
-    if (!dept) return [];
-    const munis = await listActiveMunicipalitiesByDepartment(dept.id);
-    // Sort alphabetically and return only names
-    return munis.map(m => m.name).sort((a, b) => a.localeCompare(b, "es"));
+    return await listMunicipalityNames(departmentName);
   } catch (error) {
     console.error("Error fetching municipalities:", error);
     return [];
+  }
+}
+
+/** Precio de envío a una ciudad (vista previa del perfil), calculado por el POS. */
+export async function getAddressShippingPreviewAction(
+  city: string,
+  department: string,
+): Promise<{ cost: number; rateName: string | null } | null> {
+  if (!city || !department) return null;
+  try {
+    const quote = await quoteShippingForAddress({ city, department, subtotalNeto: 0 });
+    return quote.ok && quote.baseCost != null ? { cost: quote.baseCost, rateName: quote.rateName } : null;
+  } catch {
+    return null;
   }
 }

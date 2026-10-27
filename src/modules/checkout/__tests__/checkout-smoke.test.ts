@@ -203,14 +203,20 @@ describe("Checkout — checkout totals calculator", () => {
   });
 });
 
+const TERMS = { freeShippingThreshold: 300_000, freeShippingActive: true };
+
 describe("Checkout — applyFreeShipping", () => {
   it("cobra la tarifa base si el neto no alcanza el umbral", () => {
-    expect(applyFreeShipping(18000, 200_000, 300_000)).toBe(18000);
+    expect(applyFreeShipping(18000, 200_000, TERMS)).toBe(18000);
   });
 
   it("deja el envío en 0 si el neto alcanza el umbral", () => {
-    expect(applyFreeShipping(18000, 300_000, 300_000)).toBe(0);
-    expect(applyFreeShipping(18000, 350_000, 300_000)).toBe(0);
+    expect(applyFreeShipping(18000, 300_000, TERMS)).toBe(0);
+    expect(applyFreeShipping(18000, 350_000, TERMS)).toBe(0);
+  });
+
+  it("con el envío gratis pausado en el POS se cobra siempre", () => {
+    expect(applyFreeShipping(18000, 900_000, { ...TERMS, freeShippingActive: false })).toBe(18000);
   });
 });
 

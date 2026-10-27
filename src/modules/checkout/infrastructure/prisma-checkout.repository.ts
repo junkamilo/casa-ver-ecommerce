@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
-import { getShippingCost } from "@/modules/shipping/application/use-cases/get-shipping-cost.use-case";
+import { quoteShippingForAddress } from "@/modules/shipping/application/pos-shipping";
 import { applyFreeShipping } from "@/modules/shipping/domain/resolve-shipping-price";
 import { computeOrderPaymentExpiresAt } from "../domain/order-payment-grace";
 import { quoteCouponWithPos, type CouponQuote } from "./pos-coupon";
@@ -86,29 +86,25 @@ export class PrismaCheckoutRepository {
     input: CreateOrderInputDTO,
     palette: PosColorPalette | null = null,
   ): Promise<CreatedOrderRecord> {
-    // Lecturas de envío ANTES del $transaction: getShippingCost usa el cliente
-    // Prisma global. Dentro del tx (connection_limit=1) eso deadlockea el pool.
-    const municipality = await prisma.municipality.findFirst({
-      where: { name: input.city, department: { name: input.department } },
-      select: { id: true },
-    });
-
-    if (!municipality) {
-      throw new InvalidAddressError("Municipio no encontrado para envío");
+    // Envío: tarifa, cobertura y condiciones de envío gratis las da el POS (red ANTES del $transaction).
+    // El envío gratis se aplica sobre el subtotal neto con las condiciones que publicó el POS.
+    let shippingQuote;
+    try {
+      shippingQuote = await quoteShippingForAddress({ city: input.city, department: input.department, subtotalNeto: 0 });
+    } catch (error) {
+      console.error("[checkout] El POS no cotizó el envío:", error);
+      throw new InvalidAddressError("No pudimos calcular el envío. Intenta de nuevo en unos segundos.");
     }
-
-    const shippingQuote = await getShippingCost({
-      municipalityId: municipality.id,
-      subtotalNeto: 0,
-    });
-
     if (!shippingQuote.ok || shippingQuote.baseCost == null) {
       throw new InvalidAddressError("No hay cobertura para esta dirección");
     }
 
     const shippingBaseCost = shippingQuote.baseCost;
     const shippingRateName = shippingQuote.rateName;
-    const freeShippingThreshold = shippingQuote.freeShippingThreshold;
+    const shippingTerms = {
+      freeShippingThreshold: shippingQuote.freeShippingThreshold,
+      freeShippingActive: shippingQuote.freeShippingActive,
+    };
 
     // Ítems del POS (SKU como variantId): precio del POS; no se reservan en la web (el POS ya
     // verificó el stock en verifyPosAvailability y lo descuenta al registrar la venta).
@@ -290,11 +286,7 @@ export class PrismaCheckoutRepository {
 
         const finalDiscount = couponDiscountAmount;
         const netSubtotal = realSubtotal - finalDiscount;
-        const realShippingCost = applyFreeShipping(
-          shippingBaseCost,
-          netSubtotal,
-          freeShippingThreshold
-        );
+        const realShippingCost = applyFreeShipping(shippingBaseCost, netSubtotal, shippingTerms);
         const realTotal = realSubtotal + realShippingCost - finalDiscount;
 
         const orderNumber = generateOrderNumber();

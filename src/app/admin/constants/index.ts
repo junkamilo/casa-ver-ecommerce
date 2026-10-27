@@ -1,4 +1,4 @@
-import { BadgePercent, BannerIcon, ConfigIcon, DashboardIcon, InventoryIcon, MapIcon, PerfilIcon, ReportsIcon, ReviewsIcon, TruckIcon } from "@/components/icons";
+import { BadgePercent, BannerIcon, DashboardIcon, InventoryIcon, PerfilIcon, ReportsIcon, ReviewsIcon } from "@/components/icons";
 import {
   Package,
   ClipboardList,
@@ -15,23 +15,6 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { label: "Reseñas",   href: "/admin/resenas",           icon: ReviewsIcon },
   { label: "Reportes",   href: "/admin/estadisticas",      icon: ReportsIcon },
   { label: "Banners",    href: "/admin/hero",               icon: BannerIcon },
-  {
-    label: "Configuraciones",
-    icon: ConfigIcon,
-    href: "/admin/configuraciones",
-    children: [
-      {
-        label: "Precio envíos",
-        href: "/admin/configuraciones/precio-envios",
-        icon: TruckIcon,
-      },
-      {
-        label: "Ciudades de envío",
-        href: "/admin/configuraciones/ciudades-envios",
-        icon: MapIcon,
-      },
-    ],
-  },
   { label: "Admins",     href: "/admin/administradores",   icon: Shield },
   { label: "Mi Perfil",  href: "/admin/perfil",            icon: PerfilIcon },
 ];

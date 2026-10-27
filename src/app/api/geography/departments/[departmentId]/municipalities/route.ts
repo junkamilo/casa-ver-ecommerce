@@ -1,22 +1,15 @@
 import { NextResponse } from "next/server";
-import { listMunicipalitiesByDepartmentUseCase } from "@/modules/geography/application/public/list-municipalities-by-department.use-case";
+import { listPosMunicipalities } from "@/modules/posIntegration/infrastructure/pos-catalog.client";
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ departmentId: string }> },
-) {
+/** Municipios con cobertura del departamento (`departmentId` = código DANE de 2 dígitos), según el POS. */
+export async function GET(_req: Request, { params }: { params: Promise<{ departmentId: string }> }) {
   try {
     const { departmentId } = await params;
-    const data = await listMunicipalitiesByDepartmentUseCase(departmentId);
+    const data = await listPosMunicipalities(departmentId);
     return NextResponse.json(data, {
-      headers: {
-        "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=3600",
-      },
+      headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=3600" },
     });
   } catch {
-    return NextResponse.json(
-      { message: "Error al obtener municipios" },
-      { status: 500 },
-    );
+    return NextResponse.json({ message: "Error al obtener municipios" }, { status: 502 });
   }
 }
