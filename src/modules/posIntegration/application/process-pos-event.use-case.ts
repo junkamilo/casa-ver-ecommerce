@@ -6,6 +6,7 @@ import {
   revalidatePosPopups,
   revalidatePosProduct,
   revalidatePosReviews,
+  revalidatePosTheme,
 } from "./revalidate-catalog";
 import { syncOrderStatusFromPos } from "./sync-order-status.use-case";
 import { clearShippingCache } from "@/modules/shipping/application/pos-shipping";
@@ -57,6 +58,13 @@ export async function processPosEvent(event: Pick<PosWebhookPayload, "entityType
   if (entityType === "popup") {
     revalidatePosPopups(id);
     console.info(`[POS webhook] popup.${action} ${id}: popup expirado`);
+    return { status: "revalidated" as const, entityType, id };
+  }
+
+  // Temas (id = slug del tema): se activó, programó o revirtió un tema estacional en Diseño → Temas.
+  if (entityType === "theme") {
+    revalidatePosTheme();
+    console.info(`[POS webhook] theme.${action} ${id}: tag pos-theme expirado`);
     return { status: "revalidated" as const, entityType, id };
   }
 

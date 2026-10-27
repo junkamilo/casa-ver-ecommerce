@@ -88,7 +88,7 @@ const RegisterForm = ({ returnTo }: RegisterFormProps) => {
         ¿Ya tienes cuenta?{" "}
         <Link
           href="/login"
-          className="font-semibold text-[#154734] hover:text-[#C19A6B] transition-colors"
+          className="font-semibold text-[color:var(--theme-primary)] hover:text-[color:var(--theme-accent)] transition-colors"
         >
           Inicia sesión aquí
         </Link>

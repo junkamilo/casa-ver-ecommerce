@@ -1,3 +1,4 @@
-export const BRAND_GREEN = "#154734";
+export const BRAND_GREEN = "var(--theme-primary)";
 
-export const TEXT_BRAND = `text-[${BRAND_GREEN}]`;
+// Clase literal (Tailwind solo genera las clases que ve escritas completas).
+export const TEXT_BRAND = "text-[color:var(--theme-primary)]";

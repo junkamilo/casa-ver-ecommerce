@@ -59,7 +59,7 @@ export default function ProductClient({
   } = useProductClient(product, initialItemId);
 
   return (
-    <div className="bg-white selection:bg-[#C19A6B]/20 min-h-screen">
+    <div className="bg-white selection:bg-[color:var(--theme-accent)]/20 min-h-screen">
 
       <Toast show={showAddedNotification} productName={product.name} />
 
@@ -94,7 +94,7 @@ export default function ProductClient({
                 </span>
               )}
               <h1
-                className="text-3xl sm:text-4xl lg:text-[2.75rem] xl:text-5xl font-light text-[#154734] mb-3 sm:mb-4 uppercase leading-tight tracking-tight text-center sm:text-left"
+                className="text-3xl sm:text-4xl lg:text-[2.75rem] xl:text-5xl font-light text-[color:var(--theme-primary)] mb-3 sm:mb-4 uppercase leading-tight tracking-tight text-center sm:text-left"
                 style={{ fontFamily: "Georgia, serif" }}
               >
                 {product.name}
@@ -156,11 +156,11 @@ export default function ProductClient({
               <div className="bg-[#FAFAFA] border border-gray-100 p-3 sm:p-4 rounded-xl flex items-center gap-3 sm:gap-4 mb-5 sm:mb-8">
                 <div className="flex -space-x-3 shrink-0">
                   {socialProof.recentBuyers.map((buyer, i) => (
-                    <div key={i} className="w-8 h-8 rounded-full bg-[#154734]/10 border-2 border-white overflow-hidden shadow-sm flex items-center justify-center">
+                    <div key={i} className="w-8 h-8 rounded-full bg-[color:var(--theme-primary)]/10 border-2 border-white overflow-hidden shadow-sm flex items-center justify-center">
                       {buyer.avatar ? (
                         <Image src={buyer.avatar} alt="" aria-hidden="true" width={32} height={32} className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-[10px] font-bold text-[#154734]">{buyer.name[0]}</span>
+                        <span className="text-[10px] font-bold text-[color:var(--theme-primary)]">{buyer.name[0]}</span>
                       )}
                     </div>
                   ))}
@@ -168,15 +168,15 @@ export default function ProductClient({
                 <p className="text-xs text-gray-600 leading-relaxed font-light">
                   {socialProof.recentBuyers.length >= 2 ? (
                     <>
-                      <strong className="text-[#154734] font-semibold">
+                      <strong className="text-[color:var(--theme-primary)] font-semibold">
                         {socialProof.recentBuyers[0].name}, {socialProof.recentBuyers[1].name}
                       </strong>{" "}
                       y{" "}
                     </>
                   ) : socialProof.recentBuyers.length === 1 ? (
-                    <><strong className="text-[#154734] font-semibold">{socialProof.recentBuyers[0].name}</strong> y </>
+                    <><strong className="text-[color:var(--theme-primary)] font-semibold">{socialProof.recentBuyers[0].name}</strong> y </>
                   ) : null}
-                  <strong className="text-[#154734] font-semibold">
+                  <strong className="text-[color:var(--theme-primary)] font-semibold">
                     {socialProof.totalBuyers > 3 ? `${socialProof.totalBuyers}+ personas` : `${socialProof.totalBuyers} persona${socialProof.totalBuyers !== 1 ? "s" : ""}`}
                   </strong>{" "}
                   ya lucen esta prenda.
@@ -218,8 +218,8 @@ export default function ProductClient({
                       onClick={() => handleViewSelect(item.id)}
                       className={`px-5 py-2.5 rounded-xl border text-sm font-bold transition-all duration-200 ${
                         activeView === item.id
-                          ? "bg-[#154734] text-white border-[#154734] shadow-md shadow-[#154734]/20"
-                          : "bg-white text-gray-700 border-gray-300 hover:border-[#154734] hover:text-[#154734]"
+                          ? "bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] border-[color:var(--theme-primary)] shadow-md shadow-[color:var(--theme-primary)]/20"
+                          : "bg-white text-gray-700 border-gray-300 hover:border-[color:var(--theme-primary)] hover:text-[color:var(--theme-primary)]"
                       }`}
                     >
                       {item.name}
@@ -264,7 +264,7 @@ export default function ProductClient({
                   disabled={!selectedSize || activeStock === 0}
                   className={`flex-1 font-bold uppercase tracking-widest text-xs sm:text-sm rounded-lg transition-all h-14 duration-300 ${
                     selectedSize && activeStock > 0
-                      ? "bg-[#154734] hover:bg-[#0f3424] text-white shadow-lg shadow-[#154734]/20 hover:shadow-[#154734]/40 active:scale-[0.98]"
+                      ? "bg-[color:var(--theme-primary)] hover:bg-[color:color-mix(in_srgb,var(--theme-primary)_80%,black)] text-[color:var(--theme-primary-fg)] shadow-lg shadow-[color:var(--theme-primary)]/20 hover:shadow-[color:var(--theme-primary)]/40 active:scale-[0.98]"
                       : "bg-gray-100 text-gray-400 cursor-not-allowed"
                   }`}
                 >
@@ -284,7 +284,7 @@ export default function ProductClient({
                 disabled={!selectedSize || activeStock === 0}
                 className={`w-full font-bold py-4 rounded-lg uppercase tracking-widest text-sm transition-all duration-300 ${
                   selectedSize && activeStock > 0
-                    ? "bg-[#C19A6B] hover:bg-[#b0885a] text-white shadow-md hover:shadow-xl hover:shadow-[#C19A6B]/25 active:scale-[0.98]"
+                    ? "bg-[color:var(--theme-accent)] hover:bg-[color:color-mix(in_srgb,var(--theme-accent)_85%,black)] text-[color:var(--theme-accent-fg)] shadow-md hover:shadow-xl hover:shadow-[color:var(--theme-accent)]/25 active:scale-[0.98]"
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
                 }`}
               >
@@ -321,16 +321,16 @@ export default function ProductClient({
 
         {/* Video editorial — reactivo al tab activo */}
         {activeVideoUrl && (
-          <div className="mt-12 sm:mt-24 md:mt-32 mb-10 sm:mb-16 mx-3 sm:mx-6 lg:mx-8 xl:mx-12 relative bg-[#154734] border border-[#C19A6B]/20 rounded-2xl sm:rounded-[2.5rem] md:rounded-[3rem] shadow-[0_20px_50px_-15px_rgba(21,71,52,0.4)] overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-5 sm:gap-10 lg:gap-16 p-6 sm:p-10 lg:p-16 group isolate transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(21,71,52,0.5)]">
+          <div className="mt-12 sm:mt-24 md:mt-32 mb-10 sm:mb-16 mx-3 sm:mx-6 lg:mx-8 xl:mx-12 relative bg-[color:var(--theme-primary)] border border-[color:var(--theme-accent)]/20 rounded-2xl sm:rounded-[2.5rem] md:rounded-[3rem] shadow-[0_20px_50px_-15px_rgba(21,71,52,0.4)] overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-5 sm:gap-10 lg:gap-16 p-6 sm:p-10 lg:p-16 group isolate transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(21,71,52,0.5)]">
 
             <div
               className="absolute inset-0 opacity-[0.05] pointer-events-none"
-              style={{ backgroundImage: "radial-gradient(#C19A6B 1.5px, transparent 1.5px)", backgroundSize: "32px 32px" }}
+              style={{ backgroundImage: "radial-gradient(var(--theme-accent) 1.5px, transparent 1.5px)", backgroundSize: "32px 32px" }}
             />
-            <div className="absolute top-0 right-0 w-72 h-72 bg-linear-to-bl from-[#C19A6B]/20 to-transparent rounded-bl-full pointer-events-none -z-10 transition-transform duration-1000 group-hover:scale-110" />
+            <div className="absolute top-0 right-0 w-72 h-72 bg-linear-to-bl from-[color:var(--theme-accent)]/20 to-transparent rounded-bl-full pointer-events-none -z-10 transition-transform duration-1000 group-hover:scale-110" />
 
             <div className="shrink-0 flex justify-center sm:order-last sm:justify-end z-10 w-full sm:w-auto">
-              <div className="relative w-[55vw] max-w-55 sm:w-60 md:w-70 lg:w-[320px] aspect-3/4 sm:aspect-4/5 bg-white rounded-2xl sm:rounded-4xl overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.3)] border border-[#C19A6B]/30 transition-all duration-700 ease-in-out hover:-translate-y-2 hover:shadow-[0_25px_50px_rgba(193,154,107,0.25)] hover:border-[#C19A6B]/60">
+              <div className="relative w-[55vw] max-w-55 sm:w-60 md:w-70 lg:w-[320px] aspect-3/4 sm:aspect-4/5 bg-white rounded-2xl sm:rounded-4xl overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.3)] border border-[color:var(--theme-accent)]/30 transition-all duration-700 ease-in-out hover:-translate-y-2 hover:shadow-[0_25px_50px_rgba(193,154,107,0.25)] hover:border-[color:var(--theme-accent)]/60">
                 <ProductVideo url={activeVideoUrl} />
               </div>
             </div>
@@ -344,7 +344,7 @@ export default function ProductClient({
               </h2>
 
               {activeDescription && (
-                <div className="hidden sm:block max-w-md text-sm sm:text-base border-l-2 border-[#C19A6B]/50 pl-4">
+                <div className="hidden sm:block max-w-md text-sm sm:text-base border-l-2 border-[color:var(--theme-accent)]/50 pl-4">
                   <ProductDescriptionContent
                     description={activeDescription}
                     className="text-gray-300 font-light"

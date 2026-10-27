@@ -20,14 +20,14 @@ const WhatsAppIcon = () => (
 
 const Footer = () => {
   return (
-    <footer className="bg-[#154734] text-white relative overflow-hidden isolate">
+    <footer className="bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] relative overflow-hidden isolate">
 
       <div
         className="absolute inset-0 opacity-[0.03] pointer-events-none z-0"
-        style={{ backgroundImage: "radial-gradient(#C19A6B 1.5px, transparent 1.5px)", backgroundSize: "32px 32px" }}
+        style={{ backgroundImage: "radial-gradient(var(--theme-accent) 1.5px, transparent 1.5px)", backgroundSize: "32px 32px" }}
       />
 
-      <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-[#C19A6B] to-transparent opacity-50" />
+      <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-[color:var(--theme-accent)] to-transparent opacity-50" />
 
       <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-12 md:py-14 relative z-10">
         <div className="max-w-7xl 2xl:max-w-6xl mx-auto">
@@ -39,13 +39,13 @@ const Footer = () => {
               <ul className="space-y-3 sm:space-y-4">
                 <li>
                   <a href={GMAIL_COMPOSE_URL} className="flex items-start gap-3 text-gray-300 text-sm hover:text-white transition-colors group p-1 touch-target active:scale-95">
-                    <Mail className="w-4 h-4 text-[#C19A6B] shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                    <Mail className="w-4 h-4 text-[color:var(--theme-accent)] shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
                     <span>talentocasaverde@gmail.com</span>
                   </a>
                 </li>
                 <li>
                   <a href="tel:+573022457432" className="flex items-start gap-3 text-gray-300 text-sm hover:text-white transition-colors group p-1 touch-target active:scale-95">
-                    <Phone className="w-4 h-4 text-[#C19A6B] shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                    <Phone className="w-4 h-4 text-[color:var(--theme-accent)] shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
                     <span>+57 302 245 7432</span>
                   </a>
                 </li>
@@ -57,7 +57,7 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="WhatsApp"
-                  className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-gray-300 hover:text-white hover:border-[#C19A6B] hover:bg-[#C19A6B]/10 transition-all duration-300 touch-target active:scale-90"
+                  className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-gray-300 hover:text-[color:var(--theme-accent-fg)] hover:border-[color:var(--theme-accent)] hover:bg-[color:var(--theme-accent)]/10 transition-all duration-300 touch-target active:scale-90"
                 >
                   <WhatsAppIcon />
                 </a>
@@ -66,14 +66,14 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram"
-                  className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-gray-300 hover:text-white hover:border-[#C19A6B] hover:bg-[#C19A6B]/10 transition-all duration-300 touch-target active:scale-90"
+                  className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-gray-300 hover:text-[color:var(--theme-accent-fg)] hover:border-[color:var(--theme-accent)] hover:bg-[color:var(--theme-accent)]/10 transition-all duration-300 touch-target active:scale-90"
                 >
                   <InstagramIcon />
                 </a>
                 <a
                   href={GMAIL_COMPOSE_URL}
                   aria-label="Correo electrónico"
-                  className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-gray-300 hover:text-white hover:border-[#C19A6B] hover:bg-[#C19A6B]/10 transition-all duration-300 touch-target active:scale-90"
+                  className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-gray-300 hover:text-[color:var(--theme-accent-fg)] hover:border-[color:var(--theme-accent)] hover:bg-[color:var(--theme-accent)]/10 transition-all duration-300 touch-target active:scale-90"
                 >
                   <Mail className="w-4 h-4" />
                 </a>
@@ -91,8 +91,8 @@ const Footer = () => {
                   { name: "Más Vendidos", href: "/collections/mas-vendidos" },
                 ].map((link) => (
                   <li key={link.name}>
-                    <Link href={link.href} className="text-gray-300 text-sm hover:text-[#C19A6B] transition-all flex items-center gap-2 group w-fit p-1 touch-target active:scale-95">
-                      <span className="w-0 h-px bg-[#C19A6B] transition-all duration-300 group-hover:w-4" />
+                    <Link href={link.href} className="text-gray-300 text-sm hover:text-[color:var(--theme-accent)] transition-all flex items-center gap-2 group w-fit p-1 touch-target active:scale-95">
+                      <span className="w-0 h-px bg-[color:var(--theme-accent)] transition-all duration-300 group-hover:w-4" />
                       {link.name}
                     </Link>
                   </li>
@@ -111,8 +111,8 @@ const Footer = () => {
                   { name: "Política de Privacidad", href: "/politica-de-privacidad" },
                 ].map((link) => (
                   <li key={link.name}>
-                    <Link href={link.href} className="text-gray-300 text-sm hover:text-[#C19A6B] transition-all flex items-center gap-2 group w-fit p-1 touch-target active:scale-95">
-                      <span className="w-0 h-px bg-[#C19A6B] transition-all duration-300 group-hover:w-4" />
+                    <Link href={link.href} className="text-gray-300 text-sm hover:text-[color:var(--theme-accent)] transition-all flex items-center gap-2 group w-fit p-1 touch-target active:scale-95">
+                      <span className="w-0 h-px bg-[color:var(--theme-accent)] transition-all duration-300 group-hover:w-4" />
                       {link.name}
                     </Link>
                   </li>
@@ -131,12 +131,12 @@ const Footer = () => {
               &copy; {new Date().getFullYear()} Casa Verde. Todos los derechos reservados.
             </p>
             <div className="flex flex-wrap gap-4 sm:gap-6 text-xs text-white/50 font-light tracking-wide justify-center sm:justify-end">
-              <Link href="/politica-de-privacidad" className="hover:text-[#C19A6B] transition-colors p-1 touch-target active:scale-95">Política de Privacidad</Link>
-              <Link href="/terminos-del-servicio" className="hover:text-[#C19A6B] transition-colors p-1 touch-target active:scale-95">Términos del Servicio</Link>
+              <Link href="/politica-de-privacidad" className="hover:text-[color:var(--theme-accent)] transition-colors p-1 touch-target active:scale-95">Política de Privacidad</Link>
+              <Link href="/terminos-del-servicio" className="hover:text-[color:var(--theme-accent)] transition-colors p-1 touch-target active:scale-95">Términos del Servicio</Link>
             </div>
           </div>
           <p className="max-w-7xl 2xl:max-w-6xl mx-auto mt-3 sm:mt-4 text-center text-[10px] sm:text-xs text-white/35 font-light tracking-[0.2em] uppercase">
-            Tecnología de <span className="text-[#C19A6B]/70 font-medium tracking-[0.15em]">ROA Producciones</span>
+            Tecnología de <span className="text-[color:var(--theme-accent)]/70 font-medium tracking-[0.15em]">ROA Producciones</span>
           </p>
         </div>
       </div>

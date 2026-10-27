@@ -10,7 +10,7 @@ export const Toast = ({ show, productName }: Props) => {
     <div
       aria-live="polite"
       // Nota: Cambié z-100 a z-[100] porque z-100 no existe por defecto en Tailwind, requiere corchetes para valores arbitrarios
-      className={`fixed top-6 right-6 z-[100] flex items-center gap-4 bg-[#154734] text-white shadow-2xl rounded-xl px-5 py-4 transition-all duration-500 ease-in-out ${
+      className={`fixed top-6 right-6 z-[100] flex items-center gap-4 bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] shadow-2xl rounded-xl px-5 py-4 transition-all duration-500 ease-in-out ${
         show
           ? "opacity-100 translate-y-0"
           : "opacity-0 -translate-y-8 pointer-events-none"

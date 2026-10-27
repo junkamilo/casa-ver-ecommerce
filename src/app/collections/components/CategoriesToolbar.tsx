@@ -39,7 +39,7 @@ export function CategoriesToolbar({
 
       {/* Contador */}
       <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-gray-400">
-        <strong className="text-[#154734]">{count}</strong>
+        <strong className="text-[color:var(--theme-primary)]">{count}</strong>
         <span className="hidden sm:inline"> colecciones</span>
         <span className="sm:hidden"> cols</span>
       </span>
@@ -49,13 +49,13 @@ export function CategoriesToolbar({
 
         {/* Dropdown ordenamiento */}
         <div className="relative flex items-center gap-2" ref={dropdownRef}>
-          <span className="hidden sm:block text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[#154734] whitespace-nowrap">
+          <span className="hidden sm:block text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[color:var(--theme-primary)] whitespace-nowrap">
             Ordenar por:
           </span>
 
           <button
             onClick={() => setIsSortOpen((v) => !v)}
-            className="flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[#C19A6B] hover:text-[#154734] transition-colors duration-300 py-1 active:scale-95"
+            className="flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[color:var(--theme-accent)] hover:text-[color:var(--theme-primary)] transition-colors duration-300 py-1 active:scale-95"
           >
             <span className="truncate max-w-27.5 sm:max-w-none">{currentLabel}</span>
             <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${isSortOpen ? "rotate-180" : ""}`} />
@@ -69,10 +69,10 @@ export function CategoriesToolbar({
                   onClick={() => { onSortChange(opt.value); setIsSortOpen(false); }}
                   className="w-full text-left px-5 py-3 text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-colors duration-200 flex items-center justify-between group hover:bg-[#FAFAFA] active:scale-95"
                 >
-                  <span className={sortBy === opt.value ? "text-[#C19A6B]" : "text-gray-500 group-hover:text-[#154734]"}>
+                  <span className={sortBy === opt.value ? "text-[color:var(--theme-accent)]" : "text-gray-500 group-hover:text-[color:var(--theme-primary)]"}>
                     {opt.label}
                   </span>
-                  {sortBy === opt.value && <Check className="w-3.5 h-3.5 text-[#C19A6B]" />}
+                  {sortBy === opt.value && <Check className="w-3.5 h-3.5 text-[color:var(--theme-accent)]" />}
                 </button>
               ))}
             </div>
@@ -85,8 +85,8 @@ export function CategoriesToolbar({
             onClick={() => onViewModeChange("grid")}
             className={`p-2 rounded-lg border transition-all duration-300 active:scale-90 ${
               viewMode === "grid"
-                ? "bg-[#FAFAFA] text-[#154734] border-gray-200 shadow-inner"
-                : "bg-white text-gray-300 hover:text-[#C19A6B] hover:bg-[#FAFAFA] hover:border-[#C19A6B]/30 border-transparent"
+                ? "bg-[#FAFAFA] text-[color:var(--theme-primary)] border-gray-200 shadow-inner"
+                : "bg-white text-gray-300 hover:text-[color:var(--theme-accent)] hover:bg-[#FAFAFA] hover:border-[color:var(--theme-accent)]/30 border-transparent"
             }`}
             aria-label="Vista cuadrícula"
           >
@@ -96,8 +96,8 @@ export function CategoriesToolbar({
             onClick={() => onViewModeChange("list")}
             className={`p-2 rounded-lg border transition-all duration-300 active:scale-90 ${
               viewMode === "list"
-                ? "bg-[#FAFAFA] text-[#154734] border-gray-200 shadow-inner"
-                : "bg-white text-gray-300 hover:text-[#C19A6B] hover:bg-[#FAFAFA] hover:border-[#C19A6B]/30 border-transparent"
+                ? "bg-[#FAFAFA] text-[color:var(--theme-primary)] border-gray-200 shadow-inner"
+                : "bg-white text-gray-300 hover:text-[color:var(--theme-accent)] hover:bg-[#FAFAFA] hover:border-[color:var(--theme-accent)]/30 border-transparent"
             }`}
             aria-label="Vista lista"
           >

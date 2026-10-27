@@ -117,16 +117,16 @@ export default function CouponAppliedModal({
           ))}
         </div>
 
-        <div className="relative bg-[#154734] px-7 pt-8 pb-7 text-center">
-          <div className="mx-auto w-16 h-16 rounded-full bg-[#C19A6B]/20 flex items-center justify-center mb-4">
-            <PartyPopper className="w-8 h-8 text-[#C19A6B]" />
+        <div className="relative bg-[color:var(--theme-primary)] px-7 pt-8 pb-7 text-center">
+          <div className="mx-auto w-16 h-16 rounded-full bg-[color:var(--theme-accent)]/20 flex items-center justify-center mb-4">
+            <PartyPopper className="w-8 h-8 text-[color:var(--theme-accent)]" />
           </div>
           <div className="flex items-center justify-center gap-2 mb-2">
-            <Sparkles className="w-4 h-4 text-[#C19A6B]" />
-            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#C19A6B]">
+            <Sparkles className="w-4 h-4 text-[color:var(--theme-accent)]" />
+            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[color:var(--theme-accent)]">
               ¡Logro desbloqueado!
             </span>
-            <Sparkles className="w-4 h-4 text-[#C19A6B]" />
+            <Sparkles className="w-4 h-4 text-[color:var(--theme-accent)]" />
           </div>
           <h2
             className="text-2xl font-bold text-white leading-snug"
@@ -136,7 +136,7 @@ export default function CouponAppliedModal({
           </h2>
           <p className="mt-2 text-sm text-white/70">
             Obtuviste un{" "}
-            <span className="font-bold text-[#C19A6B]">
+            <span className="font-bold text-[color:var(--theme-accent)]">
               {discountType === "FIXED" && discountValue
                 ? `$${discountValue.toLocaleString(LOCALE)}`
                 : `${discountPercentage}%`}
@@ -151,7 +151,7 @@ export default function CouponAppliedModal({
               Ahorras en tu compra
             </p>
             <p
-              className="text-3xl font-light text-[#154734] tracking-tight"
+              className="text-3xl font-light text-[color:var(--theme-primary)] tracking-tight"
               style={{ fontFamily: "Georgia, serif" }}
             >
               ${couponDiscount.toLocaleString(LOCALE)}
@@ -165,7 +165,7 @@ export default function CouponAppliedModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-4 rounded-2xl bg-[#154734] text-white text-sm font-black uppercase tracking-[0.15em] hover:bg-[#103a2a] active:scale-[0.98] transition-all"
+            className="w-full py-4 rounded-2xl bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] text-sm font-black uppercase tracking-[0.15em] hover:bg-[color:color-mix(in_srgb,var(--theme-primary)_80%,black)] active:scale-[0.98] transition-all"
           >
             Continuar
           </button>

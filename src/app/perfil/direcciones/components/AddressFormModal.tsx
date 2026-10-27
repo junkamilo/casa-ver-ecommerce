@@ -63,7 +63,7 @@ export function AddressFormModal({ open, editing, submitting, onSave, onClose }:
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
           <h2
-            className="text-base font-semibold text-[#154734]"
+            className="text-base font-semibold text-[color:var(--theme-primary)]"
             style={{ fontFamily: "Georgia, serif" }}
           >
             {editing ? "Editar dirección" : "Nueva dirección"}
@@ -168,8 +168,8 @@ export function AddressFormModal({ open, editing, submitting, onSave, onClose }:
 
           {/* Banner costo de envío (tarifa del POS) */}
           {shippingCost > 0 && (
-            <div className="flex items-start gap-3 px-4 py-3 rounded-xl border text-sm font-medium bg-[#154734]/5 border-[#154734]/20 text-[#154734]">
-              <Truck className="w-4 h-4 mt-0.5 shrink-0 text-[#154734]" />
+            <div className="flex items-start gap-3 px-4 py-3 rounded-xl border text-sm font-medium bg-[color:var(--theme-primary)]/5 border-[color:var(--theme-primary)]/20 text-[color:var(--theme-primary)]">
+              <Truck className="w-4 h-4 mt-0.5 shrink-0 text-[color:var(--theme-primary)]" />
               <div>
                 Los envíos a esta ciudad tienen un costo de{" "}
                 <span className="font-bold">${shippingCost.toLocaleString("es-CO")}</span>
@@ -188,10 +188,10 @@ export function AddressFormModal({ open, editing, submitting, onSave, onClose }:
           <label className="flex items-center gap-3 cursor-pointer select-none group">
             <div className="relative">
               <input type="checkbox" className="sr-only peer" {...register("isDefault")} />
-              <div className="w-10 h-5 bg-gray-200 peer-checked:bg-[#154734] rounded-full transition-colors duration-200" />
+              <div className="w-10 h-5 bg-gray-200 peer-checked:bg-[color:var(--theme-primary)] rounded-full transition-colors duration-200" />
               <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-5" />
             </div>
-            <span className="text-sm text-gray-600 group-hover:text-[#154734] transition-colors">
+            <span className="text-sm text-gray-600 group-hover:text-[color:var(--theme-primary)] transition-colors">
               Establecer como dirección predeterminada
             </span>
           </label>
@@ -217,7 +217,7 @@ export function AddressFormModal({ open, editing, submitting, onSave, onClose }:
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 py-3 bg-[#154734] text-white text-sm font-semibold rounded-xl hover:bg-[#1a5c43] active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 py-3 bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] text-sm font-semibold rounded-xl hover:bg-[color:color-mix(in_srgb,var(--theme-primary)_88%,white)] active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {submitting ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Guardando…</>

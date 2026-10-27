@@ -57,9 +57,9 @@ export default function CouponInput({
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600/80">
                 Cupón aplicado
               </p>
-              <p className="text-sm font-bold text-[#154734] truncate">{coupon.code}</p>
+              <p className="text-sm font-bold text-[color:var(--theme-primary)] truncate">{coupon.code}</p>
             </div>
-            <span className="shrink-0 text-[10px] font-black bg-[#154734] text-white px-2 py-0.5 rounded-full">
+            <span className="shrink-0 text-[10px] font-black bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] px-2 py-0.5 rounded-full">
               {coupon.discountType === "FIXED" && coupon.discountValue
                 ? `−$${coupon.discountValue.toLocaleString("es-CO")}`
                 : `−${coupon.discountPercentage}%`}
@@ -83,7 +83,7 @@ export default function CouponInput({
     <div className={wrapperCls}>
       {!compact && (
         <label className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 mb-2.5 flex items-center gap-1.5">
-          <TicketPercent className="w-3.5 h-3.5 text-[#C19A6B]" />
+          <TicketPercent className="w-3.5 h-3.5 text-[color:var(--theme-accent)]" />
           Código de cupón
         </label>
       )}
@@ -96,10 +96,10 @@ export default function CouponInput({
           onKeyDown={handleKeyDown}
           placeholder="EJ: ABC123XYZ456"
           disabled={isDisabled}
-          className={`flex-1 min-w-0 px-4 py-3 rounded-xl border text-sm font-bold uppercase tracking-wider text-[#154734] placeholder:text-gray-300 placeholder:font-medium placeholder:normal-case placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-[#C19A6B]/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
+          className={`flex-1 min-w-0 px-4 py-3 rounded-xl border text-sm font-bold uppercase tracking-wider text-[color:var(--theme-primary)] placeholder:text-gray-300 placeholder:font-medium placeholder:normal-case placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-[color:var(--theme-accent)]/40 transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
             isInvalid
               ? "border-red-300 bg-red-50/50"
-              : "border-gray-200 bg-[#FAFAFA] focus:border-[#C19A6B]"
+              : "border-gray-200 bg-[#FAFAFA] focus:border-[color:var(--theme-accent)]"
           }`}
           aria-invalid={isInvalid}
           aria-describedby={isInvalid ? "coupon-error" : undefined}
@@ -108,7 +108,7 @@ export default function CouponInput({
           type="button"
           onClick={handleApply}
           disabled={isDisabled || !inputValue.trim()}
-          className="shrink-0 px-5 py-3 rounded-xl bg-[#154734] text-white text-[11px] font-black uppercase tracking-[0.15em] hover:bg-[#103a2a] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          className="shrink-0 px-5 py-3 rounded-xl bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] text-[11px] font-black uppercase tracking-[0.15em] hover:bg-[color:color-mix(in_srgb,var(--theme-primary)_80%,black)] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
           {isValidating ? (
             <>
@@ -127,7 +127,7 @@ export default function CouponInput({
           {needsRegistration && (
             <Link
               href="/registro?returnTo=/checkout"
-              className="inline-block mt-1 font-bold text-[#154734] hover:text-[#C19A6B] underline underline-offset-2"
+              className="inline-block mt-1 font-bold text-[color:var(--theme-primary)] hover:text-[color:var(--theme-accent)] underline underline-offset-2"
             >
               Crear cuenta para usar este cupón
             </Link>

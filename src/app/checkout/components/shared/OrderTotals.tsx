@@ -39,7 +39,7 @@ export default function OrderTotals({
     >
       <div className="flex justify-between items-center">
         <span>Subtotal</span>
-        <span className="text-[#154734] font-bold">${subtotal.toLocaleString(LOCALE)}</span>
+        <span className="text-[color:var(--theme-primary)] font-bold">${subtotal.toLocaleString(LOCALE)}</span>
       </div>
 
       {hasDiscount && (
@@ -61,7 +61,7 @@ export default function OrderTotals({
 
       <div className="flex justify-between items-center">
         <span className="flex items-center gap-1.5">
-          <Truck className="w-3 h-3 text-[#C19A6B]" />
+          <Truck className="w-3 h-3 text-[color:var(--theme-accent)]" />
           Envío
         </span>
         {isFreeByThreshold ? (
@@ -71,7 +71,7 @@ export default function OrderTotals({
                 +${baseShippingCost.toLocaleString(LOCALE)}
               </span>
             )}
-            <span className="text-[#154734] font-bold">Gratis</span>
+            <span className="text-[color:var(--theme-primary)] font-bold">Gratis</span>
           </span>
         ) : noCoverage ? (
           <span className="text-red-600 font-semibold text-xs text-right">
@@ -80,7 +80,7 @@ export default function OrderTotals({
         ) : isPendingAddress ? (
           <span className="text-gray-400 italic text-xs">por calcular</span>
         ) : (
-          <span className="text-[#154734] font-bold">
+          <span className="text-[color:var(--theme-primary)] font-bold">
             +${shippingCost.toLocaleString(LOCALE)}
           </span>
         )}

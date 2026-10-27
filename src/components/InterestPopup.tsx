@@ -116,7 +116,7 @@ const InterestPopup = ({ excludeSlug = null }: InterestPopupProps) => {
         sm:left-4 sm:right-auto sm:bottom-6 md:bottom-8
         sm:w-[calc(100vw-32px)] md:max-w-sm lg:max-w-md
         bg-white
-        border-l-[6px] border-[#C19A6B]
+        border-l-[6px] border-[color:var(--theme-accent)]
         shadow-[0_10px_40px_-10px_rgba(0,0,0,0.35)]
         rounded-r-lg rounded-tl-sm rounded-bl-sm
         transition-all duration-500 ease-out
@@ -156,11 +156,11 @@ const InterestPopup = ({ excludeSlug = null }: InterestPopupProps) => {
 
         <div className="flex-1 min-w-0 flex flex-col justify-center gap-1 sm:gap-1.5">
           <div className="flex items-center gap-1 text-[11px] sm:text-xs text-gray-500">
-            <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#C19A6B] shrink-0" />
-            <span className="font-bold text-[#C19A6B] truncate">Te podría interesar</span>
+            <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[color:var(--theme-accent)] shrink-0" />
+            <span className="font-bold text-[color:var(--theme-accent)] truncate">Te podría interesar</span>
           </div>
 
-          <p className="text-xs sm:text-sm font-bold text-gray-900 leading-tight line-clamp-1 group-hover:text-[#C19A6B] transition-colors">
+          <p className="text-xs sm:text-sm font-bold text-gray-900 leading-tight line-clamp-1 group-hover:text-[color:var(--theme-accent)] transition-colors">
             {currentItem.name}
           </p>
 

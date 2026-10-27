@@ -1,2 +1,2 @@
-export const BRAND_GOLD  = "#C19A6B";
-export const BRAND_GREEN = "#154734";
+export const BRAND_GOLD  = "var(--theme-accent)";
+export const BRAND_GREEN = "var(--theme-primary)";

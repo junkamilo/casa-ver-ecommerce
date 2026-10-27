@@ -32,7 +32,7 @@ export function SearchField({
       <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
         <SearchIcon
           size={20}
-          className="text-gray-400 group-focus-within:text-[#C19A6B] transition-colors"
+          className="text-gray-400 group-focus-within:text-[color:var(--theme-accent)] transition-colors"
         />
       </div>
       <input
@@ -44,8 +44,8 @@ export function SearchField({
         aria-label={ariaLabel ?? placeholder}
         className={cn(
           "w-full pl-14 py-4 bg-white border border-gray-100 rounded-2xl text-sm",
-          "focus:outline-none focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10",
-          "transition-all shadow-sm hover:shadow-md text-[#154734] font-medium",
+          "focus:outline-none focus:border-[color:var(--theme-accent)] focus:ring-4 focus:ring-[color:var(--theme-accent)]/10",
+          "transition-all shadow-sm hover:shadow-md text-[color:var(--theme-primary)] font-medium",
           "placeholder:font-normal placeholder:text-gray-400",
           value ? "pr-12" : "pr-6",
         )}

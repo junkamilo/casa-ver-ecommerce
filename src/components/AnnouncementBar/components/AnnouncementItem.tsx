@@ -16,12 +16,12 @@ export function AnnouncementItem({ item, index }: AnnouncementItemProps) {
         style={{ animationDelay: floatDelay }}
       >
         <span
-          className="absolute inset-0 -m-1 rounded-full blur-sm bg-[#C19A6B]/40 animate-glow-pulse"
+          className="absolute inset-0 -m-1 rounded-full blur-sm bg-[color:var(--theme-accent)]/40 animate-glow-pulse"
           style={{ animationDelay: glowDelay }}
           aria-hidden="true"
         />
         <Icon
-          className="relative w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C19A6B]"
+          className="relative w-3.5 h-3.5 sm:w-4 sm:h-4 text-[color:var(--theme-accent)]"
           style={STYLES.iconGlow}
           aria-hidden="true"
         />
@@ -37,13 +37,13 @@ export function AnnouncementItem({ item, index }: AnnouncementItemProps) {
 
       {/* Separador diamante con líneas laterales */}
       <div className="mx-8 sm:mx-12 flex items-center gap-2 shrink-0">
-        <div className="w-4 sm:w-6 h-px bg-linear-to-r from-transparent to-[#C19A6B]/40" />
+        <div className="w-4 sm:w-6 h-px bg-linear-to-r from-transparent to-[color:var(--theme-accent)]/40" />
         <div
           className="w-1.5 h-1.5 animate-diamond-breathe"
           style={{ ...STYLES.diamond, animationDelay: diamondDelay }}
           aria-hidden="true"
         />
-        <div className="w-4 sm:w-6 h-px bg-linear-to-l from-transparent to-[#C19A6B]/40" />
+        <div className="w-4 sm:w-6 h-px bg-linear-to-l from-transparent to-[color:var(--theme-accent)]/40" />
       </div>
 
     </div>

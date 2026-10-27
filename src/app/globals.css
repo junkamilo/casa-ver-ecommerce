@@ -3,6 +3,19 @@
 
 @layer base {
   :root {
+    /* Variables de tema dinámico gobernadas desde el POS (Diseño → Temas) */
+    --theme-primary: #154734;
+    --theme-primary-fg: #ffffff;
+    --theme-accent: #c19a6b;
+    --theme-accent-fg: #ffffff;
+    --theme-bg: #ffffff;
+    --theme-surface: #f9f9f7;
+    --theme-text: #1a1a1a;
+    --theme-border: #e5e5e0;
+    --theme-font-display: Georgia, "Times New Roman", serif;
+    --theme-font-body: "Helvetica Neue", Arial, sans-serif;
+    --theme-radius: 0.5rem;
+
     --background: 0 0% 100%;
     --foreground: 0 0% 10%;
 
@@ -120,7 +133,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-family: var(--theme-font-body, 'Helvetica Neue', Arial, sans-serif);
   }
   /* Evita el auto-zoom de iOS Safari al enfocar inputs con font-size < 16px */
   input, textarea, select {
@@ -155,17 +168,17 @@
     100% { transform: translateX(-50%); }
   }
 
-  /* Gradiente dorado premium para CTAs */
+  /* Gradiente dorado premium para CTAs conectado al token de acento */
   .gold-gradient {
-    background: linear-gradient(135deg, hsl(31 42% 59%), hsl(31 52% 66%));
+    background: linear-gradient(135deg, var(--theme-accent), color-mix(in srgb, var(--theme-accent) 82%, white));
   }
   .gold-gradient:hover {
-    background: linear-gradient(135deg, hsl(31 33% 50%), hsl(31 42% 59%));
+    background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 85%, black), var(--theme-accent));
   }
 
-  /* Gradiente verde marca */
+  /* Gradiente primario de marca conectado al token primario */
   .brand-gradient {
-    background: linear-gradient(135deg, hsl(157 55% 18%), hsl(157 50% 24%));
+    background: linear-gradient(135deg, var(--theme-primary), color-mix(in srgb, var(--theme-primary) 82%, white));
   }
 
   /* Sombra premium con tinte verde */
@@ -185,7 +198,7 @@
 
   /* Shimmer dorado para texto especial */
   .text-gold-shimmer {
-    background: linear-gradient(90deg, hsl(31 42% 59%), hsl(31 52% 66%), hsl(31 42% 59%));
+    background: linear-gradient(90deg, var(--theme-accent), color-mix(in srgb, var(--theme-accent) 78%, white), var(--theme-accent));
     background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -204,7 +217,7 @@
   /* Scrollbar estilo Casa Verde */
   .scrollbar-brand {
     scrollbar-width: thin;
-    scrollbar-color: #C19A6B #f3f4f6;
+    scrollbar-color: var(--theme-accent) #f3f4f6;
   }
   .scrollbar-brand::-webkit-scrollbar {
     width: 5px;
@@ -214,20 +227,20 @@
     border-radius: 99px;
   }
   .scrollbar-brand::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #154734 0%, #C19A6B 100%);
+    background: linear-gradient(180deg, var(--theme-primary) 0%, var(--theme-accent) 100%);
     border-radius: 99px;
   }
   .scrollbar-brand::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #0f3829 0%, #a8845a 100%);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--theme-primary) 85%, black) 0%, color-mix(in srgb, var(--theme-accent) 85%, black) 100%);
   }
 
-  /* Acento dorado debajo de títulos de sección */
+  /* Acento debajo de títulos de sección */
   .title-accent::after {
     content: '';
     display: block;
     width: 40px;
     height: 2px;
-    background: hsl(31 42% 59%);
+    background: var(--theme-accent);
     margin-top: 8px;
   }
   .title-accent-center::after {
@@ -235,7 +248,7 @@
     display: block;
     width: 40px;
     height: 2px;
-    background: hsl(31 42% 59%);
+    background: var(--theme-accent);
     margin: 8px auto 0;
   }
 }
@@ -247,7 +260,78 @@
   scrollbar-width: none;
 }
 
-/* Scrollbar para sidebar oscuro ? fuera de @layer para que ::-webkit-scrollbar funcione */
+/* ============================================================================
+ * Mapeo global de clases utilitarias con colores de marca a los Tokens del POS
+ * (md/PLAN-IMPLEMENTACION-MODULO-TEMAS-POS-vs-WEB.md §7.1)
+ * ============================================================================ */
+.bg-primary,
+.bg-\[\#154734\],
+.bg-\[\#0f3829\] {
+  background-color: var(--theme-primary) !important;
+}
+
+.hover\:bg-\[\#154734\]:hover,
+.hover\:bg-\[\#0f3829\]:hover,
+.hover\:bg-\[\#1b5c43\]:hover {
+  background-color: color-mix(in srgb, var(--theme-primary) 88%, black) !important;
+}
+
+.text-primary,
+.text-\[\#154734\] {
+  color: var(--theme-primary) !important;
+}
+
+.hover\:text-\[\#154734\]:hover {
+  color: var(--theme-primary) !important;
+}
+
+.border-primary,
+.border-\[\#154734\] {
+  border-color: var(--theme-primary) !important;
+}
+
+.hover\:border-\[\#154734\]:hover {
+  border-color: var(--theme-primary) !important;
+}
+
+.fill-\[\#154734\] {
+  fill: var(--theme-primary) !important;
+}
+
+.bg-\[\#C19A6B\],
+.bg-\[\#c19a6b\] {
+  background-color: var(--theme-accent) !important;
+}
+
+.hover\:bg-\[\#C19A6B\]:hover,
+.hover\:bg-\[\#a8845a\]:hover {
+  background-color: color-mix(in srgb, var(--theme-accent) 88%, black) !important;
+}
+
+.text-\[\#C19A6B\],
+.text-\[\#c19a6b\] {
+  color: var(--theme-accent) !important;
+}
+
+.hover\:text-\[\#C19A6B\]:hover {
+  color: var(--theme-accent) !important;
+}
+
+.border-\[\#C19A6B\],
+.border-\[\#c19a6b\] {
+  border-color: var(--theme-accent) !important;
+}
+
+.hover\:border-\[\#C19A6B\]:hover {
+  border-color: var(--theme-accent) !important;
+}
+
+.bg-\[\#F9F9F7\],
+.bg-\[\#f9f9f7\] {
+  background-color: var(--theme-surface) !important;
+}
+
+/* Scrollbar para sidebar oscuro - fuera de @layer para que ::-webkit-scrollbar funcione */
 .scrollbar-sidebar {
   scrollbar-width: thin;
   scrollbar-color: rgba(193,154,107,0.5) transparent;
@@ -272,7 +356,7 @@
   transform: scale(var(--hero-zoom-mobile, 1));
   transform-origin: var(--hero-focus-mobile, 50% 50%);
 }
-/* Align with <picture> sources: tablet ?768, desktop ?1024 */
+/* Align with <picture> sources: tablet >=768, desktop >=1024 */
 @media (min-width: 768px) {
   .hero-slide-media {
     object-position: var(--hero-focus-tablet, 50% 40%);

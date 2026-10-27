@@ -17,13 +17,13 @@ const PaymentSection = () => {
       {/* Encabezado */}
       <div className="flex items-center justify-between gap-3 mb-5 sm:mb-6">
         <h2
-          className="text-lg sm:text-xl md:text-2xl text-[#154734] shrink-0"
+          className="text-lg sm:text-xl md:text-2xl text-[color:var(--theme-primary)] shrink-0"
           style={{ fontFamily: "Georgia, serif" }}
         >
           Pago
         </h2>
         <span className="flex items-center gap-1 text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wide font-bold text-right">
-          <Lock className="w-3 h-3 text-[#154734] shrink-0" />
+          <Lock className="w-3 h-3 text-[color:var(--theme-primary)] shrink-0" />
           Todas las transacciones son seguras y están encriptadas.
         </span>
       </div>
@@ -35,7 +35,7 @@ const PaymentSection = () => {
           onClick={() => setValue("paymentMethod", "BOLD", { shouldValidate: true })}
           className={`w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border-2 transition-all duration-200 text-left ${
             paymentMethod === "BOLD"
-              ? "border-[#154734] bg-[#154734]/5"
+              ? "border-[color:var(--theme-primary)] bg-[color:var(--theme-primary)]/5"
               : "border-gray-200 bg-white hover:border-gray-300"
           }`}
         >
@@ -44,13 +44,13 @@ const PaymentSection = () => {
             <div
               className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors duration-200 ${
                 paymentMethod === "BOLD"
-                  ? "border-[#154734] bg-[#154734]"
+                  ? "border-[color:var(--theme-primary)] bg-[color:var(--theme-primary)]"
                   : "border-gray-300 bg-white"
               }`}
             >
               {paymentMethod === "BOLD" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
             </div>
-            <span className={`text-sm font-bold transition-colors duration-200 ${paymentMethod === "BOLD" ? "text-[#154734]" : "text-gray-600"}`}>
+            <span className={`text-sm font-bold transition-colors duration-200 ${paymentMethod === "BOLD" ? "text-[color:var(--theme-primary)]" : "text-gray-600"}`}>
               Bold
             </span>
           </div>

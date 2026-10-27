@@ -14,12 +14,12 @@ const EmailField = ({ register, errors }: EmailFieldProps) => (
       Correo Electrónico
     </label>
     <div className="relative">
-      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#154734]/50" />
+      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[color:var(--theme-primary)]/50" />
       <input
         {...register("email")}
         type="email"
         placeholder="tu@correo.com"
-        className="w-full pl-10 pr-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C19A6B]/40 focus:border-[#C19A6B] focus:bg-white transition-all placeholder:text-gray-400"
+        className="w-full pl-10 pr-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[color:var(--theme-accent)]/40 focus:border-[color:var(--theme-accent)] focus:bg-white transition-all placeholder:text-gray-400"
       />
     </div>
     {errors.email && (

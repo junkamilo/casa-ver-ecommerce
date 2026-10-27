@@ -91,7 +91,7 @@ function ResenasContent() {
         <div className="text-center mb-8">
           <Link href="/">
             <span
-              className="text-2xl font-bold text-[#154734] tracking-tight"
+              className="text-2xl font-bold text-[color:var(--theme-primary)] tracking-tight"
               style={{ fontFamily: "Georgia, serif" }}
             >
               Casa Verde
@@ -99,12 +99,12 @@ function ResenasContent() {
           </Link>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(21,71,52,0.2)] border border-[#C19A6B]/10 overflow-hidden">
+        <div className="bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(21,71,52,0.2)] border border-[color:var(--theme-accent)]/10 overflow-hidden">
 
           {/* Loading */}
           {state === "loading" && (
             <div className="flex flex-col items-center justify-center py-20 px-8">
-              <Loader2 className="w-10 h-10 text-[#154734] animate-spin mb-4" />
+              <Loader2 className="w-10 h-10 text-[color:var(--theme-primary)] animate-spin mb-4" />
               <p className="text-sm text-gray-500">Cargando tu enlace de reseña...</p>
             </div>
           )}
@@ -119,7 +119,7 @@ function ResenasContent() {
               <p className="text-sm text-gray-500 mb-6">{errorMsg}</p>
               <Link
                 href="/"
-                className="text-sm font-semibold text-[#154734] underline underline-offset-2"
+                className="text-sm font-semibold text-[color:var(--theme-primary)] underline underline-offset-2"
               >
                 Volver al inicio
               </Link>
@@ -130,18 +130,18 @@ function ResenasContent() {
           {state === "form" && info && (
             <form onSubmit={handleSubmit} className="p-8 sm:p-10">
               <div className="mb-6">
-                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#C19A6B]">
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[color:var(--theme-accent)]">
                   Pedido #{info.orderNumber}
                 </span>
                 <h1
-                  className="text-2xl sm:text-3xl font-light text-[#154734] mt-1 leading-tight"
+                  className="text-2xl sm:text-3xl font-light text-[color:var(--theme-primary)] mt-1 leading-tight"
                   style={{ fontFamily: "Georgia, serif" }}
                 >
                   ¿Cómo te quedó?
                 </h1>
                 <p className="text-sm text-gray-500 mt-2">
                   Deja tu opinión sobre{" "}
-                  <span className="font-semibold text-[#154734]">{info.productName}</span>
+                  <span className="font-semibold text-[color:var(--theme-primary)]">{info.productName}</span>
                 </p>
               </div>
 
@@ -163,7 +163,7 @@ function ResenasContent() {
                       <Star
                         className={`w-9 h-9 transition-colors ${
                           star <= (hoverRating || rating)
-                            ? "fill-[#C19A6B] text-[#C19A6B]"
+                            ? "fill-[color:var(--theme-accent)] text-[color:var(--theme-accent)]"
                             : "fill-gray-200 text-gray-300"
                         }`}
                       />
@@ -187,7 +187,7 @@ function ResenasContent() {
                   placeholder="Cuéntanos cómo te quedó, si la talla fue la esperada, la calidad de la tela..."
                   rows={5}
                   maxLength={1000}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#154734]/30 focus:border-[#154734] resize-none transition"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[color:var(--theme-primary)]/30 focus:border-[color:var(--theme-primary)] resize-none transition"
                 />
                 <div className="flex justify-between mt-1">
                   {formError ? (
@@ -202,7 +202,7 @@ function ResenasContent() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-[#154734] text-white font-semibold py-3.5 rounded-xl text-sm hover:bg-[#154734]/90 active:scale-[0.98] transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+                className="w-full bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] font-semibold py-3.5 rounded-xl text-sm hover:bg-[color:var(--theme-primary)]/90 active:scale-[0.98] transition-all disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>
@@ -223,11 +223,11 @@ function ResenasContent() {
           {/* Success */}
           {state === "success" && (
             <div className="flex flex-col items-center justify-center py-20 px-8 text-center">
-              <div className="w-16 h-16 rounded-full bg-[#F2EAE0] flex items-center justify-center mb-5 border border-[#C19A6B]/20">
-                <CheckCircle className="w-8 h-8 text-[#154734]" />
+              <div className="w-16 h-16 rounded-full bg-[#F2EAE0] flex items-center justify-center mb-5 border border-[color:var(--theme-accent)]/20">
+                <CheckCircle className="w-8 h-8 text-[color:var(--theme-primary)]" />
               </div>
               <h2
-                className="text-2xl font-light text-[#154734] mb-3"
+                className="text-2xl font-light text-[color:var(--theme-primary)] mb-3"
                 style={{ fontFamily: "Georgia, serif" }}
               >
                 ¡Gracias por tu reseña!
@@ -237,7 +237,7 @@ function ResenasContent() {
               </p>
               <Link
                 href="/"
-                className="bg-[#154734] text-white text-sm font-semibold px-6 py-3 rounded-xl hover:bg-[#154734]/90 transition"
+                className="bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] text-sm font-semibold px-6 py-3 rounded-xl hover:bg-[color:var(--theme-primary)]/90 transition"
               >
                 Volver a la tienda
               </Link>
@@ -255,7 +255,7 @@ export default function ResenasPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-[#F2EAE0] flex items-center justify-center">
-          <Loader2 className="w-10 h-10 text-[#154734] animate-spin" />
+          <Loader2 className="w-10 h-10 text-[color:var(--theme-primary)] animate-spin" />
         </div>
       }
     >

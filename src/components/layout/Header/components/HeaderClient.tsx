@@ -44,7 +44,7 @@ const HeaderClient = ({ categories: initialCategories }: HeaderClientProps) => {
       >
         {/* ── Línea dorada inferior: aparece suavemente al hacer scroll ── */}
         <div
-          className={`absolute bottom-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-[#C19A6B] to-transparent animate-border-shimmer transition-opacity duration-500 ${
+          className={`absolute bottom-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-[color:var(--theme-accent)] to-transparent animate-border-shimmer transition-opacity duration-500 ${
             scrolled ? "opacity-100" : "opacity-0"
           }`}
         />
@@ -57,12 +57,12 @@ const HeaderClient = ({ categories: initialCategories }: HeaderClientProps) => {
 
             {/* Botón hamburguesa con círculo de hover */}
             <button
-              className="lg:hidden text-foreground hover:text-[#154734] transition-colors relative group"
+              className="lg:hidden text-foreground hover:text-[color:var(--theme-primary)] transition-colors relative group"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Menú"
             >
               <span
-                className="absolute inset-0 -m-2 rounded-full bg-[#154734]/0 group-hover:bg-[#154734]/8 transition-all duration-300 scale-0 group-hover:scale-100"
+                className="absolute inset-0 -m-2 rounded-full bg-[color:var(--theme-primary)]/0 group-hover:bg-[color:var(--theme-primary)]/8 transition-all duration-300 scale-0 group-hover:scale-100"
                 aria-hidden="true"
               />
               {menuOpen
@@ -74,7 +74,7 @@ const HeaderClient = ({ categories: initialCategories }: HeaderClientProps) => {
             {/* Logo con halo dorado en hover */}
             <Link href="/" className="shrink-0 block group relative" aria-label="Inicio">
               <span
-                className="absolute inset-0 -m-1.5 rounded-full blur-md bg-[#C19A6B]/0 group-hover:bg-[#C19A6B]/25 transition-all duration-500"
+                className="absolute inset-0 -m-1.5 rounded-full blur-md bg-[color:var(--theme-accent)]/0 group-hover:bg-[color:var(--theme-accent)]/25 transition-all duration-500"
                 aria-hidden="true"
               />
               <Image
@@ -95,8 +95,8 @@ const HeaderClient = ({ categories: initialCategories }: HeaderClientProps) => {
           <div className="hidden lg:block absolute left-1/2 -translate-x-1/2 pointer-events-none">
             <Link href="/" className="block pointer-events-auto" aria-label="Casa Verde — inicio">
               <span
-                className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-light tracking-wide text-[#154734] inline-block"
-                style={{ fontFamily: "Georgia, serif" }}
+                className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-light tracking-wide text-[color:var(--theme-primary)] inline-block"
+                style={{ fontFamily: "var(--theme-font-display, Georgia, serif)" }}
               >
                 CASA VERDE
               </span>

@@ -27,7 +27,7 @@ export default function TiendaError({
       <button
         type="button"
         onClick={reset}
-        className="px-6 py-2.5 bg-[#154734] text-white rounded-md hover:bg-[#154734]/90 transition-colors"
+        className="px-6 py-2.5 bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] rounded-md hover:bg-[color:var(--theme-primary)]/90 transition-colors"
       >
         Reintentar
       </button>

@@ -16,7 +16,7 @@ const PhoneField = ({ register, errors }: PhoneFieldProps) => (
       <span className="text-[10px] text-gray-400 font-medium">Opcional</span>
     </div>
     <div className="relative">
-      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#154734]/50" />
+      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[color:var(--theme-primary)]/50" />
       <input
         {...register("phone")}
         type="tel"
@@ -32,7 +32,7 @@ const PhoneField = ({ register, errors }: PhoneFieldProps) => (
           const pasted = e.clipboardData.getData("text");
           if (!/^\d+$/.test(pasted)) e.preventDefault();
         }}
-        className="w-full pl-10 pr-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C19A6B]/40 focus:border-[#C19A6B] focus:bg-white transition-all placeholder:text-gray-400"
+        className="w-full pl-10 pr-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[color:var(--theme-accent)]/40 focus:border-[color:var(--theme-accent)] focus:bg-white transition-all placeholder:text-gray-400"
       />
     </div>
     {errors.phone && (

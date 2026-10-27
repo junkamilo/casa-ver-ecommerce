@@ -23,7 +23,7 @@ export function ProductToolbar({
       {/* Izquierda: Contador + Botón Filtrar (móvil) */}
       <div className="flex items-center gap-3">
         <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-gray-400">
-          <strong className="text-[#154734]">{count}</strong>
+          <strong className="text-[color:var(--theme-primary)]">{count}</strong>
           <span className="hidden sm:inline"> artículos</span>
           <span className="sm:hidden"> arts</span>
         </span>
@@ -33,14 +33,14 @@ export function ProductToolbar({
             onClick={onFilterOpen}
             className={`lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all duration-300 active:scale-95 ${
               hasActiveFilters
-                ? "bg-[#154734] text-white border-[#154734] shadow-[0_4px_12px_-4px_rgba(21,71,52,0.4)]"
-                : "bg-white text-[#154734] border-gray-200 hover:border-[#C19A6B]/50 hover:text-[#C19A6B]"
+                ? "bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] border-[color:var(--theme-primary)] shadow-[0_4px_12px_-4px_rgba(21,71,52,0.4)]"
+                : "bg-white text-[color:var(--theme-primary)] border-gray-200 hover:border-[color:var(--theme-accent)]/50 hover:text-[color:var(--theme-accent)]"
             }`}
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
             <span>Filtrar</span>
             {hasActiveFilters && (
-              <span className="w-1.5 h-1.5 rounded-full bg-[#C19A6B]" aria-hidden="true" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--theme-accent)]" aria-hidden="true" />
             )}
           </button>
         )}
@@ -51,13 +51,13 @@ export function ProductToolbar({
 
         {/* Menú Desplegable de Ordenamiento */}
         <div className="relative flex items-center gap-2" ref={dropdownRef}>
-          <span className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[#154734] whitespace-nowrap hidden sm:block">
+          <span className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[color:var(--theme-primary)] whitespace-nowrap hidden sm:block">
             Ordenar por:
           </span>
 
           <button
             onClick={() => setIsSortOpen(!isSortOpen)}
-            className="flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[#C19A6B] hover:text-[#154734] transition-colors duration-300 py-1 active:scale-95"
+            className="flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[color:var(--theme-accent)] hover:text-[color:var(--theme-primary)] transition-colors duration-300 py-1 active:scale-95"
           >
             <span className="truncate max-w-27.5 sm:max-w-none">{currentSortLabel}</span>
             <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${isSortOpen ? "rotate-180" : ""}`} />
@@ -74,11 +74,11 @@ export function ProductToolbar({
                   }}
                   className="w-full text-left px-5 py-3 text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-colors duration-200 flex items-center justify-between group hover:bg-[#FAFAFA] active:scale-95"
                 >
-                  <span className={`${sortBy === option.value ? "text-[#C19A6B]" : "text-gray-500 group-hover:text-[#154734]"}`}>
+                  <span className={`${sortBy === option.value ? "text-[color:var(--theme-accent)]" : "text-gray-500 group-hover:text-[color:var(--theme-primary)]"}`}>
                     {option.label}
                   </span>
                   {sortBy === option.value && (
-                    <Check className="w-3.5 h-3.5 text-[#C19A6B]" />
+                    <Check className="w-3.5 h-3.5 text-[color:var(--theme-accent)]" />
                   )}
                 </button>
               ))}

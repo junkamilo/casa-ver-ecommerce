@@ -69,11 +69,11 @@ export default function ReviewForm({ productId, existing, isAuthenticated }: Pro
   if (!isAuthenticated) {
     return (
       <div className="flex flex-col items-center text-center w-full max-w-sm mx-auto group">
-        <div className="w-20 h-20 bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-inner border border-gray-100 mb-8 group-hover:scale-110 group-hover:bg-[#154734]/5 transition-all duration-500">
-          <MessageSquareQuote className="w-8 h-8 text-[#C19A6B] group-hover:text-[#154734] transition-colors duration-500" strokeWidth={1.5} />
+        <div className="w-20 h-20 bg-[#FAFAFA] rounded-full flex items-center justify-center shadow-inner border border-gray-100 mb-8 group-hover:scale-110 group-hover:bg-[color:var(--theme-primary)]/5 transition-all duration-500">
+          <MessageSquareQuote className="w-8 h-8 text-[color:var(--theme-accent)] group-hover:text-[color:var(--theme-primary)] transition-colors duration-500" strokeWidth={1.5} />
         </div>
         <h3
-          className="text-2xl sm:text-4xl font-light text-[#154734] mb-3 sm:mb-4 tracking-tight leading-[1.1]"
+          className="text-2xl sm:text-4xl font-light text-[color:var(--theme-primary)] mb-3 sm:mb-4 tracking-tight leading-[1.1]"
           style={{ fontFamily: "Georgia, serif" }}
         >
           Tu opinión es invaluable
@@ -84,7 +84,7 @@ export default function ReviewForm({ productId, existing, isAuthenticated }: Pro
         </p>
         <a
           href="/login"
-          className="w-full inline-flex items-center justify-center bg-[#154734] hover:bg-[#C19A6B] text-white text-xs sm:text-sm font-bold uppercase tracking-[0.2em] px-8 py-4 sm:py-5 rounded-xl shadow-[0_10px_20px_-10px_rgba(21,71,52,0.5)] hover:shadow-[0_15px_30px_-10px_rgba(193,154,107,0.6)] transition-all duration-500 active:scale-95"
+          className="w-full inline-flex items-center justify-center bg-[color:var(--theme-primary)] hover:bg-[color:var(--theme-accent)] text-[color:var(--theme-primary-fg)] text-xs sm:text-sm font-bold uppercase tracking-[0.2em] px-8 py-4 sm:py-5 rounded-xl shadow-[0_10px_20px_-10px_rgba(21,71,52,0.5)] hover:shadow-[0_15px_30px_-10px_rgba(193,154,107,0.6)] transition-all duration-500 active:scale-95"
         >
           Iniciar sesión
         </a>
@@ -98,11 +98,11 @@ export default function ReviewForm({ productId, existing, isAuthenticated }: Pro
       {/* Toast feedback */}
       <div
         aria-live="polite"
-        className={`absolute -top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-white border border-[#C19A6B]/30 text-[#154734] shadow-[0_20px_40px_-10px_rgba(193,154,107,0.3)] rounded-2xl px-5 py-3 transition-all duration-500 w-max ${
+        className={`absolute -top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-white border border-[color:var(--theme-accent)]/30 text-[color:var(--theme-primary)] shadow-[0_20px_40px_-10px_rgba(193,154,107,0.3)] rounded-2xl px-5 py-3 transition-all duration-500 w-max ${
           toast ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
         }`}
       >
-        <CheckCircle className="w-5 h-5 text-[#C19A6B]" />
+        <CheckCircle className="w-5 h-5 text-[color:var(--theme-accent)]" />
         <span className="text-xs sm:text-sm font-bold tracking-wide">
           {toast === "deleted" ? "Reseña eliminada" : "¡Reseña guardada!"}
         </span>
@@ -112,7 +112,7 @@ export default function ReviewForm({ productId, existing, isAuthenticated }: Pro
 
         <div className="text-center mb-6 sm:mb-10">
           <h3
-            className="text-2xl sm:text-4xl font-light text-[#154734] mb-2 sm:mb-3 tracking-tight leading-[1.1]"
+            className="text-2xl sm:text-4xl font-light text-[color:var(--theme-primary)] mb-2 sm:mb-3 tracking-tight leading-[1.1]"
             style={{ fontFamily: "Georgia, serif" }}
           >
             {existing ? "Actualiza tu reseña" : "Déjanos tu opinión"}
@@ -130,11 +130,11 @@ export default function ReviewForm({ productId, existing, isAuthenticated }: Pro
             placeholder="Cuéntanos tu experiencia con el tejido, el ajuste y la comodidad..."
             rows={4}
             maxLength={500}
-            className="w-full text-sm bg-[#FAFAFA] border border-gray-200 rounded-2xl px-5 py-4 sm:py-5 resize-none outline-none focus:bg-white focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/15 transition-all duration-300 placeholder:text-gray-400 placeholder:font-light text-[#154734] shadow-inner group-hover/textarea:shadow-md"
+            className="w-full text-sm bg-[#FAFAFA] border border-gray-200 rounded-2xl px-5 py-4 sm:py-5 resize-none outline-none focus:bg-white focus:border-[color:var(--theme-accent)] focus:ring-4 focus:ring-[color:var(--theme-accent)]/15 transition-all duration-300 placeholder:text-gray-400 placeholder:font-light text-[color:var(--theme-primary)] shadow-inner group-hover/textarea:shadow-md"
           />
           <span
             className={`absolute bottom-3 right-4 text-[10px] sm:text-xs font-medium pointer-events-none transition-colors duration-300 ${
-              comment.length >= 450 ? "text-[#C19A6B]" : "text-gray-400"
+              comment.length >= 450 ? "text-[color:var(--theme-accent)]" : "text-gray-400"
             }`}
           >
             {comment.length}/500
@@ -152,7 +152,7 @@ export default function ReviewForm({ productId, existing, isAuthenticated }: Pro
         <button
           type="submit"
           disabled={isPending || !comment.trim()}
-          className="w-full bg-[#154734] text-white text-xs sm:text-sm font-bold uppercase tracking-[0.2em] px-8 py-4 sm:py-5 rounded-xl hover:bg-[#C19A6B] shadow-[0_10px_20px_-10px_rgba(21,71,52,0.5)] hover:shadow-[0_15px_30px_-10px_rgba(193,154,107,0.6)] transition-all duration-500 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#154734] disabled:hover:shadow-none disabled:active:scale-100 flex items-center justify-center gap-3 relative overflow-hidden group/btn"
+          className="w-full bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] text-xs sm:text-sm font-bold uppercase tracking-[0.2em] px-8 py-4 sm:py-5 rounded-xl hover:bg-[color:var(--theme-accent)] shadow-[0_10px_20px_-10px_rgba(21,71,52,0.5)] hover:shadow-[0_15px_30px_-10px_rgba(193,154,107,0.6)] transition-all duration-500 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[color:var(--theme-primary)] disabled:hover:shadow-none disabled:active:scale-100 flex items-center justify-center gap-3 relative overflow-hidden group/btn"
         >
           <div className="absolute inset-0 w-full h-full bg-white/20 -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite]" />
           <span className="relative z-10 flex items-center gap-2">

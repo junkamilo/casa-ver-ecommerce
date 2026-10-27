@@ -137,15 +137,15 @@ export default function CustomSelect({
       {/* Buscador */}
       {searchable && (
         <div className="flex-none px-3 py-2.5 border-b border-gray-100 bg-white">
-          <div className="flex items-center gap-2 bg-[#FAFAFA] border border-gray-200 rounded-lg px-3 py-2 focus-within:border-[#C19A6B] focus-within:ring-2 focus-within:ring-[#C19A6B]/15 transition-all duration-200">
-            <Search className="w-3.5 h-3.5 text-[#C19A6B] shrink-0" />
+          <div className="flex items-center gap-2 bg-[#FAFAFA] border border-gray-200 rounded-lg px-3 py-2 focus-within:border-[color:var(--theme-accent)] focus-within:ring-2 focus-within:ring-[color:var(--theme-accent)]/15 transition-all duration-200">
+            <Search className="w-3.5 h-3.5 text-[color:var(--theme-accent)] shrink-0" />
             <input
               ref={searchRef}
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar..."
-              className="flex-1 bg-transparent text-sm text-[#154734] placeholder:text-gray-400 outline-none"
+              className="flex-1 bg-transparent text-sm text-[color:var(--theme-primary)] placeholder:text-gray-400 outline-none"
             />
             {query && (
               <button
@@ -179,12 +179,12 @@ export default function CustomSelect({
                   className={[
                     "w-full text-left px-4 py-3 text-sm flex items-center justify-between gap-3 transition-colors duration-100",
                     selected
-                      ? "bg-[#154734] text-white font-semibold"
-                      : "text-[#154734] hover:bg-[#edf3f0]",
+                      ? "bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] font-semibold"
+                      : "text-[color:var(--theme-primary)] hover:bg-[#edf3f0]",
                   ].join(" ")}
                 >
                   <span className="truncate">{opt}</span>
-                  {selected && <Check className="w-3.5 h-3.5 shrink-0 text-[#C19A6B]" />}
+                  {selected && <Check className="w-3.5 h-3.5 shrink-0 text-[color:var(--theme-accent)]" />}
                 </button>
               </li>
             );
@@ -193,7 +193,7 @@ export default function CustomSelect({
       </ul>
 
       {/* Pie decorativo */}
-      <div className="flex-none h-1 rounded-b-2xl bg-linear-to-r from-[#154734] via-[#C19A6B] to-[#154734]" />
+      <div className="flex-none h-1 rounded-b-2xl bg-linear-to-r from-[color:var(--theme-primary)] via-[color:var(--theme-accent)] to-[color:var(--theme-primary)]" />
     </>
   );
 
@@ -213,7 +213,7 @@ export default function CustomSelect({
         <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-1 shrink-0" />
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 shrink-0">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-[#154734]">
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-[color:var(--theme-primary)]">
             {label}
           </p>
           <button
@@ -242,10 +242,10 @@ export default function CustomSelect({
         maxHeight: DROPDOWN_MAX_H,
         zIndex: 9999,
       }}
-      className="bg-white rounded-2xl border border-[#C19A6B]/25 shadow-[0_24px_48px_-12px_rgba(21,71,52,0.22)] flex flex-col"
+      className="bg-white rounded-2xl border border-[color:var(--theme-accent)]/25 shadow-[0_24px_48px_-12px_rgba(21,71,52,0.22)] flex flex-col"
     >
-      <div className="flex-none px-4 pt-3 pb-2 border-b border-gray-100 rounded-t-2xl bg-linear-to-r from-[#154734]/6 to-[#C19A6B]/6">
-        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#154734]/60">
+      <div className="flex-none px-4 pt-3 pb-2 border-b border-gray-100 rounded-t-2xl bg-linear-to-r from-[color:var(--theme-primary)]/6 to-[color:var(--theme-accent)]/6">
+        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[color:var(--theme-primary)]/60">
           {label}
         </p>
       </div>
@@ -269,10 +269,10 @@ export default function CustomSelect({
           disabled
             ? "opacity-50 cursor-not-allowed border-gray-200 text-gray-400 bg-gray-50"
             : open
-            ? "bg-white border-[#C19A6B] ring-4 ring-[#C19A6B]/15 text-[#154734]"
+            ? "bg-white border-[color:var(--theme-accent)] ring-4 ring-[color:var(--theme-accent)]/15 text-[color:var(--theme-primary)]"
             : value
-            ? "bg-[#FAFAFA] border-gray-200 hover:border-[#C19A6B]/60 text-[#154734] font-medium cursor-pointer"
-            : "bg-[#FAFAFA] border-gray-200 hover:border-[#C19A6B]/60 text-gray-400 cursor-pointer",
+            ? "bg-[#FAFAFA] border-gray-200 hover:border-[color:var(--theme-accent)]/60 text-[color:var(--theme-primary)] font-medium cursor-pointer"
+            : "bg-[#FAFAFA] border-gray-200 hover:border-[color:var(--theme-accent)]/60 text-gray-400 cursor-pointer",
         ].join(" ")}
       >
         {value || placeholder}
@@ -283,7 +283,7 @@ export default function CustomSelect({
         htmlFor={id}
         className={[
           "absolute left-5 top-2 text-[10px] font-bold uppercase tracking-widest pointer-events-none transition-colors duration-300",
-          disabled ? "text-gray-300" : "text-[#C19A6B]",
+          disabled ? "text-gray-300" : "text-[color:var(--theme-accent)]",
         ].join(" ")}
       >
         {label}
@@ -293,7 +293,7 @@ export default function CustomSelect({
       <ChevronDown
         className={[
           "absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none transition-transform duration-300",
-          disabled ? "text-gray-300" : "text-[#C19A6B]",
+          disabled ? "text-gray-300" : "text-[color:var(--theme-accent)]",
           open ? "rotate-180" : "",
         ].join(" ")}
       />

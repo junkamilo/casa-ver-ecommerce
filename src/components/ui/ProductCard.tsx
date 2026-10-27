@@ -91,7 +91,7 @@ function ColorSwatchesRow({
               e.stopPropagation();
               scrollByDir("left");
             }}
-            className="absolute left-0 top-1/2 z-20 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-white/95 border border-[#C19A6B]/25 shadow-sm text-[#154734] active:scale-90"
+            className="absolute left-0 top-1/2 z-20 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-white/95 border border-[color:var(--theme-accent)]/25 shadow-sm text-[color:var(--theme-primary)] active:scale-90"
           >
             <ChevronLeft className="w-3 h-3" strokeWidth={2.5} />
           </button>
@@ -112,7 +112,7 @@ function ColorSwatchesRow({
               e.stopPropagation();
               scrollByDir("right");
             }}
-            className="absolute right-0 top-1/2 z-20 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-white/95 border border-[#C19A6B]/25 shadow-sm text-[#154734] active:scale-90"
+            className="absolute right-0 top-1/2 z-20 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-white/95 border border-[color:var(--theme-accent)]/25 shadow-sm text-[color:var(--theme-primary)] active:scale-90"
           >
             <ChevronRight className="w-3 h-3" strokeWidth={2.5} />
           </button>
@@ -131,7 +131,7 @@ function ColorSwatchesRow({
             onClick={(e) => onColorClick(e, color)}
             className={`w-6 h-6 md:w-7 md:h-7 rounded-full border shadow-sm transition-all duration-200 shrink-0 active:scale-90 ${
               activeColor?.name === color.name
-                ? "ring-2 ring-offset-2 ring-[#154734] border-[#154734]"
+                ? "ring-2 ring-offset-2 ring-[color:var(--theme-primary)] border-[color:var(--theme-primary)]"
                 : "border-gray-200 hover:scale-110 hover:border-gray-400"
             }`}
             style={{ backgroundColor: color.hexCode }}
@@ -196,7 +196,7 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
     item.colors && item.colors.length > 0 ? (
       <div className="flex flex-col gap-1 w-full min-w-0">
         <span className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">
-          Color{activeColor ? <span className="text-[#154734] ml-1">{activeColor.name}</span> : null}
+          Color{activeColor ? <span className="text-[color:var(--theme-primary)] ml-1">{activeColor.name}</span> : null}
         </span>
         <ColorSwatchesRow
           colors={item.colors}
@@ -211,7 +211,7 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
     return (
       <Link
         href={productHref}
-        className="cursor-pointer flex gap-4 sm:gap-6 bg-white p-3 sm:p-4 rounded-3xl border border-[#C19A6B]/20 hover:border-[#C19A6B]/60 shadow-[0_4px_15px_-5px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_30px_-5px_rgba(193,154,107,0.15)] transition-all duration-500 group"
+        className="cursor-pointer flex gap-4 sm:gap-6 bg-white p-3 sm:p-4 rounded-3xl border border-[color:var(--theme-accent)]/20 hover:border-[color:var(--theme-accent)]/60 shadow-[0_4px_15px_-5px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_30px_-5px_rgba(193,154,107,0.15)] transition-all duration-500 group"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -249,7 +249,7 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
               {canGoPrev && (
                 <button
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); prevImage(); }}
-                  className={`hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 z-30 items-center justify-center w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm border border-[#C19A6B]/20 shadow-md transition-all duration-500 hover:scale-110 hover:bg-[#154734] hover:border-[#154734] text-[#154734] hover:text-[#C19A6B] active:scale-90 ${
+                  className={`hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 z-30 items-center justify-center w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm border border-[color:var(--theme-accent)]/20 shadow-md transition-all duration-500 hover:scale-110 hover:bg-[color:var(--theme-primary)] hover:border-[color:var(--theme-primary)] text-[color:var(--theme-primary)] hover:text-[color:var(--theme-accent)] active:scale-90 ${
                     isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"
                   }`}
                   aria-label="Imagen anterior"
@@ -260,7 +260,7 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
               {canGoNext && (
                 <button
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); nextImage(); }}
-                  className={`hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 z-30 items-center justify-center w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm border border-[#C19A6B]/20 shadow-md transition-all duration-500 hover:scale-110 hover:bg-[#154734] hover:border-[#154734] text-[#154734] hover:text-[#C19A6B] active:scale-90 ${
+                  className={`hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 z-30 items-center justify-center w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm border border-[color:var(--theme-accent)]/20 shadow-md transition-all duration-500 hover:scale-110 hover:bg-[color:var(--theme-primary)] hover:border-[color:var(--theme-primary)] text-[color:var(--theme-primary)] hover:text-[color:var(--theme-accent)] active:scale-90 ${
                     isHovered ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
                   }`}
                   aria-label="Imagen siguiente"
@@ -279,11 +279,11 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
         </div>
 
         <div className="flex flex-col justify-center gap-2 py-2 flex-1">
-          <h3 className={`text-sm sm:text-base font-bold uppercase tracking-widest transition-colors ${isHovered ? "text-[#C19A6B]" : "text-[#154734]"}`}>
+          <h3 className={`text-sm sm:text-base font-bold uppercase tracking-widest transition-colors ${isHovered ? "text-[color:var(--theme-accent)]" : "text-[color:var(--theme-primary)]"}`}>
             {item.name}
           </h3>
           <div className="flex items-center gap-3 mb-1">
-            <span className="font-medium text-[#154734] text-sm">
+            <span className="font-medium text-[color:var(--theme-primary)] text-sm">
               {`$${item.price.toLocaleString("es-CO")}`}
             </span>
             {item.oldPrice && (
@@ -302,7 +302,7 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
   return (
     <Link
       href={productHref}
-      className="cursor-pointer flex flex-col h-full bg-white p-2 sm:p-3 md:p-4 rounded-3xl border border-[#C19A6B]/20 hover:border-[#C19A6B]/60 shadow-[0_4px_15px_-5px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_30px_-5px_rgba(193,154,107,0.15)] transition-all duration-500 group overflow-hidden"
+      className="cursor-pointer flex flex-col h-full bg-white p-2 sm:p-3 md:p-4 rounded-3xl border border-[color:var(--theme-accent)]/20 hover:border-[color:var(--theme-accent)]/60 shadow-[0_4px_15px_-5px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_30px_-5px_rgba(193,154,107,0.15)] transition-all duration-500 group overflow-hidden"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -408,7 +408,7 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
             {canGoPrev && (
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); prevImage(); }}
-                className={`hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 z-30 items-center justify-center w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm border border-[#C19A6B]/20 shadow-[0_5px_15px_-3px_rgba(21,71,52,0.15)] transition-all duration-500 hover:scale-110 hover:bg-[#154734] hover:border-[#154734] text-[#154734] hover:text-[#C19A6B] active:scale-90 ${
+                className={`hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 z-30 items-center justify-center w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm border border-[color:var(--theme-accent)]/20 shadow-[0_5px_15px_-3px_rgba(21,71,52,0.15)] transition-all duration-500 hover:scale-110 hover:bg-[color:var(--theme-primary)] hover:border-[color:var(--theme-primary)] text-[color:var(--theme-primary)] hover:text-[color:var(--theme-accent)] active:scale-90 ${
                   isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"
                 }`}
                 aria-label="Imagen anterior"
@@ -419,7 +419,7 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
             {canGoNext && (
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); nextImage(); }}
-                className={`hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 z-30 items-center justify-center w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm border border-[#C19A6B]/20 shadow-[0_5px_15px_-3px_rgba(21,71,52,0.15)] transition-all duration-500 hover:scale-110 hover:bg-[#154734] hover:border-[#154734] text-[#154734] hover:text-[#C19A6B] active:scale-90 ${
+                className={`hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 z-30 items-center justify-center w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm border border-[color:var(--theme-accent)]/20 shadow-[0_5px_15px_-3px_rgba(21,71,52,0.15)] transition-all duration-500 hover:scale-110 hover:bg-[color:var(--theme-primary)] hover:border-[color:var(--theme-primary)] text-[color:var(--theme-primary)] hover:text-[color:var(--theme-accent)] active:scale-90 ${
                   isHovered ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
                 }`}
                 aria-label="Imagen siguiente"
@@ -432,7 +432,7 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
                 <button
                   key={i}
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCurrentIndex(i); }}
-                  className={`h-1.5 rounded-full transition-all duration-300 shadow-sm ${i === currentIndex ? "bg-[#C19A6B] w-4" : "bg-white/80 w-1.5 hover:bg-white"}`}
+                  className={`h-1.5 rounded-full transition-all duration-300 shadow-sm ${i === currentIndex ? "bg-[color:var(--theme-accent)] w-4" : "bg-white/80 w-1.5 hover:bg-white"}`}
                   aria-label={`Ir a imagen ${i + 1}`}
                 />
               ))}
@@ -448,11 +448,11 @@ const ProductCard = ({ item, viewMode = "grid", index = 99 }: ProductCardProps) 
       </div>
 
       <div className="px-1 flex flex-col flex-1 items-start gap-1 sm:gap-2 min-w-0">
-        <h3 className={`text-xs sm:text-sm font-bold uppercase tracking-widest transition-colors w-full truncate leading-tight ${isHovered ? "text-[#C19A6B]" : "text-[#154734]"}`}>
+        <h3 className={`text-xs sm:text-sm font-bold uppercase tracking-widest transition-colors w-full truncate leading-tight ${isHovered ? "text-[color:var(--theme-accent)]" : "text-[color:var(--theme-primary)]"}`}>
           {item.name}
         </h3>
         <div className="flex flex-row items-center gap-2 sm:gap-3 text-sm mb-0.5 flex-wrap">
-          <span className="font-medium text-[#154734] text-sm">
+          <span className="font-medium text-[color:var(--theme-primary)] text-sm">
             {`$${item.price.toLocaleString("es-CO")}`}
           </span>
           {item.oldPrice && (

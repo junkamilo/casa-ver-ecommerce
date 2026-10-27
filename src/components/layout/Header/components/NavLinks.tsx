@@ -12,15 +12,15 @@ export default function NavLinks({ isCategoriesActive, onCategoriesEnter }: NavL
       <div className="relative group flex flex-col items-center gap-0.5 py-1">
         <Link
           href="/"
-          className="relative text-xs font-bold tracking-[0.18em] text-foreground/70 group-hover:text-[#154734] transition-all duration-300 group-hover:-translate-y-px"
+          className="relative text-xs font-bold tracking-[0.18em] text-foreground/70 group-hover:text-[color:var(--theme-primary)] transition-all duration-300 group-hover:-translate-y-px"
         >
           INICIO
         </Link>
 
         {/* Underline que crece desde el centro hacia afuera */}
         <span className="relative h-px w-full overflow-hidden flex">
-          <span className="absolute right-1/2 top-0 bottom-0 w-0 group-hover:w-1/2 bg-linear-to-l from-[#C19A6B] to-[#C19A6B]/20 transition-all duration-350 ease-out" />
-          <span className="absolute left-1/2 top-0 bottom-0 w-0 group-hover:w-1/2 bg-linear-to-r from-[#C19A6B] to-[#C19A6B]/20 transition-all duration-350 ease-out" />
+          <span className="absolute right-1/2 top-0 bottom-0 w-0 group-hover:w-1/2 bg-linear-to-l from-[color:var(--theme-accent)] to-[color:var(--theme-accent)]/20 transition-all duration-350 ease-out" />
+          <span className="absolute left-1/2 top-0 bottom-0 w-0 group-hover:w-1/2 bg-linear-to-r from-[color:var(--theme-accent)] to-[color:var(--theme-accent)]/20 transition-all duration-350 ease-out" />
         </span>
       </div>
 
@@ -30,15 +30,15 @@ export default function NavLinks({ isCategoriesActive, onCategoriesEnter }: NavL
       <div className="relative group flex flex-col items-center gap-0.5 py-1">
         <Link
           href="/tienda"
-          className="relative text-xs font-bold tracking-[0.18em] text-foreground/70 group-hover:text-[#154734] transition-all duration-300 group-hover:-translate-y-px"
+          className="relative text-xs font-bold tracking-[0.18em] text-foreground/70 group-hover:text-[color:var(--theme-primary)] transition-all duration-300 group-hover:-translate-y-px"
         >
           TIENDA
         </Link>
 
         {/* Underline desde el centro hacia afuera */}
         <span className="relative h-px w-full overflow-hidden flex">
-          <span className="absolute right-1/2 top-0 bottom-0 w-0 group-hover:w-1/2 bg-linear-to-l from-[#C19A6B] to-[#C19A6B]/20 transition-all duration-350 ease-out" />
-          <span className="absolute left-1/2 top-0 bottom-0 w-0 group-hover:w-1/2 bg-linear-to-r from-[#C19A6B] to-[#C19A6B]/20 transition-all duration-350 ease-out" />
+          <span className="absolute right-1/2 top-0 bottom-0 w-0 group-hover:w-1/2 bg-linear-to-l from-[color:var(--theme-accent)] to-[color:var(--theme-accent)]/20 transition-all duration-350 ease-out" />
+          <span className="absolute left-1/2 top-0 bottom-0 w-0 group-hover:w-1/2 bg-linear-to-r from-[color:var(--theme-accent)] to-[color:var(--theme-accent)]/20 transition-all duration-350 ease-out" />
         </span>
       </div>
 
@@ -56,7 +56,7 @@ export default function NavLinks({ isCategoriesActive, onCategoriesEnter }: NavL
           className={`relative text-xs font-bold tracking-[0.18em] transition-all duration-300 py-2 ${
             isCategoriesActive
               ? `${TEXT_BRAND} -translate-y-px`
-              : "text-foreground/70 hover:text-[#154734] hover:-translate-y-px"
+              : "text-foreground/70 hover:text-[color:var(--theme-primary)] hover:-translate-y-px"
           }`}
         >
           CATEGORÍAS
@@ -65,12 +65,12 @@ export default function NavLinks({ isCategoriesActive, onCategoriesEnter }: NavL
         {/* Underline: crece desde el centro cuando activo */}
         <span className="relative h-px w-full overflow-hidden flex">
           <span
-            className={`absolute right-1/2 top-0 bottom-0 bg-linear-to-l from-[#C19A6B] to-[#C19A6B]/20 transition-all duration-350 ease-out ${
+            className={`absolute right-1/2 top-0 bottom-0 bg-linear-to-l from-[color:var(--theme-accent)] to-[color:var(--theme-accent)]/20 transition-all duration-350 ease-out ${
               isCategoriesActive ? "w-1/2" : "w-0 group-hover:w-1/2"
             }`}
           />
           <span
-            className={`absolute left-1/2 top-0 bottom-0 bg-linear-to-r from-[#C19A6B] to-[#C19A6B]/20 transition-all duration-350 ease-out ${
+            className={`absolute left-1/2 top-0 bottom-0 bg-linear-to-r from-[color:var(--theme-accent)] to-[color:var(--theme-accent)]/20 transition-all duration-350 ease-out ${
               isCategoriesActive ? "w-1/2" : "w-0 group-hover:w-1/2"
             }`}
           />

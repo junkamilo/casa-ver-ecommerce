@@ -17,7 +17,7 @@ export default function ColorSelector({ colors, selected, onSelect }: Props) {
           Tono Seleccionado
         </span>
         <span
-          className="text-base sm:text-lg text-[#154734] italic capitalize transition-all duration-300"
+          className="text-base sm:text-lg text-[color:var(--theme-primary)] italic capitalize transition-all duration-300"
           style={{ fontFamily: "Georgia, serif" }}
         >
           {selected
@@ -41,13 +41,13 @@ export default function ColorSelector({ colors, selected, onSelect }: Props) {
               aria-label={`${isOOS ? "Agotado — " : ""}Seleccionar color ${color.name}`}
               aria-pressed={isSelected}
               title={isOOS ? `${color.name} — Agotado` : color.name}
-              className="relative flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-[#C19A6B] focus-visible:ring-offset-2 rounded-full group"
+              className="relative flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--theme-accent)] focus-visible:ring-offset-2 rounded-full group"
             >
               {/* Anillo de selección */}
               <span
                 className={`absolute inset-0 rounded-full border transition-all duration-500 ease-out ${
                   isSelected && !isOOS
-                    ? "border-[#C19A6B] scale-[1.35] opacity-100"
+                    ? "border-[color:var(--theme-accent)] scale-[1.35] opacity-100"
                     : isSelected && isOOS
                     ? "border-gray-400 scale-[1.35] opacity-100"
                     : "border-transparent scale-100 opacity-0 group-hover:scale-[1.2] group-hover:border-gray-300 group-hover:opacity-100"

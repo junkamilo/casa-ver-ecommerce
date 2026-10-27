@@ -64,7 +64,7 @@ export function OrdersSection() {
           {/* Título + contador */}
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <Package className="w-5 h-5 text-[#154734]" />
+              <Package className="w-5 h-5 text-[color:var(--theme-primary)]" />
               Mis Pedidos
             </h2>
             {!error && !isLoading && (
@@ -79,7 +79,7 @@ export function OrdersSection() {
           {!error && !isLoading && stats.total > 0 && (
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
               <div className="flex flex-col items-center justify-center gap-0.5 p-2 sm:p-3 bg-gray-50 rounded-xl border border-gray-100">
-                <ShoppingBag className="w-4 h-4 text-[#154734]" />
+                <ShoppingBag className="w-4 h-4 text-[color:var(--theme-primary)]" />
                 <span className="text-base font-bold text-gray-900">{stats.total}</span>
                 <span className="text-[10px] text-gray-500 text-center leading-tight">Pedidos</span>
               </div>
@@ -89,7 +89,7 @@ export function OrdersSection() {
                 <span className="text-[10px] text-gray-500 text-center leading-tight">Entregados</span>
               </div>
               <div className="flex flex-col items-center justify-center gap-0.5 p-2 sm:p-3 bg-gray-50 rounded-xl border border-gray-100">
-                <TrendingUp className="w-4 h-4 text-[#C19A6B]" />
+                <TrendingUp className="w-4 h-4 text-[color:var(--theme-accent)]" />
                 <span className="text-[11px] sm:text-sm font-bold text-gray-900 text-center leading-tight">
                   {formatOrderPrice(stats.totalSpent)}
                 </span>
@@ -118,7 +118,7 @@ export function OrdersSection() {
                   value={searchQuery}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Buscar por número de pedido..."
-                  className="w-full pl-8 pr-8 py-2 text-xs rounded-lg border border-gray-200 focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10 outline-none bg-gray-50 transition-all"
+                  className="w-full pl-8 pr-8 py-2 text-xs rounded-lg border border-gray-200 focus:border-[color:var(--theme-accent)] focus:ring-4 focus:ring-[color:var(--theme-accent)]/10 outline-none bg-gray-50 transition-all"
                 />
                 {hasSearch && (
                   <button
@@ -137,7 +137,7 @@ export function OrdersSection() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortBy)}
-                  className="pl-7 pr-3 py-2 text-xs rounded-lg border border-gray-200 bg-gray-50 focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10 outline-none appearance-none cursor-pointer transition-all text-gray-600"
+                  className="pl-7 pr-3 py-2 text-xs rounded-lg border border-gray-200 bg-gray-50 focus:border-[color:var(--theme-accent)] focus:ring-4 focus:ring-[color:var(--theme-accent)]/10 outline-none appearance-none cursor-pointer transition-all text-gray-600"
                   aria-label="Ordenar pedidos"
                 >
                   {SORT_OPTIONS.map((opt) => (
@@ -189,7 +189,7 @@ export function OrdersSection() {
             <button
               onClick={() => setPage(currentPage - 1)}
               disabled={currentPage === 1}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:border-[#154734]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:border-[color:var(--theme-primary)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
               Anterior
@@ -202,7 +202,7 @@ export function OrdersSection() {
                   onClick={() => setPage(page)}
                   className={`w-7 h-7 rounded-lg text-xs font-medium transition-all ${
                     page === currentPage
-                      ? "bg-[#154734] text-white"
+                      ? "bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)]"
                       : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
@@ -214,7 +214,7 @@ export function OrdersSection() {
             <button
               onClick={() => setPage(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:border-[#154734]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:border-[color:var(--theme-primary)]/50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               Siguiente
               <ChevronRight className="w-3.5 h-3.5" />

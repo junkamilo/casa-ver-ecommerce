@@ -41,7 +41,7 @@ function PerfilContent() {
   if (status === "loading" || (needsProfileData && loading)) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="w-10 h-10 animate-spin text-[#154734]" />
+        <Loader2 className="w-10 h-10 animate-spin text-[color:var(--theme-primary)]" />
       </div>
     );
   }
@@ -56,7 +56,7 @@ function PerfilContent() {
           {fetchError && <p className="text-gray-500 text-sm mt-1">{fetchError}</p>}
           <button
             onClick={() => window.location.reload()}
-            className="mt-5 px-5 py-2.5 bg-[#154734] text-white text-sm font-medium rounded-lg hover:bg-[#1a5c43] active:scale-95 transition-all"
+            className="mt-5 px-5 py-2.5 bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] text-sm font-medium rounded-lg hover:bg-[color:color-mix(in_srgb,var(--theme-primary)_88%,white)] active:scale-95 transition-all"
           >
             Reintentar
           </button>
@@ -152,7 +152,7 @@ export default function PerfilUsuario() {
     <Suspense
       fallback={
         <div className="h-screen flex items-center justify-center bg-gray-50">
-          <Loader2 className="w-10 h-10 animate-spin text-[#154734]" />
+          <Loader2 className="w-10 h-10 animate-spin text-[color:var(--theme-primary)]" />
         </div>
       }
     >

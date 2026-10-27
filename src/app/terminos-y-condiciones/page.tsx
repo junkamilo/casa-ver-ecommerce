@@ -109,22 +109,22 @@ export default function TerminosYCondicionesPage() {
 
         <main className="flex-1 w-full">
           {/* ── Hero ── */}
-          <section className="relative bg-[#154734] text-white overflow-hidden">
+          <section className="relative bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] overflow-hidden">
             <div
               className="absolute inset-0 opacity-[0.04] pointer-events-none"
               style={{
                 backgroundImage:
-                  "radial-gradient(#C19A6B 1.5px, transparent 1.5px)",
+                  "radial-gradient(var(--theme-accent) 1.5px, transparent 1.5px)",
                 backgroundSize: "28px 28px",
               }}
             />
-            <div className="absolute bottom-0 left-0 w-full h-px bg-linear-to-r from-transparent via-[#C19A6B]/50 to-transparent" />
+            <div className="absolute bottom-0 left-0 w-full h-px bg-linear-to-r from-transparent via-[color:var(--theme-accent)]/50 to-transparent" />
 
             <div className="relative max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-16 sm:py-20 md:py-24 text-center">
               <div className="absolute top-6 left-4 sm:left-6 md:left-8">
                 <BackButton className="text-white/70 hover:text-white" />
               </div>
-              <p className="text-[10px] font-black tracking-[0.35em] text-[#C19A6B]/70 uppercase mb-4">
+              <p className="text-[10px] font-black tracking-[0.35em] text-[color:var(--theme-accent)]/70 uppercase mb-4">
                 Casa Verde
               </p>
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4 sm:mb-6">
@@ -145,25 +145,25 @@ export default function TerminosYCondicionesPage() {
                   {/* Section header */}
                   <div className="flex items-center gap-4">
                     <span
-                      className="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#154734] text-white text-sm font-bold flex items-center justify-center"
+                      className="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] text-sm font-bold flex items-center justify-center"
                       aria-hidden="true"
                     >
                       {section.number}
                     </span>
-                    <h2 className="text-base sm:text-lg font-bold tracking-[0.15em] text-[#154734] uppercase">
+                    <h2 className="text-base sm:text-lg font-bold tracking-[0.15em] text-[color:var(--theme-primary)] uppercase">
                       {section.title}
                     </h2>
                   </div>
 
                   {/* Divider */}
-                  <div className="h-px bg-linear-to-r from-[#C19A6B]/40 via-[#C19A6B]/10 to-transparent ml-13" />
+                  <div className="h-px bg-linear-to-r from-[color:var(--theme-accent)]/40 via-[color:var(--theme-accent)]/10 to-transparent ml-13" />
 
                   {/* Items */}
                   <ul className="flex flex-col gap-3 ml-13">
                     {section.items.map((item, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <span
-                          className="shrink-0 mt-2 w-1.5 h-1.5 rotate-45 bg-[#C19A6B]"
+                          className="shrink-0 mt-2 w-1.5 h-1.5 rotate-45 bg-[color:var(--theme-accent)]"
                           aria-hidden="true"
                         />
                         <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
@@ -177,7 +177,7 @@ export default function TerminosYCondicionesPage() {
             </div>
 
             {/* ── Commitment note ── */}
-            <div className="mt-14 sm:mt-16 border border-[#154734]/15 rounded-2xl bg-[#154734]/3 p-6 sm:p-8 text-center flex flex-col gap-3">
+            <div className="mt-14 sm:mt-16 border border-[color:var(--theme-primary)]/15 rounded-2xl bg-[color:var(--theme-primary)]/3 p-6 sm:p-8 text-center flex flex-col gap-3">
               <p className="text-gray-700 text-sm sm:text-base leading-relaxed">
                 Nuestro compromiso siempre será cumplir con los tiempos de
                 despacho, acompañarte en el proceso y ayudarte con cualquier
@@ -187,7 +187,7 @@ export default function TerminosYCondicionesPage() {
                 href="https://wa.me/573022457432"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 text-[#154734] font-semibold text-sm sm:text-base hover:text-[#C19A6B] transition-colors duration-200"
+                className="inline-flex items-center justify-center gap-2 text-[color:var(--theme-primary)] font-semibold text-sm sm:text-base hover:text-[color:var(--theme-accent)] transition-colors duration-200"
               >
                 <span>WhatsApp:</span>
                 <span className="font-bold tracking-wide">302 245 74 32</span>

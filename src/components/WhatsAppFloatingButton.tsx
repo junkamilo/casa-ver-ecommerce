@@ -81,7 +81,7 @@ export default function WhatsAppFloatingButton() {
             <div className="flex items-end gap-2 mb-4">
               <div className="max-w-[85%] bg-white rounded-2xl rounded-tl-sm px-3 py-2 shadow-sm">
                 <p className="text-gray-800 text-sm leading-relaxed">
-                  ¡Hola! 👋 Bienvenido/a a <span className="font-semibold text-[#154734]">Casa Verde</span>. ¿En qué podemos ayudarte hoy?
+                  ¡Hola! 👋 Bienvenido/a a <span className="font-semibold text-[color:var(--theme-primary)]">Casa Verde</span>. ¿En qué podemos ayudarte hoy?
                 </p>
                 <span className="text-[10px] text-gray-400 block text-right mt-1">Ahora</span>
               </div>

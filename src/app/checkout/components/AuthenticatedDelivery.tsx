@@ -111,7 +111,7 @@ export function AuthenticatedDelivery({ onAutoSaveChange }: Props) {
           className={`${SECTION_TITLE_CLS} mb-5 sm:mb-6`}
           style={{ fontFamily: "Georgia, serif" }}
         >
-          <MapPin className="w-4 sm:w-5 h-4 sm:h-5 text-[#C19A6B] shrink-0" />
+          <MapPin className="w-4 sm:w-5 h-4 sm:h-5 text-[color:var(--theme-accent)] shrink-0" />
           Dirección de entrega
         </h2>
         <p className="-mt-3 mb-4 text-[11px] sm:text-xs text-amber-700">
@@ -138,7 +138,7 @@ export function AuthenticatedDelivery({ onAutoSaveChange }: Props) {
           className={`${SECTION_TITLE_CLS} mb-5 sm:mb-6`}
           style={{ fontFamily: "Georgia, serif" }}
         >
-          <MapPin className="w-4 sm:w-5 h-4 sm:h-5 text-[#C19A6B] shrink-0" />
+          <MapPin className="w-4 sm:w-5 h-4 sm:h-5 text-[color:var(--theme-accent)] shrink-0" />
           Dirección de entrega
         </h2>
         <p className="-mt-3 mb-4 text-[11px] sm:text-xs text-amber-700">
@@ -156,14 +156,14 @@ export function AuthenticatedDelivery({ onAutoSaveChange }: Props) {
         />
 
         {selectedAddr && (
-          <div className="mb-5 px-4 py-3 bg-[#154734]/4 border border-[#154734]/10 rounded-xl">
+          <div className="mb-5 px-4 py-3 bg-[color:var(--theme-primary)]/4 border border-[color:var(--theme-primary)]/10 rounded-xl">
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              <span className="text-sm font-semibold text-[#154734]">
+              <span className="text-sm font-semibold text-[color:var(--theme-primary)]">
                 {selectedAddr.fullName}
               </span>
               {selectedAddr.isDefault && (
-                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-widest text-[#154734] bg-[#154734]/10 px-1.5 py-0.5 rounded-full">
-                  <Star className="w-2 h-2 fill-[#154734]" />
+                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-widest text-[color:var(--theme-primary)] bg-[color:var(--theme-primary)]/10 px-1.5 py-0.5 rounded-full">
+                  <Star className="w-2 h-2 fill-[color:var(--theme-primary)]" />
                   Predeterminada
                 </span>
               )}
@@ -182,7 +182,7 @@ export function AuthenticatedDelivery({ onAutoSaveChange }: Props) {
         <button
           type="button"
           onClick={handleSwitchToManual}
-          className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#C19A6B] hover:text-[#154734] transition-colors py-1 active:scale-95"
+          className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[color:var(--theme-accent)] hover:text-[color:var(--theme-primary)] transition-colors py-1 active:scale-95"
         >
           <Plus className="w-3.5 h-3.5" />
           Usar otra dirección
@@ -205,14 +205,14 @@ export function AuthenticatedDelivery({ onAutoSaveChange }: Props) {
           className={SECTION_TITLE_CLS}
           style={{ fontFamily: "Georgia, serif" }}
         >
-          <MapPin className="w-4 sm:w-5 h-4 sm:h-5 text-[#C19A6B] shrink-0" />
+          <MapPin className="w-4 sm:w-5 h-4 sm:h-5 text-[color:var(--theme-accent)] shrink-0" />
           Dirección de entrega
         </h2>
         {hasExistingAddresses && (
           <button
             type="button"
             onClick={handleBackToCards}
-            className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#C19A6B] hover:text-[#154734] transition-colors active:scale-95 p-1"
+            className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[color:var(--theme-accent)] hover:text-[color:var(--theme-primary)] transition-colors active:scale-95 p-1"
           >
             <ArrowLeft className="w-3 h-3" />
             Mis direcciones
@@ -235,12 +235,12 @@ export function AuthenticatedDelivery({ onAutoSaveChange }: Props) {
               checked={autoSave}
               onChange={(e) => handleAutoSaveToggle(e.target.checked)}
             />
-            <div className="w-9 h-5 bg-gray-200 peer-checked:bg-[#154734] rounded-full transition-colors duration-200" />
+            <div className="w-9 h-5 bg-gray-200 peer-checked:bg-[color:var(--theme-primary)] rounded-full transition-colors duration-200" />
             <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4" />
           </div>
           <div>
-            <span className="text-sm font-medium text-gray-700 group-hover:text-[#154734] transition-colors flex items-center gap-1.5">
-              <BookMarked className="w-3.5 h-3.5 text-[#C19A6B] shrink-0" />
+            <span className="text-sm font-medium text-gray-700 group-hover:text-[color:var(--theme-primary)] transition-colors flex items-center gap-1.5">
+              <BookMarked className="w-3.5 h-3.5 text-[color:var(--theme-accent)] shrink-0" />
               Guardar dirección en mi cuenta
             </span>
             <p className="text-xs text-gray-400 mt-0.5">

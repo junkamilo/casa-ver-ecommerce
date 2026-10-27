@@ -8,7 +8,7 @@ export default function SetComponents({ components }: { components: SetComponent
   if (components.length === 0) return null;
   return (
     <section className="mt-6 space-y-3">
-      <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#154734]">Este conjunto incluye</p>
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-[color:var(--theme-primary)]">Este conjunto incluye</p>
       <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {components.map((piece) => {
           const content = (
@@ -29,7 +29,7 @@ export default function SetComponents({ components }: { components: SetComponent
               {piece.slug ? (
                 <Link
                   href={`/product/${piece.slug}`}
-                  className="flex items-center gap-3 rounded-xl border border-gray-100 p-2 hover:border-[#C19A6B]/50 transition-colors"
+                  className="flex items-center gap-3 rounded-xl border border-gray-100 p-2 hover:border-[color:var(--theme-accent)]/50 transition-colors"
                 >
                   {content}
                 </Link>

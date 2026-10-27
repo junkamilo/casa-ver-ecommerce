@@ -23,7 +23,7 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
       onMouseLeave={onLeave}
     >
       {/* ── Línea dorada superior — efecto que respira ── */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-[#C19A6B]/70 to-transparent animate-border-shimmer" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-[color:var(--theme-accent)]/70 to-transparent animate-border-shimmer" />
 
       {/* ── Barrido de luz dorada — firma de lujo ── */}
       <div
@@ -41,7 +41,7 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
         className="absolute inset-0 pointer-events-none opacity-[0.04]"
         style={{
           backgroundImage:
-            "radial-gradient(ellipse 70% 100% at 50% 0%, #154734 0%, transparent 80%)",
+            "radial-gradient(ellipse 70% 100% at 50% 0%, var(--theme-primary) 0%, transparent 80%)",
         }}
         aria-hidden="true"
       />
@@ -51,10 +51,10 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
         {categories.length === 0 && (
           <div className="flex flex-col items-center justify-center py-6 gap-2">
             <span
-              className="w-5 h-5 rounded-full border-2 border-[#C19A6B]/40 border-t-[#C19A6B] animate-spin"
+              className="w-5 h-5 rounded-full border-2 border-[color:var(--theme-accent)]/40 border-t-[color:var(--theme-accent)] animate-spin"
               aria-hidden="true"
             />
-            <p className="italic text-sm text-[#C19A6B]/70">
+            <p className="italic text-sm text-[color:var(--theme-accent)]/70">
               Colecciones en preparación.
             </p>
           </div>
@@ -83,19 +83,19 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
               >
                 {/* ── Título de columna (Categoría Principal) ── */}
                 <div>
-                  <div className="h-px w-8 bg-linear-to-r from-[#C19A6B] to-[#C19A6B]/20 mb-3" />
+                  <div className="h-px w-8 bg-linear-to-r from-[color:var(--theme-accent)] to-[color:var(--theme-accent)]/20 mb-3" />
                   <Link
                     href={`/collections/${category.slug}`}
                     className={`relative text-xs font-bold tracking-[0.2em] uppercase transition-colors duration-200 ${
                       isCategoryActive
-                        ? "text-[#154734]"
-                        : `${TEXT_BRAND} hover:text-[#C19A6B]`
+                        ? "text-[color:var(--theme-primary)]"
+                        : `${TEXT_BRAND} hover:text-[color:var(--theme-accent)]`
                     }`}
                     onClick={onClose}
                   >
                     {category.name.toUpperCase()}
                     {isCategoryActive && (
-                      <span className="absolute -bottom-1 left-0 right-0 h-[1.5px] bg-[#C19A6B] rounded-full" />
+                      <span className="absolute -bottom-1 left-0 right-0 h-[1.5px] bg-[color:var(--theme-accent)] rounded-full" />
                     )}
                   </Link>
                 </div>
@@ -115,14 +115,14 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
                           href={gt.href}
                           className={`relative group flex items-center text-sm font-normal transition-colors duration-300 pl-3 min-w-0 ${
                             isGarmentActive
-                              ? "text-[#C19A6B]"
-                              : "text-gray-400 hover:text-[#C19A6B]"
+                              ? "text-[color:var(--theme-accent)]"
+                              : "text-gray-400 hover:text-[color:var(--theme-accent)]"
                           }`}
                           onClick={onClose}
                         >
                           {/* Barra izquierda dorada: permanente si activo, aparece en hover */}
                           <span
-                            className={`absolute left-0 top-0 bottom-0 w-[1.5px] rounded-full bg-[#C19A6B] origin-top transition-all duration-200 ${
+                            className={`absolute left-0 top-0 bottom-0 w-[1.5px] rounded-full bg-[color:var(--theme-accent)] origin-top transition-all duration-200 ${
                               isGarmentActive
                                 ? "scale-y-100"
                                 : "scale-y-0 group-hover:scale-y-100"
@@ -132,7 +132,7 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
                           <span
                             className={`transition-transform duration-200 leading-snug truncate ${
                               isGarmentActive
-                                ? "translate-x-0.5 font-medium underline underline-offset-2 decoration-[#C19A6B]/60 decoration-1"
+                                ? "translate-x-0.5 font-medium underline underline-offset-2 decoration-[color:var(--theme-accent)]/60 decoration-1"
                                 : "group-hover:translate-x-0.5"
                             }`}
                           >
@@ -148,7 +148,7 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
                 {!hasGarmentTypes && (
                   <Link
                     href={`/collections/${category.slug}`}
-                    className="text-sm text-gray-400 hover:text-[#C19A6B] pl-3 transition-colors duration-200"
+                    className="text-sm text-gray-400 hover:text-[color:var(--theme-accent)] pl-3 transition-colors duration-200"
                     onClick={onClose}
                   >
                     Ver todo
@@ -161,7 +161,7 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
       </div>
 
       {/* ── Línea dorada inferior sutil ── */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-[#C19A6B]/20 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-[color:var(--theme-accent)]/20 to-transparent" />
     </div>
   );
 }

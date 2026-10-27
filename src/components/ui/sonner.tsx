@@ -48,7 +48,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           closeButton:
             "!bg-white/80 !border-black/5 !text-gray-500 hover:!bg-white",
           actionButton:
-            "!bg-[#154734] !text-white !rounded-lg !text-xs !font-semibold",
+            "!bg-[color:var(--theme-primary)] !text-[color:var(--theme-primary-fg)] !rounded-lg !text-xs !font-semibold",
           cancelButton:
             "!bg-white !text-gray-700 !border !border-gray-200 !rounded-lg !text-xs !font-semibold",
         },

@@ -31,7 +31,7 @@ export function MobileFilterDrawer({
     <div className="fixed inset-0 z-50 lg:hidden flex">
       {/* Overlay */}
       <div
-        className="absolute inset-0 bg-[#154734]/20 backdrop-blur-sm transition-opacity duration-300"
+        className="absolute inset-0 bg-[color:var(--theme-primary)]/20 backdrop-blur-sm transition-opacity duration-300"
         onClick={onClose}
         onTouchEnd={onClose}
         style={{ touchAction: "manipulation" }}
@@ -43,8 +43,8 @@ export function MobileFilterDrawer({
         {/* Cabecera */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-[#FAFAFA]">
           <div className="flex items-center gap-3">
-            <SlidersHorizontal className="w-5 h-5 text-[#C19A6B]" />
-            <span className="text-base font-bold text-[#154734] uppercase tracking-widest">Filtrar</span>
+            <SlidersHorizontal className="w-5 h-5 text-[color:var(--theme-accent)]" />
+            <span className="text-base font-bold text-[color:var(--theme-primary)] uppercase tracking-widest">Filtrar</span>
           </div>
           <div className="flex items-center gap-3">
             {hasActiveFilters && (
@@ -57,7 +57,7 @@ export function MobileFilterDrawer({
             )}
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-[#154734] hover:bg-gray-100 rounded-full transition-colors duration-300"
+              className="p-2 text-gray-400 hover:text-[color:var(--theme-primary)] hover:bg-gray-100 rounded-full transition-colors duration-300"
             >
               <X className="w-5 h-5" />
             </button>
@@ -71,10 +71,10 @@ export function MobileFilterDrawer({
           <div className="border border-gray-100 rounded-2xl bg-[#FAFAFA] overflow-hidden">
             <button
               onClick={() => setIsPriceOpen(!isPriceOpen)}
-              className="flex items-center justify-between w-full p-4 text-sm font-bold text-[#154734] uppercase tracking-wider bg-white hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-between w-full p-4 text-sm font-bold text-[color:var(--theme-primary)] uppercase tracking-wider bg-white hover:bg-gray-50 transition-colors"
             >
               <span>Precio</span>
-              <ChevronDown className={`w-4 h-4 text-[#C19A6B] transition-transform duration-300 ${isPriceOpen ? "rotate-180" : ""}`} />
+              <ChevronDown className={`w-4 h-4 text-[color:var(--theme-accent)] transition-transform duration-300 ${isPriceOpen ? "rotate-180" : ""}`} />
             </button>
 
             <div className={`transition-all duration-300 overflow-hidden ${isPriceOpen ? "max-h-56 opacity-100" : "max-h-0 opacity-0"}`}>
@@ -82,32 +82,32 @@ export function MobileFilterDrawer({
                 <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-3">Rango de precio</p>
                 <div className="flex items-center gap-3 mb-3">
                   <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-[#C19A6B]">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-[color:var(--theme-accent)]">$</span>
                     <input
                       type="number"
                       value={minPrice}
                       onChange={(e) => onPriceChange("minPrice", e.target.value)}
                       placeholder="0"
                       min={0}
-                      className="w-full pl-7 pr-3 py-3 text-sm text-[#154734] font-medium bg-white border border-gray-200 rounded-xl focus:border-[#C19A6B] focus:ring-2 focus:ring-[#C19A6B]/20 outline-none transition-all"
+                      className="w-full pl-7 pr-3 py-3 text-sm text-[color:var(--theme-primary)] font-medium bg-white border border-gray-200 rounded-xl focus:border-[color:var(--theme-accent)] focus:ring-2 focus:ring-[color:var(--theme-accent)]/20 outline-none transition-all"
                     />
                   </div>
                   <span className="text-sm font-medium text-gray-400">a</span>
                   <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-[#C19A6B]">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-[color:var(--theme-accent)]">$</span>
                     <input
                       type="number"
                       value={maxPrice}
                       onChange={(e) => onPriceChange("maxPrice", e.target.value)}
                       placeholder={maxPriceDb > 0 ? String(maxPriceDb) : "0"}
                       min={0}
-                      className="w-full pl-7 pr-3 py-3 text-sm text-[#154734] font-medium bg-white border border-gray-200 rounded-xl focus:border-[#C19A6B] focus:ring-2 focus:ring-[#C19A6B]/20 outline-none transition-all"
+                      className="w-full pl-7 pr-3 py-3 text-sm text-[color:var(--theme-primary)] font-medium bg-white border border-gray-200 rounded-xl focus:border-[color:var(--theme-accent)] focus:ring-2 focus:ring-[color:var(--theme-accent)]/20 outline-none transition-all"
                     />
                   </div>
                 </div>
                 {maxPriceDb > 0 && (
                   <p className="text-[10px] text-gray-500 italic">
-                    El precio más alto es <strong className="text-[#154734]">${maxPriceDb.toLocaleString("es-CO")}</strong>
+                    El precio más alto es <strong className="text-[color:var(--theme-primary)]">${maxPriceDb.toLocaleString("es-CO")}</strong>
                   </p>
                 )}
               </div>
@@ -119,10 +119,10 @@ export function MobileFilterDrawer({
             <div className="border border-gray-100 rounded-2xl bg-[#FAFAFA] overflow-hidden">
               <button
                 onClick={() => setIsColorOpen(!isColorOpen)}
-                className="flex items-center justify-between w-full p-4 text-sm font-bold text-[#154734] uppercase tracking-wider bg-white hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-between w-full p-4 text-sm font-bold text-[color:var(--theme-primary)] uppercase tracking-wider bg-white hover:bg-gray-50 transition-colors"
               >
                 <span>Color</span>
-                <ChevronDown className={`w-4 h-4 text-[#C19A6B] transition-transform duration-300 ${isColorOpen ? "rotate-180" : ""}`} />
+                <ChevronDown className={`w-4 h-4 text-[color:var(--theme-accent)] transition-transform duration-300 ${isColorOpen ? "rotate-180" : ""}`} />
               </button>
 
               <div className={`transition-all duration-300 overflow-hidden ${isColorOpen ? "max-h-48 opacity-100" : "max-h-0 opacity-0"}`}>
@@ -137,7 +137,7 @@ export function MobileFilterDrawer({
                           title={color.name}
                           className={`w-9 h-9 rounded-full border-2 transition-all duration-200 shadow-sm hover:scale-110 active:scale-95 ${
                             isActive
-                              ? "border-[#154734] ring-2 ring-[#154734]/30 scale-110"
+                              ? "border-[color:var(--theme-primary)] ring-2 ring-[color:var(--theme-primary)]/30 scale-110"
                               : "border-white hover:border-gray-300"
                           }`}
                           style={{ backgroundColor: color.hexCode }}
@@ -148,7 +148,7 @@ export function MobileFilterDrawer({
                   {selectedColor && (
                     <p className="text-[10px] text-gray-500 mt-3 italic">
                       Color:{" "}
-                      <strong className="text-[#154734]">
+                      <strong className="text-[color:var(--theme-primary)]">
                         {availableColors.find((c) => c.hexCode === selectedColor)?.name ?? selectedColor}
                       </strong>
                     </p>
@@ -164,7 +164,7 @@ export function MobileFilterDrawer({
         <div className="p-6 border-t border-gray-100 bg-white">
           <button
             onClick={onClose}
-            className="w-full bg-[#154734] hover:bg-[#C19A6B] text-white text-xs font-bold uppercase tracking-[0.2em] py-4 rounded-xl shadow-[0_10px_20px_-10px_rgba(21,71,52,0.5)] transition-all duration-300 active:scale-[0.98]"
+            className="w-full bg-[color:var(--theme-primary)] hover:bg-[color:var(--theme-accent)] text-[color:var(--theme-primary-fg)] text-xs font-bold uppercase tracking-[0.2em] py-4 rounded-xl shadow-[0_10px_20px_-10px_rgba(21,71,52,0.5)] transition-all duration-300 active:scale-[0.98]"
           >
             Ver Resultados
           </button>

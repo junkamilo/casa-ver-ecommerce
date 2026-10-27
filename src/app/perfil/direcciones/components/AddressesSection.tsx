@@ -28,12 +28,12 @@ export function AddressesSection() {
       {/* Header */}
       <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-[#154734]/8">
-            <MapPin className="w-5 h-5 text-[#154734]" />
+          <div className="p-2 rounded-xl bg-[color:var(--theme-primary)]/8">
+            <MapPin className="w-5 h-5 text-[color:var(--theme-primary)]" />
           </div>
           <div>
             <h2
-              className="text-base font-semibold text-[#154734]"
+              className="text-base font-semibold text-[color:var(--theme-primary)]"
               style={{ fontFamily: "Georgia, serif" }}
             >
               Mis Direcciones
@@ -50,7 +50,7 @@ export function AddressesSection() {
           <button
             onClick={openCreate}
             disabled={submitting}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#154734] text-white text-xs font-semibold rounded-xl hover:bg-[#1a5c43] active:scale-95 transition-all duration-200 disabled:opacity-60 shrink-0"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] text-xs font-semibold rounded-xl hover:bg-[color:color-mix(in_srgb,var(--theme-primary)_88%,white)] active:scale-95 transition-all duration-200 disabled:opacity-60 shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Agregar</span>
@@ -70,7 +70,7 @@ export function AddressesSection() {
 
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-7 h-7 animate-spin text-[#154734]/40" />
+            <Loader2 className="w-7 h-7 animate-spin text-[color:var(--theme-primary)]/40" />
           </div>
         ) : addresses.length === 0 ? (
           <AddressEmptyState onAdd={openCreate} />

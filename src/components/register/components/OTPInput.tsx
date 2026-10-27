@@ -100,9 +100,9 @@ export default function OTPInput({ onComplete, disabled, hasError, onReset }: OT
             hasError
               ? "border-red-400 bg-red-50 text-red-700 animate-shake"
               : val
-              ? "border-[#154734] bg-[#154734]/5 text-[#154734]"
+              ? "border-[color:var(--theme-primary)] bg-[color:var(--theme-primary)]/5 text-[color:var(--theme-primary)]"
               : "border-gray-200 bg-white text-gray-800",
-            "focus:border-[#154734] focus:ring-2 focus:ring-[#154734]/20",
+            "focus:border-[color:var(--theme-primary)] focus:ring-2 focus:ring-[color:var(--theme-primary)]/20",
           ].join(" ")}
         />
       ))}

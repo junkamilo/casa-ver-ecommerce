@@ -23,13 +23,13 @@ export default function Breadcrumb({ items }: Props) {
             <Fragment key={`${item.label}-${index}`}>
               {/* Si es el último elemento o no tiene link, se muestra como texto activo */}
               {isLast || !item.href ? (
-                <span className="text-[#154734] font-bold shrink-0">
+                <span className="text-[color:var(--theme-primary)] font-bold shrink-0">
                   {item.label}
                 </span>
               ) : (
                 <Link
                   href={item.href}
-                  className="hover:text-[#C19A6B] transition-colors shrink-0"
+                  className="hover:text-[color:var(--theme-accent)] transition-colors shrink-0"
                 >
                   {item.label}
                 </Link>

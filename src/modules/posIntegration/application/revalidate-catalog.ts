@@ -4,6 +4,7 @@ import { POS_PRODUCTS_CACHE_TAG, posProductCacheTag } from "../infrastructure/po
 import { POS_REVIEWS_CACHE_TAG, posReviewsCacheTag } from "../infrastructure/pos-reviews.client";
 import { POS_POPUPS_CACHE_TAG, posPopupsCacheTag } from "../infrastructure/pos-popups.client";
 import { POS_HERO_CACHE_TAG } from "../infrastructure/pos-banners.client";
+import { POS_THEME_CACHE_TAG } from "../infrastructure/pos-theme.client";
 
 export const POS_CATEGORIES_CACHE_TAG = "pos-categories";
 export const POS_COLORS_CACHE_TAG = "pos-colors";
@@ -95,5 +96,15 @@ export function revalidatePosBanners() {
     revalidatePath("/");
   } catch (error) {
     console.warn("[POS sync] No se pudo revalidar banners:", error instanceof Error ? error.message : error);
+  }
+}
+
+/** Expira el tema visual activo de la tienda cuando el POS activa o actualiza un tema estacional. */
+export function revalidatePosTheme() {
+  try {
+    revalidateTag(POS_THEME_CACHE_TAG, { expire: 0 });
+    revalidatePath("/", "layout");
+  } catch (error) {
+    console.warn("[POS sync] No se pudo revalidar el tema activo:", error instanceof Error ? error.message : error);
   }
 }

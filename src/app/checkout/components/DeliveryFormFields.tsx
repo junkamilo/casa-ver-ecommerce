@@ -74,16 +74,16 @@ export function DeliveryFormFields() {
       <div className="relative">
         <select
           aria-label="País"
-          className="w-full px-5 py-4 bg-[#FAFAFA] border border-gray-200 rounded-xl appearance-none text-[#154734] font-medium outline-none focus:bg-white focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/15 transition-all duration-300 text-sm shadow-inner cursor-pointer pt-6"
+          className="w-full px-5 py-4 bg-[#FAFAFA] border border-gray-200 rounded-xl appearance-none text-[color:var(--theme-primary)] font-medium outline-none focus:bg-white focus:border-[color:var(--theme-accent)] focus:ring-4 focus:ring-[color:var(--theme-accent)]/15 transition-all duration-300 text-sm shadow-inner cursor-pointer pt-6"
           defaultValue="CO"
           disabled
         >
           <option value="CO">Colombia</option>
         </select>
-        <label className="absolute left-5 top-2 text-[10px] font-bold uppercase tracking-widest text-[#C19A6B] pointer-events-none">
+        <label className="absolute left-5 top-2 text-[10px] font-bold uppercase tracking-widest text-[color:var(--theme-accent)] pointer-events-none">
           País / Región
         </label>
-        <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#C19A6B] pointer-events-none" />
+        <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[color:var(--theme-accent)] pointer-events-none" />
       </div>
 
       {/* Nombre + Apellido */}

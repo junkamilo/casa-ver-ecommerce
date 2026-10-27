@@ -39,7 +39,7 @@ export default async function CheckoutPendingPage({ searchParams }: PendingPageP
         </div>
 
         <h1
-          className="text-3xl text-[#154734] mb-3"
+          className="text-3xl text-[color:var(--theme-primary)] mb-3"
           style={{ fontFamily: "Georgia, serif" }}
         >
           Pedido pendiente
@@ -47,8 +47,8 @@ export default async function CheckoutPendingPage({ searchParams }: PendingPageP
 
         {order && (
           <p className="text-gray-500 text-sm mb-6 leading-relaxed">
-            Gracias, <strong className="text-[#154734]">{order.shippingName}</strong>. Tu pedido{" "}
-            <strong className="text-[#154734]">{order.orderNumber}</strong> está esperando
+            Gracias, <strong className="text-[color:var(--theme-primary)]">{order.shippingName}</strong>. Tu pedido{" "}
+            <strong className="text-[color:var(--theme-primary)]">{order.orderNumber}</strong> está esperando
             confirmación de pago.
           </p>
         )}
@@ -72,7 +72,7 @@ export default async function CheckoutPendingPage({ searchParams }: PendingPageP
 
         <Link
           href="/"
-          className="w-full border border-gray-200 text-[#154734] text-sm font-bold uppercase tracking-[0.15em] py-4 rounded-xl hover:border-[#154734] transition-colors duration-300 flex items-center justify-center gap-2"
+          className="w-full border border-gray-200 text-[color:var(--theme-primary)] text-sm font-bold uppercase tracking-[0.15em] py-4 rounded-xl hover:border-[color:var(--theme-primary)] transition-colors duration-300 flex items-center justify-center gap-2"
         >
           Volver a la tienda
           <ArrowRight className="w-4 h-4" />

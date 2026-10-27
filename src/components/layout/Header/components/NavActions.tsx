@@ -25,13 +25,13 @@ export default function NavActions({
         aria-label="Buscar"
         style={{ touchAction: "manipulation" }}
       >
-        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#154734] hover:bg-[#103a2a] transition-colors">
+        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[color:var(--theme-primary)] hover:bg-[color:color-mix(in_srgb,var(--theme-primary)_80%,black)] transition-colors">
           <SearchIcon size={16} strokeWidth={1.5} className="text-white" />
         </span>
       </button>
 
       {/* ── Separador dorado ── */}
-      <div className="w-px h-5 bg-[#C19A6B]/15 mx-0.5" aria-hidden="true" />
+      <div className="w-px h-5 bg-[color:var(--theme-accent)]/15 mx-0.5" aria-hidden="true" />
 
       {/* ────────────────────────────────────────────────
           USUARIO — Identidad premium
@@ -47,7 +47,7 @@ export default function NavActions({
         >
           <span
             className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${
-              isUserMenuOpen ? "bg-[#103a2a]" : "bg-[#154734] hover:bg-[#103a2a]"
+              isUserMenuOpen ? "bg-[color:color-mix(in_srgb,var(--theme-primary)_80%,black)]" : "bg-[color:var(--theme-primary)] hover:bg-[color:color-mix(in_srgb,var(--theme-primary)_80%,black)]"
             }`}
           >
             <PerfilIcon size={16} strokeWidth={1.5} className="text-white" />
@@ -57,7 +57,7 @@ export default function NavActions({
       </div>
 
       {/* ── Separador dorado ── */}
-      <div className="w-px h-5 bg-[#C19A6B]/15 mx-0.5" aria-hidden="true" />
+      <div className="w-px h-5 bg-[color:var(--theme-accent)]/15 mx-0.5" aria-hidden="true" />
 
       {/* ────────────────────────────────────────────────
           CARRITO — La bolsa que invita a comprar
@@ -71,12 +71,12 @@ export default function NavActions({
         aria-label="Carrito de compras"
         style={{ touchAction: "manipulation" }}
       >
-        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#154734] hover:bg-[#103a2a] transition-colors">
+        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[color:var(--theme-primary)] hover:bg-[color:color-mix(in_srgb,var(--theme-primary)_80%,black)] transition-colors">
           <ShoppingCart size={16} strokeWidth={1.5} className="text-white" />
         </span>
         {cartCount > 0 && (
           <span
-            className="absolute top-0.5 right-0.5 flex items-center justify-center min-w-4 h-4 px-0.5 rounded-full bg-[#C19A6B] text-white text-[8px] font-black leading-none"
+            className="absolute top-0.5 right-0.5 flex items-center justify-center min-w-4 h-4 px-0.5 rounded-full bg-[color:var(--theme-accent)] text-[color:var(--theme-accent-fg)] text-[8px] font-black leading-none"
             aria-label={`${cartCount} productos`}
           >
             {cartCount > 9 ? "9+" : cartCount}

@@ -53,19 +53,19 @@ function OrderTimeline({ order }: { order: { status: OrderStatus; createdAt: str
               {/* Línea vertical */}
               {i < TIMELINE_STEPS.length - 1 && (
                 <span
-                  className={`absolute -left-3.25 top-4 bottom-0 w-0.5 ${done ? "bg-[#154734]" : "bg-gray-200"}`}
+                  className={`absolute -left-3.25 top-4 bottom-0 w-0.5 ${done ? "bg-[color:var(--theme-primary)]" : "bg-gray-200"}`}
                 />
               )}
               {/* Dot */}
               <span className="absolute -left-4.25 top-1">
                 {done ? (
-                  <CheckCircle2 className="w-4 h-4 text-[#154734]" />
+                  <CheckCircle2 className="w-4 h-4 text-[color:var(--theme-primary)]" />
                 ) : (
                   <Circle className="w-4 h-4 text-gray-300" />
                 )}
               </span>
               <div className={`text-xs ${done ? "text-gray-900" : "text-gray-400"}`}>
-                <span className={`font-semibold ${active && !done ? "text-[#154734]" : ""}`}>
+                <span className={`font-semibold ${active && !done ? "text-[color:var(--theme-primary)]" : ""}`}>
                   {step.label}
                 </span>
                 {dateValue && (
@@ -140,8 +140,8 @@ export function OrderDetailModal({ order, onClose, onDelivered }: OrderDetailMod
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-[#154734]/10 rounded-lg shrink-0">
-              <Package className="w-4 h-4 text-[#154734]" />
+            <div className="p-2 bg-[color:var(--theme-primary)]/10 rounded-lg shrink-0">
+              <Package className="w-4 h-4 text-[color:var(--theme-primary)]" />
             </div>
             <div>
               <h2 className="text-base font-bold text-gray-900">Detalle del pedido</h2>
@@ -229,7 +229,7 @@ export function OrderDetailModal({ order, onClose, onDelivered }: OrderDetailMod
                       href={order.trackingUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="ml-auto font-semibold text-[#154734] hover:underline"
+                      className="ml-auto font-semibold text-[color:var(--theme-primary)] hover:underline"
                     >
                       Rastrear envío
                     </a>
@@ -250,7 +250,7 @@ export function OrderDetailModal({ order, onClose, onDelivered }: OrderDetailMod
                 <button
                   onClick={handleConfirmDelivery}
                   disabled={confirming}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#154734] text-white text-sm font-bold rounded-xl hover:bg-[#103a2a] active:scale-95 transition-all disabled:opacity-60"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] text-sm font-bold rounded-xl hover:bg-[color:color-mix(in_srgb,var(--theme-primary)_80%,black)] active:scale-95 transition-all disabled:opacity-60"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   {confirming ? "Confirmando..." : "Confirmar que recibí mi pedido"}

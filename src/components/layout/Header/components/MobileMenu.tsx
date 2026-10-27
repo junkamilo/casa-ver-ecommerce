@@ -31,14 +31,14 @@ export default function MobileMenu({ categories, onClose, onSearchOpen }: Mobile
       }}
     >
       {/* ── Franja decorativa dorada ── */}
-      <div className="h-px bg-linear-to-r from-transparent via-[#C19A6B]/60 to-transparent animate-border-shimmer" />
+      <div className="h-px bg-linear-to-r from-transparent via-[color:var(--theme-accent)]/60 to-transparent animate-border-shimmer" />
 
       {/* ── Aurora sutil de fondo ── */}
       <div
         className="absolute top-0 left-0 right-0 h-40 pointer-events-none opacity-[0.035]"
         style={{
           backgroundImage:
-            "radial-gradient(ellipse 80% 100% at 50% 0%, #154734 0%, transparent 80%)",
+            "radial-gradient(ellipse 80% 100% at 50% 0%, var(--theme-primary) 0%, transparent 80%)",
         }}
         aria-hidden="true"
       />
@@ -47,33 +47,33 @@ export default function MobileMenu({ categories, onClose, onSearchOpen }: Mobile
 
         {/* ── BUSCAR ── */}
         <button
-          className="group flex items-center gap-3 text-sm font-bold tracking-[0.15em] text-foreground hover:text-[#154734] py-3.5 border-b border-border/40 text-left transition-colors duration-200 w-full mb-2"
+          className="group flex items-center gap-3 text-sm font-bold tracking-[0.15em] text-foreground hover:text-[color:var(--theme-primary)] py-3.5 border-b border-border/40 text-left transition-colors duration-200 w-full mb-2"
           onClick={onSearchOpen}
         >
-          <span className="relative flex items-center justify-center w-8 h-8 rounded-full bg-[#154734]/0 group-hover:bg-[#154734]/8 transition-colors duration-300">
+          <span className="relative flex items-center justify-center w-8 h-8 rounded-full bg-[color:var(--theme-primary)]/0 group-hover:bg-[color:var(--theme-primary)]/8 transition-colors duration-300">
             <Search className="w-4 h-4" />
           </span>
           BUSCAR
-          <ChevronRight className="ml-auto w-4 h-4 text-foreground/30 group-hover:text-[#154734]/50 transition-colors" />
+          <ChevronRight className="ml-auto w-4 h-4 text-foreground/30 group-hover:text-[color:var(--theme-primary)]/50 transition-colors" />
         </button>
 
         {/* ── INICIO ── */}
         <Link
           href="/"
-          className="group flex items-center gap-3 text-sm font-bold tracking-[0.15em] text-foreground hover:text-[#154734] py-3 transition-colors duration-200"
+          className="group flex items-center gap-3 text-sm font-bold tracking-[0.15em] text-foreground hover:text-[color:var(--theme-primary)] py-3 transition-colors duration-200"
           onClick={onClose}
         >
-          <span className="w-1.5 h-1.5 rotate-45 bg-[#C19A6B]/0 group-hover:bg-[#C19A6B] transition-all duration-300 shrink-0" aria-hidden="true" />
+          <span className="w-1.5 h-1.5 rotate-45 bg-[color:var(--theme-accent)]/0 group-hover:bg-[color:var(--theme-accent)] transition-all duration-300 shrink-0" aria-hidden="true" />
           INICIO
         </Link>
 
         {/* ── TIENDA ── */}
         <Link
           href="/tienda"
-          className="group flex items-center gap-3 text-sm font-bold tracking-[0.15em] text-foreground hover:text-[#154734] py-3 transition-colors duration-200"
+          className="group flex items-center gap-3 text-sm font-bold tracking-[0.15em] text-foreground hover:text-[color:var(--theme-primary)] py-3 transition-colors duration-200"
           onClick={onClose}
         >
-          <span className="w-1.5 h-1.5 rotate-45 bg-[#C19A6B]/0 group-hover:bg-[#C19A6B] transition-all duration-300 shrink-0" aria-hidden="true" />
+          <span className="w-1.5 h-1.5 rotate-45 bg-[color:var(--theme-accent)]/0 group-hover:bg-[color:var(--theme-accent)] transition-all duration-300 shrink-0" aria-hidden="true" />
           TIENDA
         </Link>
 
@@ -83,20 +83,20 @@ export default function MobileMenu({ categories, onClose, onSearchOpen }: Mobile
 
           {/* Botón toggle de CATEGORÍAS */}
           <button
-            className="group flex items-center gap-3 text-sm font-bold tracking-[0.15em] text-foreground hover:text-[#154734] py-3 transition-colors duration-200 w-full text-left"
+            className="group flex items-center gap-3 text-sm font-bold tracking-[0.15em] text-foreground hover:text-[color:var(--theme-primary)] py-3 transition-colors duration-200 w-full text-left"
             onClick={() => setCategoriesOpen((v) => !v)}
             aria-expanded={categoriesOpen}
           >
             <span
               className={`w-1.5 h-1.5 rotate-45 transition-all duration-300 shrink-0 ${
-                categoriesOpen ? "bg-[#C19A6B]" : "bg-[#C19A6B]/0 group-hover:bg-[#C19A6B]"
+                categoriesOpen ? "bg-[color:var(--theme-accent)]" : "bg-[color:var(--theme-accent)]/0 group-hover:bg-[color:var(--theme-accent)]"
               }`}
               aria-hidden="true"
             />
             CATEGORÍAS
             <ChevronDown
               className={`ml-auto w-4 h-4 text-foreground/40 transition-all duration-300 ${
-                categoriesOpen ? "rotate-180 text-[#154734]" : "group-hover:text-[#154734]/50"
+                categoriesOpen ? "rotate-180 text-[color:var(--theme-primary)]" : "group-hover:text-[color:var(--theme-primary)]/50"
               }`}
             />
           </button>
@@ -111,7 +111,7 @@ export default function MobileMenu({ categories, onClose, onSearchOpen }: Mobile
 
               {/* Separador dorado */}
               <div className="flex items-center gap-2 mb-2 px-3">
-                <div className="h-px flex-1 bg-linear-to-r from-[#C19A6B]/40 to-transparent" />
+                <div className="h-px flex-1 bg-linear-to-r from-[color:var(--theme-accent)]/40 to-transparent" />
               </div>
 
               {categories.length === 0 && (
@@ -131,19 +131,19 @@ export default function MobileMenu({ categories, onClose, onSearchOpen }: Mobile
                     {/* Fila de categoría: toggle si tiene tipos, link directo si no */}
                     {hasTypes ? (
                       <button
-                        className="group flex items-center gap-3 py-3 px-3 rounded-lg hover:bg-[#154734]/5 transition-colors duration-200 w-full text-left"
+                        className="group flex items-center gap-3 py-3 px-3 rounded-lg hover:bg-[color:var(--theme-primary)]/5 transition-colors duration-200 w-full text-left"
                         onClick={() => toggleCategory(category.id)}
                         aria-expanded={isOpen}
                       >
                         <span
                           className={`w-1 h-1 rounded-full shrink-0 transition-all duration-300 ${
-                            isOpen ? "bg-[#C19A6B] scale-125" : "bg-[#154734]/30 group-hover:bg-[#154734]"
+                            isOpen ? "bg-[color:var(--theme-accent)] scale-125" : "bg-[color:var(--theme-primary)]/30 group-hover:bg-[color:var(--theme-primary)]"
                           }`}
                           aria-hidden="true"
                         />
                         <span
                           className={`text-xs font-bold uppercase tracking-[0.2em] transition-colors duration-200 ${
-                            isOpen ? "text-[#154734]" : "text-foreground/70 group-hover:text-[#154734]"
+                            isOpen ? "text-[color:var(--theme-primary)]" : "text-foreground/70 group-hover:text-[color:var(--theme-primary)]"
                           }`}
                         >
                           {category.name}
@@ -151,22 +151,22 @@ export default function MobileMenu({ categories, onClose, onSearchOpen }: Mobile
                         <ChevronDown
                           className={`ml-auto w-3.5 h-3.5 transition-all duration-300 ${
                             isOpen
-                              ? "rotate-180 text-[#C19A6B]"
-                              : "text-foreground/30 group-hover:text-[#154734]/50"
+                              ? "rotate-180 text-[color:var(--theme-accent)]"
+                              : "text-foreground/30 group-hover:text-[color:var(--theme-primary)]/50"
                           }`}
                         />
                       </button>
                     ) : (
                       <Link
                         href={`/collections/${category.slug}`}
-                        className="group flex items-center gap-3 py-3 px-3 rounded-lg hover:bg-[#154734]/5 transition-colors duration-200"
+                        className="group flex items-center gap-3 py-3 px-3 rounded-lg hover:bg-[color:var(--theme-primary)]/5 transition-colors duration-200"
                         onClick={onClose}
                       >
-                        <span className="w-1 h-1 rounded-full bg-[#154734]/30 group-hover:bg-[#154734] shrink-0 transition-colors duration-200" aria-hidden="true" />
-                        <span className="text-xs font-bold uppercase tracking-[0.2em] text-foreground/70 group-hover:text-[#154734] transition-colors duration-200">
+                        <span className="w-1 h-1 rounded-full bg-[color:var(--theme-primary)]/30 group-hover:bg-[color:var(--theme-primary)] shrink-0 transition-colors duration-200" aria-hidden="true" />
+                        <span className="text-xs font-bold uppercase tracking-[0.2em] text-foreground/70 group-hover:text-[color:var(--theme-primary)] transition-colors duration-200">
                           {category.name}
                         </span>
-                        <ChevronRight className="ml-auto w-3.5 h-3.5 text-foreground/30 group-hover:text-[#154734]/50 transition-colors" />
+                        <ChevronRight className="ml-auto w-3.5 h-3.5 text-foreground/30 group-hover:text-[color:var(--theme-primary)]/50 transition-colors" />
                       </Link>
                     )}
 
@@ -182,10 +182,10 @@ export default function MobileMenu({ categories, onClose, onSearchOpen }: Mobile
                           {/* Link "Ver todo" la colección */}
                           <Link
                             href={`/collections/${category.slug}`}
-                            className="flex items-center gap-2 py-2.5 text-xs text-[#154734]/70 font-medium hover:text-[#154734] transition-colors duration-200 border-b border-border/30 mb-1"
+                            className="flex items-center gap-2 py-2.5 text-xs text-[color:var(--theme-primary)]/70 font-medium hover:text-[color:var(--theme-primary)] transition-colors duration-200 border-b border-border/30 mb-1"
                             onClick={onClose}
                           >
-                            <span className="w-3 h-px bg-[#C19A6B]/50" aria-hidden="true" />
+                            <span className="w-3 h-px bg-[color:var(--theme-accent)]/50" aria-hidden="true" />
                             Ver toda la colección
                           </Link>
 
@@ -197,20 +197,20 @@ export default function MobileMenu({ categories, onClose, onSearchOpen }: Mobile
                                 href={gt.href}
                                 className={`relative group flex items-center gap-2 py-2.5 pl-2 text-sm transition-colors duration-200 rounded-md ${
                                   isGarmentActive
-                                    ? "text-[#C19A6B] font-medium bg-[#C19A6B]/5"
-                                    : "text-gray-500 hover:text-[#154734] hover:bg-[#154734]/5"
+                                    ? "text-[color:var(--theme-accent)] font-medium bg-[color:var(--theme-accent)]/5"
+                                    : "text-gray-500 hover:text-[color:var(--theme-primary)] hover:bg-[color:var(--theme-primary)]/5"
                                 }`}
                                 onClick={onClose}
                               >
                                 <span
                                   className={`w-1 h-1 rounded-full shrink-0 transition-all duration-200 ${
-                                    isGarmentActive ? "bg-[#C19A6B]" : "bg-gray-300 group-hover:bg-[#154734]"
+                                    isGarmentActive ? "bg-[color:var(--theme-accent)]" : "bg-gray-300 group-hover:bg-[color:var(--theme-primary)]"
                                   }`}
                                   aria-hidden="true"
                                 />
                                 <span
                                   className={`transition-transform duration-200 ${
-                                    isGarmentActive ? "underline underline-offset-2 decoration-[#C19A6B]/50 decoration-1" : ""
+                                    isGarmentActive ? "underline underline-offset-2 decoration-[color:var(--theme-accent)]/50 decoration-1" : ""
                                   }`}
                                 >
                                   {gt.name}
@@ -231,19 +231,19 @@ export default function MobileMenu({ categories, onClose, onSearchOpen }: Mobile
         {/* ── MI CUENTA ── */}
         <Link
           href="/perfil"
-          className="group flex items-center gap-3 text-sm font-bold tracking-[0.15em] text-foreground hover:text-[#154734] pt-5 mt-2 border-t border-border/40 transition-colors duration-200"
+          className="group flex items-center gap-3 text-sm font-bold tracking-[0.15em] text-foreground hover:text-[color:var(--theme-primary)] pt-5 mt-2 border-t border-border/40 transition-colors duration-200"
           onClick={onClose}
         >
-          <span className="relative flex items-center justify-center w-8 h-8 rounded-full bg-[#154734]/0 group-hover:bg-[#154734]/8 transition-colors duration-300">
+          <span className="relative flex items-center justify-center w-8 h-8 rounded-full bg-[color:var(--theme-primary)]/0 group-hover:bg-[color:var(--theme-primary)]/8 transition-colors duration-300">
             <User className="w-4 h-4" />
           </span>
           MI CUENTA
-          <ChevronRight className="ml-auto w-4 h-4 text-foreground/30 group-hover:text-[#154734]/50 transition-colors" />
+          <ChevronRight className="ml-auto w-4 h-4 text-foreground/30 group-hover:text-[color:var(--theme-primary)]/50 transition-colors" />
         </Link>
       </div>
 
       {/* ── Franja dorada final ── */}
-      <div className="h-px bg-linear-to-r from-transparent via-[#C19A6B]/20 to-transparent" />
+      <div className="h-px bg-linear-to-r from-transparent via-[color:var(--theme-accent)]/20 to-transparent" />
     </nav>
   );
 }

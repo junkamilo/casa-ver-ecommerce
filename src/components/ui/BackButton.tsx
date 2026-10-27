@@ -14,7 +14,7 @@ export default function BackButton({ label = "Volver", className = "" }: BackBut
   return (
     <button
       onClick={() => router.back()}
-      className={`group inline-flex items-center gap-2 text-xs font-semibold tracking-[0.15em] uppercase text-[#154734]/70 hover:text-[#154734] transition-colors duration-200 ${className}`}
+      className={`group inline-flex items-center gap-2 text-xs font-semibold tracking-[0.15em] uppercase text-[color:var(--theme-primary)]/70 hover:text-[color:var(--theme-primary)] transition-colors duration-200 ${className}`}
       aria-label="Volver a la página anterior"
     >
       {/* Flecha con movimiento sutil al hover */}
@@ -26,7 +26,7 @@ export default function BackButton({ label = "Volver", className = "" }: BackBut
       {/* Línea dorada + texto */}
       <span className="relative">
         {label}
-        <span className="absolute -bottom-px left-0 w-0 h-px bg-[#C19A6B] group-hover:w-full transition-all duration-300 ease-out rounded-full" />
+        <span className="absolute -bottom-px left-0 w-0 h-px bg-[color:var(--theme-accent)] group-hover:w-full transition-all duration-300 ease-out rounded-full" />
       </span>
     </button>
   );

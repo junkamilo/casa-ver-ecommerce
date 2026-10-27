@@ -12,7 +12,7 @@ export function NavItem({ item, collapsed }: NavItemProps) {
     collapsed ? "justify-center p-3" : "px-4 py-3"
   } ${
     item.isActive
-      ? "bg-white text-[#154734] shadow-sm"
+      ? "bg-white text-[color:var(--theme-primary)] shadow-sm"
       : "text-white/75 hover:bg-white/10 hover:text-white"
   }`;
 

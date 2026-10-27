@@ -20,7 +20,7 @@ export function OrderCard({ order, onOpenDetail }: OrderCardProps) {
   const overflow = order.items.length - MAX_THUMBS;
 
   return (
-    <div className="flex items-center gap-3 p-4 sm:p-5 bg-white rounded-xl border border-gray-200 shadow-sm hover:border-[#154734]/30 hover:shadow-md transition-all">
+    <div className="flex items-center gap-3 p-4 sm:p-5 bg-white rounded-xl border border-gray-200 shadow-sm hover:border-[color:var(--theme-primary)]/30 hover:shadow-md transition-all">
       {/* Thumbnails (desktop) / ícono fallback (mobile) */}
       <div className="shrink-0 hidden sm:flex items-center">
         {thumbs.length > 0 ? (
@@ -57,15 +57,15 @@ export function OrderCard({ order, onOpenDetail }: OrderCardProps) {
             )}
           </div>
         ) : (
-          <div className="p-2 bg-[#154734]/10 rounded-lg">
-            <Package className="w-4 h-4 text-[#154734]" />
+          <div className="p-2 bg-[color:var(--theme-primary)]/10 rounded-lg">
+            <Package className="w-4 h-4 text-[color:var(--theme-primary)]" />
           </div>
         )}
       </div>
 
       {/* Ícono mobile */}
-      <div className="p-2 bg-[#154734]/10 rounded-lg shrink-0 sm:hidden">
-        <Package className="w-4 h-4 text-[#154734]" />
+      <div className="p-2 bg-[color:var(--theme-primary)]/10 rounded-lg shrink-0 sm:hidden">
+        <Package className="w-4 h-4 text-[color:var(--theme-primary)]" />
       </div>
 
       {/* Info principal */}
@@ -98,7 +98,7 @@ export function OrderCard({ order, onOpenDetail }: OrderCardProps) {
       {/* Ver detalle */}
       <button
         onClick={() => onOpenDetail(order)}
-        className="p-2 text-gray-400 hover:text-[#154734] hover:bg-[#154734]/10 rounded-lg transition-colors shrink-0 active:scale-90"
+        className="p-2 text-gray-400 hover:text-[color:var(--theme-primary)] hover:bg-[color:var(--theme-primary)]/10 rounded-lg transition-colors shrink-0 active:scale-90"
         title="Ver detalle"
         aria-label="Ver detalle del pedido"
       >

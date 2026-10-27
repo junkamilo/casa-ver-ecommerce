@@ -5,7 +5,7 @@ const LoginRegisterLink = () => (
     ¿No tienes cuenta?{" "}
     <Link
       href="/registro"
-      className="font-semibold text-[#154734] hover:text-[#C19A6B] transition-colors"
+      className="font-semibold text-[color:var(--theme-primary)] hover:text-[color:var(--theme-accent)] transition-colors"
     >
       Regístrate aquí
     </Link>

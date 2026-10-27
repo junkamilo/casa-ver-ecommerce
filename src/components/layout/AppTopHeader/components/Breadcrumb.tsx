@@ -16,7 +16,7 @@ export function Breadcrumb({ root, current, onMenuOpen }: BreadcrumbProps) {
         <div className="hidden sm:flex items-center text-sm text-gray-500">
           <span className="font-medium text-gray-900">{root}</span>
           <span className="mx-2">/</span>
-          <span className="capitalize text-[#154734]">{current}</span>
+          <span className="capitalize text-[color:var(--theme-primary)]">{current}</span>
         </div>
       ) : null}
     </div>

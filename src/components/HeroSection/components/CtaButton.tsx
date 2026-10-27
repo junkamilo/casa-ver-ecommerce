@@ -15,8 +15,8 @@ export function CtaButton({ label, href, variant }: HeroButton) {
         "transition-all duration-400 active:scale-95 flex-1 sm:flex-none",
         "focus-visible:outline",
         isPrimary
-          ? "text-white hover:shadow-[0_0_28px_rgba(193,154,107,0.28)] focus-visible:outline-[#C19A6B]"
-          : "text-[#154734] hover:shadow-[0_0_28px_rgba(255,255,255,0.28)] focus-visible:outline-[#154734]",
+          ? "text-white hover:shadow-[0_0_28px_rgba(193,154,107,0.28)] focus-visible:outline-[color:var(--theme-accent)]"
+          : "text-[color:var(--theme-primary)] hover:shadow-[0_0_28px_rgba(255,255,255,0.28)] focus-visible:outline-[color:var(--theme-primary)]",
       ].join(" ")}
       style={isPrimary ? { background: BRAND_GREEN } : { background: "#ffffff" }}
     >
@@ -27,7 +27,7 @@ export function CtaButton({ label, href, variant }: HeroButton) {
       <span
         className={[
           "absolute inset-0 border border-transparent transition-colors duration-400",
-          isPrimary ? "group-hover:border-[#C19A6B]/45" : "group-hover:border-black/20",
+          isPrimary ? "group-hover:border-[color:var(--theme-accent)]/45" : "group-hover:border-black/20",
         ].join(" ")}
       />
       <span className="relative">{label}</span>

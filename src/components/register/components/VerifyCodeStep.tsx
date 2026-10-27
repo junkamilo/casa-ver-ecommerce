@@ -51,11 +51,11 @@ export default function VerifyCodeStep({
     <div className="w-full max-w-md mx-auto">
       {/* Encabezado */}
       <div className="mb-7 text-center">
-        <div className="w-16 h-16 rounded-full bg-[#154734]/10 flex items-center justify-center mx-auto mb-4">
-          <Mail className="w-8 h-8 text-[#154734]" />
+        <div className="w-16 h-16 rounded-full bg-[color:var(--theme-primary)]/10 flex items-center justify-center mx-auto mb-4">
+          <Mail className="w-8 h-8 text-[color:var(--theme-primary)]" />
         </div>
         <h2
-          className="text-2xl sm:text-3xl font-bold text-[#154734] mb-2"
+          className="text-2xl sm:text-3xl font-bold text-[color:var(--theme-primary)] mb-2"
           style={{ fontFamily: "Georgia, serif" }}
         >
           Verifica tu correo
@@ -96,7 +96,7 @@ export default function VerifyCodeStep({
 
       {/* Loading */}
       {isLoading && (
-        <p className="text-center text-sm text-[#154734] mb-4 animate-pulse">
+        <p className="text-center text-sm text-[color:var(--theme-primary)] mb-4 animate-pulse">
           Verificando código...
         </p>
       )}
@@ -113,7 +113,7 @@ export default function VerifyCodeStep({
         type="button"
         onClick={handleResend}
         disabled={cooldown > 0 || resending || isLoading}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border-2 border-gray-200 text-sm font-medium text-gray-600 hover:border-[#154734] hover:text-[#154734] transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:text-gray-600"
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border-2 border-gray-200 text-sm font-medium text-gray-600 hover:border-[color:var(--theme-primary)] hover:text-[color:var(--theme-primary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:text-gray-600"
       >
         <RefreshCw className={`w-4 h-4 ${resending ? "animate-spin" : ""}`} />
         {resending

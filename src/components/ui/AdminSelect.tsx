@@ -48,10 +48,10 @@ export default function AdminSelect({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className={`w-full flex items-center gap-2 pl-2.5 pr-2 py-2 bg-gray-50 border rounded-xl text-xs sm:text-sm font-medium text-gray-700 cursor-pointer transition-all focus:outline-none focus:ring-4 focus:ring-[#154734]/10 ${
+        className={`w-full flex items-center gap-2 pl-2.5 pr-2 py-2 bg-gray-50 border rounded-xl text-xs sm:text-sm font-medium text-gray-700 cursor-pointer transition-all focus:outline-none focus:ring-4 focus:ring-[color:var(--theme-primary)]/10 ${
           open
-            ? "border-[#154734] bg-white ring-4 ring-[#154734]/10"
-            : "border-gray-200 hover:border-[#154734]"
+            ? "border-[color:var(--theme-primary)] bg-white ring-4 ring-[color:var(--theme-primary)]/10"
+            : "border-gray-200 hover:border-[color:var(--theme-primary)]"
         }`}
       >
         {icon && (
@@ -84,12 +84,12 @@ export default function AdminSelect({
                 }}
                 className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 text-xs sm:text-sm transition-colors ${
                   isSelected
-                    ? "bg-[#154734]/5 text-[#154734] font-semibold"
+                    ? "bg-[color:var(--theme-primary)]/5 text-[color:var(--theme-primary)] font-semibold"
                     : "text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 <span className="truncate text-left">{optLabel}</span>
-                {isSelected && <Check className="w-3.5 h-3.5 text-[#154734] shrink-0" />}
+                {isSelected && <Check className="w-3.5 h-3.5 text-[color:var(--theme-primary)] shrink-0" />}
               </button>
             );
           })}

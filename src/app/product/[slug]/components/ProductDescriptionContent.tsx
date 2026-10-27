@@ -24,7 +24,7 @@ export default function ProductDescriptionContent({ description, className = "" 
     <ul className={`space-y-2.5 text-sm ${className}`}>
       {bullets.map((line, index) => (
         <li key={`${index}-${line.slice(0, 24)}`} className="flex items-start gap-2.5">
-          <span className="mt-2 w-1.5 h-1.5 rounded-full bg-[#C19A6B] shrink-0" aria-hidden />
+          <span className="mt-2 w-1.5 h-1.5 rounded-full bg-[color:var(--theme-accent)] shrink-0" aria-hidden />
           <span className="leading-relaxed">{line}</span>
         </li>
       ))}

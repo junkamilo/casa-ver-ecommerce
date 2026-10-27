@@ -40,19 +40,19 @@ const OrderSummaryPanel = ({
   const discountPercentage = lineItemDiscountPercentage;
 
   return (
-    <div className="hidden lg:flex lg:w-[45%] lg:h-dvh lg:sticky lg:top-0 bg-[#154734] px-8 xl:px-16 justify-center items-center relative overflow-hidden isolate shadow-2xl">
+    <div className="hidden lg:flex lg:w-[45%] lg:h-dvh lg:sticky lg:top-0 bg-[color:var(--theme-primary)] px-8 xl:px-16 justify-center items-center relative overflow-hidden isolate shadow-2xl">
       {/* Fondos decorativos */}
       <div
         className="absolute inset-0 opacity-[0.05] pointer-events-none"
-        style={{ backgroundImage: "radial-gradient(#C19A6B 1px, transparent 1px)", backgroundSize: "32px 32px" }}
+        style={{ backgroundImage: "radial-gradient(var(--theme-accent) 1px, transparent 1px)", backgroundSize: "32px 32px" }}
       />
-      <div className="absolute top-0 right-0 w-160 h-160 bg-[#C19A6B] opacity-10 rounded-full blur-3xl pointer-events-none -z-10 translate-x-1/3 -translate-y-1/3" />
+      <div className="absolute top-0 right-0 w-160 h-160 bg-[color:var(--theme-accent)] opacity-10 rounded-full blur-3xl pointer-events-none -z-10 translate-x-1/3 -translate-y-1/3" />
 
-      <div className="relative w-full max-w-lg bg-white rounded-[2.5rem] p-10 shadow-[0_30px_60px_rgba(0,0,0,0.3)] overflow-x-hidden overflow-y-auto isolate border border-white/10 max-h-[calc(100dvh-4rem)] scrollbar-thin scrollbar-thumb-[#C19A6B]/30 scrollbar-track-transparent">
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-linear-to-r from-[#C19A6B]/50 via-[#C19A6B] to-[#C19A6B]/50" />
+      <div className="relative w-full max-w-lg bg-white rounded-[2.5rem] p-10 shadow-[0_30px_60px_rgba(0,0,0,0.3)] overflow-x-hidden overflow-y-auto isolate border border-white/10 max-h-[calc(100dvh-4rem)] scrollbar-thin scrollbar-thumb-[color:var(--theme-accent)]/30 scrollbar-track-transparent">
+        <div className="absolute top-0 left-0 w-full h-1.5 bg-linear-to-r from-[color:var(--theme-accent)]/50 via-[color:var(--theme-accent)] to-[color:var(--theme-accent)]/50" />
 
         <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-gray-400 mb-10 flex items-center justify-center gap-3 border-b border-gray-100 pb-5">
-          <Sparkles className="w-4 h-4 text-[#C19A6B]" />
+          <Sparkles className="w-4 h-4 text-[color:var(--theme-accent)]" />
           Tu Selección Casa Verde
         </h3>
 
@@ -64,7 +64,7 @@ const OrderSummaryPanel = ({
             return (
               <div
                 key={item.id}
-                className="flex gap-5 items-center group/item bg-[#FAFAFA] p-3 rounded-2xl border border-transparent hover:border-[#C19A6B]/30 hover:bg-white transition-all duration-300"
+                className="flex gap-5 items-center group/item bg-[#FAFAFA] p-3 rounded-2xl border border-transparent hover:border-[color:var(--theme-accent)]/30 hover:bg-white transition-all duration-300"
               >
                 <div className="relative w-20 h-24 rounded-xl overflow-hidden shrink-0 shadow-sm group-hover/item:shadow-md transition-shadow">
                   <Image
@@ -73,12 +73,12 @@ const OrderSummaryPanel = ({
                     fill
                     className="object-cover group-hover/item:scale-110 transition-transform duration-700"
                   />
-                  <div className="absolute top-0 right-0 bg-[#154734] text-white text-[10px] font-bold w-6 h-6 flex items-center justify-center rounded-bl-xl z-10 shadow-sm">
+                  <div className="absolute top-0 right-0 bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] text-[10px] font-bold w-6 h-6 flex items-center justify-center rounded-bl-xl z-10 shadow-sm">
                     {item.quantity}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-[#154734] uppercase tracking-wide truncate group-hover/item:text-[#C19A6B] transition-colors">
+                  <p className="text-sm font-bold text-[color:var(--theme-primary)] uppercase tracking-wide truncate group-hover/item:text-[color:var(--theme-accent)] transition-colors">
                     {item.name}
                   </p>
                   <p className="text-[11px] text-gray-500 uppercase tracking-widest mt-1">
@@ -96,7 +96,7 @@ const OrderSummaryPanel = ({
                       </span>
                     </div>
                   ) : (
-                    <span className="text-sm font-bold text-[#154734]">
+                    <span className="text-sm font-bold text-[color:var(--theme-primary)]">
                       ${originalTotal.toLocaleString(LOCALE)}
                     </span>
                   )}
@@ -134,9 +134,9 @@ const OrderSummaryPanel = ({
             Total a pagar
           </span>
           <div className="flex items-baseline gap-2">
-            <span className="text-xs text-[#C19A6B] font-bold">COP</span>
+            <span className="text-xs text-[color:var(--theme-accent)] font-bold">COP</span>
             <span
-              className="text-4xl lg:text-5xl font-light text-[#154734] tracking-tighter drop-shadow-sm"
+              className="text-4xl lg:text-5xl font-light text-[color:var(--theme-primary)] tracking-tighter drop-shadow-sm"
               style={{ fontFamily: "Georgia, serif" }}
             >
               ${total.toLocaleString(LOCALE)}

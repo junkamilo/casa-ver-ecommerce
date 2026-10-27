@@ -20,10 +20,10 @@ export default function GuestCheckoutModal({ onContinueAsGuest }: GuestCheckoutM
         className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
         style={{ animation: "fadeIn 0.2s ease-out, scaleIn 0.2s ease-out" }}
       >
-        <div className="bg-[#154734] px-7 pt-7 pb-6">
+        <div className="bg-[color:var(--theme-primary)] px-7 pt-7 pb-6">
           <div className="flex items-center gap-2 mb-3">
-            <ShoppingBag className="w-4 h-4 text-[#C19A6B]" />
-            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#C19A6B]">
+            <ShoppingBag className="w-4 h-4 text-[color:var(--theme-accent)]" />
+            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[color:var(--theme-accent)]">
               Casa Verde
             </span>
           </div>
@@ -41,7 +41,7 @@ export default function GuestCheckoutModal({ onContinueAsGuest }: GuestCheckoutM
         <div className="p-6 space-y-3">
           <button
             onClick={handleRegister}
-            className="w-full text-left border-2 border-[#154734]/20 bg-[#154734]/5 rounded-2xl p-5 hover:bg-[#154734]/10 transition-colors group active:scale-[0.98]"
+            className="w-full text-left border-2 border-[color:var(--theme-primary)]/20 bg-[color:var(--theme-primary)]/5 rounded-2xl p-5 hover:bg-[color:var(--theme-primary)]/10 transition-colors group active:scale-[0.98]"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -50,7 +50,7 @@ export default function GuestCheckoutModal({ onContinueAsGuest }: GuestCheckoutM
                   Guarda tu historial de pedidos y dirección de envío
                 </p>
               </div>
-              <div className="shrink-0 w-10 h-10 rounded-full bg-[#154734] flex items-center justify-center group-hover:scale-110 transition-transform">
+              <div className="shrink-0 w-10 h-10 rounded-full bg-[color:var(--theme-primary)] flex items-center justify-center group-hover:scale-110 transition-transform">
                 <UserPlus className="w-4 h-4 text-white" />
               </div>
             </div>
@@ -77,7 +77,7 @@ export default function GuestCheckoutModal({ onContinueAsGuest }: GuestCheckoutM
             ¿Ya tienes cuenta?{" "}
             <button
               onClick={() => router.push("/login?returnTo=/checkout")}
-              className="font-semibold text-[#154734] hover:text-[#C19A6B] transition-colors"
+              className="font-semibold text-[color:var(--theme-primary)] hover:text-[color:var(--theme-accent)] transition-colors"
             >
               Inicia sesión
             </button>

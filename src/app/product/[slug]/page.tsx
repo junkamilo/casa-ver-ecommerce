@@ -67,7 +67,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
   if (!data) notFound();
 
   return (
-    <div className="min-h-screen flex flex-col bg-white selection:bg-[#C19A6B]/20">
+    <div className="min-h-screen flex flex-col bg-white selection:bg-[color:var(--theme-accent)]/20">
       <AnnouncementBar />
       <Header />
       <div className="flex-1 w-full">

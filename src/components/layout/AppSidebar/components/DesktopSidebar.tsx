@@ -19,14 +19,14 @@ export function DesktopSidebar({
 }: DesktopSidebarProps) {
   return (
     <aside
-      className={`hidden md:flex flex-col bg-[#154734] text-white shadow-xl z-20 transition-all duration-300 ease-in-out relative ${
+      className={`hidden md:flex flex-col bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] shadow-xl z-20 transition-all duration-300 ease-in-out relative ${
         isOpen ? "w-64" : "w-16"
       }`}
     >
       {/* Collapse toggle */}
       <button
         onClick={onToggle}
-        className="absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#154734] border-2 border-white/30 hover:border-[#C19A6B] flex items-center justify-center text-white/80 hover:text-white transition-all z-10 shadow-md"
+        className="absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[color:var(--theme-primary)] border-2 border-white/30 hover:border-[color:var(--theme-accent)] flex items-center justify-center text-white/80 hover:text-white transition-all z-10 shadow-md"
         aria-label={isOpen ? "Colapsar menú" : "Expandir menú"}
       >
         {isOpen ? (
@@ -42,7 +42,7 @@ export function DesktopSidebar({
           isOpen ? "p-5 gap-3" : "p-3 justify-center"
         }`}
       >
-        <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border-2 border-[#C19A6B]/60 shadow-md">
+        <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border-2 border-[color:var(--theme-accent)]/60 shadow-md">
           <Image src={logoIcon} alt="Casa Verde" fill className="object-cover" priority />
         </div>
         {isOpen && (
@@ -53,7 +53,7 @@ export function DesktopSidebar({
             >
               Casa Verde
             </span>
-            <span className="text-[10px] font-bold tracking-widest text-[#C19A6B] uppercase mt-1">
+            <span className="text-[10px] font-bold tracking-widest text-[color:var(--theme-accent)] uppercase mt-1">
               {brandSubtitle}
             </span>
           </div>
@@ -73,14 +73,14 @@ export function DesktopSidebar({
 
       {/* Footer */}
       <div
-        className={`border-t border-white/10 bg-[#0f3626]/50 transition-all duration-300 ${
+        className={`border-t border-white/10 bg-[color:color-mix(in_srgb,var(--theme-primary)_80%,black)]/50 transition-all duration-300 ${
           isOpen ? "p-4 space-y-3" : "p-2 flex flex-col items-center gap-2"
         }`}
       >
         {isOpen ? (
           <>
             <div className="flex items-center gap-3 px-1">
-              <div className="w-9 h-9 rounded-full bg-[#C19A6B] flex items-center justify-center font-bold text-white text-sm shrink-0 shadow-sm ring-2 ring-[#C19A6B]/30">
+              <div className="w-9 h-9 rounded-full bg-[color:var(--theme-accent)] flex items-center justify-center font-bold text-[color:var(--theme-accent-fg)] text-sm shrink-0 shadow-sm ring-2 ring-[color:var(--theme-accent)]/30">
                 {userInitial}
               </div>
               <div className="flex-1 min-w-0">
@@ -91,7 +91,7 @@ export function DesktopSidebar({
             {extraLink && (
               <Link
                 href={extraLink.href}
-                className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#C19A6B]/20 hover:bg-[#C19A6B]/30 border border-[#C19A6B]/30 hover:border-[#C19A6B]/50 rounded-lg text-xs font-medium text-[#C19A6B] transition-all"
+                className="flex items-center justify-center gap-2 w-full py-2.5 bg-[color:var(--theme-accent)]/20 hover:bg-[color:var(--theme-accent)]/30 border border-[color:var(--theme-accent)]/30 hover:border-[color:var(--theme-accent)]/50 rounded-lg text-xs font-medium text-[color:var(--theme-accent)] transition-all"
               >
                 <ShieldCheck className="w-4 h-4" />
                 {extraLink.label}
@@ -111,7 +111,7 @@ export function DesktopSidebar({
           <>
             <div
               title={userName ?? ""}
-              className="w-8 h-8 rounded-full bg-[#C19A6B] flex items-center justify-center font-bold text-white text-xs ring-2 ring-[#C19A6B]/30"
+              className="w-8 h-8 rounded-full bg-[color:var(--theme-accent)] flex items-center justify-center font-bold text-[color:var(--theme-accent-fg)] text-xs ring-2 ring-[color:var(--theme-accent)]/30"
             >
               {userInitial}
             </div>

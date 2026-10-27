@@ -24,16 +24,16 @@ function CountdownUnit({ value, label }: CountdownUnitProps) {
     <div className="flex flex-col items-center gap-1.5 min-w-[4.5rem] sm:min-w-[5.5rem]">
       <div
         key={display}
-        className="relative w-full rounded-2xl bg-[#154734]/5 border border-[#154734]/10 px-3 py-3 sm:py-4 shadow-sm animate-in zoom-in-95 duration-300"
+        className="relative w-full rounded-2xl bg-[color:var(--theme-primary)]/5 border border-[color:var(--theme-primary)]/10 px-3 py-3 sm:py-4 shadow-sm animate-in zoom-in-95 duration-300"
       >
         <span
-          className="block text-center text-3xl sm:text-4xl font-bold text-[#154734] tabular-nums leading-none"
+          className="block text-center text-3xl sm:text-4xl font-bold text-[color:var(--theme-primary)] tabular-nums leading-none"
           style={{ fontFamily: "Georgia, serif" }}
         >
           {display}
         </span>
       </div>
-      <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-[#154734]/60">
+      <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-[color:var(--theme-primary)]/60">
         {label}
       </span>
     </div>
@@ -43,7 +43,7 @@ function CountdownUnit({ value, label }: CountdownUnitProps) {
 function CountdownSeparator() {
   return (
     <span
-      className="text-2xl sm:text-3xl font-bold text-[#C19A6B] pb-6 animate-pulse select-none"
+      className="text-2xl sm:text-3xl font-bold text-[color:var(--theme-accent)] pb-6 animate-pulse select-none"
       aria-hidden
     >
       :
@@ -77,12 +77,12 @@ export default function LaunchCountdownModal() {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header verde */}
-        <div className="bg-[#154734] px-7 pt-8 pb-7 text-center relative overflow-hidden">
+        <div className="bg-[color:var(--theme-primary)] px-7 pt-8 pb-7 text-center relative overflow-hidden">
           <div
             className="absolute inset-0 opacity-20 pointer-events-none"
             style={{
               background:
-                "radial-gradient(ellipse 80% 60% at 50% 0%, #C19A6B 0%, transparent 70%)",
+                "radial-gradient(ellipse 80% 60% at 50% 0%, var(--theme-accent) 0%, transparent 70%)",
             }}
           />
           <div className="relative flex flex-col items-center">
@@ -95,7 +95,7 @@ export default function LaunchCountdownModal() {
                 className="w-8 h-8 object-contain"
                 aria-hidden
               />
-              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#C19A6B]">
+              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[color:var(--theme-accent)]">
                 Casa Verde
               </span>
             </div>
@@ -115,11 +115,11 @@ export default function LaunchCountdownModal() {
         {/* Countdown */}
         <div className="px-6 sm:px-8 py-8 bg-[#F9F9F7]">
           <div className="flex items-center justify-center gap-1 sm:gap-2 mb-6">
-            <Sparkles className="w-4 h-4 text-[#C19A6B] shrink-0" />
-            <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#154734]/70 text-center">
+            <Sparkles className="w-4 h-4 text-[color:var(--theme-accent)] shrink-0" />
+            <p className="text-xs font-bold uppercase tracking-[0.15em] text-[color:var(--theme-primary)]/70 text-center">
               Apertura en
             </p>
-            <Sparkles className="w-4 h-4 text-[#C19A6B] shrink-0" />
+            <Sparkles className="w-4 h-4 text-[color:var(--theme-accent)] shrink-0" />
           </div>
 
           <div className="flex items-center justify-center gap-1 sm:gap-2">
@@ -132,7 +132,7 @@ export default function LaunchCountdownModal() {
             <CountdownUnit value={seconds} label="Segundos" />
           </div>
 
-          <p className="mt-8 text-center text-sm text-[#154734]/60 capitalize">
+          <p className="mt-8 text-center text-sm text-[color:var(--theme-primary)]/60 capitalize">
             {launchDateLabel}
           </p>
         </div>

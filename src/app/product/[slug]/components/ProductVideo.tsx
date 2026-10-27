@@ -33,10 +33,10 @@ export default function ProductVideo({ url }: Props) {
   if (hasError) {
     return (
       <div className="w-full h-full bg-[#FAFAFA] flex flex-col items-center justify-center p-8 text-center transition-all duration-500 ease-out group">
-        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white border border-gray-100 flex items-center justify-center mb-5 shadow-sm group-hover:scale-110 group-hover:bg-[#154734]/5 transition-all duration-500">
-          <Film className="w-6 h-6 sm:w-7 sm:h-7 text-[#C19A6B] group-hover:text-[#154734] transition-colors duration-500" strokeWidth={1.5} />
+        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white border border-gray-100 flex items-center justify-center mb-5 shadow-sm group-hover:scale-110 group-hover:bg-[color:var(--theme-primary)]/5 transition-all duration-500">
+          <Film className="w-6 h-6 sm:w-7 sm:h-7 text-[color:var(--theme-accent)] group-hover:text-[color:var(--theme-primary)] transition-colors duration-500" strokeWidth={1.5} />
         </div>
-        <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.25em] text-[#154734] mb-2">
+        <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.25em] text-[color:var(--theme-primary)] mb-2">
           Lookbook
         </p>
         <p className="text-[10px] sm:text-xs font-light text-gray-500 leading-relaxed px-4">
@@ -69,7 +69,7 @@ export default function ProductVideo({ url }: Props) {
       )}
 
       {/* Overlay Cinemático */}
-      <div className="absolute inset-0 bg-linear-to-t from-[#154734]/80 via-transparent to-transparent pointer-events-none z-10 opacity-70 group-hover:opacity-40 transition-opacity duration-700 ease-in-out" />
+      <div className="absolute inset-0 bg-linear-to-t from-[color:var(--theme-primary)]/80 via-transparent to-transparent pointer-events-none z-10 opacity-70 group-hover:opacity-40 transition-opacity duration-700 ease-in-out" />
 
     </div>
   );

@@ -44,20 +44,20 @@ export default function PromoPopupModal({ popup, onClose }: PromoPopupModalProps
         <div className="px-8 pt-10 pb-6 text-center">
           <h2
             id="promo-popup-title"
-            className="text-4xl sm:text-5xl font-bold text-[#154734] leading-tight"
+            className="text-4xl sm:text-5xl font-bold text-[color:var(--theme-primary)] leading-tight"
             style={{ fontFamily: "Georgia, serif" }}
           >
             {popup.headline}
           </h2>
           <p
-            className="mt-2 text-xl sm:text-2xl text-[#154734]"
+            className="mt-2 text-xl sm:text-2xl text-[color:var(--theme-primary)]"
             style={{ fontFamily: "Georgia, serif" }}
           >
             {popup.subtitle}
           </p>
           <div className="border-t border-gray-200 mt-6 mb-5" />
           <p className="text-sm text-gray-500 mb-3">Usa el código:</p>
-          <div className="flex items-center justify-center gap-2 bg-[#154734] text-white rounded-lg px-5 py-4 mx-auto max-w-xs">
+          <div className="flex items-center justify-center gap-2 bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] rounded-lg px-5 py-4 mx-auto max-w-xs">
             <span className="font-mono font-bold tracking-widest text-sm sm:text-base">
               {popup.couponCode}
             </span>
@@ -80,7 +80,7 @@ export default function PromoPopupModal({ popup, onClose }: PromoPopupModalProps
           <Link
             href={popup.ctaUrl}
             onClick={onClose}
-            className="block w-full bg-[#154734] text-white text-sm font-black uppercase tracking-[0.15em] py-4 rounded-lg hover:bg-[#103a2a] active:scale-[0.99] transition-all text-center"
+            className="block w-full bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] text-sm font-black uppercase tracking-[0.15em] py-4 rounded-lg hover:bg-[color:color-mix(in_srgb,var(--theme-primary)_80%,black)] active:scale-[0.99] transition-all text-center"
           >
             {popup.ctaText}
           </Link>

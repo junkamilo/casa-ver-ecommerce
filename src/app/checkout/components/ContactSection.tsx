@@ -42,7 +42,7 @@ const ContactSection = () => {
           className={SECTION_TITLE_CLS}
           style={{ fontFamily: "Georgia, serif" }}
         >
-          <Mail className="w-4 sm:w-5 h-4 sm:h-5 text-[#C19A6B] shrink-0" />
+          <Mail className="w-4 sm:w-5 h-4 sm:h-5 text-[color:var(--theme-accent)] shrink-0" />
           Contacto
           {isAuthenticated && firstName && (
             <span className="text-xs sm:text-sm text-gray-400 font-normal ml-1">
@@ -54,7 +54,7 @@ const ContactSection = () => {
         {!isAuthenticated && (
           <Link
             href="/login"
-            className="text-[9px] sm:text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-[#C19A6B] hover:text-[#154734] transition-colors border-b border-transparent hover:border-[#154734] pb-0.5 p-1 active:scale-90 shrink-0"
+            className="text-[9px] sm:text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-[color:var(--theme-accent)] hover:text-[color:var(--theme-primary)] transition-colors border-b border-transparent hover:border-[color:var(--theme-primary)] pb-0.5 p-1 active:scale-90 shrink-0"
           >
             Iniciar sesión
           </Link>

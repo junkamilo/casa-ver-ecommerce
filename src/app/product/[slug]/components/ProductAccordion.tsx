@@ -26,7 +26,7 @@ export default function ProductAccordion({ openKey, onToggle, description }: Pro
         <ul className="space-y-2 text-sm">
           {PRODUCTION_TIME_CONTENT.map((line) => (
             <li key={line} className="flex items-start gap-2">
-              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#C19A6B] shrink-0" />
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[color:var(--theme-accent)] shrink-0" />
               <span>{line}</span>
             </li>
           ))}
@@ -56,22 +56,22 @@ export default function ProductAccordion({ openKey, onToggle, description }: Pro
           <div key={key} className="border-b border-gray-100">
             <button
               onClick={() => onToggle(key)}
-              className="w-full py-5 flex items-center justify-between text-left group transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#C19A6B]/50"
+              className="w-full py-5 flex items-center justify-between text-left group transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--theme-accent)]/50"
               aria-expanded={isOpen}
             >
               <div className="flex items-center gap-4">
                 <div
                   className={`flex items-center justify-center w-9 h-9 rounded-full transition-all duration-500 ${
                     isOpen
-                      ? "bg-[#154734] text-white shadow-md"
-                      : "bg-[#FAFAFA] text-[#154734] group-hover:bg-[#C19A6B]/10 group-hover:text-[#C19A6B]"
+                      ? "bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] shadow-md"
+                      : "bg-[#FAFAFA] text-[color:var(--theme-primary)] group-hover:bg-[color:var(--theme-accent)]/10 group-hover:text-[color:var(--theme-accent)]"
                   }`}
                 >
                   {icon}
                 </div>
                 <span
                   className={`text-[11px] sm:text-xs font-bold uppercase tracking-[0.15em] transition-colors duration-300 ${
-                    isOpen ? "text-[#154734]" : "text-gray-500 group-hover:text-[#C19A6B]"
+                    isOpen ? "text-[color:var(--theme-primary)]" : "text-gray-500 group-hover:text-[color:var(--theme-accent)]"
                   }`}
                 >
                   {title}
@@ -80,7 +80,7 @@ export default function ProductAccordion({ openKey, onToggle, description }: Pro
 
               <ChevronDown
                 className={`w-4 h-4 transition-transform duration-500 shrink-0 ${
-                  isOpen ? "rotate-180 text-[#154734]" : "text-gray-300 group-hover:text-[#C19A6B]"
+                  isOpen ? "rotate-180 text-[color:var(--theme-primary)]" : "text-gray-300 group-hover:text-[color:var(--theme-accent)]"
                 }`}
                 strokeWidth={1.5}
               />

@@ -11,12 +11,12 @@ interface BenefitItemProps {
 
 export const BenefitItem = ({ icon: Icon, text, step }: BenefitItemProps) => (
   <div className="flex items-start gap-3">
-    <div className="mt-0.5 w-5 h-5 rounded-full bg-[#C19A6B]/25 border border-[#C19A6B]/55 flex items-center justify-center shrink-0">
-      <Icon className="w-3 h-3 text-[#C19A6B]" />
+    <div className="mt-0.5 w-5 h-5 rounded-full bg-[color:var(--theme-accent)]/25 border border-[color:var(--theme-accent)]/55 flex items-center justify-center shrink-0">
+      <Icon className="w-3 h-3 text-[color:var(--theme-accent)]" />
     </div>
     <div className="flex items-center gap-2">
       {step !== undefined && (
-        <span className="text-[#C19A6B] text-xs font-bold">{step}.</span>
+        <span className="text-[color:var(--theme-accent)] text-xs font-bold">{step}.</span>
       )}
       <span className="text-white/80 text-sm leading-snug">{text}</span>
     </div>
@@ -79,7 +79,7 @@ const AuthLayout = ({
       />
 
       {/* Gradiente overlay */}
-      <div className="absolute inset-0 bg-linear-to-br from-[#154734]/88 via-[#154734]/72 to-[#0a2218]/92" />
+      <div className="absolute inset-0 bg-linear-to-br from-[color:var(--theme-primary)]/88 via-[color:var(--theme-primary)]/72 to-[color:color-mix(in_srgb,var(--theme-primary)_60%,black)]/92" />
 
       {/* Hojas decorativas */}
       <div className="absolute -bottom-20 -right-20 opacity-[0.07] pointer-events-none">
@@ -94,8 +94,8 @@ const AuthLayout = ({
 
         {/* Eyebrow */}
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-px bg-[#C19A6B]" />
-          <span className="text-[#C19A6B] text-xs font-semibold uppercase tracking-[0.25em]">
+          <div className="w-10 h-px bg-[color:var(--theme-accent)]" />
+          <span className="text-[color:var(--theme-accent)] text-xs font-semibold uppercase tracking-[0.25em]">
             {eyebrow}
           </span>
         </div>
@@ -124,7 +124,7 @@ const AuthLayout = ({
         {/* Separador decorativo */}
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-white/15" />
-          <Leaf className="w-4 h-4 text-[#C19A6B] opacity-50" />
+          <Leaf className="w-4 h-4 text-[color:var(--theme-accent)] opacity-50" />
           <div className="flex-1 h-px bg-white/15" />
         </div>
       </div>

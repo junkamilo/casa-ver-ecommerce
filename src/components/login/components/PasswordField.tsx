@@ -21,17 +21,17 @@ const PasswordField = ({ register, errors }: PasswordFieldProps) => {
         Contraseña
       </label>
       <div className="relative">
-        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#154734]/50" />
+        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[color:var(--theme-primary)]/50" />
         <input
           {...register("password")}
           type={show ? "text" : "password"}
           placeholder="••••••••"
-          className="w-full pl-10 pr-11 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C19A6B]/40 focus:border-[#C19A6B] focus:bg-white transition-all placeholder:text-gray-400"
+          className="w-full pl-10 pr-11 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[color:var(--theme-accent)]/40 focus:border-[color:var(--theme-accent)] focus:bg-white transition-all placeholder:text-gray-400"
         />
         <button
           type="button"
           onClick={() => setShow((s) => !s)}
-          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#154734] transition-colors"
+          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[color:var(--theme-primary)] transition-colors"
           tabIndex={-1}
         >
           {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -45,7 +45,7 @@ const PasswordField = ({ register, errors }: PasswordFieldProps) => {
       <div className="pt-1 flex justify-end">
         <Link
           href="/recuperar"
-          className="inline-flex items-center gap-1 text-xs font-semibold text-[#C19A6B] hover:text-[#a67c52] underline underline-offset-2 transition-colors"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-[color:var(--theme-accent)] hover:text-[color:color-mix(in_srgb,var(--theme-accent)_85%,black)] underline underline-offset-2 transition-colors"
         >
           ¿Olvidaste tu contraseña?
         </Link>

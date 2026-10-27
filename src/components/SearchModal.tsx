@@ -183,7 +183,7 @@ const SearchModal = ({ onClose }: SearchModalProps) => {
                   </h3>
                   <button
                     onClick={handleClearRecent}
-                    className="text-xs sm:text-sm text-muted-foreground hover:text-[#154734] transition-colors p-1 touch-target active:scale-90"
+                    className="text-xs sm:text-sm text-muted-foreground hover:text-[color:var(--theme-primary)] transition-colors p-1 touch-target active:scale-90"
                   >
                     Borrar
                   </button>
@@ -287,12 +287,12 @@ const ProductSearchCard = ({
             onError={() => setImageFailed(true)}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-[#154734]">
+          <div className="w-full h-full flex items-center justify-center bg-[color:var(--theme-primary)]">
             <Package className="w-8 h-8 text-white/60" />
           </div>
         )}
       </div>
-      <h4 className="text-xs sm:text-sm font-medium text-foreground line-clamp-2 group-hover:text-[#154734] transition-colors">
+      <h4 className="text-xs sm:text-sm font-medium text-foreground line-clamp-2 group-hover:text-[color:var(--theme-primary)] transition-colors">
         {item.name}
       </h4>
       <p className="text-xs sm:text-sm font-semibold text-foreground mt-1">

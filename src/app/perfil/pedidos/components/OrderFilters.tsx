@@ -14,8 +14,8 @@ export function OrderFilters({ active, onChange, countByStatus }: OrderFiltersPr
             onClick={() => onChange(filter)}
             className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
               isActive
-                ? "bg-[#154734] text-white border-[#154734]"
-                : "bg-white text-gray-600 border-gray-200 hover:border-[#154734]/50"
+                ? "bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] border-[color:var(--theme-primary)]"
+                : "bg-white text-gray-600 border-gray-200 hover:border-[color:var(--theme-primary)]/50"
             }`}
           >
             {ORDER_FILTER_LABELS[filter]}

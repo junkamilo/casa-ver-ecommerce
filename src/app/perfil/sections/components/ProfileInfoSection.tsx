@@ -63,12 +63,12 @@ function EditableField({
             value={inputValue}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
-            className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10 outline-none text-sm"
+            className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:border-[color:var(--theme-accent)] focus:ring-4 focus:ring-[color:var(--theme-accent)]/10 outline-none text-sm"
           />
           <button
             onClick={onSave}
             disabled={saving}
-            className="px-4 py-2.5 bg-[#154734] text-white rounded-lg text-sm font-medium hover:bg-[#103a2a] transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2.5 bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] rounded-lg text-sm font-medium hover:bg-[color:color-mix(in_srgb,var(--theme-primary)_80%,black)] transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Guardar
@@ -87,7 +87,7 @@ function EditableField({
           </span>
           <button
             onClick={onStart}
-            className="text-[#154734] hover:bg-[#154734]/10 p-1.5 rounded-lg transition-colors"
+            className="text-[color:var(--theme-primary)] hover:bg-[color:var(--theme-primary)]/10 p-1.5 rounded-lg transition-colors"
           >
             <Edit3 className="w-4 h-4" />
           </button>
@@ -121,7 +121,7 @@ export function ProfileInfoSection({ profile, onProfileUpdate, onToast }: Profil
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
       {/* Banner */}
-      <div className="bg-gradient-to-r from-[#154734] to-[#1a5c43] p-6 sm:p-8">
+      <div className="bg-gradient-to-r from-[color:var(--theme-primary)] to-[color:color-mix(in_srgb,var(--theme-primary)_88%,white)] p-6 sm:p-8">
         <div className="flex items-center gap-4">
           {profile.image ? (
             <Image
@@ -132,7 +132,7 @@ export function ProfileInfoSection({ profile, onProfileUpdate, onToast }: Profil
               className="rounded-full border-4 border-white/30 shadow-lg"
             />
           ) : (
-            <div className="w-[72px] h-[72px] rounded-full bg-[#C19A6B] text-white flex items-center justify-center font-bold text-2xl border-4 border-white/30 shadow-lg">
+            <div className="w-[72px] h-[72px] rounded-full bg-[color:var(--theme-accent)] text-[color:var(--theme-accent-fg)] flex items-center justify-center font-bold text-2xl border-4 border-white/30 shadow-lg">
               {profile.name?.charAt(0).toUpperCase() ?? "U"}
             </div>
           )}
@@ -257,7 +257,7 @@ export function ProfileInfoSection({ profile, onProfileUpdate, onToast }: Profil
             {!showPasswordSection ? (
               <button
                 onClick={showPasswordForm}
-                className="flex items-center gap-2 text-sm font-medium text-[#154734] hover:underline"
+                className="flex items-center gap-2 text-sm font-medium text-[color:var(--theme-primary)] hover:underline"
               >
                 <Lock className="w-4 h-4" />
                 Cambiar contraseña
@@ -277,7 +277,7 @@ export function ProfileInfoSection({ profile, onProfileUpdate, onToast }: Profil
                       onChange={(e) => setCurrentPassword(e.target.value)}
                       placeholder="Contraseña actual"
                       required
-                      className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10 outline-none text-sm pr-10"
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-[color:var(--theme-accent)] focus:ring-4 focus:ring-[color:var(--theme-accent)]/10 outline-none text-sm pr-10"
                     />
                     <button
                       type="button"
@@ -296,7 +296,7 @@ export function ProfileInfoSection({ profile, onProfileUpdate, onToast }: Profil
                       placeholder="Nueva contraseña (mín. 6 caracteres)"
                       required
                       minLength={6}
-                      className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10 outline-none text-sm pr-10"
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-[color:var(--theme-accent)] focus:ring-4 focus:ring-[color:var(--theme-accent)]/10 outline-none text-sm pr-10"
                     />
                     <button
                       type="button"
@@ -314,7 +314,7 @@ export function ProfileInfoSection({ profile, onProfileUpdate, onToast }: Profil
                     placeholder="Confirmar nueva contraseña"
                     required
                     minLength={6}
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-[#C19A6B] focus:ring-4 focus:ring-[#C19A6B]/10 outline-none text-sm"
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-[color:var(--theme-accent)] focus:ring-4 focus:ring-[color:var(--theme-accent)]/10 outline-none text-sm"
                   />
                 </div>
 
@@ -322,7 +322,7 @@ export function ProfileInfoSection({ profile, onProfileUpdate, onToast }: Profil
                   <button
                     type="submit"
                     disabled={savingPassword}
-                    className="px-5 py-2.5 bg-[#154734] text-white rounded-lg text-sm font-medium hover:bg-[#103a2a] transition-colors disabled:opacity-50 flex items-center gap-2"
+                    className="px-5 py-2.5 bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] rounded-lg text-sm font-medium hover:bg-[color:color-mix(in_srgb,var(--theme-primary)_80%,black)] transition-colors disabled:opacity-50 flex items-center gap-2"
                   >
                     {savingPassword ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

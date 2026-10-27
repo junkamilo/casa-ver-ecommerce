@@ -22,7 +22,7 @@ export default function BankTransferInfo({ bank, order }: BankTransferInfoProps)
       {order && (
         <div className="flex justify-between text-sm border-t border-gray-100 pt-4">
           <span className="text-gray-500">Monto a transferir</span>
-          <span className="font-bold text-[#154734]">
+          <span className="font-bold text-[color:var(--theme-primary)]">
             ${Number(order.total).toLocaleString("es-CO")} COP
           </span>
         </div>

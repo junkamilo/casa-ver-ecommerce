@@ -9,7 +9,7 @@ export default function SuccessStep() {
       </div>
 
       <h2
-        className="text-2xl sm:text-3xl font-bold text-[#154734] mb-3"
+        className="text-2xl sm:text-3xl font-bold text-[color:var(--theme-primary)] mb-3"
         style={{ fontFamily: "Georgia, serif" }}
       >
         ¡Contraseña actualizada!
@@ -21,7 +21,7 @@ export default function SuccessStep() {
 
       <Link
         href="/login"
-        className="inline-flex items-center justify-center gap-2 w-full bg-[#154734] hover:bg-[#0f3829] text-white font-semibold py-3.5 text-sm rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98]"
+        className="inline-flex items-center justify-center gap-2 w-full bg-[color:var(--theme-primary)] hover:bg-[color:color-mix(in_srgb,var(--theme-primary)_80%,black)] text-[color:var(--theme-primary-fg)] font-semibold py-3.5 text-sm rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98]"
       >
         <LogIn className="w-4 h-4" />
         Iniciar sesión

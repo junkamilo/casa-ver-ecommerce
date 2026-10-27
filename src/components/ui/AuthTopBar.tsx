@@ -21,7 +21,7 @@ const AuthTopBar = ({
         className="rounded-full"
       />
       <span
-        className="text-xl font-bold text-[#154734]"
+        className="text-xl font-bold text-[color:var(--theme-primary)]"
         style={{ fontFamily: "Georgia, serif" }}
       >
         Casa Verde
@@ -29,7 +29,7 @@ const AuthTopBar = ({
     </div>
     <Link
       href={backHref}
-      className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-[#154734] transition-colors"
+      className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-[color:var(--theme-primary)] transition-colors"
     >
       <ArrowLeft className="w-4 h-4" />
       {backLabel}

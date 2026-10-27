@@ -43,7 +43,7 @@ export default function CollectionClient({ products, filterOptions, setItemKey, 
       <div className="flex flex-col w-full animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500 fill-mode-both">
         <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 lg:p-10 shadow-[0_20px_50px_-15px_rgba(21,71,52,0.05)] border border-gray-100/80 relative overflow-hidden isolate transition-all duration-500">
 
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#C19A6B]/5 to-transparent rounded-bl-full pointer-events-none -z-10" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[color:var(--theme-accent)]/5 to-transparent rounded-bl-full pointer-events-none -z-10" />
 
           <ProductToolbar
             count={sortedProducts.length}

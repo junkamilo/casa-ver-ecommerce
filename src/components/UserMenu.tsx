@@ -31,7 +31,7 @@ const UserMenu = ({ onClose }: UserMenuProps) => {
       {/* Cargando */}
       {status === "loading" && (
         <div className="flex justify-center py-8">
-          <Loader2 className="w-8 h-8 animate-spin text-[#154734]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[color:var(--theme-primary)]" />
         </div>
       )}
 
@@ -54,13 +54,13 @@ const UserMenu = ({ onClose }: UserMenuProps) => {
             Iniciar sesión con Google
           </button>
           <Link href="/registro" onClick={onClose}
-            className="w-full flex items-center justify-center gap-2 bg-[#154734] hover:bg-[#1a5c43] text-white font-medium py-3 px-4 rounded-lg transition-all active:scale-95 text-sm sm:text-base"
+            className="w-full flex items-center justify-center gap-2 bg-[color:var(--theme-primary)] hover:bg-[color:color-mix(in_srgb,var(--theme-primary)_88%,white)] text-[color:var(--theme-primary-fg)] font-medium py-3 px-4 rounded-lg transition-all active:scale-95 text-sm sm:text-base"
           >
             <User className="w-4 h-4 shrink-0" />
             Registrarse
           </Link>
           <Link href="/login" onClick={onClose}
-            className="w-full flex items-center justify-center gap-2 border-2 border-[#154734] text-[#154734] hover:bg-[#154734]/5 font-medium py-3 px-4 rounded-lg transition-all active:scale-95 text-sm sm:text-base"
+            className="w-full flex items-center justify-center gap-2 border-2 border-[color:var(--theme-primary)] text-[color:var(--theme-primary)] hover:bg-[color:var(--theme-primary)]/5 font-medium py-3 px-4 rounded-lg transition-all active:scale-95 text-sm sm:text-base"
           >
             <LogOut className="w-4 h-4 shrink-0 rotate-180" />
             Iniciar sesión
@@ -75,7 +75,7 @@ const UserMenu = ({ onClose }: UserMenuProps) => {
             {session.user?.image ? (
               <Image src={session.user.image} alt="Avatar" width={40} height={40} className="rounded-full border border-gray-200" />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-[#154734] text-white flex items-center justify-center font-bold text-lg">
+              <div className="w-10 h-10 rounded-full bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] flex items-center justify-center font-bold text-lg">
                 {session.user?.name?.charAt(0).toUpperCase() || "U"}
               </div>
             )}
@@ -87,15 +87,15 @@ const UserMenu = ({ onClose }: UserMenuProps) => {
 
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <Link href="/perfil?section=pedidos" onClick={onClose}
-              className="flex flex-col items-center justify-center gap-2 border border-border rounded-lg py-3 hover:bg-muted/50 hover:border-[#C19A6B] transition-all text-foreground font-medium group text-sm"
+              className="flex flex-col items-center justify-center gap-2 border border-border rounded-lg py-3 hover:bg-muted/50 hover:border-[color:var(--theme-accent)] transition-all text-foreground font-medium group text-sm"
             >
-              <Package className="w-5 h-5 text-muted-foreground group-hover:text-[#C19A6B]" />
+              <Package className="w-5 h-5 text-muted-foreground group-hover:text-[color:var(--theme-accent)]" />
               Mis Pedidos
             </Link>
             <Link href="/perfil" onClick={onClose}
-              className="flex flex-col items-center justify-center gap-2 border border-border rounded-lg py-3 hover:bg-muted/50 hover:border-[#C19A6B] transition-all text-foreground font-medium group text-sm"
+              className="flex flex-col items-center justify-center gap-2 border border-border rounded-lg py-3 hover:bg-muted/50 hover:border-[color:var(--theme-accent)] transition-all text-foreground font-medium group text-sm"
             >
-              <User className="w-5 h-5 text-muted-foreground group-hover:text-[#C19A6B]" />
+              <User className="w-5 h-5 text-muted-foreground group-hover:text-[color:var(--theme-accent)]" />
               Mi Perfil
             </Link>
           </div>

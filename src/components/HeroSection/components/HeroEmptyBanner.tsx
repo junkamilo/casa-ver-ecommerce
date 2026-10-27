@@ -20,14 +20,14 @@ export function HeroEmptyBanner({ previewLayout }: HeroEmptyBannerProps) {
     <section
       className={layout.section.replace(/\bbg-black\b/, "")}
       style={{
-        background: `linear-gradient(145deg, ${BRAND_GREEN} 0%, #0f3a28 45%, #1a5c40 100%)`,
+        background: `linear-gradient(145deg, ${BRAND_GREEN} 0%, color-mix(in srgb, ${BRAND_GREEN} 75%, black) 45%, color-mix(in srgb, ${BRAND_GREEN} 85%, white) 100%)`,
       }}
     >
       <div
         className="absolute inset-0 z-0 opacity-30"
         aria-hidden
         style={{
-          background: `radial-gradient(ellipse 80% 60% at 20% 0%, ${BRAND_GOLD}33, transparent 55%)`,
+          background: `radial-gradient(ellipse 80% 60% at 20% 0%, color-mix(in srgb, ${BRAND_GOLD} 20%, transparent), transparent 55%)`,
         }}
       />
       <div
@@ -41,7 +41,7 @@ export function HeroEmptyBanner({ previewLayout }: HeroEmptyBannerProps) {
         className="absolute bottom-0 left-0 right-0 h-px z-10 opacity-60"
         aria-hidden
         style={{
-          background: `linear-gradient(90deg, transparent, ${BRAND_GOLD}55, transparent)`,
+          background: `linear-gradient(90deg, transparent, color-mix(in srgb, ${BRAND_GOLD} 33%, transparent), transparent)`,
         }}
       />
 

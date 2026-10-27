@@ -48,7 +48,7 @@ export default function TiendaPagination({ page, totalPages, totalProducts, filt
         {prevHref ? (
           <Link
             href={prevHref}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-[#154734] hover:bg-[#154734]/5 hover:border-[#154734]/30 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-[color:var(--theme-primary)] hover:bg-[color:var(--theme-primary)]/5 hover:border-[color:var(--theme-primary)]/30 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" aria-hidden />
             Anterior
@@ -66,7 +66,7 @@ export default function TiendaPagination({ page, totalPages, totalProducts, filt
               <li>
                 <Link
                   href={`/tienda${buildQuery(filters, 1)}`}
-                  className="min-w-9 h-9 inline-flex items-center justify-center rounded-lg text-sm font-semibold text-gray-600 hover:bg-[#154734]/10"
+                  className="min-w-9 h-9 inline-flex items-center justify-center rounded-lg text-sm font-semibold text-gray-600 hover:bg-[color:var(--theme-primary)]/10"
                 >
                   1
                 </Link>
@@ -82,7 +82,7 @@ export default function TiendaPagination({ page, totalPages, totalProducts, filt
             <li key={n}>
               {n === page ? (
                 <span
-                  className="min-w-9 h-9 inline-flex items-center justify-center rounded-lg text-sm font-bold bg-[#154734] text-white shadow-sm"
+                  className="min-w-9 h-9 inline-flex items-center justify-center rounded-lg text-sm font-bold bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] shadow-sm"
                   aria-current="page"
                 >
                   {n}
@@ -90,7 +90,7 @@ export default function TiendaPagination({ page, totalPages, totalProducts, filt
               ) : (
                 <Link
                   href={`/tienda${buildQuery(filters, n)}`}
-                  className="min-w-9 h-9 inline-flex items-center justify-center rounded-lg text-sm font-semibold text-gray-600 hover:bg-[#154734]/10"
+                  className="min-w-9 h-9 inline-flex items-center justify-center rounded-lg text-sm font-semibold text-gray-600 hover:bg-[color:var(--theme-primary)]/10"
                 >
                   {n}
                 </Link>
@@ -107,7 +107,7 @@ export default function TiendaPagination({ page, totalPages, totalProducts, filt
               <li>
                 <Link
                   href={`/tienda${buildQuery(filters, totalPages)}`}
-                  className="min-w-9 h-9 inline-flex items-center justify-center rounded-lg text-sm font-semibold text-gray-600 hover:bg-[#154734]/10"
+                  className="min-w-9 h-9 inline-flex items-center justify-center rounded-lg text-sm font-semibold text-gray-600 hover:bg-[color:var(--theme-primary)]/10"
                 >
                   {totalPages}
                 </Link>
@@ -119,7 +119,7 @@ export default function TiendaPagination({ page, totalPages, totalProducts, filt
         {nextHref ? (
           <Link
             href={nextHref}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-[#154734] hover:bg-[#154734]/5 hover:border-[#154734]/30 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-[color:var(--theme-primary)] hover:bg-[color:var(--theme-primary)]/5 hover:border-[color:var(--theme-primary)]/30 transition-colors"
           >
             Siguiente
             <ChevronRight className="w-4 h-4" aria-hidden />

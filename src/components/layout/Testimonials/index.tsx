@@ -66,20 +66,20 @@ const Testimonials = ({ comments }: Props) => {
 
         <div
           className="absolute inset-0 opacity-[0.05] pointer-events-none"
-          style={{ backgroundImage: "radial-gradient(#C19A6B 1.5px, transparent 1.5px)", backgroundSize: "32px 32px" }}
+          style={{ backgroundImage: "radial-gradient(var(--theme-accent) 1.5px, transparent 1.5px)", backgroundSize: "32px 32px" }}
         />
 
         <div className="flex flex-col items-center justify-center mb-8 sm:mb-10 lg:mb-14 px-4 sm:px-6 lg:px-8 relative z-20">
           <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-            <span className="h-px w-6 sm:w-8 lg:w-12 bg-gradient-to-r from-transparent to-[#C19A6B]" />
-            <span className="text-[8px] sm:text-[9px] lg:text-[10px] font-black tracking-[0.3em] uppercase text-[#C19A6B] flex items-center gap-1 sm:gap-1.5 drop-shadow-sm">
+            <span className="h-px w-6 sm:w-8 lg:w-12 bg-gradient-to-r from-transparent to-[color:var(--theme-accent)]" />
+            <span className="text-[8px] sm:text-[9px] lg:text-[10px] font-black tracking-[0.3em] uppercase text-[color:var(--theme-accent)] flex items-center gap-1 sm:gap-1.5 drop-shadow-sm">
               <Sparkles className="w-3 h-3" />
               Comunidad
             </span>
-            <span className="h-px w-6 sm:w-8 lg:w-12 bg-gradient-to-l from-transparent to-[#C19A6B]" />
+            <span className="h-px w-6 sm:w-8 lg:w-12 bg-gradient-to-l from-transparent to-[color:var(--theme-accent)]" />
           </div>
           <h2
-            className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl text-[#154734] text-center tracking-tight leading-[1.1]"
+            className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl text-[color:var(--theme-primary)] text-center tracking-tight leading-[1.1]"
             style={{ fontFamily: "Georgia, serif" }}
           >
             Lo que dicen nuestras clientas
@@ -88,19 +88,19 @@ const Testimonials = ({ comments }: Props) => {
 
         {items.length === 0 ? (
           <div className="relative z-20 mx-3 sm:mx-auto sm:max-w-sm">
-            <div className="flex flex-col items-center justify-center py-7 sm:py-12 px-5 sm:px-8 text-center bg-white border border-[#C19A6B]/20 rounded-2xl sm:rounded-[2rem] shadow-sm overflow-hidden">
+            <div className="flex flex-col items-center justify-center py-7 sm:py-12 px-5 sm:px-8 text-center bg-white border border-[color:var(--theme-accent)]/20 rounded-2xl sm:rounded-[2rem] shadow-sm overflow-hidden">
               {/* Decoración de fondo */}
               <div
                 className="absolute inset-0 opacity-[0.03] pointer-events-none"
-                style={{ backgroundImage: "radial-gradient(#154734 1px, transparent 1px)", backgroundSize: "20px 20px" }}
+                style={{ backgroundImage: "radial-gradient(var(--theme-primary) 1px, transparent 1px)", backgroundSize: "20px 20px" }}
               />
-              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#F2EAE0] flex items-center justify-center mb-4 sm:mb-5 shadow-inner border border-[#C19A6B]/15 relative z-10">
-                <MessageSquare className="w-5 sm:w-6 h-5 sm:h-6 text-[#C19A6B]" strokeWidth={1.2} />
+              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#F2EAE0] flex items-center justify-center mb-4 sm:mb-5 shadow-inner border border-[color:var(--theme-accent)]/15 relative z-10">
+                <MessageSquare className="w-5 sm:w-6 h-5 sm:h-6 text-[color:var(--theme-accent)]" strokeWidth={1.2} />
               </div>
-              <p className="text-sm sm:text-base text-[#154734] font-light leading-relaxed relative z-10" style={{ fontFamily: "Georgia, serif" }}>
+              <p className="text-sm sm:text-base text-[color:var(--theme-primary)] font-light leading-relaxed relative z-10" style={{ fontFamily: "Georgia, serif" }}>
                 Aún no hay comentarios para esta prenda.
               </p>
-              <span className="block mt-2 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.25em] text-[#C19A6B] relative z-10">
+              <span className="block mt-2 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.25em] text-[color:var(--theme-accent)] relative z-10">
                 ¡Sé la primera en opinar!
               </span>
             </div>
@@ -130,7 +130,7 @@ const Testimonials = ({ comments }: Props) => {
               {items.map((_, index) => (
                 <div
                   key={index}
-                  className="w-1.5 h-1.5 rounded-full bg-[#C19A6B]/30"
+                  className="w-1.5 h-1.5 rounded-full bg-[color:var(--theme-accent)]/30"
                 />
               ))}
             </div>

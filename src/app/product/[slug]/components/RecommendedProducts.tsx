@@ -20,7 +20,7 @@ export default function RecommendedProducts({ products }: Props) {
 
         {/* Título — mismo estilo que BestSellers / NewCollection */}
         <h2
-          className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-light text-[#154734] leading-tight mb-6 sm:mb-8 md:mb-10 lg:mb-12"
+          className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-light text-[color:var(--theme-primary)] leading-tight mb-6 sm:mb-8 md:mb-10 lg:mb-12"
           style={{ fontFamily: "Georgia, serif" }}
         >
           Sugerencias{" "}
@@ -34,9 +34,9 @@ export default function RecommendedProducts({ products }: Props) {
             aria-label="Anterior"
             className={`
               hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20
-              w-11 h-11 rounded-full bg-white border border-[#154734]/15 shadow-md
-              items-center justify-center text-[#154734]
-              hover:bg-[#154734] hover:text-white hover:border-[#154734]
+              w-11 h-11 rounded-full bg-white border border-[color:var(--theme-primary)]/15 shadow-md
+              items-center justify-center text-[color:var(--theme-primary)]
+              hover:bg-[color:var(--theme-primary)] hover:text-[color:var(--theme-primary-fg)] hover:border-[color:var(--theme-primary)]
               transition-all duration-200 active:scale-90
               ${canScrollLeft ? "opacity-100 -translate-x-5" : "opacity-0 pointer-events-none"}
             `}
@@ -50,9 +50,9 @@ export default function RecommendedProducts({ products }: Props) {
             aria-label="Siguiente"
             className={`
               hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-20
-              w-11 h-11 rounded-full bg-white border border-[#154734]/15 shadow-md
-              items-center justify-center text-[#154734]
-              hover:bg-[#154734] hover:text-white hover:border-[#154734]
+              w-11 h-11 rounded-full bg-white border border-[color:var(--theme-primary)]/15 shadow-md
+              items-center justify-center text-[color:var(--theme-primary)]
+              hover:bg-[color:var(--theme-primary)] hover:text-[color:var(--theme-primary-fg)] hover:border-[color:var(--theme-primary)]
               transition-all duration-200 active:scale-90
               ${canScrollRight ? "opacity-100 translate-x-5" : "opacity-0 pointer-events-none"}
             `}

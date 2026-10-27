@@ -95,7 +95,7 @@ export default function CheckoutPage() {
 
       <form
         onSubmit={onSubmit}
-        className="min-h-screen lg:h-dvh bg-[#FAFAFA] flex flex-col lg:flex-row font-sans selection:bg-[#C19A6B]/20"
+        className="min-h-screen lg:h-dvh bg-[#FAFAFA] flex flex-col lg:flex-row font-sans selection:bg-[color:var(--theme-accent)]/20"
       >
         <CheckoutMobileSummary
           items={items}
@@ -116,7 +116,7 @@ export default function CheckoutPage() {
           <div
             className="absolute inset-0 opacity-[0.02] pointer-events-none"
             style={{
-              backgroundImage: "radial-gradient(#154734 1px, transparent 1px)",
+              backgroundImage: "radial-gradient(var(--theme-primary) 1px, transparent 1px)",
               backgroundSize: "40px 40px",
             }}
           />

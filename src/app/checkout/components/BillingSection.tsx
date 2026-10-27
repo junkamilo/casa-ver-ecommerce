@@ -13,12 +13,12 @@ const BillingSection = () => (
       className={`${SECTION_TITLE_CLS} mb-4 sm:mb-6`}
       style={{ fontFamily: "Georgia, serif" }}
     >
-      <User className="w-4 sm:w-5 h-4 sm:h-5 text-[#C19A6B] shrink-0" />
+      <User className="w-4 sm:w-5 h-4 sm:h-5 text-[color:var(--theme-accent)] shrink-0" />
       Facturación
     </h2>
-    <div className="flex items-center gap-3 px-4 py-3.5 bg-[#154734]/4 border border-[#154734]/10 rounded-xl">
-      <CheckCircle2 className="w-4 h-4 text-[#154734] shrink-0" />
-      <span className="text-sm text-[#154734] font-medium">
+    <div className="flex items-center gap-3 px-4 py-3.5 bg-[color:var(--theme-primary)]/4 border border-[color:var(--theme-primary)]/10 rounded-xl">
+      <CheckCircle2 className="w-4 h-4 text-[color:var(--theme-primary)] shrink-0" />
+      <span className="text-sm text-[color:var(--theme-primary)] font-medium">
         Misma dirección de envío
       </span>
     </div>

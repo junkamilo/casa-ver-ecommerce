@@ -29,21 +29,21 @@ export default function ReviewsSection({
         {/* Dot pattern */}
         <div
           className="absolute inset-0 opacity-[0.05] pointer-events-none"
-          style={{ backgroundImage: "radial-gradient(#C19A6B 1.5px, transparent 1.5px)", backgroundSize: "32px 32px" }}
+          style={{ backgroundImage: "radial-gradient(var(--theme-accent) 1.5px, transparent 1.5px)", backgroundSize: "32px 32px" }}
         />
 
         {/* Header */}
         <div className="flex flex-col items-center justify-center mb-8 sm:mb-10 lg:mb-14 px-4 sm:px-6 lg:px-8 relative z-20">
           <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-            <span className="h-px w-6 sm:w-8 lg:w-12 bg-linear-to-r from-transparent to-[#C19A6B]" />
-            <span className="text-[8px] sm:text-[9px] lg:text-[10px] font-black tracking-[0.3em] uppercase text-[#C19A6B] flex items-center gap-1 sm:gap-1.5 drop-shadow-sm">
+            <span className="h-px w-6 sm:w-8 lg:w-12 bg-linear-to-r from-transparent to-[color:var(--theme-accent)]" />
+            <span className="text-[8px] sm:text-[9px] lg:text-[10px] font-black tracking-[0.3em] uppercase text-[color:var(--theme-accent)] flex items-center gap-1 sm:gap-1.5 drop-shadow-sm">
               <Sparkles className="w-3 h-3" />
               Comunidad
             </span>
-            <span className="h-px w-6 sm:w-8 lg:w-12 bg-linear-to-l from-transparent to-[#C19A6B]" />
+            <span className="h-px w-6 sm:w-8 lg:w-12 bg-linear-to-l from-transparent to-[color:var(--theme-accent)]" />
           </div>
           <h2
-            className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl text-[#154734] text-center tracking-tight leading-[1.1] uppercase"
+            className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl text-[color:var(--theme-primary)] text-center tracking-tight leading-[1.1] uppercase"
             style={{ fontFamily: "Georgia, serif" }}
           >
             Opiniones de nuestras clientas
@@ -52,7 +52,7 @@ export default function ReviewsSection({
 
         {/* Two-column layout */}
         <div className="relative z-10 px-4 sm:px-8 lg:px-12 xl:px-16">
-          <div className="flex flex-col md:flex-row gap-8 md:gap-0 bg-white rounded-2xl sm:rounded-4xl shadow-[0_20px_60px_-15px_rgba(21,71,52,0.2)] border border-[#C19A6B]/10 overflow-hidden">
+          <div className="flex flex-col md:flex-row gap-8 md:gap-0 bg-white rounded-2xl sm:rounded-4xl shadow-[0_20px_60px_-15px_rgba(21,71,52,0.2)] border border-[color:var(--theme-accent)]/10 overflow-hidden">
 
             {/* Left — Form */}
             <div className="flex-1 p-6 sm:p-10 lg:p-12 flex items-start justify-center">
@@ -70,7 +70,7 @@ export default function ReviewsSection({
             {/* Right — Reviews list */}
             <div className="flex-1 p-6 sm:p-10 lg:p-12 flex flex-col">
               <h3
-                className="text-xl sm:text-2xl lg:text-3xl font-light text-[#154734] mb-6 tracking-tight"
+                className="text-xl sm:text-2xl lg:text-3xl font-light text-[color:var(--theme-primary)] mb-6 tracking-tight"
                 style={{ fontFamily: "Georgia, serif" }}
               >
                 Lo que dicen nuestras clientas
@@ -78,13 +78,13 @@ export default function ReviewsSection({
 
               {reviews.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center flex-1">
-                  <div className="w-12 h-12 rounded-full bg-[#F2EAE0] flex items-center justify-center mb-4 shadow-inner border border-[#C19A6B]/15">
-                    <MessageSquare className="w-5 h-5 text-[#C19A6B]" strokeWidth={1.2} />
+                  <div className="w-12 h-12 rounded-full bg-[#F2EAE0] flex items-center justify-center mb-4 shadow-inner border border-[color:var(--theme-accent)]/15">
+                    <MessageSquare className="w-5 h-5 text-[color:var(--theme-accent)]" strokeWidth={1.2} />
                   </div>
-                  <p className="text-sm text-[#154734] font-light" style={{ fontFamily: "Georgia, serif" }}>
+                  <p className="text-sm text-[color:var(--theme-primary)] font-light" style={{ fontFamily: "Georgia, serif" }}>
                     Aún no hay comentarios para esta prenda.
                   </p>
-                  <span className="block mt-2 text-[9px] font-black uppercase tracking-[0.25em] text-[#C19A6B]">
+                  <span className="block mt-2 text-[9px] font-black uppercase tracking-[0.25em] text-[color:var(--theme-accent)]">
                     ¡Sé la primera en opinar!
                   </span>
                 </div>
@@ -94,11 +94,11 @@ export default function ReviewsSection({
                     <div key={index}>
                       <div className="flex items-start gap-3 py-4">
                         {/* Avatar */}
-                        <div className="w-10 h-10 rounded-full overflow-hidden bg-[#154734] shrink-0 border-2 border-white shadow-sm flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-[color:var(--theme-primary)] shrink-0 border-2 border-white shadow-sm flex items-center justify-center">
                           {review.avatarUrl ? (
                             <Image src={review.avatarUrl} alt={review.name} width={40} height={40} className="w-full h-full object-cover" />
                           ) : (
-                            <span className="text-[#C19A6B] font-bold text-sm" style={{ fontFamily: "Georgia, serif" }}>
+                            <span className="text-[color:var(--theme-accent)] font-bold text-sm" style={{ fontFamily: "Georgia, serif" }}>
                               {review.name.charAt(0)}
                             </span>
                           )}
@@ -107,7 +107,7 @@ export default function ReviewsSection({
                         <div className="flex-1 min-w-0">
                           {/* Name + date */}
                           <div className="flex items-center justify-between gap-2 mb-1">
-                            <span className="text-sm font-bold text-[#154734] truncate">{review.name}</span>
+                            <span className="text-sm font-bold text-[color:var(--theme-primary)] truncate">{review.name}</span>
                             {review.date && (
                               <span className="text-[10px] text-gray-400 font-medium shrink-0">{review.date}</span>
                             )}

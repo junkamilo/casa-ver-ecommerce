@@ -47,8 +47,8 @@ function SizeGuideModal({ onClose }: { onClose: () => void }) {
         {/* Header fijo */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-2">
-            <Ruler className="w-4 h-4 text-[#154734]" />
-            <h2 className="text-sm font-bold uppercase tracking-[0.18em] text-[#154734]">
+            <Ruler className="w-4 h-4 text-[color:var(--theme-primary)]" />
+            <h2 className="text-sm font-bold uppercase tracking-[0.18em] text-[color:var(--theme-primary)]">
               Guía de Tallas
             </h2>
           </div>
@@ -90,7 +90,7 @@ function SizeGuideModal({ onClose }: { onClose: () => void }) {
                 href="https://wa.me/573022457432"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#154734] font-semibold hover:text-[#C19A6B] transition-colors"
+                className="text-[color:var(--theme-primary)] font-semibold hover:text-[color:var(--theme-accent)] transition-colors"
               >
                 302 245 74 32
               </a>
@@ -115,7 +115,7 @@ export default function SizeSelector({ availableSizes, selectedSize, onSelect }:
           </span>
           <div className="flex items-center gap-3">
             <span
-              className="text-base sm:text-lg text-[#154734] italic font-medium transition-all duration-300"
+              className="text-base sm:text-lg text-[color:var(--theme-primary)] italic font-medium transition-all duration-300"
               style={{ fontFamily: "Georgia, serif" }}
             >
               {selectedSize || "Elige una talla"}
@@ -141,10 +141,10 @@ export default function SizeSelector({ availableSizes, selectedSize, onSelect }:
                   onClick={() => onSelect(size)}
                   aria-label={`Seleccionar talla ${size}`}
                   aria-pressed={isSelected}
-                  className={`shrink-0 min-w-14 h-12 px-4 rounded-xl border text-sm font-bold tracking-widest transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C19A6B] focus-visible:ring-offset-2 ${
+                  className={`shrink-0 min-w-14 h-12 px-4 rounded-xl border text-sm font-bold tracking-widest transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--theme-accent)] focus-visible:ring-offset-2 ${
                     isSelected
-                      ? "border-[#154734] bg-[#154734] text-white shadow-md scale-105"
-                      : "border-gray-200 bg-white text-gray-600 hover:border-[#C19A6B] hover:text-[#154734] hover:shadow-sm"
+                      ? "border-[color:var(--theme-primary)] bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] shadow-md scale-105"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-[color:var(--theme-accent)] hover:text-[color:var(--theme-primary)] hover:shadow-sm"
                   }`}
                 >
                   {size}
@@ -158,11 +158,11 @@ export default function SizeSelector({ availableSizes, selectedSize, onSelect }:
         <button
           type="button"
           onClick={() => setShowGuide(true)}
-          className="mt-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#154734]/70 hover:text-[#154734] transition-colors duration-200 group"
+          className="mt-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--theme-primary)]/70 hover:text-[color:var(--theme-primary)] transition-colors duration-200 group"
         >
-          <Ruler className="w-3.5 h-3.5 text-[#C19A6B] group-hover:scale-110 transition-transform duration-200" />
+          <Ruler className="w-3.5 h-3.5 text-[color:var(--theme-accent)] group-hover:scale-110 transition-transform duration-200" />
           Guía de tallas
-          <span className="h-px flex-1 bg-[#C19A6B]/30 group-hover:bg-[#C19A6B]/60 transition-colors duration-200 hidden sm:block" />
+          <span className="h-px flex-1 bg-[color:var(--theme-accent)]/30 group-hover:bg-[color:var(--theme-accent)]/60 transition-colors duration-200 hidden sm:block" />
         </button>
       </div>
 

@@ -12,8 +12,8 @@ export function EditIcon({ size = 24, className = "", ...props }: IconProps) {
       className={cn(
         "inline-flex items-center justify-center rounded-lg p-1.5",
         "text-gray-400 transition-colors",
-        "hover:bg-[#C19A6B]/10 hover:text-[#C19A6B]",
-        "group-hover:bg-[#C19A6B]/10 group-hover:text-[#C19A6B]",
+        "hover:bg-[color:var(--theme-accent)]/10 hover:text-[color:var(--theme-accent)]",
+        "group-hover:bg-[color:var(--theme-accent)]/10 group-hover:text-[color:var(--theme-accent)]",
         className,
       )}
     >

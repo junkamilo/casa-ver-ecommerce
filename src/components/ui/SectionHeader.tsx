@@ -10,9 +10,9 @@ interface SectionHeaderProps {
   href: string;
   /** Texto del enlace (default: "VER TODO") */
   linkText?: string;
-  /** Clase Tailwind para el color del texto (ej. "text-[#154734]") */
+  /** Clase Tailwind para el color del texto (ej. "text-[color:var(--theme-primary)]") */
   textColor?: string;
-  /** Clase Tailwind para el color de hover (ej. "hover:text-[#C19A6B]") */
+  /** Clase Tailwind para el color de hover (ej. "hover:text-[color:var(--theme-accent)]") */
   hoverColor?: string;
   /** Clase Tailwind para el color de la fuente (ej. "font-light") */
   fontClass?: string;
@@ -23,8 +23,8 @@ const SectionHeader = ({
   titleItalic,
   href,
   linkText = "VER TODO",
-  textColor = "text-[#154734]",
-  hoverColor = "hover:text-[#C19A6B]",
+  textColor = "text-[color:var(--theme-primary)]",
+  hoverColor = "hover:text-[color:var(--theme-accent)]",
   fontClass = "font-light",
 }: SectionHeaderProps) => {
   return (

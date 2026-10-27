@@ -130,7 +130,6 @@ export const posWebhookPayloadSchema = z.object({
   eventId: z.string().min(1),
   event: z.string().min(1),
   // shipping: cambió la geografía o el precio de envíos (id = "shipping"); se vuelve a sincronizar todo.
-  // admin: cambiaron los administradores de la web en el POS (id = "admin"); la web limpia su lista en memoria.
   // color: se creó, cambió o desactivó un color del catálogo (id = colorId); se vuelve a leer GET /colors.
   // review: cambiaron las reseñas publicadas de un producto (id = slug); se expira su caché de reseñas.
   // popup: cambió un popup publicitario (id = HOME, PRODUCT o CHECKOUT); se expira el popup de esa ubicación.
@@ -143,14 +142,14 @@ export const posWebhookPayloadSchema = z.object({
     "promotion",
     "order",
     "shipping",
-    "admin",
     "review",
     "popup",
     "banner",
+    "theme",
   ]),
   id: z.string().min(1),
   // status_changed: el POS cambió el estado logístico de un pedido (id = número del pedido).
-  action: z.enum(["upserted", "removed", "stock_changed", "status_changed"]),
+  action: z.enum(["upserted", "removed", "stock_changed", "status_changed", "activated", "deactivated"]),
   occurredAt: z.string().optional(),
 });
 

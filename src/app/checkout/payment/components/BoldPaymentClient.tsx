@@ -126,7 +126,7 @@ export default function BoldPaymentClient({
         </div>
         <div>
           <p
-            className="text-2xl text-[#154734] mb-2"
+            className="text-2xl text-[color:var(--theme-primary)] mb-2"
             style={{ fontFamily: "Georgia, serif" }}
           >
             Tu pago está en proceso
@@ -140,13 +140,13 @@ export default function BoldPaymentClient({
         <div className="flex flex-col gap-3 w-full max-w-xs">
           <Link
             href={`/pago/resultado?reference_id=${orderRef}`}
-            className="w-full px-8 py-3 bg-[#154734] text-white rounded-full text-sm font-semibold text-center"
+            className="w-full px-8 py-3 bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] rounded-full text-sm font-semibold text-center"
           >
             Verificar estado del pago
           </Link>
           <Link
             href={pedidosHref}
-            className="w-full px-8 py-3 border border-[#154734] text-[#154734] rounded-full text-sm font-semibold text-center"
+            className="w-full px-8 py-3 border border-[color:var(--theme-primary)] text-[color:var(--theme-primary)] rounded-full text-sm font-semibold text-center"
           >
             Ver mis pedidos
           </Link>
@@ -159,11 +159,11 @@ export default function BoldPaymentClient({
     <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center gap-6 px-4">
       {/* Loader visual mientras Bold inicializa */}
       <div className="flex flex-col items-center gap-4 text-center">
-        <div className="w-16 h-16 rounded-full bg-[#154734]/10 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-[#154734] animate-spin" />
+        <div className="w-16 h-16 rounded-full bg-[color:var(--theme-primary)]/10 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-[color:var(--theme-primary)] animate-spin" />
         </div>
         <p
-          className="text-2xl text-[#154734]"
+          className="text-2xl text-[color:var(--theme-primary)]"
           style={{ fontFamily: "Georgia, serif" }}
         >
           Abriendo pasarela de pago

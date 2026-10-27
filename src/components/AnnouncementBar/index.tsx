@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Truck } from "lucide-react";
+import { Sparkles, Truck } from "lucide-react";
 import { MARQUEE_COPIES, STYLES } from "./constants";
 import { AnnouncementItem } from "./components";
 import type { Announcement } from "./types";
@@ -22,6 +22,7 @@ export default function AnnouncementBar() {
   const [threshold, setThreshold] = useState(FREE_SHIPPING_MIN_NET_SUBTOTAL);
   // El POS puede pausar el envío gratis: entonces no se anuncia.
   const [freeShippingActive, setFreeShippingActive] = useState(true);
+  const [seasonalText, setSeasonalText] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -38,26 +39,64 @@ export default function AnnouncementBar() {
       .catch(() => {
         // Mantener fallback local si la API no responde
       });
+
+    fetch("/api/theme/active")
+      .then((res) => (res.ok ? res.json() : null))
+      .then(
+        (payload: {
+          data?: {
+            slug?: string;
+            announcementBar?: { enabled?: boolean; text?: string | null };
+          };
+        } | null) => {
+          if (!active) return;
+          const theme = payload?.data;
+          if (
+            theme &&
+            theme.slug !== "casa-verde" &&
+            theme.announcementBar?.enabled &&
+            theme.announcementBar.text?.trim()
+          ) {
+            setSeasonalText(theme.announcementBar.text.trim());
+          }
+        },
+      )
+      .catch(() => {
+        // Mantener anuncio de envío por defecto
+      });
+
     return () => {
       active = false;
     };
   }, []);
 
-  const announcements = useMemo(
-    () => [buildFreeShippingAnnouncement(threshold)],
-    [threshold]
-  );
+  const announcements = useMemo(() => {
+    const items: Announcement[] = [];
+    if (seasonalText) {
+      items.push({ text: seasonalText, icon: Sparkles });
+    }
+    if (freeShippingActive) {
+      items.push(buildFreeShippingAnnouncement(threshold));
+    }
+    return items;
+  }, [freeShippingActive, seasonalText, threshold]);
 
-  if (!freeShippingActive) return null;
+  if (announcements.length === 0) return null;
 
   return (
     <div className="relative w-full select-none">
-      {/* Línea de borde superior: degradado dorado que respira */}
-      <div className="animate-border-shimmer h-[1.5px] bg-linear-to-r from-transparent via-[#C19A6B] to-transparent" />
+      {/* Línea de borde superior: degradado de acento que respira */}
+      <div
+        className="animate-border-shimmer h-[1.5px]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, transparent, var(--theme-accent, #C19A6B), transparent)",
+        }}
+      />
 
       {/* Barra principal */}
       <div
-        className="relative bg-[#154734] py-2.5 sm:py-3 flex items-center overflow-hidden group"
+        className="relative bg-[color:var(--theme-primary)] py-2.5 sm:py-3 flex items-center overflow-hidden group"
         style={STYLES.barBackground}
       >
         {/* Efecto Aurora */}
@@ -73,8 +112,20 @@ export default function AnnouncementBar() {
         />
 
         {/* Fades laterales */}
-        <div className="absolute inset-y-0 left-0 w-20 sm:w-36 z-10 pointer-events-none bg-linear-to-r from-[#154734] via-[#154734]/90 to-transparent" />
-        <div className="absolute inset-y-0 right-0 w-20 sm:w-36 z-10 pointer-events-none bg-linear-to-l from-[#154734] via-[#154734]/90 to-transparent" />
+        <div
+          className="absolute inset-y-0 left-0 w-20 sm:w-36 z-10 pointer-events-none"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, var(--theme-primary, #154734), transparent)",
+          }}
+        />
+        <div
+          className="absolute inset-y-0 right-0 w-20 sm:w-36 z-10 pointer-events-none"
+          style={{
+            backgroundImage:
+              "linear-gradient(to left, var(--theme-primary, #154734), transparent)",
+          }}
+        />
 
         {/* Marquee */}
         <div
@@ -97,7 +148,13 @@ export default function AnnouncementBar() {
       </div>
 
       {/* Línea de borde inferior */}
-      <div className="h-px bg-linear-to-r from-transparent via-[#C19A6B]/35 to-transparent" />
+      <div
+        className="h-px"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, transparent, color-mix(in srgb, var(--theme-accent, #C19A6B) 35%, transparent), transparent)",
+        }}
+      />
     </div>
   );
 }

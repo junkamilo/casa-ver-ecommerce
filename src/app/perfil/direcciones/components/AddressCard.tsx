@@ -20,25 +20,25 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault, disabled 
     <div
       className={`relative bg-white rounded-2xl border transition-all duration-200 p-5 group ${
         address.isDefault
-          ? "border-[#154734]/30 shadow-[0_0_0_1px_#154734]/10 shadow-md"
-          : "border-gray-100 shadow-sm hover:border-[#C19A6B]/40 hover:shadow-md"
+          ? "border-[color:var(--theme-primary)]/30 shadow-[0_0_0_1px_#154734]/10 shadow-md"
+          : "border-gray-100 shadow-sm hover:border-[color:var(--theme-accent)]/40 hover:shadow-md"
       }`}
     >
       {/* Predeterminada badge */}
       {address.isDefault && (
-        <span className="absolute top-4 right-4 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-[#154734] bg-[#154734]/10 px-2.5 py-1 rounded-full">
-          <Star className="w-2.5 h-2.5 fill-[#154734]" />
+        <span className="absolute top-4 right-4 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-[color:var(--theme-primary)] bg-[color:var(--theme-primary)]/10 px-2.5 py-1 rounded-full">
+          <Star className="w-2.5 h-2.5 fill-[color:var(--theme-primary)]" />
           Predeterminada
         </span>
       )}
 
       {/* Contenido */}
       <div className="flex items-start gap-3 pr-28">
-        <div className="p-2 rounded-xl bg-[#154734]/8 shrink-0 mt-0.5">
-          <MapPin className="w-4 h-4 text-[#154734]" />
+        <div className="p-2 rounded-xl bg-[color:var(--theme-primary)]/8 shrink-0 mt-0.5">
+          <MapPin className="w-4 h-4 text-[color:var(--theme-primary)]" />
         </div>
         <div className="min-w-0">
-          <p className="font-semibold text-[#154734] text-sm leading-tight">
+          <p className="font-semibold text-[color:var(--theme-primary)] text-sm leading-tight">
             {address.fullName}
           </p>
           <p className="text-xs text-gray-500 mt-0.5">{address.phone}</p>
@@ -60,7 +60,7 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault, disabled 
           <button
             onClick={handleSetDefault}
             disabled={isLoading}
-            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-[#154734] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-[color:var(--theme-primary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {actionLoading === "default" ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -76,7 +76,7 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault, disabled 
           <button
             onClick={() => onEdit(address)}
             disabled={isLoading}
-            className="p-2 text-gray-400 hover:text-[#154734] hover:bg-[#154734]/8 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 text-gray-400 hover:text-[color:var(--theme-primary)] hover:bg-[color:var(--theme-primary)]/8 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             title="Editar"
           >
             <Pencil className="w-3.5 h-3.5" />

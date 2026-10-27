@@ -58,8 +58,8 @@ export default function ProductGallery({
                 aria-label={isVideo ? `Ver video de ${productName}` : `Ver imagen ${i + 1} de ${productName}`}
                 className={`relative w-14 h-16 sm:w-20 sm:h-28 lg:w-full lg:h-28 xl:h-32 shrink-0 snap-center lg:snap-none rounded-lg sm:rounded-xl overflow-hidden transition-all duration-500 ease-out focus:outline-none touch-target active:scale-90 ${
                   isSelected
-                    ? "ring-2 ring-[#C19A6B] ring-offset-2 opacity-100 shadow-sm"
-                    : "opacity-55 grayscale-30 hover:opacity-100 hover:grayscale-0 hover:shadow-md hover:ring-1 hover:ring-[#C19A6B]/40 hover:ring-offset-1"
+                    ? "ring-2 ring-[color:var(--theme-accent)] ring-offset-2 opacity-100 shadow-sm"
+                    : "opacity-55 grayscale-30 hover:opacity-100 hover:grayscale-0 hover:shadow-md hover:ring-1 hover:ring-[color:var(--theme-accent)]/40 hover:ring-offset-1"
                 }`}
               >
                 {isVideo ? (
@@ -74,7 +74,7 @@ export default function ProductGallery({
                     />
                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                       <div className="w-6 sm:w-7 h-6 sm:h-7 rounded-full bg-white/90 flex items-center justify-center shadow-md">
-                        <Play className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-[#154734] fill-[#154734] ml-0.5" />
+                        <Play className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-[color:var(--theme-primary)] fill-[color:var(--theme-primary)] ml-0.5" />
                       </div>
                     </div>
                   </>
@@ -165,14 +165,14 @@ export default function ProductGallery({
               <button
                 onClick={(e) => { e.stopPropagation(); goTo(currentIndex - 1); }}
                 aria-label="Medio anterior"
-                className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-20 w-10 sm:w-9 h-10 sm:h-9 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 flex items-center justify-center shadow-md transition-all duration-200 hover:bg-[#154734] hover:border-[#154734] hover:text-white text-gray-700 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 touch-target active:scale-90"
+                className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-20 w-10 sm:w-9 h-10 sm:h-9 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 flex items-center justify-center shadow-md transition-all duration-200 hover:bg-[color:var(--theme-primary)] hover:border-[color:var(--theme-primary)] hover:text-[color:var(--theme-primary-fg)] text-gray-700 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 touch-target active:scale-90"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); goTo(currentIndex + 1); }}
                 aria-label="Siguiente medio"
-                className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-20 w-10 sm:w-9 h-10 sm:h-9 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 flex items-center justify-center shadow-md transition-all duration-200 hover:bg-[#154734] hover:border-[#154734] hover:text-white text-gray-700 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 touch-target active:scale-90"
+                className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-20 w-10 sm:w-9 h-10 sm:h-9 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 flex items-center justify-center shadow-md transition-all duration-200 hover:bg-[color:var(--theme-primary)] hover:border-[color:var(--theme-primary)] hover:text-[color:var(--theme-primary-fg)] text-gray-700 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 touch-target active:scale-90"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -183,7 +183,7 @@ export default function ProductGallery({
             <button
               onClick={(e) => { e.stopPropagation(); setIsZoomOpen(true); }}
               aria-label="Ampliar imagen"
-              className="absolute top-2 sm:top-3 right-2 sm:right-3 z-20 w-10 sm:w-9 h-10 sm:h-9 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 flex items-center justify-center shadow-md transition-all duration-200 hover:bg-[#154734] hover:border-[#154734] hover:text-white text-gray-600 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 touch-target active:scale-90"
+              className="absolute top-2 sm:top-3 right-2 sm:right-3 z-20 w-10 sm:w-9 h-10 sm:h-9 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 flex items-center justify-center shadow-md transition-all duration-200 hover:bg-[color:var(--theme-primary)] hover:border-[color:var(--theme-primary)] hover:text-[color:var(--theme-primary-fg)] text-gray-600 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 touch-target active:scale-90"
             >
               <Maximize2 className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
             </button>

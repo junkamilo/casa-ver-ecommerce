@@ -39,12 +39,12 @@ export default async function TiendaPage({
     await getAllProducts(filters);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAFAFA] selection:bg-[#C19A6B]/20 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-[#FAFAFA] selection:bg-[color:var(--theme-accent)]/20 relative overflow-hidden">
 
       <div
         className="fixed inset-0 opacity-[0.02] pointer-events-none z-0"
         style={{
-          backgroundImage: "radial-gradient(#154734 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(var(--theme-primary) 1px, transparent 1px)",
           backgroundSize: "40px 40px",
         }}
       />

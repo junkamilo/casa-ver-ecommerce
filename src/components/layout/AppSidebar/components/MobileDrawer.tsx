@@ -22,11 +22,11 @@ export function MobileDrawer({
         className="fixed inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onToggle}
       />
-      <aside className="relative w-72 max-w-[85vw] bg-[#154734] flex flex-col h-full shadow-2xl animate-in slide-in-from-left duration-300">
+      <aside className="relative w-72 max-w-[85vw] bg-[color:var(--theme-primary)] flex flex-col h-full shadow-2xl animate-in slide-in-from-left duration-300">
 
         {/* Header */}
         <div className="p-5 border-b border-white/10 flex items-center gap-3">
-          <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border-2 border-[#C19A6B]/60 shadow-md">
+          <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border-2 border-[color:var(--theme-accent)]/60 shadow-md">
             <Image src={logoIcon} alt="Casa Verde" fill className="object-cover" priority />
           </div>
           <div className="flex flex-col flex-1 min-w-0">
@@ -36,7 +36,7 @@ export function MobileDrawer({
             >
               Casa Verde
             </span>
-            <span className="text-[10px] font-bold tracking-widest text-[#C19A6B] uppercase mt-1">
+            <span className="text-[10px] font-bold tracking-widest text-[color:var(--theme-accent)] uppercase mt-1">
               {brandSubtitle}
             </span>
           </div>
@@ -57,9 +57,9 @@ export function MobileDrawer({
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-white/10 bg-[#0f3626]/50 space-y-3">
+        <div className="p-4 border-t border-white/10 bg-[color:color-mix(in_srgb,var(--theme-primary)_80%,black)]/50 space-y-3">
           <div className="flex items-center gap-3 px-1">
-            <div className="w-9 h-9 rounded-full bg-[#C19A6B] flex items-center justify-center font-bold text-white text-sm shrink-0 shadow-sm ring-2 ring-[#C19A6B]/30">
+            <div className="w-9 h-9 rounded-full bg-[color:var(--theme-accent)] flex items-center justify-center font-bold text-[color:var(--theme-accent-fg)] text-sm shrink-0 shadow-sm ring-2 ring-[color:var(--theme-accent)]/30">
               {userInitial}
             </div>
             <div className="flex-1 min-w-0">
@@ -70,7 +70,7 @@ export function MobileDrawer({
           {extraLink && (
             <Link
               href={extraLink.href}
-              className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#C19A6B]/20 hover:bg-[#C19A6B]/30 border border-[#C19A6B]/30 hover:border-[#C19A6B]/50 rounded-lg text-xs font-medium text-[#C19A6B] transition-all"
+              className="flex items-center justify-center gap-2 w-full py-2.5 bg-[color:var(--theme-accent)]/20 hover:bg-[color:var(--theme-accent)]/30 border border-[color:var(--theme-accent)]/30 hover:border-[color:var(--theme-accent)]/50 rounded-lg text-xs font-medium text-[color:var(--theme-accent)] transition-all"
             >
               <ShieldCheck className="w-4 h-4" />
               {extraLink.label}

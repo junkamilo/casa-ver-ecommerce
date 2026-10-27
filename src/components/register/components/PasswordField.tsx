@@ -30,7 +30,7 @@ const PasswordField = ({ register, errors }: PasswordFieldProps) => {
         Contraseña
       </label>
       <div className="relative">
-        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#154734]/50" />
+        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[color:var(--theme-primary)]/50" />
         <input
           {...rest}
           type={show ? "text" : "password"}
@@ -40,12 +40,12 @@ const PasswordField = ({ register, errors }: PasswordFieldProps) => {
             setValue(e.target.value);
             onChange(e);
           }}
-          className="w-full pl-10 pr-11 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C19A6B]/40 focus:border-[#C19A6B] focus:bg-white transition-all placeholder:text-gray-400"
+          className="w-full pl-10 pr-11 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[color:var(--theme-accent)]/40 focus:border-[color:var(--theme-accent)] focus:bg-white transition-all placeholder:text-gray-400"
         />
         <button
           type="button"
           onClick={() => setShow((s) => !s)}
-          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#154734] transition-colors"
+          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[color:var(--theme-primary)] transition-colors"
           tabIndex={-1}
         >
           {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -59,12 +59,12 @@ const PasswordField = ({ register, errors }: PasswordFieldProps) => {
             const ok = rule.test(value);
             return (
               <li key={rule.label} className="flex items-center gap-1.5">
-                <span className={`flex-shrink-0 w-3.5 h-3.5 rounded-full flex items-center justify-center transition-colors ${ok ? "bg-[#154734]" : "bg-gray-200"}`}>
+                <span className={`flex-shrink-0 w-3.5 h-3.5 rounded-full flex items-center justify-center transition-colors ${ok ? "bg-[color:var(--theme-primary)]" : "bg-gray-200"}`}>
                   <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 10 10">
                     <path d="M2 5l2.5 2.5 3.5-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </span>
-                <span className={`text-[11px] transition-colors ${ok ? "text-[#154734] font-medium" : "text-gray-400"}`}>
+                <span className={`text-[11px] transition-colors ${ok ? "text-[color:var(--theme-primary)] font-medium" : "text-gray-400"}`}>
                   {rule.label}
                 </span>
               </li>

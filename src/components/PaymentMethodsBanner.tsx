@@ -3,7 +3,7 @@ import LogoAddi from "@/assets/LogoAddi.png";
 
 
 
-const BRAND_GOLD  = "#C19A6B";
+const BRAND_GOLD  = "var(--theme-accent)";
 
 const PaymentMethodsBanner = () => {
   return (
@@ -13,12 +13,12 @@ const PaymentMethodsBanner = () => {
         <div className="flex flex-col items-center justify-center mb-12 sm:mb-14 md:mb-16 text-center">
           <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
             <span className="h-px w-6 sm:w-8" style={{ background: BRAND_GOLD }} />
-            <span className="text-[9px] sm:text-[10px] font-black tracking-[0.38em] uppercase text-[#C19A6B]">
+            <span className="text-[9px] sm:text-[10px] font-black tracking-[0.38em] uppercase text-[color:var(--theme-accent)]">
               Beneficios Casa Verde
             </span>
             <span className="h-px w-6 sm:w-8" style={{ background: BRAND_GOLD }} />
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-[#154734] leading-none" style={{ fontFamily: "Georgia, serif" }}>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-[color:var(--theme-primary)] leading-none" style={{ fontFamily: "Georgia, serif" }}>
             Facilidades de Pago
           </h2>
         </div>
@@ -40,7 +40,7 @@ const PaymentMethodsBanner = () => {
                 />
               </div>
 
-              <h3 className="text-2xl sm:text-3xl lg:text-4xl text-[#154734] leading-[1.1] mb-4 sm:mb-5" style={{ fontFamily: "Georgia, serif" }}>
+              <h3 className="text-2xl sm:text-3xl lg:text-4xl text-[color:var(--theme-primary)] leading-[1.1] mb-4 sm:mb-5" style={{ fontFamily: "Georgia, serif" }}>
                 <span className="block font-bold mb-1">Compra Ahora,</span>
                 <span className="block italic">Paga Después.</span>
               </h3>

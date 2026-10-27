@@ -10,7 +10,7 @@ const SubmitButton = ({ isLoading, label, icon: Icon }: SubmitButtonProps) => (
   <button
     type="submit"
     disabled={isLoading}
-    className="w-full bg-[#154734] hover:bg-[#0f3829] disabled:opacity-70 text-white font-semibold py-3.5 text-sm rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 mt-2"
+    className="w-full bg-[color:var(--theme-primary)] hover:bg-[color:color-mix(in_srgb,var(--theme-primary)_80%,black)] disabled:opacity-70 text-[color:var(--theme-primary-fg)] font-semibold py-3.5 text-sm rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 mt-2"
   >
     {isLoading ? (
       <Loader2 className="w-4 h-4 animate-spin" />

@@ -53,7 +53,7 @@ export function NavGroup({ item, collapsed }: NavItemProps) {
           {item.children.map((child) => {
             const childClass = `flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs font-medium transition-all ${
               child.isActive
-                ? "bg-white text-[#154734] shadow-sm"
+                ? "bg-white text-[color:var(--theme-primary)] shadow-sm"
                 : "text-white/70 hover:bg-white/10 hover:text-white"
             }`;
             return (

@@ -3,7 +3,8 @@ import type { Announcement } from "../types";
 
 /**
  * Anuncios estáticos de respaldo. El texto de envío gratis en la barra
- * se construye en runtime con las condiciones de envío gratis del POS (/api/shipping-config).
+ * se construye en runtime con las condiciones de envío gratis del POS (/api/shipping-config)
+ * y el anuncio estacional activo del tema (/api/theme/active).
  */
 export const ANNOUNCEMENTS: Announcement[] = [
   {
@@ -25,11 +26,11 @@ export const DELAY_FACTORS = {
 export const STYLES = {
   barBackground: {
     backgroundImage:
-      "linear-gradient(135deg, #154734 0%, #1a5a42 40%, #154734 70%, #122e25 100%)",
+      "linear-gradient(135deg, var(--theme-primary, #154734) 0%, color-mix(in srgb, var(--theme-primary, #154734) 84%, white) 40%, var(--theme-primary, #154734) 70%, color-mix(in srgb, var(--theme-primary, #154734) 82%, black) 100%)",
   },
   aurora: {
     backgroundImage:
-      "radial-gradient(ellipse 60% 80% at 20% 50%, #1d6b4f 0%, transparent 70%), radial-gradient(ellipse 50% 70% at 80% 50%, #0f3a2a 0%, transparent 70%)",
+      "radial-gradient(ellipse 60% 80% at 20% 50%, color-mix(in srgb, var(--theme-primary, #154734) 72%, white) 0%, transparent 70%), radial-gradient(ellipse 50% 70% at 80% 50%, color-mix(in srgb, var(--theme-primary, #154734) 75%, black) 0%, transparent 70%)",
   },
   shineSweep: {
     background:
@@ -43,7 +44,7 @@ export const STYLES = {
     textShadow: "0 0 20px rgba(193,154,107,0.15)",
   },
   diamond: {
-    background: "#C19A6B",
+    background: "var(--theme-accent, #C19A6B)",
     transform: "rotate(45deg)",
     boxShadow: "0 0 6px 1px rgba(193,154,107,0.6)",
   },

@@ -29,8 +29,8 @@ const BestSellersClient = ({ items: initialItems }: BestSellersClientProps) => {
           titleItalic="vendidos"
           href="/collections/mas-vendidos"
           linkText="VER TODO"
-          textColor="text-[#154734]"
-          hoverColor="hover:text-[#C19A6B]"
+          textColor="text-[color:var(--theme-primary)]"
+          hoverColor="hover:text-[color:var(--theme-accent)]"
           fontClass="font-light"
         />
 
@@ -46,9 +46,9 @@ const BestSellersClient = ({ items: initialItems }: BestSellersClientProps) => {
               aria-label="Anterior"
               className={`
                 hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20
-                w-11 h-11 rounded-full bg-white border border-[#154734]/15 shadow-md
-                items-center justify-center text-[#154734]
-                hover:bg-[#154734] hover:text-white hover:border-[#154734]
+                w-11 h-11 rounded-full bg-white border border-[color:var(--theme-primary)]/15 shadow-md
+                items-center justify-center text-[color:var(--theme-primary)]
+                hover:bg-[color:var(--theme-primary)] hover:text-[color:var(--theme-primary-fg)] hover:border-[color:var(--theme-primary)]
                 transition-all duration-200 active:scale-90
                 ${canScrollLeft ? "opacity-100 -translate-x-5" : "opacity-0 pointer-events-none"}
               `}
@@ -62,9 +62,9 @@ const BestSellersClient = ({ items: initialItems }: BestSellersClientProps) => {
               aria-label="Siguiente"
               className={`
                 hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-20
-                w-11 h-11 rounded-full bg-white border border-[#154734]/15 shadow-md
-                items-center justify-center text-[#154734]
-                hover:bg-[#154734] hover:text-white hover:border-[#154734]
+                w-11 h-11 rounded-full bg-white border border-[color:var(--theme-primary)]/15 shadow-md
+                items-center justify-center text-[color:var(--theme-primary)]
+                hover:bg-[color:var(--theme-primary)] hover:text-[color:var(--theme-primary-fg)] hover:border-[color:var(--theme-primary)]
                 transition-all duration-200 active:scale-90
                 ${canScrollRight ? "opacity-100 translate-x-5" : "opacity-0 pointer-events-none"}
               `}
@@ -92,12 +92,12 @@ const BestSellersClient = ({ items: initialItems }: BestSellersClientProps) => {
                     className="
                       flex flex-col items-center justify-center gap-3
                       w-full min-h-70 md:min-h-80
-                      rounded-2xl border-2 border-dashed border-[#154734]/20
-                      bg-[#154734]/3 hover:bg-[#154734]/7
-                      text-[#154734] transition-all duration-200 group px-4
+                      rounded-2xl border-2 border-dashed border-[color:var(--theme-primary)]/20
+                      bg-[color:var(--theme-primary)]/3 hover:bg-[color:var(--theme-primary)]/7
+                      text-[color:var(--theme-primary)] transition-all duration-200 group px-4
                     "
                   >
-                    <div className="w-12 h-12 rounded-full border-2 border-[#154734]/30 flex items-center justify-center group-hover:bg-[#154734] group-hover:border-[#154734] transition-all duration-200">
+                    <div className="w-12 h-12 rounded-full border-2 border-[color:var(--theme-primary)]/30 flex items-center justify-center group-hover:bg-[color:var(--theme-primary)] group-hover:border-[color:var(--theme-primary)] transition-all duration-200">
                       <ArrowRight className="w-5 h-5 group-hover:text-white transition-colors duration-200" />
                     </div>
                     <span className="text-sm font-semibold text-center leading-snug">

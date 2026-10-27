@@ -103,7 +103,7 @@ const SocialProofPopup = () => {
         sm:left-4 sm:right-auto sm:bottom-6 md:bottom-8
         sm:w-[calc(100vw-32px)] md:max-w-sm lg:max-w-md
         bg-white
-        border-l-[4px] sm:border-l-[6px] border-[#154734]
+        border-l-[4px] sm:border-l-[6px] border-[color:var(--theme-primary)]
         shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)]
         rounded-r-lg rounded-tl-sm rounded-bl-sm
         transition-all duration-500 ease-out
@@ -143,20 +143,20 @@ const SocialProofPopup = () => {
 
         <div className="flex-1 min-w-0 flex flex-col justify-center gap-1 sm:gap-1.5">
           <div className="flex items-center gap-1 text-[11px] sm:text-xs text-gray-500">
-            <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#154734] shrink-0" />
+            <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[color:var(--theme-primary)] shrink-0" />
             <span className="truncate">
-              <span className="font-bold text-[#154734]">{currentItem.name}</span> de {currentItem.location}
+              <span className="font-bold text-[color:var(--theme-primary)]">{currentItem.name}</span> de {currentItem.location}
             </span>
           </div>
 
-          <p className="text-xs sm:text-sm font-bold text-gray-900 leading-tight line-clamp-1 group-hover:text-[#154734] transition-colors">
+          <p className="text-xs sm:text-sm font-bold text-gray-900 leading-tight line-clamp-1 group-hover:text-[color:var(--theme-primary)] transition-colors">
             Compró {currentItem.productName}
           </p>
 
           <p className="text-[9px] sm:text-[10px] font-medium text-gray-400 flex items-center gap-1">
             <span className="relative flex h-2 w-2 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C19A6B] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#C19A6B]"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[color:var(--theme-accent)] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[color:var(--theme-accent)]"></span>
             </span>
             {currentItem.timeAgo}
           </p>

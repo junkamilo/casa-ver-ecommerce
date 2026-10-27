@@ -21,7 +21,7 @@ const ProductCarousel = ({ config, items }: ProductCarouselProps) => {
       : "top-10 left-0 -translate-x-1/4";
 
   return (
-    <section className={`relative w-full py-12 sm:py-16 md:py-20 lg:py-20 px-4 sm:px-6 md:px-8 lg:px-12 ${config.bgColor} border-t border-[#C19A6B]/10 overflow-hidden`}>
+    <section className={`relative w-full py-12 sm:py-16 md:py-20 lg:py-20 px-4 sm:px-6 md:px-8 lg:px-12 ${config.bgColor} border-t border-[color:var(--theme-accent)]/10 overflow-hidden`}>
       <div
         className={`absolute ${decorPositionClass} text-[120px] sm:text-[160px] md:text-[200px] font-black leading-none text-black/[0.02] pointer-events-none select-none`}
         style={{ fontFamily: "Georgia, serif" }}
@@ -34,8 +34,8 @@ const ProductCarousel = ({ config, items }: ProductCarouselProps) => {
           titleItalic={config.titleItalic}
           href={config.linkHref}
           linkText={config.linkText}
-          textColor="text-[#154734]"
-          hoverColor="hover:text-[#C19A6B]"
+          textColor="text-[color:var(--theme-primary)]"
+          hoverColor="hover:text-[color:var(--theme-accent)]"
           fontClass="font-light"
         />
 

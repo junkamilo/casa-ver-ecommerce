@@ -18,15 +18,15 @@ const AuthFormHeader = ({
   <div className={`mb-7 ${align === "center" ? "text-center" : "text-center lg:text-left"}`}>
     {Icon && (
       <div
-        className={`w-14 h-14 rounded-full bg-[#154734]/10 flex items-center justify-center mb-4 ${
+        className={`w-14 h-14 rounded-full bg-[color:var(--theme-primary)]/10 flex items-center justify-center mb-4 ${
           align === "center" ? "mx-auto" : "mx-auto lg:mx-0"
         }`}
       >
-        <Icon className="w-7 h-7 text-[#154734]" />
+        <Icon className="w-7 h-7 text-[color:var(--theme-primary)]" />
       </div>
     )}
     <h2
-      className="text-2xl sm:text-3xl font-bold text-[#154734] mb-1.5"
+      className="text-2xl sm:text-3xl font-bold text-[color:var(--theme-primary)] mb-1.5"
       style={{ fontFamily: "Georgia, serif" }}
     >
       {title}

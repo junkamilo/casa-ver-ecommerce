@@ -1,4 +1,4 @@
-export const BRAND_GREEN = "#154734";
+export const BRAND_GREEN = "var(--theme-primary)";
 export const BG_COLOR = "#FAFAFA";
 export const FONT_SERIF = "Georgia, serif";
 

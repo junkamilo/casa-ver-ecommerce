@@ -9,7 +9,7 @@ export default function CollectionHero({ title }: CollectionHeroProps) {
     <div
       className="w-full flex items-center justify-center rounded-2xl sm:rounded-3xl shadow-[0_8px_32px_-8px_rgba(21,71,52,0.45)] overflow-hidden
                  py-5 sm:py-0 sm:h-28"
-      style={{ background: "#154734" }}
+      style={{ background: "var(--theme-primary)" }}
     >
       <h1
         className="text-white font-semibold uppercase text-center px-4

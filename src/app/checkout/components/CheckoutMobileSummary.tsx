@@ -64,7 +64,7 @@ export default function CheckoutMobileSummary({
 
       {/* Barra superior fija — sticky al hacer scroll */}
       <div
-        className={`lg:hidden fixed inset-x-0 top-0 z-[110] bg-[#154734] shadow-[0_4px_24px_rgba(0,0,0,0.18)] pt-[env(safe-area-inset-top,0px)] border-b border-white/10 transition-transform duration-300 ${
+        className={`lg:hidden fixed inset-x-0 top-0 z-[110] bg-[color:var(--theme-primary)] shadow-[0_4px_24px_rgba(0,0,0,0.18)] pt-[env(safe-area-inset-top,0px)] border-b border-white/10 transition-transform duration-300 ${
           hidden ? "-translate-y-full" : "motion-safe:animate-order-bar-slide-up motion-reduce:animate-none"
         }`}
       >
@@ -77,14 +77,14 @@ export default function CheckoutMobileSummary({
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="w-full flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 min-h-[5.5rem] active:bg-[#103a2a] transition-colors"
+          className="w-full flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 min-h-[5.5rem] active:bg-[color:color-mix(in_srgb,var(--theme-primary)_80%,black)] transition-colors"
           aria-expanded={open}
           aria-label={`Ver pedido: ${itemLabel}, total ${total.toLocaleString(LOCALE)} pesos`}
         >
           <div className="flex items-center gap-3 min-w-0 text-left">
             <div className="relative shrink-0 w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center">
               <ShoppingBag className="w-5 h-5 text-white" />
-              <span className="absolute -top-1 -right-1 bg-[#C19A6B] text-white text-[9px] font-black min-w-[1.125rem] h-[1.125rem] px-0.5 rounded-full flex items-center justify-center ring-2 ring-[#154734]">
+              <span className="absolute -top-1 -right-1 bg-[color:var(--theme-accent)] text-[color:var(--theme-accent-fg)] text-[9px] font-black min-w-[1.125rem] h-[1.125rem] px-0.5 rounded-full flex items-center justify-center ring-2 ring-[color:var(--theme-primary)]">
                 {totalItems}
               </span>
             </div>
@@ -137,8 +137,8 @@ export default function CheckoutMobileSummary({
             <div className="w-10 h-1 rounded-full bg-gray-200" />
           </div>
           <div className="flex items-center justify-between px-5 pb-3 border-b border-gray-100 shrink-0">
-            <h3 className="text-xs font-black uppercase tracking-[0.25em] text-[#154734] flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-[#C19A6B]" />
+            <h3 className="text-xs font-black uppercase tracking-[0.25em] text-[color:var(--theme-primary)] flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-[color:var(--theme-accent)]" />
               Tu selección
             </h3>
             <button
@@ -163,12 +163,12 @@ export default function CheckoutMobileSummary({
                   >
                     <div className="relative w-14 h-16 rounded-xl overflow-hidden shrink-0 shadow-sm">
                       <Image src={item.image} alt={item.name} fill className="object-cover" />
-                      <span className="absolute top-0 right-0 bg-[#154734] text-white text-[9px] font-bold w-5 h-5 flex items-center justify-center rounded-bl-xl z-10">
+                      <span className="absolute top-0 right-0 bg-[color:var(--theme-primary)] text-[color:var(--theme-primary-fg)] text-[9px] font-bold w-5 h-5 flex items-center justify-center rounded-bl-xl z-10">
                         {item.quantity}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-[#154734] uppercase tracking-wide truncate">
+                      <p className="text-xs font-bold text-[color:var(--theme-primary)] uppercase tracking-wide truncate">
                         {item.name}
                       </p>
                       <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">
@@ -186,7 +186,7 @@ export default function CheckoutMobileSummary({
                           </span>
                         </div>
                       ) : (
-                        <span className="text-xs font-bold text-[#154734]">
+                        <span className="text-xs font-bold text-[color:var(--theme-primary)]">
                           ${originalTotal.toLocaleString(LOCALE)}
                         </span>
                       )}
@@ -218,9 +218,9 @@ export default function CheckoutMobileSummary({
                 Total a pagar
               </span>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-[10px] text-[#C19A6B] font-bold">COP</span>
+                <span className="text-[10px] text-[color:var(--theme-accent)] font-bold">COP</span>
                 <span
-                  className="text-2xl font-light text-[#154734] tracking-tight"
+                  className="text-2xl font-light text-[color:var(--theme-primary)] tracking-tight"
                   style={{ fontFamily: "Georgia, serif" }}
                 >
                   ${total.toLocaleString(LOCALE)}
