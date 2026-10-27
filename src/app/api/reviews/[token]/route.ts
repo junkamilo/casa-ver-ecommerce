@@ -1,64 +1,52 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import {
+  getReviewToken,
+  submitReviewByToken,
+} from "@/modules/posIntegration/infrastructure/pos-reviews.client";
 
-// GET /api/reviews/[token] — valida token y devuelve info del producto/orden
+// Enlace del correo de solicitud de reseña (/resenas?token=...). El token, la reseña y su moderación viven en el
+// POS (md/COMPARACION-TABLAS-RESENAS-POS-vs-WEB.md): esta ruta solo valida y reenvía.
+
+const UNAVAILABLE = "No pudimos procesar tu reseña. Intenta de nuevo más tarde.";
+
+/** 404 = enlace inválido; 409 del POS (usado o vencido) se responde 410 como antes. */
+function errorStatus(status: number): number {
+  return status === 409 ? 410 : status;
+}
+
+// GET /api/reviews/[token] — valida el token y devuelve el producto y el pedido
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params;
-
-  const review = await prisma.review.findUnique({
-    where: { reviewToken: token },
-    include: {
-      order:   { select: { orderNumber: true } },
-      user:    { select: { name: true } },
-    },
-  });
-
-  if (!review) {
-    return NextResponse.json({ error: "Enlace inválido" }, { status: 404 });
+  try {
+    const result = await getReviewToken(token);
+    if (!result.ok) {
+      return NextResponse.json({ error: result.message }, { status: errorStatus(result.status) });
+    }
+    const info = result.data;
+    return NextResponse.json({
+      productId: info.productSlug,
+      productName: info.productName ?? info.productSlug,
+      productSlug: info.productSlug,
+      orderNumber: info.orderNumber,
+      reviewerName: info.customerName ?? "",
+    });
+  } catch (error) {
+    console.error("[reviews/token] POS sin respuesta:", error instanceof Error ? error.message : error);
+    return NextResponse.json({ error: UNAVAILABLE }, { status: 503 });
   }
-  if (review.reviewTokenUsed) {
-    return NextResponse.json({ error: "Este enlace ya fue utilizado" }, { status: 410 });
-  }
-  if (review.reviewTokenExpiresAt && review.reviewTokenExpiresAt < new Date()) {
-    return NextResponse.json({ error: "Este enlace ha expirado" }, { status: 410 });
-  }
-
-  return NextResponse.json({
-    reviewId:      review.id,
-    productId:     review.productSlug,
-    productName:   review.productName ?? review.productSlug,
-    productSlug:   review.productSlug,
-    orderNumber:   review.order.orderNumber,
-    reviewerName:  review.user?.name || review.guestName || "",
-  });
 }
 
-// POST /api/reviews/[token] — guarda la reseña
+// POST /api/reviews/[token] — envía la reseña al POS (queda pendiente de moderación)
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params;
-
-  const review = await prisma.review.findUnique({
-    where: { reviewToken: token },
-  });
-
-  if (!review) {
-    return NextResponse.json({ error: "Enlace inválido" }, { status: 404 });
-  }
-  if (review.reviewTokenUsed) {
-    return NextResponse.json({ error: "Este enlace ya fue utilizado" }, { status: 410 });
-  }
-  if (review.reviewTokenExpiresAt && review.reviewTokenExpiresAt < new Date()) {
-    return NextResponse.json({ error: "Este enlace ha expirado" }, { status: 410 });
-  }
-
-  const body = await request.json();
-  const rating  = Number(body.rating);
+  const body = await request.json().catch(() => ({}));
+  const rating = Number(body.rating);
   const comment = String(body.comment ?? "").trim();
 
   if (!rating || rating < 1 || rating > 5) {
@@ -71,15 +59,14 @@ export async function POST(
     return NextResponse.json({ error: "El comentario es muy largo (máx. 1000 caracteres)" }, { status: 400 });
   }
 
-  const updated = await prisma.review.update({
-    where: { id: review.id },
-    data: {
-      rating,
-      comment,
-      status:          "PENDING",
-      reviewTokenUsed: true,
-    },
-  });
-
-  return NextResponse.json({ success: true, reviewId: updated.id });
+  try {
+    const result = await submitReviewByToken(token, { rating: Math.round(rating), comment });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.message }, { status: errorStatus(result.status) });
+    }
+    return NextResponse.json({ success: true, reviewId: result.data.reviewId });
+  } catch (error) {
+    console.error("[reviews/token] POS sin respuesta:", error instanceof Error ? error.message : error);
+    return NextResponse.json({ error: UNAVAILABLE }, { status: 503 });
+  }
 }

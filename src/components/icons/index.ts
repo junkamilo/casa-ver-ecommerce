@@ -15,7 +15,6 @@ export { MapIcon } from "./MapIcon";
 export { NotificationIcon } from "./NotificationIcon";
 export { OrdersIcon } from "./OrdersIcon";
 export { PackageOpen } from "./PackageOpen";
-export { PerfilAdminIcon } from "./PerfilAdminIcon";
 export { PerfilIcon } from "./PerfilIcon";
 export { ReportsIcon } from "./ReportsIcon";
 export { ReviewsIcon } from "./ReviewsIcon";

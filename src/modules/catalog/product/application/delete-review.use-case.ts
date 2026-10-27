@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
-import { PrismaProductDetailRepository } from "../infrastructure/prisma-product-detail.repository";
+import { deleteOwnReview } from "@/modules/posIntegration/infrastructure/pos-reviews.client";
 import {
   InvalidProductIdError,
   ProductError,
@@ -9,15 +9,12 @@ import {
 } from "./product.errors";
 import type { ReviewActionResult } from "../contracts/product-detail.dto";
 
-const repository = new PrismaProductDetailRepository();
-
 function isValidId(id: unknown): id is string {
   return typeof id === "string" && id.length > 0 && id.length <= 200;
 }
 
 /**
- * Elimina la reseña del usuario autenticado para un producto (por su slug).
- * Recálcula `rating` y `numReviews` en la misma transacción.
+ * Elimina en el POS la reseña de la clienta autenticada para un producto (por su slug y su correo).
  *
  * Devuelve `{ success, error? }` para preservar el contrato consumido por
  * `ReviewForm.tsx`.
@@ -30,16 +27,8 @@ export async function deleteReviewUseCase(
 
     const session = await auth();
     if (!session?.user?.email) throw new ReviewNotAuthenticatedError("delete");
-    const userId = await repository.getUserIdByEmail(session.user.email);
-    if (!userId) throw new ReviewNotAuthenticatedError("delete");
-
-    const existing = await repository.findOwnReview(userId, productSlug);
-    if (!existing) throw new ReviewNotFoundError();
-
-    await repository.deleteReview({
-      reviewId: existing.id,
-      productSlug,
-    });
+    const deleted = await deleteOwnReview(productSlug, session.user.email);
+    if (!deleted) throw new ReviewNotFoundError();
 
     revalidatePath(`/product/${productSlug}`);
     return { success: true };

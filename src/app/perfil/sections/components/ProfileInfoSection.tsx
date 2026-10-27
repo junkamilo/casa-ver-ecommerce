@@ -146,11 +146,7 @@ export function ProfileInfoSection({ profile, onProfileUpdate, onToast }: Profil
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 text-xs bg-white/20 text-white px-3 py-1 rounded-full font-medium">
-                {profile.role === "ADMIN" ? (
-                  <><ShieldCheck className="w-3 h-3" /> Administrador</>
-                ) : (
-                  <><User className="w-3 h-3" /> Cliente</>
-                )}
+                <User className="w-3 h-3" /> Cliente
               </span>
               {profile.linkedProviders.map((p) => (
                 <span

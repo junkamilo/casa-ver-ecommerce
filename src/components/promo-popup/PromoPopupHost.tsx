@@ -3,15 +3,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { fetchActivePromoPopup } from "@/modules/adminCatalog/promoPopups/presentation/api-client";
 import type {
   ActivePromoPopupDTO,
   PromoPopupPlacement,
-} from "@/modules/adminCatalog/promoPopups/contracts/promo-popup.dto";
+} from "@/modules/posIntegration/contracts/pos-popups.schema";
 import { useLaunchLockActive } from "@/hooks/use-launch-lock-gate";
 import PromoPopupModal from "./PromoPopupModal";
 
 const DISMISS_PREFIX = "cv_promo_popup_dismissed_";
+
+/** Popup vigente de la ubicación (lo decide el POS: Diseño → Popups); `null` si no hay ninguno. */
+async function fetchActivePromoPopup(placement: PromoPopupPlacement): Promise<ActivePromoPopupDTO | null> {
+  const response = await fetch(`/api/promo-popups/active?placement=${placement}`);
+  if (!response.ok) return null;
+  const payload = (await response.json().catch(() => null)) as { data?: ActivePromoPopupDTO | null } | null;
+  return payload?.data ?? null;
+}
 
 function resolvePlacement(pathname: string): PromoPopupPlacement | null {
   if (pathname === "/") return "HOME";
@@ -42,7 +49,6 @@ export default function PromoPopupHost() {
   const launchLockActive = useLaunchLockActive();
 
   const placement = useMemo(() => resolvePlacement(pathname), [pathname]);
-  const isAdminRoute = pathname.startsWith("/admin");
 
   const [popup, setPopup] = useState<ActivePromoPopupDTO | null>(null);
   const [visible, setVisible] = useState(false);
@@ -81,7 +87,7 @@ export default function PromoPopupHost() {
       }
     };
 
-    if (!placement || isAdminRoute || launchLockActive || checkoutBlocked) {
+    if (!placement || launchLockActive || checkoutBlocked) {
       queueMicrotask(reset);
       return () => {
         cancelled = true;
@@ -110,7 +116,7 @@ export default function PromoPopupHost() {
       cancelled = true;
       if (showTimer) clearTimeout(showTimer);
     };
-  }, [placement, isAdminRoute, launchLockActive, checkoutBlocked, pathname]);
+  }, [placement, launchLockActive, checkoutBlocked, pathname]);
 
   if (!visible || !popup) return null;
 

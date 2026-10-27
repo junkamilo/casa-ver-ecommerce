@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
 import {
   isLaunchLockActive,
   isLaunchLockExemptRoute,
@@ -28,23 +27,15 @@ export function useLaunchLockActive(): boolean {
  */
 export function useLaunchLockGate() {
   const pathname = usePathname();
-  const { data: session, status } = useSession();
 
   const lockActive = useLaunchLockActive();
   const exemptRoute = isLaunchLockExemptRoute(pathname);
-  const isAdmin = (session?.user as { role?: string } | undefined)?.role === "ADMIN";
-
-  const isResolvingSession = lockActive && !exemptRoute && status === "loading";
-  const shouldShowModal =
-    lockActive && !exemptRoute && status !== "loading" && !isAdmin;
-  const shouldHideGlobalWidgets =
-    lockActive && !exemptRoute && (status === "loading" || !isAdmin);
+  const shouldShowModal = lockActive && !exemptRoute;
+  const shouldHideGlobalWidgets = shouldShowModal;
 
   return {
     lockActive,
     exemptRoute,
-    isAdmin,
-    isResolvingSession,
     shouldShowModal,
     shouldHideGlobalWidgets,
   };

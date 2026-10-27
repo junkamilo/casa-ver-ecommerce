@@ -21,6 +21,8 @@ export interface Slide {
   mediaFocus?: MediaFocus;
   /** When true and mediaType=video, wait for video end before advancing. */
   playFullVideo?: boolean;
+  /** Destino al tocar el título (ruta de la tienda o https://), definido en el POS. */
+  href?: string;
 }
 
 export type HeroButtonVariant = "primary" | "secondary";

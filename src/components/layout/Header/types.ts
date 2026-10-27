@@ -34,7 +34,6 @@ export interface HeaderClientProps {
 }
 
 export interface NavActionsProps {
-  isAdmin: boolean;
   cartCount: number;
   isUserMenuOpen: boolean;
   onSearchOpen: () => void;

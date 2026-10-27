@@ -23,7 +23,7 @@ export interface AppSidebarProps {
   userInitial: string;
   userRole: string;
   backLink?: { href: string; label: string };
-  /** Enlace extra en el footer (ej. "Panel Admin" para clientes con rol ADMIN) */
+  /** Enlace extra en el footer (opcional) */
   extraLink?: { href: string; label: string };
 }
 

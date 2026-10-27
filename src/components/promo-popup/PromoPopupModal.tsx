@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Copy, X } from "lucide-react";
-import type { ActivePromoPopupDTO } from "@/modules/adminCatalog/promoPopups/contracts/promo-popup.dto";
+import type { ActivePromoPopupDTO } from "@/modules/posIntegration/contracts/pos-popups.schema";
 
 interface PromoPopupModalProps {
   popup: ActivePromoPopupDTO;

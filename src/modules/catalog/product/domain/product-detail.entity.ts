@@ -76,11 +76,12 @@ interface RawItem {
   colors: RawColor[];
 }
 
+/** Reseña aprobada que publica el POS (el nombre ya viene corto: «María G.»). */
 export interface RawReview {
   rating: number;
   comment: string | null;
-  createdAt: Date | string;
-  user: { name: string | null } | null;
+  createdAt?: Date | string | null;
+  customerName: string | null;
 }
 
 export interface RawProductDetail {
@@ -205,11 +206,13 @@ export function mapProductReviews(reviews: RawReview[]): TestimonialItem[] {
   return reviews.map((r) => ({
     rating: r.rating,
     comment: r.comment ?? "",
-    name: r.user?.name ?? "Clienta",
-    date: new Date(r.createdAt).toLocaleDateString("es-CO", {
-      year: "numeric",
-      month: "short",
-    }),
+    name: r.customerName?.trim() || "Clienta",
+    date: r.createdAt
+      ? new Date(r.createdAt).toLocaleDateString("es-CO", {
+          year: "numeric",
+          month: "short",
+        })
+      : undefined,
   }));
 }
 
@@ -226,20 +229,6 @@ export function mapSocialProof(buyerOrders: RawBuyerOrder[]): ProductSocialProof
       avatar: o.user?.image ?? null,
     })),
   };
-}
-
-// ── Métricas agregadas de reviews ────────────────────────────────────────────
-
-export function computeReviewMetrics(reviews: RawReview[]): {
-  liveRating: number;
-  liveNumReviews: number;
-} {
-  const liveNumReviews = reviews.length;
-  const liveRating =
-    liveNumReviews > 0
-      ? reviews.reduce((sum, r) => sum + r.rating, 0) / liveNumReviews
-      : 0;
-  return { liveRating, liveNumReviews };
 }
 
 // ── Resolver `initialItemId` desde el query param `tipo` ─────────────────────
@@ -282,19 +271,4 @@ export function resolveGalleryAndVideo(
   const resolvedVideoUrl =
     dbVideoUrl ?? allGeneralImages.find(isVideoUrl) ?? null;
   return { allGeneralImages, resolvedVideoUrl };
-}
-
-// ── User review extraída del array de reviews ya cargado ─────────────────────
-
-export function extractUserReview(
-  reviews: (RawReview & { userId?: string })[],
-  userId: string | null,
-): { rating: number; comment: string | null } | null {
-  if (!userId) return null;
-  const found = reviews.find((r) => r.userId === userId);
-  if (!found) return null;
-  return {
-    rating: found.rating,
-    comment: found.comment ?? null,
-  };
 }

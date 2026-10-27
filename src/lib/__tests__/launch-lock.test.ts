@@ -85,7 +85,7 @@ describe("launch-lock helpers", () => {
 
   it("isLaunchLockExemptRoute exime /admin y /login", () => {
     expect(isLaunchLockExemptRoute("/admin")).toBe(true);
-    expect(isLaunchLockExemptRoute("/admin/productos")).toBe(true);
+    expect(isLaunchLockExemptRoute("/admin/perfil")).toBe(true);
     expect(isLaunchLockExemptRoute("/login")).toBe(true);
     expect(isLaunchLockExemptRoute("/login?callbackUrl=/admin")).toBe(true);
     expect(isLaunchLockExemptRoute("/tienda")).toBe(false);

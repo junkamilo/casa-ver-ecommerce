@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useHeroSection } from "./hooks";
 import { AUTOPLAY_TIME, HERO_BUTTONS } from "./constants";
 import { SlideTrack, Overlays, CtaButton, HeroEmptyBanner } from "./components";
@@ -54,7 +55,7 @@ export default function HeroSection({
               className={layout.headline}
               style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
             >
-              {slide.headline}
+              {slide.href ? <Link href={slide.href}>{slide.headline}</Link> : slide.headline}
             </h1>
           </div>
           {slide.subheadline && (

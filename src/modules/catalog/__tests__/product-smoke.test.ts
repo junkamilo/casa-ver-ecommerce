@@ -5,9 +5,7 @@
 // a Prisma, NextAuth ni revalidatePath.
 
 import {
-  computeReviewMetrics,
   computeTotalStock,
-  extractUserReview,
   mapProductReviews,
   mapSocialProof,
   mapUIColor,
@@ -308,30 +306,18 @@ describe("mapUIItems", () => {
   });
 });
 
-// ── mapProductReviews / mapSocialProof / extractUserReview ────────────────────
+// ── mapProductReviews / mapSocialProof ────────────────────────────────────────
 
 describe("reviews / social proof helpers", () => {
-  it("mapProductReviews cae a 'Clienta' si no hay nombre", () => {
+  it("mapProductReviews usa el nombre corto del POS y cae a 'Clienta' si no hay", () => {
     const reviews = mapProductReviews([
-      { rating: 5, comment: "Excelente", createdAt: new Date("2024-06-15"), user: { name: null } },
-      { rating: 3, comment: null, createdAt: "2024-01-01", user: null },
+      { rating: 5, comment: "Excelente", createdAt: "2024-06-15T00:00:00Z", customerName: "María G." },
+      { rating: 3, comment: null, createdAt: null, customerName: null },
     ]);
-    expect(reviews[0].name).toBe("Clienta");
+    expect(reviews[0].name).toBe("María G.");
     expect(reviews[1].name).toBe("Clienta");
     expect(reviews[1].comment).toBe("");
-  });
-
-  it("computeReviewMetrics devuelve promedio + count, o 0/0 si vac\u00edo", () => {
-    const m1 = computeReviewMetrics([
-      { rating: 5, comment: null, createdAt: new Date(), user: null },
-      { rating: 3, comment: null, createdAt: new Date(), user: null },
-    ]);
-    expect(m1.liveRating).toBe(4);
-    expect(m1.liveNumReviews).toBe(2);
-
-    const m2 = computeReviewMetrics([]);
-    expect(m2.liveRating).toBe(0);
-    expect(m2.liveNumReviews).toBe(0);
+    expect(reviews[1].date).toBeUndefined();
   });
 
   it("mapSocialProof devuelve totalBuyers y los primeros 3 nombres", () => {
@@ -348,27 +334,6 @@ describe("reviews / social proof helpers", () => {
       { name: "Juan", avatar: null },
       { name: "", avatar: null },
     ]);
-  });
-
-  it("extractUserReview devuelve null cuando userId es null", () => {
-    expect(
-      extractUserReview(
-        [{ rating: 4, comment: "x", createdAt: new Date(), user: null, userId: "u1" }],
-        null,
-      ),
-    ).toBeNull();
-  });
-
-  it("extractUserReview encuentra la rese\u00f1a del userId", () => {
-    expect(
-      extractUserReview(
-        [
-          { rating: 4, comment: "del otro", createdAt: new Date(), user: null, userId: "u2" },
-          { rating: 5, comment: "del usuario", createdAt: new Date(), user: null, userId: "u1" },
-        ],
-        "u1",
-      ),
-    ).toEqual({ rating: 5, comment: "del usuario" });
   });
 });
 

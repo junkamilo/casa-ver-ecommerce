@@ -3,7 +3,6 @@ import type { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { ADMIN_NOT_CUSTOMER_MESSAGE, isAdminSession } from "@/server/auth/customer-session";
 
 const MAX_ADDRESSES = 5;
 
@@ -88,7 +87,6 @@ export async function GET() {
     if (!session?.user) {
       return NextResponse.json({ message: "No autorizado" }, { status: 401 });
     }
-    if (isAdminSession(session)) return NextResponse.json([]);
     const userId = (session.user as { id?: string }).id as string;
 
     const addresses = await prisma.address.findMany({
@@ -109,9 +107,6 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ message: "No autorizado" }, { status: 401 });
-    }
-    if (isAdminSession(session)) {
-      return NextResponse.json({ message: ADMIN_NOT_CUSTOMER_MESSAGE }, { status: 403 });
     }
     const userId = (session.user as { id?: string }).id as string;
 

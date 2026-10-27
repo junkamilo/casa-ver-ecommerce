@@ -4,14 +4,6 @@ import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { compare } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import {
-  isActivePosAdmin,
-  isPosAdminEmail,
-  verifyPosAdminLogin,
-} from "@/modules/posIntegration/application/verify-pos-admin.use-case";
-
-/** Cada cuánto la sesión de un admin confirma con el POS que sigue siendo admin activo de la web. */
-const ADMIN_RECHECK_MS = 5 * 60 * 1000;
 
 class InvalidCredentials extends CredentialsSignin {
   code = "invalid_credentials";
@@ -21,12 +13,6 @@ class UseGoogleSignIn extends CredentialsSignin {
 }
 class EmailNotVerified extends CredentialsSignin {
   code = "email_not_verified";
-}
-class TooManyAttempts extends CredentialsSignin {
-  code = "too_many_attempts";
-}
-class AdminUnavailable extends CredentialsSignin {
-  code = "admin_unavailable";
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -56,27 +42,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials, request) {
+      async authorize(credentials) {
         const email = credentials?.email as string | undefined;
         const password = credentials?.password as string | undefined;
 
         if (!email || !password) return null;
 
-        // Administradores: 100 % del POS (Configuraciones → Usuarios). El POS verifica la contraseña (la
-        // misma del POS), que siga siendo admin de la web y activo, y limita los intentos. La sesión lleva el
-        // id del POS y no se crea ninguna fila en Neon. `null` = no se sabe si es admin (POS caído).
-        const isAdmin = await isPosAdminEmail(email);
-        if (isAdmin !== false) {
-          const login = await verifyPosAdminLogin(email, password, clientIpOf(request));
-          if (login.outcome === "valid") {
-            return { id: login.admin.userId, name: login.admin.fullName, email: login.admin.email, role: "ADMIN" };
-          }
-          if (login.outcome === "too_many_attempts") throw new TooManyAttempts();
-          if (isAdmin && login.outcome === "unavailable") throw new AdminUnavailable();
-          // Contraseña de admin incorrecta o POS sin respuesta: puede ser su cuenta de cliente.
-        }
-
-        // Clientes de la tienda: viven en Neon.
+        // Solo clientes de la tienda (viven en Neon). Los usuarios del POS entran únicamente al POS.
         const user = await prisma.user.findUnique({ where: { email } });
 
         if (!user) throw new InvalidCredentials();
@@ -114,9 +86,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
-        // Google y clientes: siempre USER. ADMIN solo lo da el POS en el login con contraseña.
-        token.role = (user as { role?: string }).role === "ADMIN" ? "ADMIN" : "USER";
-        token.roleCheckedAt = Date.now();
+        token.role = "USER";
       }
 
       // Sesiones JWT antiguas pueden no tener id — NextAuth lo guarda en sub
@@ -133,20 +103,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
       }
 
-      // Admin: cada 5 minutos se confirma con el POS que siga siendo admin activo de la web. Si el POS le
-      // quitó el acceso (o la sesión es de antes de esta migración, con un id de Neon) se cierra la sesión.
-      // Si el POS no responde, la sesión sigue hasta que vuelva.
-      const userId = (token.id ?? token.sub) as string | undefined;
-      if (token.role === "ADMIN" && userId) {
-        const lastCheck = typeof token.roleCheckedAt === "number" ? token.roleCheckedAt : 0;
-        if (Date.now() - lastCheck > ADMIN_RECHECK_MS) {
-          const active = await isActivePosAdmin(userId);
-          if (active === false) return null;
-          if (active) token.roleCheckedAt = Date.now();
-        }
-      } else if (token.role !== "USER") {
-        token.role = "USER";
-      }
+      // La web ya no tiene administradores: una sesión de admin anterior (id del POS) se cierra.
+      if (token.role === "ADMIN") return null;
+      token.role = "USER";
 
       return token;
     },
@@ -161,9 +120,3 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 });
-
-/** IP del visitante (Vercel la pone primera en x-forwarded-for), para el límite de intentos del POS. */
-function clientIpOf(request: Request | undefined): string | null {
-  const forwarded = request?.headers.get("x-forwarded-for");
-  return forwarded?.split(",")[0]?.trim() || request?.headers.get("x-real-ip") || null;
-}

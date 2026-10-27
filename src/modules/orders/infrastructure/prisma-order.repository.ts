@@ -23,7 +23,6 @@ export class PrismaOrderRepository {
   //   1. Buscar la orden por transactionId (con items + user).
   //   2. Si ya está PAID → return.
   //   3. Update status=PAID, paymentId, paidAt.
-  //   4. Crear notificación de admin "Pedido pagado".
   //
   // El inventario no se toca en la web: el POS consume la reserva del pedido y descuenta el stock al
   // registrar la venta (reportPaidOrderToPos).
@@ -59,15 +58,6 @@ export class PrismaOrderRepository {
         where: { id: order.id },
         data: { status: "PAID", paymentId, paidAt: new Date() },
         include: { items: true, user: true },
-      });
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (tx as any).adminNotification.create({
-        data: {
-          orderId: updatedOrder.id,
-          title: `Pedido pagado · ${updatedOrder.orderNumber}`,
-          body: `${updatedOrder.user?.name ?? "Cliente"} · ${new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(Number(updatedOrder.total))}`,
-        },
       });
 
       return { order: updatedOrder as PaidOrderDTO, newlyPaid: true };

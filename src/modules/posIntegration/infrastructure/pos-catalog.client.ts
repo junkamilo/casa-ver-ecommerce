@@ -39,12 +39,6 @@ import {
   type PosGeoItem,
   type PosShippingQuote,
 } from "../contracts/pos-shipping.schema";
-import {
-  posWebAdminSchema,
-  posWebAdminVerificationSchema,
-  type PosWebAdmin,
-  type PosWebAdminVerification,
-} from "../contracts/pos-admin.schema";
 import { getPosApiConfig } from "./pos-config";
 
 const REQUEST_TIMEOUT_MS = 8_000;
@@ -241,43 +235,6 @@ export async function listPosDepartments(countryIso = "CO"): Promise<PosGeoItem[
 /** Municipios con cobertura de un departamento (código DANE de 2 dígitos). */
 export async function listPosMunicipalities(departmentDane: string): Promise<PosGeoItem[]> {
   return (await request(`/geography/departments/${encodeURIComponent(departmentDane)}/municipalities`, posGeoItemSchema.array(), undefined, "public")) ?? [];
-}
-
-/**
- * Administradores de la web según el POS (Configuraciones → Usuarios). `null` si el POS aún no publica
- * administradores (404). El login usa esta lista para saber si un correo es de un admin.
- */
-export async function listWebAdmins(): Promise<PosWebAdmin[] | null> {
-  return request("/admins", posWebAdminSchema.array(), undefined, "public");
-}
-
-/**
- * ¿Es correcta la contraseña de este admin? La verifica el POS (el hash no sale de allá). `clientIp`:
- * IP del visitante, para el límite de intentos fallidos. 429 = bloqueado temporalmente por intentos.
- */
-export async function verifyWebAdmin(
-  email: string,
-  password: string,
-  clientIp?: string | null,
-): Promise<PosWebAdminVerification> {
-  const { baseUrl, apiKey } = getPosApiConfig();
-  const url = `${baseUrl.replace(/\/catalog$/, "")}/admins/verify`;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "X-Api-Key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ email, password, clientIp: clientIp ?? undefined }),
-    cache: "no-store",
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-  });
-  if (response.status === 429) throw new PosApiError("Demasiados intentos; espera unos minutos", 429);
-  if (response.status === 401) throw new PosApiError("Clave de integración del POS inválida", 401);
-  // 400: datos que el POS rechaza (p. ej. contraseña de más de 100 caracteres) = credenciales inválidas.
-  if (response.status === 400) return { valid: false, admin: null };
-  if (!response.ok) throw new PosApiError(`POS respondió ${response.status} en /admins/verify`, response.status);
-  const json = await response.json().catch(() => null);
-  const parsed = posWebAdminVerificationSchema.safeParse(json?.data);
-  if (!parsed.success) throw new PosApiError("Respuesta inesperada del POS en /admins/verify", 502);
-  return parsed.data;
 }
 
 /** Resultado de reportar un pedido: registrado (o ya estaba) o rechazado por el POS con su motivo. */

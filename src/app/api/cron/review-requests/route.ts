@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendReviewRequestEmail } from "@/services/email/client";
-import { randomBytes } from "crypto";
 import { isPosCatalogConfigured, listPosOrders } from "@/modules/posIntegration/infrastructure/pos-catalog.client";
+import { requestReviewLink } from "@/modules/posIntegration/infrastructure/pos-reviews.client";
 
-// Envía solicitudes de reseña 7 días después de la entrega
+// Envía solicitudes de reseña 7 días después de la entrega. El enlace (token de un solo uso, 30 días) lo emite
+// el POS, donde vive la reseña y se modera (md/COMPARACION-TABLAS-RESENAS-POS-vs-WEB.md); la web solo manda el correo.
 const DAYS_AFTER_DELIVERY = 7;
 const MS = DAYS_AFTER_DELIVERY * 24 * 60 * 60 * 1000;
-const TOKEN_TTL_DAYS = 30;
 /** Ventas de los últimos días que se revisan en el POS (las más viejas ya recibieron su solicitud). */
 const LOOKBACK_DAYS = 60;
 const MAX_PAGES = 5;
@@ -73,31 +73,26 @@ export async function GET(request: Request) {
     const firstItem = order.items[0];
     if (!firstItem) continue;
 
-    // Genera un token único para esta orden
-    const token = randomBytes(32).toString("hex");
-    const expiresAt = new Date(Date.now() + TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000);
-
-    // Busca si ya existe una reseña aprobada para este item en esta orden
-    const existingReview = await prisma.review.findFirst({
-      where: { orderId: order.id, productSlug: firstItem.productId },
-    });
-    if (existingReview) continue;
-
-    // Crea el registro de reseña pendiente con token
-    await prisma.review.create({
-      data: {
-        // OrderItem.productId es el slug del producto (POS o web).
-        productSlug:         firstItem.productId,
-        productName:         firstItem.name,
-        orderId:             order.id,
-        userId:              order.userId,
-        rating:              5,
-        comment:             "",
-        status:              "PENDING",
-        reviewToken:         token,
-        reviewTokenExpiresAt: expiresAt,
-      },
-    });
+    // OrderItem.productId es el slug del producto. Si ya la reseñó, no se vuelve a pedir.
+    const link = await requestReviewLink({
+      orderNumber: order.orderNumber,
+      productSlug: firstItem.productId,
+      productName: firstItem.name,
+    }).catch((error: unknown) => ({
+      ok: false as const,
+      status: 503,
+      message: error instanceof Error ? error.message : "POS sin respuesta",
+    }));
+    if (!link.ok) {
+      if (link.status === 409) {
+        await prisma.order.update({ where: { id: order.id }, data: { reviewRequestEmailSentAt: new Date() } });
+      } else {
+        failed++;
+        console.error(`[Cron/ReviewRequests] El POS no emitió el enlace de ${order.orderNumber}:`, link.message);
+      }
+      continue;
+    }
+    const token = link.data.token;
 
     const reviewUrl = `${baseUrl}/resenas?token=${token}`;
 
@@ -117,10 +112,7 @@ export async function GET(request: Request) {
       });
       sent++;
     } else {
-      // Limpia el token creado para reintentar la próxima vez
-      await prisma.review.deleteMany({
-        where: { orderId: order.id, productSlug: firstItem.productId, reviewTokenUsed: false },
-      });
+      // El enlace sigue vigente en el POS: el próximo intento reenvía el mismo.
       failed++;
       console.error(`[Cron/ReviewRequests] Error para orden ${order.orderNumber}:`, result.error);
     }

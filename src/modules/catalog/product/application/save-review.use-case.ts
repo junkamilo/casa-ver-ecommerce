@@ -12,6 +12,7 @@ import {
 } from "./product.errors";
 import type { ReviewActionResult } from "../contracts/product-detail.dto";
 import { resolveProductSource } from "./resolve-product-source";
+import { submitProductReview } from "@/modules/posIntegration/infrastructure/pos-reviews.client";
 
 const repository = new PrismaProductDetailRepository();
 
@@ -20,8 +21,8 @@ function isValidId(id: unknown): id is string {
 }
 
 /**
- * Producto reseñable por su slug: publicado en el POS. Devuelve su nombre (se guarda en la reseña). Los
- * pedidos lo identifican por el mismo slug.
+ * Producto reseñable por su slug: publicado en el POS. Devuelve su nombre (va con la reseña). Los pedidos lo
+ * identifican por el mismo slug.
  */
 async function findReviewableProduct(slug: string): Promise<{ name: string } | null> {
   const resolved = await resolveProductSource(slug);
@@ -29,13 +30,13 @@ async function findReviewableProduct(slug: string): Promise<{ name: string } | n
 }
 
 /**
- * Guarda (upsert) la reseña de un producto para el usuario autenticado.
+ * Envía al POS la reseña de un producto de la clienta autenticada (md/COMPARACION-TABLAS-RESENAS-POS-vs-WEB.md).
  * Reglas de negocio:
- *   - Usuario debe estar autenticado.
- *   - Solo puede reseñar si tiene una orden PAID que contiene el producto.
+ *   - La clienta debe estar autenticada.
+ *   - Solo puede reseñar si tiene un pedido pagado con el producto (compra verificada en la web).
  *   - El producto debe estar publicado en el POS.
  *   - `productSlug`: el `id` del producto en el PDP, que es su slug.
- *   - El rating del PDP se calcula en vivo con las reseñas aprobadas.
+ *   - Queda pendiente hasta que se apruebe en el POS (Diseño → Reseñas); volver a enviarla la edita.
  *
  * Devuelve el contrato legacy `{ success, error? }` que consume `ReviewForm.tsx`.
  */
@@ -48,8 +49,8 @@ export async function saveReviewUseCase(
 
     const session = await auth();
     if (!session?.user?.email) throw new ReviewNotAuthenticatedError("save");
-    const userId = await repository.getUserIdByEmail(session.user.email);
-    if (!userId) throw new ReviewNotAuthenticatedError("save");
+    const user = await repository.getUserByEmail(session.user.email);
+    if (!user) throw new ReviewNotAuthenticatedError("save");
 
     const parsed = reviewSchema.safeParse(input);
     if (!parsed.success) {
@@ -60,17 +61,19 @@ export async function saveReviewUseCase(
     const product = await findReviewableProduct(productSlug);
     if (!product) throw new ProductNotFoundError();
 
-    const order = await repository.findPaidOrderForProduct(userId, [productSlug]);
+    const order = await repository.findPaidOrderForProduct(user.id, productSlug);
     if (!order) throw new ReviewNotPurchasedError();
 
-    await repository.upsertReview({
-      userId,
+    const result = await submitProductReview({
+      orderNumber: order.orderNumber,
       productSlug,
       productName: product.name,
-      orderId: order.id,
+      customerName: user.name?.trim() || order.shippingName?.trim() || "Clienta",
+      customerEmail: session.user.email,
       rating,
-      comment,
+      comment: comment ?? "",
     });
+    if (!result.ok) throw new ReviewValidationError(result.message);
 
     revalidatePath(`/product/${productSlug}`);
     return { success: true };

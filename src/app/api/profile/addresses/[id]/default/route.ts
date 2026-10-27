@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { ADMIN_NOT_CUSTOMER_MESSAGE, isAdminSession } from "@/server/auth/customer-session";
 
 function isValidId(id: unknown): id is string {
   return typeof id === "string" && id.length >= 1 && id.length <= 40;
@@ -16,9 +15,6 @@ export async function PATCH(
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ message: "No autorizado" }, { status: 401 });
-    }
-    if (isAdminSession(session)) {
-      return NextResponse.json({ message: ADMIN_NOT_CUSTOMER_MESSAGE }, { status: 403 });
     }
     const userId = (session.user as { id?: string }).id as string;
     const { id } = await params;

@@ -53,8 +53,6 @@ const checks = [
   ["order_items", () => prisma.orderItem.count()],
   ["product_web_settings", () => prisma.productWebSettings.count()],
   ["webhook_logs", () => prisma.webhookLog.count()],
-  ["promo_popups", () => prisma.promoPopup.count()],
-  ["hero_slides", () => prisma.heroSlide.count()],
 ];
 
 try {

@@ -36,7 +36,6 @@ function PerfilContent() {
 
   const displayName = profile?.name ?? session?.user?.name ?? session?.user?.email ?? "Usuario";
   const displayInitial = displayName.charAt(0).toUpperCase();
-  const isAdmin = profile?.role === "ADMIN";
 
   /* ── Loading ── */
   if (status === "loading" || (needsProfileData && loading)) {
@@ -108,13 +107,8 @@ function PerfilContent() {
         brandSubtitle="Mi Cuenta"
         userName={displayName}
         userInitial={displayInitial}
-        userRole={isAdmin ? "Administrador" : "Cliente"}
+        userRole="Cliente"
         backLink={{ href: "/", label: "Volver a la tienda" }}
-        extraLink={
-          isAdmin
-            ? { href: "/admin", label: "Panel Admin" }
-            : undefined
-        }
       />
 
       {/* Right side */}

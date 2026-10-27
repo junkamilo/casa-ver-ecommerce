@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { sendPosRejectedOrderAdminEmail } from "@/services/email";
 import { buildPosOrderPayload, parsePosLineId } from "../domain/pos-mapper";
 import { isPosCatalogConfigured, postOrder, postOrderCancellation } from "../infrastructure/pos-catalog.client";
 
@@ -11,7 +12,6 @@ export type ReportCancellationResult =
   | { status: "skipped"; reason: string }
   | { status: "cancelled"; posStatus: string; saleNumber: string | null; replay: boolean };
 
-const REJECTED_TITLE = "Pedido sin registrar en el POS";
 const PAID_STATUSES = ["PAID", "PROCESSING", "SHIPPED", "DELIVERED"] as const;
 const CANCELLED_STATUSES = ["CANCELLED", "REFUNDED"] as const;
 
@@ -104,20 +104,19 @@ export async function reportPaidOrderToPos(orderId: string): Promise<ReportOrder
   }
 
   console.error(`[POS orders] ${order.orderNumber} rechazado (${outcome.httpStatus}): ${outcome.message}`);
-  const alreadyNotified = await prisma.adminNotification.findFirst({
-    where: { orderId: order.id, title: { startsWith: REJECTED_TITLE } },
-    select: { id: true },
-  });
-  if (!alreadyNotified) {
-    await prisma.adminNotification.create({
-      data: {
-        orderId: order.id,
-        title: `${REJECTED_TITLE} · ${order.orderNumber}`,
-        body:
-          `El POS no registró la venta: ${outcome.message}. El cliente ya pagó: reembolse en la pasarela ` +
-          `y cancele el pedido.`,
-      },
+  // Una sola alerta por pedido, por correo al admin (la web ya no tiene panel): hay que reembolsar.
+  if (!order.posRejectedAlertSentAt) {
+    const sent = await sendPosRejectedOrderAdminEmail({
+      orderNumber: order.orderNumber,
+      customerName: order.shippingName ?? order.user?.name ?? "Cliente",
+      customerEmail: order.user?.email ?? "",
+      paymentMethod: order.paymentMethod,
+      total: Number(order.total),
+      reason: outcome.message,
     });
+    if (sent.success) {
+      await prisma.order.update({ where: { id: order.id }, data: { posRejectedAlertSentAt: new Date() } });
+    }
   }
   return { status: "rejected", message: outcome.message };
 }

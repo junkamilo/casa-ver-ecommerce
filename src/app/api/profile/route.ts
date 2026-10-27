@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { hash, compare } from "bcryptjs";
 import { passwordSchema } from "@/lib/auth/validation";
 import type { NextRequest } from "next/server";
-import { ADMIN_NOT_CUSTOMER_MESSAGE, isAdminSession } from "@/server/auth/customer-session";
 
 function resolveSessionUserId(session: { user?: unknown }): string | null {
   const user = session.user as { id?: string } | undefined;
@@ -16,24 +15,6 @@ export async function GET() {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ message: "No autorizado" }, { status: 401 });
-    }
-
-    // Admin: vive en el POS (Configuraciones → Usuarios); su perfil sale de la sesión y no se edita aquí.
-    if (isAdminSession(session)) {
-      return NextResponse.json({
-        id: resolveSessionUserId(session),
-        name: session.user.name ?? null,
-        email: session.user.email ?? null,
-        image: null,
-        role: "ADMIN",
-        phone: null,
-        cedula: null,
-        recoveryEmail: null,
-        createdAt: null,
-        hasPassword: false,
-        linkedProviders: [],
-        managedByPos: true,
-      });
     }
 
     const userId = resolveSessionUserId(session);
@@ -85,9 +66,6 @@ export async function PUT(req: NextRequest) {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ message: "No autorizado" }, { status: 401 });
-    }
-    if (isAdminSession(session)) {
-      return NextResponse.json({ message: ADMIN_NOT_CUSTOMER_MESSAGE }, { status: 403 });
     }
 
     const userId = resolveSessionUserId(session);

@@ -1,8 +1,14 @@
 import type { PosWebhookPayload } from "../contracts/pos-catalog.schema";
-import { revalidatePosCategories, revalidatePosColors, revalidatePosProduct } from "./revalidate-catalog";
+import {
+  revalidatePosBanners,
+  revalidatePosCategories,
+  revalidatePosColors,
+  revalidatePosPopups,
+  revalidatePosProduct,
+  revalidatePosReviews,
+} from "./revalidate-catalog";
 import { syncOrderStatusFromPos } from "./sync-order-status.use-case";
 import { clearShippingCache } from "@/modules/shipping/application/pos-shipping";
-import { clearPosAdminCache } from "./verify-pos-admin.use-case";
 import { normalizePosSlug } from "../domain/pos-mapper";
 import { collectionSlugsForWebId } from "../domain/pos-category-view";
 import { getBackupCategoryTree } from "./get-pos-categories.use-case";
@@ -33,6 +39,27 @@ export async function processPosEvent(event: Pick<PosWebhookPayload, "entityType
     return { status: "ignored" as const, entityType, id };
   }
 
+  // Reseñas (id = slug del producto): se aprobó, rechazó, editó o borró una reseña publicada en el POS.
+  if (entityType === "review") {
+    revalidatePosReviews(id);
+    console.info(`[POS webhook] review.${action} ${id}: reseñas expiradas`);
+    return { status: "revalidated" as const, entityType, id };
+  }
+
+  // Banners (id = "hero"): cambió el carrusel del inicio o su duración en el POS.
+  if (entityType === "banner") {
+    revalidatePosBanners();
+    console.info(`[POS webhook] banner.${action}: carrusel expirado`);
+    return { status: "revalidated" as const, entityType, id };
+  }
+
+  // Popups (id = ubicación): se creó, editó, activó, apagó o borró un popup publicitario en el POS.
+  if (entityType === "popup") {
+    revalidatePosPopups(id);
+    console.info(`[POS webhook] popup.${action} ${id}: popup expirado`);
+    return { status: "revalidated" as const, entityType, id };
+  }
+
   // Pedidos: el POS cambió el estado logístico (Tienda → Pedidos); se consulta y se aplica en la web.
   if (entityType === "order") {
     return syncOrderStatusFromPos(id);
@@ -50,14 +77,6 @@ export async function processPosEvent(event: Pick<PosWebhookPayload, "entityType
   if (entityType === "color") {
     revalidatePosColors();
     console.info(`[POS webhook] color.${action} ${id}: tag pos-colors expirado`);
-    return { status: "revalidated" as const, entityType, id };
-  }
-
-  // Administradores: el POS cambió quién administra la web. La web no los copia (el login los verifica en
-  // el POS): se limpia la lista en memoria para que el cambio aplique de inmediato.
-  if (entityType === "admin") {
-    clearPosAdminCache();
-    console.info(`[POS webhook] admin.${action}: lista de admins limpiada`);
     return { status: "revalidated" as const, entityType, id };
   }
 

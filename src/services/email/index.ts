@@ -4,6 +4,10 @@ import { verificationTemplate } from "./templates/verification";
 import { passwordResetTemplate } from "./templates/password-reset";
 import { orderConfirmationTemplate } from "./templates/order-confirmation";
 import { newOrderAdminTemplate } from "./templates/new-order-admin";
+import {
+  posRejectedOrderAdminTemplate,
+  type PosRejectedOrderAdminTemplateData,
+} from "./templates/pos-rejected-order-admin";
 import { abandonedCartTemplate } from "./templates/abandoned-cart";
 import { abandonedCheckoutTemplate } from "./templates/abandoned-checkout";
 import { reviewRequestTemplate } from "./templates/review-request";
@@ -130,6 +134,24 @@ export async function sendNewOrderAdminEmail(
     console.error(`[Email] Error aviso admin orden ${input.orderNumber}:`, result.error);
   }
 
+  return result;
+}
+
+// ── Pedido pagado que el POS no registró (admin) ────────────────────────────
+
+/** Alerta al admin: hay que reembolsar un pago que el POS rechazó (reemplaza la campana del admin web). */
+export async function sendPosRejectedOrderAdminEmail(
+  input: PosRejectedOrderAdminTemplateData
+): Promise<EmailResult> {
+  const adminEmail = resolveAdminOrderEmail();
+  const result = await sendEmail({
+    to: adminEmail,
+    subject: `⚠️ Pedido pagado sin registrar en el POS #${input.orderNumber}`,
+    html: posRejectedOrderAdminTemplate(input),
+  });
+  if (!result.success) {
+    console.error(`[Email] Error alerta de pedido rechazado ${input.orderNumber}:`, result.error);
+  }
   return result;
 }
 

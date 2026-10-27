@@ -5,7 +5,6 @@ import {
   useLaunchLockGate,
 } from "@/hooks/use-launch-lock-gate";
 import LaunchCountdownModal from "./LaunchCountdownModal";
-import LaunchLockSkeleton from "./LaunchLockSkeleton";
 
 export default function LaunchLockWrapper() {
   const lockActive = useLaunchLockActive();
@@ -15,9 +14,8 @@ export default function LaunchLockWrapper() {
 }
 
 function LaunchLockGate() {
-  const { isResolvingSession, shouldShowModal } = useLaunchLockGate();
+  const { shouldShowModal } = useLaunchLockGate();
 
-  if (isResolvingSession) return <LaunchLockSkeleton />;
   if (!shouldShowModal) return null;
 
   return <LaunchCountdownModal />;

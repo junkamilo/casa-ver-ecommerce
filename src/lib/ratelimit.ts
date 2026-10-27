@@ -28,7 +28,6 @@ export interface RateLimitResult {
 export const RATE_LIMIT_CONFIGS = {
   search:      { limit: 50,  window: 60 },
   cart:        { limit: 100, window: 60 },
-  stockAlerts: { limit: 20,  window: 60 },
   admin:       { limit: 100, window: 60 },
   checkout:    { limit: 10,  window: 60 },
   api:         { limit: 100, window: 60 },

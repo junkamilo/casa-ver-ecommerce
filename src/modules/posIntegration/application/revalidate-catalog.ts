@@ -1,6 +1,9 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { revalidateProductListings } from "@/lib/revalidate-product-pages";
 import { POS_PRODUCTS_CACHE_TAG, posProductCacheTag } from "../infrastructure/pos-catalog.read";
+import { POS_REVIEWS_CACHE_TAG, posReviewsCacheTag } from "../infrastructure/pos-reviews.client";
+import { POS_POPUPS_CACHE_TAG, posPopupsCacheTag } from "../infrastructure/pos-popups.client";
+import { POS_HERO_CACHE_TAG } from "../infrastructure/pos-banners.client";
 
 export const POS_CATEGORIES_CACHE_TAG = "pos-categories";
 export const POS_COLORS_CACHE_TAG = "pos-colors";
@@ -56,5 +59,41 @@ export function revalidatePosProduct(posSlug: string) {
     revalidatePath(`/product/${posSlug.trim().toLowerCase()}`);
   } catch (error) {
     console.warn("[POS sync] No se pudo revalidar el producto:", error instanceof Error ? error.message : error);
+  }
+}
+
+/**
+ * Expira las reseñas de un producto (ficha) y los testimonios del inicio cuando el POS aprueba, rechaza,
+ * edita o borra una reseña publicada.
+ */
+export function revalidatePosReviews(productSlug: string) {
+  try {
+    revalidateTag(posReviewsCacheTag(productSlug), { expire: 0 });
+    revalidateTag(POS_REVIEWS_CACHE_TAG, { expire: 0 });
+    revalidatePath(`/product/${productSlug.trim().toLowerCase()}`);
+    revalidatePath("/");
+  } catch (error) {
+    console.warn("[POS sync] No se pudo revalidar reseñas:", error instanceof Error ? error.message : error);
+  }
+}
+
+/** Expira el popup vigente de una ubicación (y la ruta que lo entrega) cuando cambia en el POS. */
+export function revalidatePosPopups(placement: string) {
+  try {
+    revalidateTag(posPopupsCacheTag(placement), { expire: 0 });
+    revalidateTag(POS_POPUPS_CACHE_TAG, { expire: 0 });
+    revalidatePath("/api/promo-popups/active");
+  } catch (error) {
+    console.warn("[POS sync] No se pudo revalidar popups:", error instanceof Error ? error.message : error);
+  }
+}
+
+/** Expira el carrusel del inicio cuando cambian los banners o su duración en el POS. */
+export function revalidatePosBanners() {
+  try {
+    revalidateTag(POS_HERO_CACHE_TAG, { expire: 0 });
+    revalidatePath("/");
+  } catch (error) {
+    console.warn("[POS sync] No se pudo revalidar banners:", error instanceof Error ? error.message : error);
   }
 }

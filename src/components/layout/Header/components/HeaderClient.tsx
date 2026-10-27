@@ -23,7 +23,6 @@ const HeaderClient = ({ categories: initialCategories }: HeaderClientProps) => {
     isSearchModalOpen,
     isUserMenuOpen,
     scrolled,
-    isAdmin,
     cartCount,
     openCart,
     openSearch,
@@ -106,7 +105,6 @@ const HeaderClient = ({ categories: initialCategories }: HeaderClientProps) => {
 
           {/* ── Derecha: íconos de acción ── */}
           <NavActions
-            isAdmin={isAdmin}
             cartCount={cartCount}
             isUserMenuOpen={isUserMenuOpen}
             onSearchOpen={openSearch}

@@ -4,15 +4,15 @@
 import type { Metadata } from "next";
 import { unstable_cache } from "next/cache";
 import { Suspense } from "react";
-import { Prisma } from "@prisma/client";
 import { AnnouncementBar, Header, HeroSection } from "@/components";
-import { prisma } from "@/lib/prisma";
+import { fetchHeroForRender } from "@/modules/posIntegration/infrastructure/pos-banners.client";
+import { mapPosHeroSlides } from "@/modules/posIntegration/domain/pos-hero";
+import {
+  fetchTestimonialsForRender,
+  POS_REVIEWS_CACHE_TAG,
+} from "@/modules/posIntegration/infrastructure/pos-reviews.client";
 import type { Slide } from "@/components/HeroSection/types";
 import { HeroLcpPreload } from "@/components/HeroSection/components/HeroLcpPreload";
-import {
-  mapActiveDbHeroSlidesToStorefront,
-  type DbHeroSlideRow,
-} from "@/modules/hero/presentation/map-to-storefront-slide";
 
 export const dynamic = "force-dynamic";
 
@@ -41,25 +41,16 @@ import PaymentMethodsBanner from "@/components/PaymentMethodsBanner";
 
 const DEFAULT_HERO_SLIDE_DURATION_MS = 6000;
 
-function isMissingHeroTableError(error: unknown): boolean {
-  return (
-    error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021"
-  );
-}
 
 async function fetchTestimonials(): Promise<TestimonialItem[]> {
   try {
-    const dbReviews = await prisma.review.findMany({
-      where: { comment: { not: "" }, status: "APPROVED" },
-      orderBy: { createdAt: "desc" },
-      take: SEED_TESTIMONIALS.length,
-      include: { user: { select: { name: true } } },
-    });
+    // Reseñas aprobadas en el POS (4 y 5 estrellas, con comentario).
+    const posReviews = await fetchTestimonialsForRender(SEED_TESTIMONIALS.length);
 
-    const realItems: TestimonialItem[] = dbReviews.map((r) => ({
+    const realItems: TestimonialItem[] = posReviews.map((r) => ({
       rating: r.rating,
-      comment: r.comment!,
-      name: r.user?.name ?? "Cliente",
+      comment: r.comment,
+      name: r.customerName || "Clienta",
     }));
 
     // Rellena con seeds hasta completar el total
@@ -70,86 +61,28 @@ async function fetchTestimonials(): Promise<TestimonialItem[]> {
   }
 }
 
-async function fetchHeroSlides(): Promise<Slide[]> {
+/**
+ * Carrusel del inicio: banners activos y duración que publica el POS (Diseño → Banners). Si el POS no responde
+ * (y la Data Cache no tiene copia) se muestra el banner vacío con la duración por defecto.
+ */
+async function fetchHero(): Promise<{ slides: Slide[]; slideDurationMs: number }> {
   try {
-    const dbSlides = (await prisma.heroSlide.findMany({
-      where: { isActive: true },
-      orderBy: { position: "asc" },
-      select: {
-        id: true,
-        position: true,
-        mediaUrl: true,
-        mediaUrlMobile: true,
-        mediaUrlTablet: true,
-        posterUrl: true,
-        mediaType: true,
-        headline: true,
-        subheadline: true,
-        mediaFocus: true,
-        playFullVideo: true,
-      },
-    })) as DbHeroSlideRow[];
-
-    if (dbSlides.length === 0) return [];
-
-    return mapActiveDbHeroSlidesToStorefront(dbSlides);
+    const hero = await fetchHeroForRender();
+    if (!hero) return { slides: [], slideDurationMs: DEFAULT_HERO_SLIDE_DURATION_MS };
+    return { slides: mapPosHeroSlides(hero.slides), slideDurationMs: hero.slideDurationMs };
   } catch (error) {
-    if (isMissingHeroTableError(error)) {
-      console.warn(
-        "[HOME_HERO] Tablas hero no encontradas; usando banner vacío. Ejecuta prisma migrate deploy.",
-      );
-      return [];
-    }
-    throw error;
+    console.error("[HOME_HERO] POS sin respuesta para los banners:", error instanceof Error ? error.message : error);
+    return { slides: [], slideDurationMs: DEFAULT_HERO_SLIDE_DURATION_MS };
   }
 }
-
-async function fetchHeroSettings(): Promise<number> {
-  try {
-    const settings = await prisma.heroSettings.findUnique({ where: { id: 1 } });
-    return settings?.slideDurationMs ?? DEFAULT_HERO_SLIDE_DURATION_MS;
-  } catch (error) {
-    if (isMissingHeroTableError(error)) {
-      console.warn(
-        "[HOME_HERO] hero_settings no encontrada; usando duración por defecto. Ejecuta prisma migrate deploy.",
-      );
-      return DEFAULT_HERO_SLIDE_DURATION_MS;
-    }
-    throw error;
-  }
-}
-
-const getCachedHeroSlides = unstable_cache(fetchHeroSlides, ["hero-slides"], {
-  revalidate: 3600,
-  tags: ["hero"],
-});
-
-const getCachedHeroSettings = unstable_cache(fetchHeroSettings, ["hero-settings"], {
-  revalidate: 3600,
-  tags: ["hero"],
-});
 
 const getCachedTestimonials = unstable_cache(fetchTestimonials, ["testimonials"], {
   revalidate: 3600,
-  tags: ["testimonials"],
+  tags: ["testimonials", POS_REVIEWS_CACHE_TAG],
 });
 
 export default async function Home() {
-  let heroSlides: Slide[];
-  let slideDurationMs: number;
-
-  try {
-    [heroSlides, slideDurationMs] = await Promise.all([
-      getCachedHeroSlides(),
-      getCachedHeroSettings(),
-    ]);
-  } catch (error) {
-    console.error("[HOME_HERO] Cache miss, reintentando sin caché", error);
-    [heroSlides, slideDurationMs] = await Promise.all([
-      fetchHeroSlides(),
-      fetchHeroSettings(),
-    ]);
-  }
+  const { slides: heroSlides, slideDurationMs } = await fetchHero();
 
   const testimonials = await getCachedTestimonials();
 

@@ -1,10 +1,8 @@
-import Link from "next/link";
 import UserMenu from "@/components/UserMenu";
-import { PerfilAdminIcon, PerfilIcon, SearchIcon, ShoppingCart } from "@/components/icons";
+import { PerfilIcon, SearchIcon, ShoppingCart } from "@/components/icons";
 import type { NavActionsProps } from "../types";
 
 export default function NavActions({
-  isAdmin,
   cartCount,
   isUserMenuOpen,
   onSearchOpen,
@@ -14,25 +12,6 @@ export default function NavActions({
 }: NavActionsProps) {
   return (
     <div className="flex items-center gap-1 sm:gap-1.5">
-
-      {/* ────────────────────────────────────────────────
-          ADMIN  — Escudo dorado con dot de vida
-      ──────────────────────────────────────────────── */}
-      {isAdmin && (
-        <Link
-          href="/admin"
-          className="flex items-center justify-center w-10 h-10"
-          aria-label="Panel Admin"
-          title="Panel Admin"
-        >
-          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#154734] hover:bg-[#103a2a] transition-colors">
-            <PerfilAdminIcon size={16} strokeWidth={1.5} className="text-white" />
-          </span>
-        </Link>
-      )}
-
-      {/* ── Separador dorado ── */}
-      {isAdmin && <div className="w-px h-5 bg-[#C19A6B]/15 mx-0.5" aria-hidden="true" />}
 
       {/* ────────────────────────────────────────────────
           BUSCAR — La lupa que escanea

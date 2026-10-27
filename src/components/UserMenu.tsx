@@ -3,7 +3,7 @@
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
-import { Package, User, X, LogOut, Loader2, Shield } from "lucide-react";
+import { Package, User, X, LogOut, Loader2 } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
 
 interface UserMenuProps {
@@ -84,20 +84,6 @@ const UserMenu = ({ onClose }: UserMenuProps) => {
               <p className="text-xs text-muted-foreground truncate">{session.user?.email}</p>
             </div>
           </div>
-
-          {(session.user as { role?: string })?.role === "ADMIN" && (
-            <Link href="/admin" onClick={onClose}
-              className="flex items-center gap-3 p-3 bg-[#154734]/5 border border-[#154734]/20 rounded-lg hover:bg-[#154734]/10 transition-colors"
-            >
-              <div className="w-9 h-9 rounded-lg bg-[#154734] flex items-center justify-center">
-                <Shield className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-[#154734]">Panel Admin</p>
-                <p className="text-xs text-gray-500">Gestionar tienda</p>
-              </div>
-            </Link>
-          )}
 
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <Link href="/perfil?section=pedidos" onClick={onClose}

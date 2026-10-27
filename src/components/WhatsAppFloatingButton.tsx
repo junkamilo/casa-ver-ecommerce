@@ -18,7 +18,6 @@ const WhatsAppIcon = () => (
 export default function WhatsAppFloatingButton() {
   const pathname = usePathname();
   const { shouldHideGlobalWidgets } = useLaunchLockGate();
-  const isAdminPath = pathname?.startsWith("/admin");
   const isCheckoutPath = pathname?.startsWith("/checkout");
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState(DEFAULT_MESSAGE);
@@ -43,7 +42,7 @@ export default function WhatsAppFloatingButton() {
     }
   };
 
-  if (isAdminPath || isCheckoutPath || shouldHideGlobalWidgets) {
+  if (isCheckoutPath || shouldHideGlobalWidgets) {
     return null;
   }
 

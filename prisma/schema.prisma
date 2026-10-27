@@ -46,12 +46,6 @@ enum PaymentMethod {
   DAVIPLATA
 }
 
-enum ReviewStatus {
-  PENDING    // Esperando moderación del admin
-  APPROVED   // Visible en la tienda
-  REJECTED   // Rechazada por el admin
-}
-
 
 // ============================================================
 // CATEGORÍAS, SUBCATEGORÍAS Y TIPOS DE PRENDA → viven en el POS
@@ -100,7 +94,6 @@ model User {
   accounts              Account[]
   addresses             Address[]
   orders                Order[]
-  reviews               Review[]
   verificationTokens    EmailVerificationToken[]
   passwordResetTokens   PasswordResetToken[]
   cart                  Cart?
@@ -228,8 +221,6 @@ model Order {
 
   items              OrderItem[]
   webhookLogs        WebhookLog[]
-  notifications      AdminNotification[]
-  reviews            Review[]
 
   // Cupón del POS aplicado (snapshot): el POS lo validó y calculó el descuento al crear la orden.
   couponCode          String?       // código que escribió el cliente (normalizado)
@@ -246,6 +237,7 @@ model Order {
   confirmationEmailError        String?
   abandonedCheckoutEmailSentAt  DateTime?
   reviewRequestEmailSentAt      DateTime? // Solicitud de reseña (7 días post-entrega)
+  posRejectedAlertSentAt        DateTime? // Alerta al admin: pagado pero el POS no registró la venta
 
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
@@ -313,7 +305,9 @@ model CartItem {
 }
 
 // ============================================================
-// RESEÑAS & CALIFICACIONES
+// CAPA WEB DE LOS PRODUCTOS DEL POS
+// Las reseñas viven en el POS (catalog.reviews, Diseño → Reseñas); la tabla reviews de Neon quedó en el
+// esquema legacy_reviews (20261031000000_reviews_from_pos).
 // ============================================================
 
 /// Lo que la web decide sobre un producto del POS (por slug, sin FK: el producto vive en el POS).
@@ -335,91 +329,12 @@ model ProductWebSettings {
   @@map("product_web_settings")
 }
 
-model Review {
-  id          String   @id @default(cuid())
-  // Producto por su slug (URL /product/<slug>): el mismo en el POS y en la web. Sin FK: los productos
-  // del POS no se guardan en esta base cuando el catálogo deja de copiarse.
-  productSlug String
-  productName String?  // nombre al momento de la reseña (admin, enlace de reseña)
-  productId   String?  // legacy: id de Neon de reseñas anteriores
-
-  // Usuario registrado (null si es invitado)
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  // Invitado (null si es usuario registrado)
-  guestName String?
-
-  // Compra verificada: obligatorio para enviar reseña
-  orderId   String
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  rating    Int      // 1-5
-  comment   String   @db.Text
-
-  // Moderación
-  status    ReviewStatus @default(PENDING)
-
-  // Token de enlace mágico (enviado por email post-entrega)
-  reviewToken          String?   @unique
-  reviewTokenUsed      Boolean   @default(false)
-  reviewTokenExpiresAt DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([orderId, productSlug]) // Una reseña por producto por orden
-  @@index([productSlug])
-  @@index([status])
-  @@map("reviews")
-}
-
 // ============================================================
-// VIGENCIA (popups de publicidad)
+// PUBLICIDAD Y CUPONES
 // Los cupones viven en el POS (sales.promotions): la web los valida con POST /api/public/promotions/validate.
-// Las tablas coupons, coupon_batches y coupon_usages quedaron como _legacy_* (20261026000000_coupons_from_pos).
+// Los popups publicitarios viven en el POS (catalog.promo_popups, Diseño → Popups): la web pide el vigente.
+// Las tablas viejas quedaron como _legacy_* (cupones) y en el esquema legacy_popups (popups).
 // ============================================================
-
-enum CouponScheduleMode {
-  NONE
-  SINGLE_DAY
-  DATE_RANGE
-}
-
-// ============================================================
-// PUBLICIDAD — POPUPS PROMOCIONALES
-// ============================================================
-
-enum PromoPopupPlacement {
-  HOME
-  PRODUCT
-  CHECKOUT
-}
-
-model PromoPopup {
-  id           String              @id @default(cuid())
-  name         String
-  placement    PromoPopupPlacement
-  isActive     Boolean             @default(false)
-
-  headline     String
-  subtitle     String
-  couponCode   String
-  disclaimer   String
-  ctaText      String
-  ctaUrl       String              @default("/tienda")
-
-  delaySeconds Int                 @default(3)
-  scheduleMode CouponScheduleMode  @default(NONE)
-  validFrom    DateTime?
-  validTo      DateTime?
-
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
-
-  @@index([placement, isActive])
-  @@map("promo_popups")
-}
 
 // ============================================================
 // LOGS Y SEGURIDAD (Webhooks)
@@ -466,62 +381,15 @@ model PosWebhookEvent {
   @@map("pos_webhook_events")
 }
 
-// ============================================================
-// NOTIFICACIONES ADMIN
-// ============================================================
-
-model AdminNotification {
-  id        String   @id @default(cuid())
-  orderId   String?
-  order     Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
-
-  title     String
-  body      String
-  isRead    Boolean  @default(false)
-
-  createdAt DateTime @default(now())
-
-  @@index([isRead])
-  @@index([createdAt])
-  @@map("admin_notifications")
-}
+// Notificaciones del admin web: la web ya no tiene panel (la administración vive en el POS). La alerta de un
+// pedido pagado que el POS no registró se envía por correo. La tabla admin_notifications quedó en el esquema
+// legacy_admin (20261103000000_close_admin_web).
 
 // Colores: la tienda usa la paleta del POS (GET /api/public/catalog/colors). La tabla "colors" se
 // renombró a "_legacy_colors" (migración 20261024000000_colors_from_pos) y ya no tiene modelo.
 
-// ============================================================
-// HERO / BANNER PRINCIPAL
-// ============================================================
-
-model HeroSlide {
-  id             String   @id @default(cuid())
-  position       Int      @unique          // orden de aparición en el slider
-  mediaUrl       String   @default("")     // Desktop / arte principal (Bunny CDN)
-  mediaUrlMobile String?                   // Art-direction mobile (opcional)
-  mediaUrlTablet String?                   // Art-direction tablet (opcional)
-  posterUrl      String?                   // Optional legacy poster for video slides
-  mediaType      String   @default("image") // "image" | "video"
-  headline       String?                   // Texto principal (opcional)
-  subheadline    String?                   // Subtítulo (opcional)
-  /// { mobile/tablet/desktop: { x, y, zoom } } — object-position 0–100 por dispositivo
-  mediaFocus     Json?
-  /// Si true y mediaType=video, el carrusel espera a que termine el video
-  playFullVideo  Boolean  @default(false)
-  isActive       Boolean  @default(true)
-  updatedAt      DateTime @updatedAt
-
-  @@index([position])
-  @@map("hero_slides")
-}
-
-/// Singleton (id=1) — duración global del carrusel hero
-model HeroSettings {
-  id              Int      @id @default(1)
-  slideDurationMs Int      @default(6000)
-  updatedAt       DateTime @updatedAt
-
-  @@map("hero_settings")
-}
+// Banners del inicio: viven en el POS (catalog.hero_slides y catalog.hero_settings, Diseño → Banners). Las
+// tablas hero_slides y hero_settings quedaron en el esquema legacy_hero (20261102000000_banners_from_pos).
 
 // ============================================================
 // ENVÍOS Y CATÁLOGO GEOGRÁFICO: viven en el POS (shipping.rates, shipping.config, core.countries,
