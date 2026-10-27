@@ -1,15 +1,12 @@
 /** @jest-environment node */
 jest.mock("server-only", () => ({}));
-jest.mock("@/lib/prisma", () => ({ prisma: { productVariant: { findUnique: jest.fn() } } }));
 jest.mock("@/modules/posIntegration/infrastructure/pos-catalog.client", () => ({ getProduct: jest.fn() }));
 
-import { prisma } from "@/lib/prisma";
 import { getProduct } from "@/modules/posIntegration/infrastructure/pos-catalog.client";
 import { resolvePosLinePrices } from "../infrastructure/pos-line-prices";
-import { ProductUnavailableError, VariantNotFoundError } from "../application/checkout.errors";
+import { PosUnavailableError, ProductUnavailableError, VariantNotFoundError } from "../application/checkout.errors";
 
 const mockGetProduct = getProduct as jest.Mock;
-const mockFindVariant = prisma.productVariant.findUnique as jest.Mock;
 
 const blusa = {
   slug: "blusa-lino",
@@ -20,14 +17,21 @@ const blusa = {
 beforeEach(() => jest.clearAllMocks());
 
 describe("resolvePosLinePrices", () => {
-  it("toma el precio del POS para los SKU del POS e ignora los ids de Neon", async () => {
+  it("toma el precio del POS una vez por producto", async () => {
     mockGetProduct.mockResolvedValue(blusa);
     const prices = await resolvePosLinePrices([
       { variantId: "pos-blusa-lino-1-2", name: "Blusa" },
-      { variantId: "clxneonvariant01", name: "Set" },
+      { variantId: "pos-blusa-lino-1-2", name: "Blusa" },
     ]);
     expect(prices).toEqual(new Map([["pos-blusa-lino-1-2", 89000]]));
     expect(mockGetProduct).toHaveBeenCalledTimes(1);
+  });
+
+  it("rechaza un ítem sin SKU del POS (carrito anterior a la migración)", async () => {
+    await expect(resolvePosLinePrices([{ variantId: "clxneonvariant01", name: "Set" }])).rejects.toBeInstanceOf(
+      ProductUnavailableError,
+    );
+    expect(mockGetProduct).not.toHaveBeenCalled();
   });
 
   it("rechaza un producto que el POS ya no publica o una variante inexistente", async () => {
@@ -41,11 +45,10 @@ describe("resolvePosLinePrices", () => {
     );
   });
 
-  it("si el POS no responde usa el precio del espejo en Neon por SKU", async () => {
+  it("si el POS no responde el pedido no se crea", async () => {
     mockGetProduct.mockRejectedValue(new Error("timeout"));
-    mockFindVariant.mockResolvedValue({ isActive: true, priceOverride: null, product: { basePrice: "85000" } });
-    const prices = await resolvePosLinePrices([{ variantId: "pos-blusa-lino-1-2", name: "Blusa" }]);
-    expect(prices.get("pos-blusa-lino-1-2")).toBe(85000);
-    expect(mockFindVariant).toHaveBeenCalledWith(expect.objectContaining({ where: { sku: "pos-blusa-lino-1-2" } }));
+    await expect(resolvePosLinePrices([{ variantId: "pos-blusa-lino-1-2", name: "Blusa" }])).rejects.toBeInstanceOf(
+      PosUnavailableError,
+    );
   });
 });

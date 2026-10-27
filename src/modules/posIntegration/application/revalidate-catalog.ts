@@ -31,9 +31,8 @@ export function revalidatePosCategories(collectionSlugs: string[] = []) {
 }
 
 /**
- * Expira la paleta de colores del POS y las páginas que la usan: los listados (tarjetas y filtro por color) y
- * todas las fichas de producto, porque los productos de la web solo muestran los colores que el POS tiene.
- * Los productos del POS que cambian llegan además con su propio aviso `product.upserted`.
+ * Expira los colores del POS y las páginas que los usan: los listados (tarjetas y filtro por color) y las
+ * fichas de producto. Los productos del POS que cambian llegan además con su propio aviso `product.upserted`.
  */
 export function revalidatePosColors() {
   try {

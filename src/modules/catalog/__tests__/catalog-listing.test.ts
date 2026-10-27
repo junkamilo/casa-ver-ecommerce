@@ -7,14 +7,8 @@ jest.mock("../product/infrastructure/prisma-product-web-settings.repository", ()
   const repo = { findAll: jest.fn() };
   return { PrismaProductWebSettingsRepository: jest.fn(() => repo), __settings: repo };
 });
-jest.mock("../listing/infrastructure/prisma-catalog-listing.repository", () => {
-  const repo = { findActiveProducts: jest.fn() };
-  return { PrismaCatalogListingRepository: jest.fn(() => repo), __repo: repo };
-});
 // Categorías y tipos de prenda: el árbol del POS (la web no los guarda).
 jest.mock("@/modules/posIntegration/application/get-pos-taxonomy.use-case", () => ({ getPosTaxonomy: jest.fn() }));
-// Colores: la paleta del POS (la web no los guarda). Por defecto, sin colores creados en el POS.
-jest.mock("@/modules/posIntegration/application/get-pos-colors.use-case", () => ({ getPosColorPalette: jest.fn() }));
 jest.mock("@/modules/collections/infrastructure/pos-collection.repository", () => {
   const repo = { getCategoryBasicBySlug: jest.fn(), getGarmentTypeBySlug: jest.fn() };
   return { PosCollectionRepository: jest.fn(() => repo), __collections: repo };
@@ -24,14 +18,11 @@ import { posProductSchema } from "@/modules/posIntegration/contracts/pos-catalog
 import { fetchCatalogForRender } from "@/modules/posIntegration/infrastructure/pos-catalog.read";
 import { getPosTaxonomy } from "@/modules/posIntegration/application/get-pos-taxonomy.use-case";
 import { buildPosTaxonomy } from "@/modules/posIntegration/domain/pos-category-view";
-import { getPosColorPalette } from "@/modules/posIntegration/application/get-pos-colors.use-case";
-import { buildPosColorPalette } from "@/modules/posIntegration/domain/pos-color-palette";
 import {
   posToCatalogEntry,
   rankBySearch,
   toCard,
   type CatalogTaxonomy,
-  type NeonCatalogRow,
   type WebSettings,
 } from "../listing/domain/catalog-entry.entity";
 import { getCatalog, getRecommendedEntries } from "../listing/application/get-catalog";
@@ -40,15 +31,11 @@ import { getProductsByFlagUseCase } from "@/modules/collections/application/get-
 import { getNewProductsUseCase } from "@/modules/collections/application/get-new-products.use-case";
 
 /* eslint-disable @typescript-eslint/no-require-imports */
-const repo = require("../listing/infrastructure/prisma-catalog-listing.repository").__repo;
 const settingsRepo = require("../product/infrastructure/prisma-product-web-settings.repository").__settings;
 const collections = require("@/modules/collections/infrastructure/pos-collection.repository").__collections;
 /* eslint-enable @typescript-eslint/no-require-imports */
 const mockFetchCatalog = fetchCatalogForRender as jest.Mock;
 const mockTaxonomy = getPosTaxonomy as jest.Mock;
-const mockPalette = getPosColorPalette as jest.Mock;
-const VERDE = { colorId: 1, name: "Verde Militar", hexCode: "#4B5320", totalProducts: 0 };
-const webColor = (name: string, hexCode: string) => ({ name, hexCode, images: [{ url: `/${name}.jpg` }], variants: [{ stock: 3 }] });
 
 function pos(slug: string, overrides: Record<string, unknown> = {}) {
   return posProductSchema.parse({
@@ -113,33 +100,6 @@ function settings(slug: string, overrides: Partial<WebSettings> = {}): WebSettin
   } as WebSettings & { slug?: string };
 }
 
-function webRow(slug: string, overrides: Partial<NeonCatalogRow> = {}): NeonCatalogRow {
-  return {
-    name: "Conjunto Venus",
-    slug,
-    description: "Set de dos piezas",
-    metaTitle: null,
-    metaDescription: null,
-    basePrice: 150000,
-    comparePrice: null,
-    isFeatured: false,
-    isNew: true,
-    isSuggested: false,
-    suggestedAt: null,
-    isSet: true,
-    isProductNew: false,
-    isProductNewAt: null,
-    isOnSale: false,
-    coverImageUrl: null,
-    createdAt: new Date("2026-08-01T00:00:00Z"),
-    posSlug: null,
-    images: [{ url: "/set.jpg" }],
-    items: [{ name: "Short", price: 70000, comparePrice: null, colors: [] }],
-    colors: [],
-    ...overrides,
-  };
-}
-
 describe("posToCatalogEntry", () => {
   it("ubica el producto en las categorías del POS por webId y toma la capa web", () => {
     const entry = posToCatalogEntry(
@@ -201,7 +161,6 @@ describe("getCatalog", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockTaxonomy.mockResolvedValue(taxonomy);
-    mockPalette.mockResolvedValue(buildPosColorPalette([]));
     settingsRepo.findAll.mockResolvedValue(
       new Map([
         ["blusa-lino", settings("blusa-lino", { publishedAt: new Date("2026-10-10T00:00:00Z") })],
@@ -210,45 +169,25 @@ describe("getCatalog", () => {
     );
   });
 
-  it("solo vende productos del POS, más nuevo primero (los creados solo en la web no se listan)", async () => {
+  it("solo vende productos del POS, más nuevo primero", async () => {
     mockFetchCatalog.mockResolvedValue([pos("falda-midi"), pos("blusa-lino")]);
-    repo.findActiveProducts.mockResolvedValue([webRow("conjunto-venus")]);
 
     const catalog = await getCatalog();
 
-    expect(repo.findActiveProducts).not.toHaveBeenCalled();
     expect(catalog.map((e) => [e.slug, e.source])).toEqual([
       ["blusa-lino", "POS"],
       ["falda-midi", "POS"],
     ]);
   });
 
-  it("si el POS no responde usa la copia en Neon de los productos del POS", async () => {
+  it("si el POS no responde (y no hay copia en la Data Cache) los listados quedan vacíos", async () => {
     mockFetchCatalog.mockRejectedValue(new Error("timeout"));
-    repo.findActiveProducts.mockResolvedValue([webRow("blusa-pos", { posSlug: "blusa-pos" })]);
-    jest.spyOn(console, "warn").mockImplementation(() => undefined);
-
-    const catalog = await getCatalog();
-
-    expect(repo.findActiveProducts).toHaveBeenLastCalledWith("POS_MIRROR");
-    expect(catalog.map((e) => e.slug)).toEqual(["blusa-pos"]);
-  });
-
-  it("con el POS caído la copia de Neon solo muestra los colores del POS", async () => {
-    mockFetchCatalog.mockRejectedValue(new Error("timeout"));
-    jest.spyOn(console, "warn").mockImplementation(() => undefined);
-    mockPalette.mockResolvedValue(buildPosColorPalette([VERDE]));
-    repo.findActiveProducts.mockResolvedValue([
-      webRow("blusa-pos", { posSlug: "blusa-pos", colors: [webColor("Arena", "#D2B48C")] }),
-    ]);
-
-    const catalog = await getCatalog();
-    expect(catalog.find((e) => e.slug === "blusa-pos")!.card.colors.map((c) => c.name)).toEqual(["Arena"]);
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
+    expect(await getCatalog()).toEqual([]);
   });
 
   it("recomienda productos que comparten categoría, sin el propio", async () => {
     mockFetchCatalog.mockResolvedValue([pos("falda-midi"), pos("blusa-lino")]);
-    repo.findActiveProducts.mockResolvedValue([webRow("conjunto-venus")]);
     const recommended = await getRecommendedEntries("blusa-lino");
     expect(recommended.map((e) => e.slug)).toEqual(["falda-midi"]);
   });
@@ -258,7 +197,6 @@ describe("listados sobre el catálogo", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockTaxonomy.mockResolvedValue(taxonomy);
-    mockPalette.mockResolvedValue(buildPosColorPalette([]));
     settingsRepo.findAll.mockResolvedValue(new Map([["blusa-lino", settings("blusa-lino", { isNew: true })]]));
     mockFetchCatalog.mockResolvedValue([
       pos("blusa-lino"),
@@ -268,7 +206,6 @@ describe("listados sobre el catálogo", () => {
         labels: [{ code: "BEST_SELLER" }],
       }),
     ]);
-    repo.findActiveProducts.mockResolvedValue([webRow("conjunto-venus")]);
   });
 
   it("colección por categoría y tipo de prenda", async () => {
@@ -297,7 +234,7 @@ describe("listados sobre el catálogo", () => {
   });
 
   it("más vendidos por etiqueta del POS y nueva colección por la bandera de la web", async () => {
-    const featured = await getProductsByFlagUseCase({ isFeatured: true, status: "ACTIVE" });
+    const featured = await getProductsByFlagUseCase({ isFeatured: true });
     expect(featured.products.map((p) => p.slug)).toEqual(["pantalon-lino"]);
 
     // Solo «blusa-lino» es nueva: los productos creados solo en la web ya no se listan.

@@ -1,4 +1,3 @@
-import type { ProductStatus } from "@prisma/client";
 
 // ── DTOs públicos del módulo collections ─────────────────────────────────────
 //
@@ -40,9 +39,7 @@ export interface CategoryData {
   bannerImage?: string | null;
 }
 
-export type ProductWhereFilter =
-  | { isFeatured: true; status: ProductStatus }
-  | { isNew: true; status: ProductStatus };
+export type ProductWhereFilter = { isFeatured: true } | { isNew: true };
 
 export interface CollectionProductsResultDTO {
   products: import("@/components/shared/ProductCollection/types").CollectionProduct[];

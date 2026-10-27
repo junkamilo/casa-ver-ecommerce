@@ -1,18 +1,77 @@
 import Image from "next/image";
-import { Loader2, Video } from "lucide-react";
-import { DeleteIcon, EditIcon } from "@/components/icons";
-import { ProductTableProps } from "../types";
-import { formatPrice, getStockStatus } from "../constants";
-import ProductMobileList from "./ProductMobileList";
+import { Loader2 } from "lucide-react";
+import { EditIcon } from "@/components/icons";
+import type { ProductListItem } from "../types";
+import { formatPrice } from "../constants";
 import SectionEmptyState from "@/components/ui/SectionEmptyState";
 
-export default function ProductTable({
-  products,
-  loading,
-  onEdit,
-  onDelete,
-  onToggleActive,
-}: ProductTableProps) {
+interface ProductTableProps {
+  products: ProductListItem[];
+  loading: boolean;
+  onEdit: (product: ProductListItem) => void;
+}
+
+function stockBadge(product: ProductListItem) {
+  if (!product.available) return { label: "Agotado", color: "bg-red-100 text-red-700 border-red-200" };
+  if (product.outOfStockCount > 0 || product.lowStockCount > 0) {
+    const parts = [
+      product.outOfStockCount > 0 ? `${product.outOfStockCount} agotada${product.outOfStockCount > 1 ? "s" : ""}` : null,
+      product.lowStockCount > 0 ? `${product.lowStockCount} en mínimo` : null,
+    ].filter(Boolean);
+    return { label: parts.join(" · "), color: "bg-amber-100 text-amber-700 border-amber-200" };
+  }
+  return { label: "En stock", color: "bg-emerald-100 text-emerald-700 border-emerald-200" };
+}
+
+function Labels({ product }: { product: ProductListItem }) {
+  const labels = [
+    product.labels.bestSeller && "Más vendidos",
+    product.web.isNew && "Nueva colección",
+    product.labels.productNew && "Nuevo",
+    (product.labels.onSale || product.web.isOnSale) && "Oferta",
+    product.labels.suggested && "Sugerido",
+    product.components.length > 0 && "Conjunto",
+  ].filter((l): l is string => Boolean(l));
+  if (labels.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1 mt-1">
+      {labels.map((label) => (
+        <span
+          key={label}
+          className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-[#C19A6B]/15 text-[#8a6a43]"
+        >
+          {label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function Thumb({ product }: { product: ProductListItem }) {
+  return (
+    <div className="w-12 h-12 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden relative shrink-0">
+      {product.coverImageUrl ? (
+        <Image src={product.coverImageUrl} alt={product.name} fill className="object-cover" sizes="48px" />
+      ) : (
+        <div className="w-full h-full bg-gray-200" />
+      )}
+    </div>
+  );
+}
+
+function Price({ product }: { product: ProductListItem }) {
+  return (
+    <span className="text-sm font-semibold text-gray-900">
+      {formatPrice(product.salePrice)}
+      {product.displayPrice && product.displayPrice > product.salePrice ? (
+        <span className="ml-2 text-xs text-gray-400 line-through">{formatPrice(product.displayPrice)}</span>
+      ) : null}
+    </span>
+  );
+}
+
+/** Productos que publica el POS (solo lectura) con acceso a su capa web. */
+export default function ProductTable({ products, loading, onEdit }: ProductTableProps) {
   if (loading) {
     return (
       <div className="py-20 flex justify-center">
@@ -21,163 +80,106 @@ export default function ProductTable({
     );
   }
 
+  if (products.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
+        <SectionEmptyState message="No hay productos publicados por el POS con estos filtros." />
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
       {/* Desktop */}
       <div className="hidden md:block overflow-auto max-h-150">
-      <table className="w-full">
-        <thead>
-          <tr className="bg-[#F8F9FA] border-b border-gray-200">
-            {["Producto", "Categoría", "Precio", "Stock", "Estado", "Acciones"].map(
-              (h, i) => (
+        <table className="w-full">
+          <thead>
+            <tr className="bg-[#F8F9FA] border-b border-gray-200">
+              {["Producto", "Categoría", "Precio", "Stock", "Web"].map((h, i) => (
                 <th
                   key={h}
                   className={`sticky top-0 z-20 bg-[#F8F9FA] px-6 py-4 text-xs font-bold text-gray-500 uppercase shadow-[0_1px_0_0_rgba(229,231,235,1)] ${
-                    i === 5 ? "text-right" : "text-left"
+                    i === 4 ? "text-right" : "text-left"
                   }`}
                 >
                   {h}
                 </th>
-              )
-            )}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {products.map((product) => {
-            const stockStatus = getStockStatus(product.stock);
-            const rawImage = product.images[0]?.url ?? null;
-            const rawImageIsVideo = rawImage
-              ? rawImage.includes('/video/upload/') || /\.(mp4|webm|mov|avi|mkv|m4v)(\?|$)/i.test(rawImage)
-              : false;
-            const mainImage = rawImage && !rawImageIsVideo ? rawImage : null;
-            const hasVideo = !mainImage && (!!product.videoUrl || rawImageIsVideo);
-            const isSetWithItems = product.isSet && product.setItems && product.setItems.length > 0;
-            return (
-              <tr
-                key={product.id}
-                className="hover:bg-gray-50/60 transition-colors group"
-              >
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden relative shrink-0 flex items-center justify-center">
-                      {mainImage ? (
-                        <Image src={mainImage} alt={product.name} fill className="object-cover" />
-                      ) : hasVideo ? (
-                        <Video className="w-5 h-5 text-gray-400" />
-                      ) : (
-                        <div className="w-full h-full bg-gray-200" />
-                      )}
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {products.map((product) => {
+              const stock = stockBadge(product);
+              return (
+                <tr key={product.slug} className="hover:bg-gray-50/60 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-4">
+                      <Thumb product={product} />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900">{product.name}</p>
+                        <p className="text-xs text-gray-400">{product.slug}</p>
+                        <Labels product={product} />
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {product.name}
-                        {product.posManaged && (
-                          <span
-                            className="ml-2 align-middle inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-[#C19A6B]/15 text-[#8a6a43]"
-                            title="Sincronizado desde el POS"
-                          >
-                            POS
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-xs text-gray-500">ID: {product.id.slice(0, 8)}...</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    {product.categories.length > 0
-                      ? product.categories.map((category) => category.name).join(", ")
-                      : "Sin categoría"}
-                  </span>
-                </td>
-                <td className="px-6 py-4 font-medium text-gray-900">
-                  {isSetWithItems ? (
-                    <div className="flex flex-col items-start gap-1">
-                      {product.setItems!.map((item) => (
-                        <span key={item.name} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border border-gray-200 bg-gray-50 text-gray-700">
-                          {item.name} ({item.price != null ? formatPrice(item.price) : "—"})
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    formatPrice(product.price)
-                  )}
-                </td>
-                <td className="px-6 py-4">
-                  {isSetWithItems ? (
-                    <div className="flex flex-col items-start gap-1">
-                      {product.setItems!.map((item) => {
-                        const s = getStockStatus(item.stock);
-                        return (
-                          <span
-                            key={item.name}
-                            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${s.color}`}
-                          >
-                            {item.name} ({item.stock})
-                          </span>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${stockStatus.color}`}
-                    >
-                      {stockStatus.label} ({product.stock})
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600">
+                    {product.categoryNames.join(", ") || <span className="text-gray-400">Sin categoría</span>}
+                  </td>
+                  <td className="px-6 py-4">
+                    <Price product={product} />
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold border ${stock.color}`}>
+                      {stock.label}
                     </span>
-                  )}
-                </td>
-                <td className="px-6 py-4">
-                  <button
-                    onClick={() => onToggleActive(product.id, product.active)}
-                    disabled={product.posManaged}
-                    title={product.posManaged ? "La visibilidad la controla el POS" : undefined}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                      product.active ? "bg-[#154734]" : "bg-gray-200"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        product.active ? "translate-x-6" : "translate-x-1"
-                      }`}
-                    />
-                  </button>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end gap-2">
+                  </td>
+                  <td className="px-6 py-4 text-right">
                     <button
-                      onClick={() => onEdit(product.id)}
-                      className="group p-0.5 bg-gray-50 rounded-lg"
-                      title="Editar producto"
+                      type="button"
+                      onClick={() => onEdit(product)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#154734] hover:bg-[#154734]/10 transition-colors"
+                      title="Nueva colección, oferta manual, portada y SEO"
                     >
-                      <EditIcon size={16} />
+                      <EditIcon size={14} />
+                      Capa web
                     </button>
-                    {!product.posManaged && (
-                      <button
-                        onClick={() => onDelete(product.id)}
-                        className="group p-0.5 bg-gray-50 rounded-lg"
-                        title="Eliminar producto"
-                      >
-                        <DeleteIcon size={16} />
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       {/* Mobile */}
-      <ProductMobileList products={products} onEdit={onEdit} onDelete={onDelete} onToggleActive={onToggleActive} />
-
-      {products.length === 0 && (
-        <div className="hidden md:flex justify-center">
-          <SectionEmptyState message="No se encontraron productos." />
-        </div>
-      )}
+      <ul className="md:hidden divide-y divide-gray-100">
+        {products.map((product) => {
+          const stock = stockBadge(product);
+          return (
+            <li key={product.slug} className="flex items-start gap-3 p-4">
+              <Thumb product={product} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 truncate">{product.name}</p>
+                <Price product={product} />
+                <div className="mt-1">
+                  <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold border ${stock.color}`}>
+                    {stock.label}
+                  </span>
+                </div>
+                <Labels product={product} />
+              </div>
+              <button
+                type="button"
+                onClick={() => onEdit(product)}
+                className="shrink-0 p-2 rounded-lg text-[#154734] hover:bg-[#154734]/10"
+                aria-label={`Capa web de ${product.name}`}
+              >
+                <EditIcon size={16} />
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

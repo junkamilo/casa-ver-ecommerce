@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getCatalog } from "@/modules/catalog/listing/application/get-catalog";
 import type {
   DashboardDataDTO,
   DashboardIncidentItemDTO,
@@ -123,7 +124,6 @@ export async function fetchDashboardDataUseCase(): Promise<DashboardDataDTO> {
   const [
     salesResult,
     todayOrdersCount,
-    activeProductsCount,
     newCustomersCount,
     rawOrders,
     pendingReviews,
@@ -137,9 +137,6 @@ export async function fetchDashboardDataUseCase(): Promise<DashboardDataDTO> {
     }),
     prisma.order.count({
       where: { createdAt: { gte: todayStart, lte: todayEnd } },
-    }),
-    prisma.product.count({
-      where: { status: "ACTIVE" },
     }),
     prisma.user.count({
       // La tabla users es solo de clientes (los admins viven en el POS).
@@ -177,6 +174,8 @@ export async function fetchDashboardDataUseCase(): Promise<DashboardDataDTO> {
       },
     }),
   ]);
+  // Productos publicados en la tienda: el catálogo del POS (la web ya no guarda productos).
+  const activeProductsCount = (await getCatalog()).length;
 
   const todaySales = salesResult._sum.total ? Number(salesResult._sum.total) : 0;
 

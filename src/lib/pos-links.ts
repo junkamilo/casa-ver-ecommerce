@@ -19,3 +19,8 @@ export function posShippingUrl(section: "prices" | "cities" = "prices"): string 
 export function posUsersUrl(): string {
   return `${POS_APP_URL}/settings/users`;
 }
+
+/** Tienda → Productos del POS: ahí se crean y editan productos, variantes, precios, fotos e inventario. */
+export function posProductsUrl(): string {
+  return `${POS_APP_URL}/products`;
+}

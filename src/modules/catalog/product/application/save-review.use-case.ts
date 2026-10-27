@@ -20,15 +20,12 @@ function isValidId(id: unknown): id is string {
 }
 
 /**
- * Producto reseñable por su slug: activo en el POS o en la web. Devuelve su nombre (se guarda en la
- * reseña). Los pedidos lo identifican por el mismo slug.
+ * Producto reseñable por su slug: publicado en el POS. Devuelve su nombre (se guarda en la reseña). Los
+ * pedidos lo identifican por el mismo slug.
  */
 async function findReviewableProduct(slug: string): Promise<{ name: string } | null> {
   const resolved = await resolveProductSource(slug);
-  if (!resolved) return null;
-  if (resolved.source === "POS") return { name: resolved.pos.name.trim() };
-  const legacy = await repository.getProductForSeo(slug);
-  return legacy ? { name: legacy.name } : null;
+  return resolved ? { name: resolved.pos.name.trim() } : null;
 }
 
 /**
@@ -36,9 +33,9 @@ async function findReviewableProduct(slug: string): Promise<{ name: string } | n
  * Reglas de negocio:
  *   - Usuario debe estar autenticado.
  *   - Solo puede reseñar si tiene una orden PAID que contiene el producto.
- *   - El producto debe existir y estar activo (en el POS o en la web).
+ *   - El producto debe estar publicado en el POS.
  *   - `productSlug`: el `id` del producto en el PDP, que es su slug.
- *   - Recálcula `rating` y `numReviews` del producto en la misma transacción.
+ *   - El rating del PDP se calcula en vivo con las reseñas aprobadas.
  *
  * Devuelve el contrato legacy `{ success, error? }` que consume `ReviewForm.tsx`.
  */
@@ -66,7 +63,7 @@ export async function saveReviewUseCase(
     const order = await repository.findPaidOrderForProduct(userId, [productSlug]);
     if (!order) throw new ReviewNotPurchasedError();
 
-    await repository.upsertReviewAndRecompute({
+    await repository.upsertReview({
       userId,
       productSlug,
       productName: product.name,

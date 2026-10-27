@@ -1,6 +1,5 @@
 import type { PosWebhookPayload } from "../contracts/pos-catalog.schema";
 import { revalidatePosCategories, revalidatePosColors, revalidatePosProduct } from "./revalidate-catalog";
-import { removeProductBySlug, syncProductBySlug } from "./sync-product.use-case";
 import { syncOrderStatusFromPos } from "./sync-order-status.use-case";
 import { clearShippingCache } from "@/modules/shipping/application/pos-shipping";
 import { clearPosAdminCache } from "./verify-pos-admin.use-case";
@@ -12,8 +11,8 @@ import { PrismaProductWebSettingsRepository } from "@/modules/catalog/product/in
 const webSettings = new PrismaProductWebSettingsRepository();
 
 /**
- * Aplica un aviso del POS. Productos: `upserted` y `stock_changed` vuelven a consultar el recurso
- * en la API (el aviso no trae datos) y `removed` lo oculta sin borrarlo. Promociones: la web no guarda
+ * Aplica un aviso del POS. Productos: la web no los copia; se expira su caché (ficha y listados) para que el
+ * próximo render los lea del POS, y un producto nuevo queda dado de alta en la capa web. Promociones: la web no guarda
  * cupones (cada código se valida contra el POS en el checkout), así que el aviso solo se registra.
  * Categorías, subcategorías y colores: la web no los guarda; se expira la caché del POS (menú, colecciones,
  * ubicación de los productos y paleta de colores) para que la próxima visita la vuelva a leer.
@@ -22,11 +21,11 @@ export async function processPosEvent(event: Pick<PosWebhookPayload, "entityType
   const { entityType, id, action } = event;
 
   if (entityType === "product") {
-    // id = slug del POS. La tienda lo lee del POS (purga por tag); la copia en Neon se mantiene hasta
-    // la Fase 5. Un producto nuevo queda dado de alta en la capa web (fecha que ordena los listados).
+    // id = slug del POS. La tienda lo lee del POS (purga por tag). Un producto nuevo queda dado de alta en
+    // la capa web (fecha que ordena los listados); uno retirado deja de verse al expirar la caché.
     revalidatePosProduct(id);
     if (action !== "removed") await webSettings.ensure(normalizePosSlug(id));
-    return action === "removed" ? removeProductBySlug(id) : syncProductBySlug(id);
+    return { status: "revalidated" as const, entityType, id };
   }
 
   if (entityType === "promotion") {

@@ -1,25 +1,21 @@
 import { z } from "zod";
-import { PrismaProductRepository } from "../infrastructure/prisma-product.repository";
-import { ProductNotFoundError, ProductPosManagedConflictError } from "./product.errors";
-import { parseSafeDate } from "./create-product.validation";
+import { getProduct } from "@/modules/posIntegration/infrastructure/pos-catalog.client";
+import { mapPosProduct, normalizePosSlug } from "@/modules/posIntegration/domain/pos-mapper";
+import { revalidatePosProduct } from "@/modules/posIntegration/application/revalidate-catalog";
 import { PrismaProductWebSettingsRepository } from "@/modules/catalog/product/infrastructure/prisma-product-web-settings.repository";
+import { ProductNotFoundError, ProductPosManagedConflictError } from "./product.errors";
 
-const productRepository = new PrismaProductRepository();
 const webSettingsRepository = new PrismaProductWebSettingsRepository();
 
-const optionalDate = z.string().nullish();
-
-/** Campos que la web puede editar en un producto sincronizado desde el POS. */
+/**
+ * Lo único que la web decide sobre un producto del POS (`product_web_settings`, por slug). Nombre, precio,
+ * fotos, variantes, inventario, categorías y las etiquetas Más vendidos / Producto nuevo / Sugerido / Oferta
+ * se administran en el POS.
+ */
 export const posManagedProductSchema = z
   .object({
-    isFeatured: z.boolean().optional(),
     isNew: z.boolean().optional(),
-    isProductNew: z.boolean().optional(),
-    isProductNewAt: optionalDate,
     isOnSale: z.boolean().optional(),
-    isOnSaleAt: optionalDate,
-    isSuggested: z.boolean().optional(),
-    suggestedAt: optionalDate,
     coverImageUrl: z.string().trim().nullish(),
     metaTitle: z.string().trim().max(70, "El título SEO no puede superar 70 caracteres").nullish(),
     metaDescription: z
@@ -32,65 +28,42 @@ export const posManagedProductSchema = z
 
 export type PosManagedProductInput = z.infer<typeof posManagedProductSchema>;
 
-function resolveFlagDate(flag: boolean | undefined, value: string | null | undefined) {
-  if (flag === undefined) return undefined;
-  return flag ? (parseSafeDate(value) ?? new Date()) : null;
-}
-
-export async function updatePosManagedProductUseCase(id: string, body: Record<string, unknown>) {
-  if ("active" in body || "status" in body) {
-    throw new ProductPosManagedConflictError(
-      "La visibilidad de este producto la controla el POS. Ocúltalo o actívalo desde allí."
-    );
-  }
-
+export async function updatePosManagedProductUseCase(slug: string, body: Record<string, unknown>) {
   const parsed = posManagedProductSchema.safeParse(body);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     throw new ProductPosManagedConflictError(
       issue?.code === "unrecognized_keys"
-        ? `Campos controlados por el POS: ${issue.keys.join(", ")}. Solo se editan SEO, portada, etiquetas y sugeridos.`
+        ? `Campos que administra el POS: ${issue.keys.join(", ")}. En la web solo se editan Nueva colección, oferta manual, portada y SEO.`
         : (issue?.message ?? "Datos inválidos")
     );
   }
 
-  const context = await productRepository.findPosManagedContext(id);
-  if (!context) throw new ProductNotFoundError("Producto no encontrado");
+  const pos = await getProduct(normalizePosSlug(slug));
+  if (!pos) throw new ProductNotFoundError("El POS no publica este producto");
+  const mapped = mapPosProduct(pos);
 
   const dto = parsed.data;
-
-  if (dto.coverImageUrl && !context.imageUrls.includes(dto.coverImageUrl)) {
-    throw new ProductPosManagedConflictError("La portada debe ser una de las imágenes del producto");
+  const coverImageUrl = dto.coverImageUrl === undefined ? undefined : dto.coverImageUrl || null;
+  if (coverImageUrl) {
+    const images = new Set([mapped.coverImageUrl, ...mapped.colors.flatMap((c) => c.images.map((img) => img.url))]);
+    if (!images.has(coverImageUrl)) {
+      throw new ProductPosManagedConflictError("La portada debe ser una de las fotos del producto en el POS");
+    }
   }
 
-  const isOnSaleAt = resolveFlagDate(dto.isOnSale, dto.isOnSaleAt);
-  const coverImageUrl = dto.coverImageUrl === undefined ? undefined : dto.coverImageUrl || null;
-  const metaTitle = dto.metaTitle === undefined ? undefined : dto.metaTitle || null;
-  const metaDescription = dto.metaDescription === undefined ? undefined : dto.metaDescription || null;
+  const current = await webSettingsRepository.findBySlug(mapped.posSlug);
+  const isOnSaleAt =
+    dto.isOnSale === undefined ? undefined : dto.isOnSale ? (current?.isOnSale ? current.isOnSaleAt : new Date()) : null;
 
-  // La tienda lee la capa web (product_web_settings); la copia en Neon se sigue actualizando porque el
-  // admin la muestra. Destacado, nuevo con fecha y sugerido los vuelve a poner el POS; las categorías y los
-  // tipos de prenda solo se editan en el POS.
-  await webSettingsRepository.save(context.slug, {
+  await webSettingsRepository.save(mapped.posSlug, {
     isNew: dto.isNew,
     isOnSale: dto.isOnSale,
     isOnSaleAt,
     coverImageUrl,
-    metaTitle,
-    metaDescription,
+    metaTitle: dto.metaTitle === undefined ? undefined : dto.metaTitle || null,
+    metaDescription: dto.metaDescription === undefined ? undefined : dto.metaDescription || null,
   });
-
-  return productRepository.updatePosManagedFields(id, {
-    isFeatured: dto.isFeatured,
-    isNew: dto.isNew,
-    isProductNew: dto.isProductNew,
-    isProductNewAt: resolveFlagDate(dto.isProductNew, dto.isProductNewAt),
-    isOnSale: dto.isOnSale,
-    isOnSaleAt,
-    isSuggested: dto.isSuggested,
-    suggestedAt: resolveFlagDate(dto.isSuggested, dto.suggestedAt),
-    coverImageUrl,
-    metaTitle,
-    metaDescription,
-  });
+  revalidatePosProduct(mapped.posSlug);
+  return { slug: mapped.posSlug };
 }

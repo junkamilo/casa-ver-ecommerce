@@ -61,21 +61,4 @@ export class PrismaReviewRepository {
   async deleteReview(id: string) {
     return this.db.review.delete({ where: { id } });
   }
-
-  /** Rating de la copia en Neon del producto, si existe (el PDP lo calcula en vivo). */
-  async recalcProductRating(productSlug: string) {
-    const agg = await prisma.review.aggregate({
-      where: { productSlug, status: "APPROVED" },
-      _avg: { rating: true },
-      _count: { id: true },
-    });
-
-    await prisma.product.updateMany({
-      where: { slug: productSlug },
-      data: {
-        rating: agg._avg.rating ?? 0,
-        numReviews: agg._count.id,
-      },
-    });
-  }
 }

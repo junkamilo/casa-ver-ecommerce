@@ -15,7 +15,6 @@ jest.mock("../infrastructure/pos-catalog.client", () => ({
   isPosCatalogConfigured: () => true,
   listCategories: jest.fn(),
 }));
-jest.mock("../application/sync-product.use-case", () => ({}));
 jest.mock("../application/sync-order-status.use-case", () => ({}));
 jest.mock("@/modules/shipping/application/pos-shipping", () => ({ clearShippingCache: jest.fn() }));
 jest.mock("../application/verify-pos-admin.use-case", () => ({ clearPosAdminCache: jest.fn() }));

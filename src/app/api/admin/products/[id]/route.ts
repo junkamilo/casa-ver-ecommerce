@@ -1,30 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { revalidateProductListings } from "@/lib/revalidate-product-pages";
-import { updateProductUseCase } from "@/modules/adminCatalog/products/application/update-product.use-case";
-import { deleteProductUseCase } from "@/modules/adminCatalog/products/application/delete-product.use-case";
-import { getProductByIdUseCase } from "@/modules/adminCatalog/products/application/get-product-by-id.use-case";
+import { updatePosManagedProductUseCase } from "@/modules/adminCatalog/products/application/update-pos-managed-product.use-case";
 import { runAdminRoute } from "@/server/http/admin-route";
 import { toErrorResponse } from "@/server/http/error-response";
 
-// ── GET: Obtener producto completo por ID ─────────────────────────────────────
-
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  return runAdminRoute(async () => {
-    try {
-      const { id } = await params;
-      const product = await getProductByIdUseCase(id);
-      return NextResponse.json(product);
-    } catch (error) {
-      return toErrorResponse(error);
-    }
-  });
-}
-
-// ── PATCH: Actualizar Producto completo ───────────────────────────────────────
+// ── PATCH: capa web de un producto del POS (`id` = slug del POS) ──────────────
 
 export async function PATCH(
   req: NextRequest,
@@ -34,27 +14,7 @@ export async function PATCH(
     try {
       const { id } = await params;
       const body = await req.json();
-      const result = await updateProductUseCase({ id, body });
-      revalidateProductListings();
-      return NextResponse.json(result);
-    } catch (error) {
-      return toErrorResponse(error);
-    }
-  });
-}
-
-// ── DELETE: Eliminar Producto ─────────────────────────────────────────────────
-
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  return runAdminRoute(async () => {
-    try {
-      const { id } = await params;
-      const result = await deleteProductUseCase({ id });
-      revalidateProductListings();
-      return NextResponse.json(result);
+      return NextResponse.json(await updatePosManagedProductUseCase(id, body));
     } catch (error) {
       return toErrorResponse(error);
     }

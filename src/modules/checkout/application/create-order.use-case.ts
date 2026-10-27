@@ -1,4 +1,4 @@
-import { PrismaCheckoutRepository } from "../infrastructure/prisma-checkout.repository";
+import { generateOrderNumber, PrismaCheckoutRepository } from "../infrastructure/prisma-checkout.repository";
 import { createOrderInputSchema } from "../contracts/create-order.schema";
 import type {
   CreateOrderInputDTO,
@@ -6,11 +6,16 @@ import type {
 } from "../contracts/create-order.dto";
 import {
   OutOfStockError,
+  PosUnavailableError,
   ProductUnavailableError,
   toCreateOrderErrorMessage,
 } from "./checkout.errors";
-import { verifyPosAvailability } from "@/modules/posIntegration/application/verify-pos-availability.use-case";
-import { getPosColorPalette } from "@/modules/posIntegration/application/get-pos-colors.use-case";
+import { ORDER_PAYMENT_GRACE_MS } from "../domain/order-payment-grace";
+import {
+  PosReservationUnavailableError,
+  releasePosReservation,
+  reservePosStockForOrder,
+} from "@/modules/posIntegration/application/reserve-pos-stock.use-case";
 
 const repository = new PrismaCheckoutRepository();
 
@@ -36,11 +41,22 @@ export async function createOrderUseCase(
     return { success: false, error: message };
   }
 
+  // El número se genera antes para apartar el inventario en el POS con él: mientras el cliente paga, esas
+  // unidades no se venden en la caja ni en otro pedido. Si el pedido no se crea, la reserva se suelta.
+  const orderNumber = generateOrderNumber();
+  let reserved = false;
   try {
-    // El POS confirma que alcanza el inventario para las cantidades del carrito antes de cobrar.
-    const posIssues = await verifyPosAvailability(
-      parsed.data.items.map((item) => ({ variantId: item.variantId, quantity: item.quantity }))
-    );
+    let posIssues;
+    try {
+      posIssues = await reservePosStockForOrder(
+        orderNumber,
+        parsed.data.items.map((item) => ({ variantId: item.variantId, quantity: item.quantity })),
+        Math.ceil(ORDER_PAYMENT_GRACE_MS / 60_000)
+      );
+    } catch (error) {
+      if (error instanceof PosReservationUnavailableError) throw new PosUnavailableError(error.message);
+      throw error;
+    }
     const firstIssue = posIssues[0];
     if (firstIssue) {
       const item = parsed.data.items.find((i) => i.variantId === firstIssue.variantId);
@@ -54,8 +70,9 @@ export async function createOrderUseCase(
           );
     }
 
-    // Los productos de la web solo se venden en colores que existen en el POS (los que la tienda muestra).
-    const result = await repository.createOrderTransaction(parsed.data, await getPosColorPalette());
+    reserved = true;
+
+    const result = await repository.createOrderTransaction(parsed.data, orderNumber);
 
     return {
       success: true,
@@ -65,6 +82,7 @@ export async function createOrderUseCase(
     };
   } catch (err) {
     console.error("[createOrder] Error:", err);
+    if (reserved) await releasePosReservation(orderNumber);
     return { success: false, error: toCreateOrderErrorMessage(err) };
   }
 }

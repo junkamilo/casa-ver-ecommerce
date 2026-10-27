@@ -1,5 +1,3 @@
-import { prisma } from "@/lib/prisma";
-import { findProductsByKeys } from "@/lib/product-keys";
 import { parsePosLineId } from "@/modules/posIntegration/domain/pos-mapper";
 import {
   isPosCatalogConfigured,
@@ -43,13 +41,11 @@ export function normalizeCouponCode(code: string): string {
 }
 
 /**
- * Slug del POS de cada línea: los ítems del POS lo traen en el `variantId`; los productos de Neon lo
- * tienen en `posSlug`. Sin slug = producto solo de la web (cuenta para «todo el pedido», no para un alcance).
+ * Slug del POS de cada línea (lo trae el SKU del POS en el `variantId`). Sin slug = línea que no es del POS
+ * (cuenta para «todo el pedido», no para un alcance; el checkout la rechaza de todos modos).
  */
 async function posSlugsOf(lines: CouponQuoteLine[]): Promise<(string | null)[]> {
-  const neonKeys = lines.filter((l) => !parsePosLineId(l.variantId)).map((l) => l.productId);
-  const neon = neonKeys.length > 0 ? await findProductsByKeys(prisma, [...new Set(neonKeys)]) : new Map();
-  return lines.map((l) => parsePosLineId(l.variantId)?.slug ?? neon.get(l.productId)?.posSlug ?? null);
+  return lines.map((l) => parsePosLineId(l.variantId)?.slug ?? null);
 }
 
 /** Respuesta del POS → resultado del checkout (puro, para probarlo sin red). */

@@ -93,6 +93,14 @@ export class CouponNotApplicableError extends Error {
   }
 }
 
+/** El POS (precios, inventario) no respondió: el pedido no se crea. */
+export class PosUnavailableError extends Error {
+  constructor(message = "No pudimos confirmar el inventario. Intenta de nuevo en unos segundos.") {
+    super(message);
+    this.name = "PosUnavailableError";
+  }
+}
+
 export const CREATE_ORDER_GENERIC_ERROR =
   "No pudimos confirmar el pedido. Intenta de nuevo en unos segundos.";
 
@@ -107,6 +115,7 @@ const CHECKOUT_DOMAIN_ERRORS = [
   CouponNotApplicableError,
   InvalidAddressError,
   OutOfStockError,
+  PosUnavailableError,
   ProductUnavailableError,
   VariantNotFoundError,
 ] as const;

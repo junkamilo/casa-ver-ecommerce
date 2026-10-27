@@ -73,6 +73,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
       <div className="flex-1 w-full">
         <ProductClient
           product={data.product}
+          setComponents={data.setComponents}
           recommended={data.recommended}
           existingReview={data.existingReview}
           isAuthenticated={!!userEmail}

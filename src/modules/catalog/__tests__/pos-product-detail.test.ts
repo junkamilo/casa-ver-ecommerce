@@ -3,10 +3,6 @@ jest.mock("server-only", () => ({}));
 jest.mock("@/lib/prisma", () => ({ prisma: {} }));
 jest.mock("@/modules/posIntegration/infrastructure/pos-catalog.read", () => ({ fetchProductForRender: jest.fn() }));
 jest.mock("@/modules/posIntegration/infrastructure/pos-config", () => ({ isPosCatalogConfigured: jest.fn(() => true) }));
-jest.mock("../product/infrastructure/prisma-product-detail.repository", () => {
-  const repo = { findNeonProduct: jest.fn() };
-  return { PrismaProductDetailRepository: jest.fn(() => repo), __repo: repo };
-});
 jest.mock("../product/infrastructure/prisma-product-web-settings.repository", () => {
   const repo = { findBySlug: jest.fn() };
   return { PrismaProductWebSettingsRepository: jest.fn(() => repo), __settings: repo };
@@ -19,8 +15,6 @@ import { posProductSeo, posToRawProductDetail, type ProductWebOverlay } from "..
 import { mapUIProduct, mapUIItems, resolveGalleryAndVideo } from "../product/domain/product-detail.entity";
 import { resolveProductSource } from "../product/application/resolve-product-source";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const repo = require("../product/infrastructure/prisma-product-detail.repository").__repo;
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const settingsRepo = require("../product/infrastructure/prisma-product-web-settings.repository").__settings;
 const mockFetch = fetchProductForRender as jest.Mock;
@@ -100,29 +94,19 @@ describe("resolveProductSource", () => {
     settingsRepo.findBySlug.mockResolvedValue(null);
   });
 
-  it("un producto creado solo en la web ya no se vende (404) y no consulta al POS", async () => {
-    repo.findNeonProduct.mockResolvedValue({ id: "clxweb", status: "ACTIVE", posSlug: null });
-    await expect(resolveProductSource("vestido-web")).resolves.toBeNull();
-    expect(mockFetch).not.toHaveBeenCalled();
-  });
-
-  it("un producto del POS se lee del POS con la capa web, aunque no tenga copia en Neon", async () => {
-    repo.findNeonProduct.mockResolvedValue(null);
+  it("un producto del POS se lee del POS con la capa web", async () => {
     settingsRepo.findBySlug.mockResolvedValue(overlay);
     mockFetch.mockResolvedValue(pos);
     await expect(resolveProductSource("blusa-lino")).resolves.toEqual({ source: "POS", pos, overlay });
   });
 
-  it("si el POS lo oculta (404) la página es 404 aunque quede la copia", async () => {
-    repo.findNeonProduct.mockResolvedValue({ id: "clxpos", status: "ACTIVE", posSlug: "falda" });
+  it("si el POS no lo publica (404) la página es 404", async () => {
     mockFetch.mockResolvedValue(null);
-    await expect(resolveProductSource("falda")).resolves.toBeNull();
+    await expect(resolveProductSource("vestido-web")).resolves.toBeNull();
   });
 
-  it("si el POS no responde usa la copia en Neon", async () => {
-    repo.findNeonProduct.mockResolvedValue({ id: "clxpos", status: "ACTIVE", posSlug: "top" });
+  it("si el POS no responde se lanza (error temporal, no 404)", async () => {
     mockFetch.mockRejectedValue(new Error("timeout"));
-    jest.spyOn(console, "warn").mockImplementation(() => undefined);
-    await expect(resolveProductSource("top")).resolves.toEqual({ source: "NEON_LEGACY" });
+    await expect(resolveProductSource("top")).rejects.toThrow("timeout");
   });
 });

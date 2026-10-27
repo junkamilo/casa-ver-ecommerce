@@ -1,132 +1,82 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { ToastState } from "./types";
-import { useProductList } from "./hooks/useProductList";
-import { useProductForm } from "./hooks/useProductForm";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ExternalLink, Info } from "lucide-react";
+import type { ProductListItem, ToastState } from "./types";
 import ToastNotification from "./components/ToastNotification";
 import ProductFilters from "./components/ProductFilters";
 import ProductTable from "./components/ProductTable";
-import AdminPagination from "@/components/ui/AdminPagination";
-import ProductModal from "./components/ProductModal";
 import PosProductModal from "./components/PosProductModal";
-import type { AdminProductDetailDTO } from "@/modules/adminCatalog/products/presentation/mappers";
+import AdminPagination from "@/components/ui/AdminPagination";
 import AdminPageHeader from "@/components/ui/AdminPageHeader";
-import { Plus } from "lucide-react";
-import {
-  AdminProductsApiError,
-  createAdminProduct,
-  fetchAdminProductById,
-  updateAdminProduct,
-} from "@/modules/adminCatalog/products/presentation/api-client";
+import { fetchAdminProducts } from "@/modules/adminCatalog/products/presentation/api-client";
+import { posProductsUrl } from "@/lib/pos-links";
 
+const ALL_LABEL = "Todos";
+const DEFAULT_PAGE_SIZE = 25;
+
+const normalize = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+
+/**
+ * Productos de la tienda: los publica el POS (Tienda → Productos), que es donde se crean, editan, se les
+ * cambia precio, fotos e inventario y se ocultan. Aquí solo se consultan y se edita la capa web de cada uno
+ * (Nueva colección, oferta manual, portada y SEO).
+ */
 export default function AdminProductos() {
-  const router = useRouter();
-  const list = useProductList();
-  const form = useProductForm();
-
-  const [showModal, setShowModal] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [formLoading, setFormLoading] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [products, setProducts] = useState<ProductListItem[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [filterCategory, setFilterCategory] = useState(ALL_LABEL);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [editing, setEditing] = useState<ProductListItem | null>(null);
   const [toast, setToast] = useState<ToastState>(null);
-  const [posProduct, setPosProduct] = useState<AdminProductDetailDTO | null>(null);
-  const [posModalOpen, setPosModalOpen] = useState(false);
-  const [posLoading, setPosLoading] = useState(false);
 
   const showToast = useCallback((type: "success" | "error", message: string) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 4000);
   }, []);
 
-  const openNew = () => {
-    form.reset();
-    setEditingId(null);
-    setShowModal(true);
-  };
-
-  const openPosEdit = async (productId: string) => {
-    setPosProduct(null);
-    setPosLoading(true);
-    setPosModalOpen(true);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setFetchError(null);
     try {
-      setPosProduct(await fetchAdminProductById(productId));
-    } catch (error: unknown) {
-      showToast("error", error instanceof Error ? error.message : "No se pudo cargar el producto");
-      setPosModalOpen(false);
+      const data = await fetchAdminProducts();
+      setProducts(data.products);
+      setCategories(data.categories);
+    } catch (error) {
+      setFetchError(
+        error instanceof Error
+          ? `No se pudieron leer los productos del POS: ${error.message}`
+          : "No se pudieron leer los productos del POS"
+      );
     } finally {
-      setPosLoading(false);
+      setLoading(false);
     }
-  };
+  }, []);
 
-  const openEdit = async (productId: string) => {
-    if (list.products.find((p) => p.id === productId)?.posManaged) {
-      await openPosEdit(productId);
-      return;
-    }
-    form.reset();
-    setEditingId(productId);
-    setFormLoading(true);
-    setShowModal(true);
-    try {
-      const data = await fetchAdminProductById(productId);
-      form.loadFromProduct(data, list.presetColors);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "No se pudo cargar el producto";
-      showToast("error", message);
-      setShowModal(false);
-    } finally {
-      setFormLoading(false);
-    }
-  };
+  useEffect(() => {
+    void load();
+  }, [load]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const missingRequired = !form.name || (!form.isSet && !form.basePrice);
-    if (missingRequired) {
-      showToast("error", form.isSet ? "Completa el nombre" : "Completa nombre y precio");
-      return;
-    }
-    // Para isSet=true los colores/tallas viven en las subcategorías, no en el padre
-    if (!form.isSet && form.selectedColors.length === 0) {
-      showToast("error", "Debes seleccionar al menos 1 color para el producto");
-      return;
-    }
-    if (!form.isSet && form.selectedSizes.length === 0) {
-      showToast("error", "Debes seleccionar al menos 1 talla para el producto");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const payload = form.buildPayload();
-      if (editingId) {
-        await updateAdminProduct(editingId, payload);
-      } else {
-        await createAdminProduct(payload);
-      }
-      showToast("success", editingId ? "Producto actualizado" : "Producto creado");
-      setShowModal(false);
-      router.refresh();
-      await list.fetchProducts();
-    } catch (err: unknown) {
-      const msg =
-        err instanceof AdminProductsApiError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : "Error al guardar el producto";
-      showToast("error", msg);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const filteredProducts = useMemo(() => {
+    const q = normalize(search.trim());
+    return products.filter(
+      (p) =>
+        (filterCategory === ALL_LABEL || p.categoryNames.includes(filterCategory)) &&
+        (!q || normalize(p.name).includes(q) || p.slug.includes(q))
+    );
+  }, [products, search, filterCategory]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("¿Eliminar este producto? Esta acción no se puede deshacer.")) return;
-    const ok = await list.deleteProduct(id);
-    showToast(ok ? "success" : "error", ok ? "Producto eliminado" : "No se pudo eliminar");
-  };
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedProducts = filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <div className="space-y-8 p-6 bg-gray-50 min-h-screen font-sans">
@@ -134,75 +84,61 @@ export default function AdminProductos() {
 
       <AdminPageHeader
         title="Inventario"
-        action={
-          list.posCatalogEnabled
-            ? undefined
-            : { label: "Nuevo Producto", onClick: openNew, icon: Plus }
-        }
+        action={{ label: "Productos en el POS", href: posProductsUrl(), icon: ExternalLink }}
       />
 
-      {list.posCatalogEnabled && (
-        <p className="text-sm text-gray-500 -mt-4">
-          El catálogo lo administra el POS: los productos se crean, editan, ocultan y borran allí y
-          llegan solos a la web. En los productos marcados como POS solo se editan etiquetas,
-          sugeridos, portada, tipos de prenda y SEO.
+      <div className="flex items-start gap-3 rounded-xl border border-[#154734]/20 bg-[#154734]/5 px-4 py-3 text-sm text-[#154734] -mt-4">
+        <Info className="w-4 h-4 mt-0.5 shrink-0" />
+        <p>
+          Los productos, variantes, precios, fotos e inventario se administran en el POS (Tienda → Productos) y
+          llegan solos a la tienda. Aquí solo se elige si van en Nueva colección, la oferta manual, la portada y el
+          SEO. Más vendidos, Producto nuevo, Sugerido y la etiqueta de oferta del POS también se ponen en el POS.
         </p>
-      )}
+      </div>
 
-      {list.fetchError && (
+      {fetchError && (
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-medium">
-          {list.fetchError}
+          {fetchError}
         </div>
       )}
 
       <ProductFilters
-        search={list.search}
-        onSearchChange={list.setSearch}
-        filterCategory={list.filterCategory}
-        onCategoryChange={list.setFilterCategory}
-        categories={list.categories}
+        search={search}
+        onSearchChange={(value) => {
+          setSearch(value);
+          setPage(1);
+        }}
+        filterCategory={filterCategory}
+        onCategoryChange={(value) => {
+          setFilterCategory(value);
+          setPage(1);
+        }}
+        categories={categories.map((name) => ({ id: name, name }))}
       />
 
-      <ProductTable
-        products={list.paginatedProducts}
-        loading={list.loading}
-        onEdit={openEdit}
-        onDelete={handleDelete}
-        onToggleActive={list.toggleActive}
-      />
+      <ProductTable products={paginatedProducts} loading={loading} onEdit={setEditing} />
 
       <AdminPagination
-        page={list.page}
-        totalPages={list.totalPages}
-        onPageChange={list.setPage}
-        total={list.filteredProducts.length}
-        pageSize={list.pageSize}
-        onPageSizeChange={list.setPageSize}
+        page={currentPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        total={filteredProducts.length}
+        pageSize={pageSize}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPage(1);
+        }}
         itemLabel="productos"
       />
 
-      {showModal && (
-        <ProductModal
-          editingId={editingId}
-          formLoading={formLoading}
-          submitting={submitting}
-          presetColors={list.presetColors}
-          onClose={() => setShowModal(false)}
-          onSubmit={handleSubmit}
-          {...form}
-        />
-      )}
-
-      {posModalOpen && (
+      {editing && (
         <PosProductModal
-          product={posProduct}
-          loading={posLoading}
-          onClose={() => setPosModalOpen(false)}
+          product={editing}
+          onClose={() => setEditing(null)}
           onSaved={async (message) => {
             showToast("success", message);
-            setPosModalOpen(false);
-            router.refresh();
-            await list.fetchProducts();
+            setEditing(null);
+            await load();
           }}
           onError={(message) => showToast("error", message)}
         />

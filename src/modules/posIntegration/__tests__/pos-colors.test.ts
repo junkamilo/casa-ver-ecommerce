@@ -16,7 +16,6 @@ jest.mock("../infrastructure/pos-catalog.client", () => ({
   listColors: jest.fn(),
   listCategories: jest.fn(),
 }));
-jest.mock("../application/sync-product.use-case", () => ({}));
 jest.mock("../application/sync-order-status.use-case", () => ({}));
 jest.mock("@/modules/shipping/application/pos-shipping", () => ({ clearShippingCache: jest.fn() }));
 jest.mock("../application/verify-pos-admin.use-case", () => ({ clearPosAdminCache: jest.fn() }));
@@ -28,46 +27,19 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { revalidateProductListings } from "@/lib/revalidate-product-pages";
 import { isPosCatalogConfigured, listColors } from "../infrastructure/pos-catalog.client";
 import {
-  getPosColorPalette,
   getPosColors,
   getPosColorsSnapshot,
   resetPosColorsBackupForTests,
 } from "../application/get-pos-colors.use-case";
 import { processPosEvent } from "../application/process-pos-event.use-case";
-import {
-  buildPosColorPalette,
-  colorKey,
-  findPaletteColor,
-  restrictToPosPalette,
-} from "../domain/pos-color-palette";
 import { posColorFacetSchema, posProductSchema, posWebhookPayloadSchema } from "../contracts/pos-catalog.schema";
 import { mapPosProduct } from "../domain/pos-mapper";
 
 const mockList = listColors as jest.Mock;
 const mockConfigured = isPosCatalogConfigured as jest.Mock;
 const VERDE = { colorId: 1, name: "Verde Militar", hexCode: "#4B5320", totalProducts: 3 };
-const BEIGE = { colorId: 2, name: "Beige Lino", hexCode: "#E5D3B3", totalProducts: 0 };
 
-describe("paleta de colores del POS", () => {
-  it("cruza por nombre sin mayúsculas, tildes ni espacios repetidos", () => {
-    expect(colorKey("  Azul   Rey ")).toBe("azul rey");
-    expect(colorKey("Limón")).toBe(colorKey("limon"));
-    const palette = buildPosColorPalette([VERDE]);
-    expect(findPaletteColor(palette, "verde  militar")).toEqual(VERDE);
-    expect(findPaletteColor(palette, "Rosa")).toBeUndefined();
-  });
-
-  it("deja solo los colores del POS, con su nombre y hex; sin paleta no queda ninguno", () => {
-    const colors = [
-      { name: "verde militar", hexCode: "#000", images: [{ url: "/v.jpg" }] },
-      { name: "Rosa", hexCode: "#FFC0CB", images: [] },
-    ];
-    expect(restrictToPosPalette(colors, buildPosColorPalette([VERDE, BEIGE]))).toEqual([
-      { name: "Verde Militar", hexCode: "#4B5320", images: [{ url: "/v.jpg" }] },
-    ]);
-    expect(restrictToPosPalette(colors, buildPosColorPalette([]))).toEqual([]);
-  });
-
+describe("colores del POS", () => {
   it("el contrato exige hex #RRGGBB y acepta el aviso de colores", () => {
     expect(posColorFacetSchema.safeParse({ ...VERDE, hexCode: "#FFF" }).success).toBe(false);
     expect(posColorFacetSchema.parse({ colorId: 3, name: "Terracota", hexCode: "#E2725B" }).totalProducts).toBe(0);
@@ -105,10 +77,9 @@ describe("getPosColors · respaldo", () => {
   });
   afterEach(() => jest.restoreAllMocks());
 
-  it("sin colores creados en el POS la paleta queda vacía", async () => {
+  it("sin colores creados en el POS no hay colores", async () => {
     mockList.mockResolvedValue([]);
     expect(await getPosColorsSnapshot()).toEqual({ colors: [], available: true });
-    expect((await getPosColorPalette())!.size).toBe(0);
   });
 
   it("si el POS cae sirve la última copia válida", async () => {
@@ -123,9 +94,9 @@ describe("getPosColors · respaldo", () => {
     expect(await getPosColorsSnapshot()).toEqual({ colors: [], available: false });
   });
 
-  it("sin integración con el POS no restringe (paleta null)", async () => {
+  it("sin integración con el POS no consulta colores", async () => {
     mockConfigured.mockReturnValue(false);
-    expect(await getPosColorPalette()).toBeNull();
+    expect(await getPosColors()).toEqual([]);
     expect(mockList).not.toHaveBeenCalled();
   });
 });

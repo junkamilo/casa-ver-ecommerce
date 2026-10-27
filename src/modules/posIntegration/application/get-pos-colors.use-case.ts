@@ -2,7 +2,6 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 import type { PosColorFacet } from "../contracts/pos-catalog.schema";
 import { isPosCatalogConfigured, listColors } from "../infrastructure/pos-catalog.client";
-import { buildPosColorPalette, type PosColorPalette } from "../domain/pos-color-palette";
 import { POS_COLORS_CACHE_TAG } from "./revalidate-catalog";
 
 const POS_COLORS_REVALIDATE_SECONDS = 300;
@@ -48,12 +47,6 @@ export async function getPosColorsSnapshot(): Promise<PosColorsSnapshot> {
 /** Colores activos del POS (o su respaldo); `[]` sin integración o sin respuesta. Nunca lanza. */
 export async function getPosColors(): Promise<PosColorFacet[]> {
   return (await getPosColorsSnapshot()).colors ?? [];
-}
-
-/** Paleta para restringir los productos de la web; `null` = sin integración con el POS (no se restringe). */
-export async function getPosColorPalette(): Promise<PosColorPalette | null> {
-  const { colors } = await getPosColorsSnapshot();
-  return colors ? buildPosColorPalette(colors) : null;
 }
 
 /** Solo para tests: olvida el respaldo en memoria. */

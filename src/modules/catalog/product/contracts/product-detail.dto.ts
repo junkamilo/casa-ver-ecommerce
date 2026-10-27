@@ -73,8 +73,18 @@ export interface ProductSocialProof {
   recentBuyers: BuyerInfo[];
 }
 
+/** Pieza de un conjunto del POS («Este conjunto incluye»). `slug` nulo = la pieza no se vende sola. */
+export interface SetComponentDTO {
+  slug: string | null;
+  name: string;
+  position: number;
+  price: number;
+  imageUrl: string | null;
+}
+
 export interface ProductClientProps {
   product: UIProduct;
+  setComponents?: SetComponentDTO[];
   recommended: CollectionProduct[];
   existingReview: ExistingReview | null;
   isAuthenticated: boolean;
@@ -87,6 +97,7 @@ export interface ProductClientProps {
 
 export interface ProductDetailResultDTO {
   product: UIProduct;
+  setComponents: SetComponentDTO[];
   recommended: CollectionProduct[];
   existingReview: ExistingReview | null;
   reviews: TestimonialItem[];

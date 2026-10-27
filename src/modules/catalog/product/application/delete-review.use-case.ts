@@ -36,7 +36,7 @@ export async function deleteReviewUseCase(
     const existing = await repository.findOwnReview(userId, productSlug);
     if (!existing) throw new ReviewNotFoundError();
 
-    await repository.deleteReviewAndRecompute({
+    await repository.deleteReview({
       reviewId: existing.id,
       productSlug,
     });

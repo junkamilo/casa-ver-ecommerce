@@ -17,12 +17,6 @@ datasource db {
 // ENUMS (Configuración Global)
 // ============================================================
 
-enum ProductStatus {
-  ACTIVE    // Visible en la tienda
-  INACTIVE  // Oculto
-  DRAFT     // Borrador
-}
-
 enum Size {
   XS
   S
@@ -189,230 +183,10 @@ model Address {
 }
 
 // ============================================================
-// CATÁLOGO DE PRODUCTOS
+// PEDIDOS & PAGOS
+// Productos, variantes e inventario viven en el POS (la web lee su API pública y reserva el stock allí
+// mientras el cliente paga). Las tablas de catálogo de Neon quedaron en el esquema legacy_catalog.
 // ============================================================
-
-model Product {
-  id              String         @id @default(cuid())
-  name            String
-  slug            String         @unique
-  description     String         @db.Text
-  basePrice       Decimal        @db.Decimal(10, 2)
-  comparePrice    Decimal?       @db.Decimal(10, 2) // Precio tachado (oferta)
-
-  status          ProductStatus  @default(DRAFT)
-  isFeatured      Boolean        @default(false)
-  isNew           Boolean        @default(false)
-
-  // Etiquetas de Producto (con control de tiempo)
-  isProductNew    Boolean        @default(false)
-  isProductNewAt  DateTime?      // Timestamp cuando se activó — expira automáticamente a los 7 días
-  isOnSale        Boolean        @default(false)
-  isOnSaleAt      DateTime?      // Timestamp cuando se activó la oferta
-  onSaleFromPos   Boolean        @default(false) // la oferta la puso el POS (etiqueta ON_SALE); si no, es manual de la web
-  isSuggested     Boolean        @default(false) // Popup "Te podría interesar"
-  suggestedAt     DateTime?      // Cuándo se activó la sugerencia (orden)
-
-  // SEO
-  metaTitle       String?
-  metaDescription String?
-
-  // Datos Adicionales
-  videoUrl        String?
-  // Portada principal del producto (URL ya subida en algún color)
-  coverImageUrl   String?
-
-  // Integración POS: slug del producto en el POS (null = creado en la web)
-  posSlug         String?        @unique
-  posSyncedAt     DateTime?
-
-  // Calificaciones
-  rating          Float          @default(0)
-  numReviews      Int            @default(0)
-
-  // Categorías y tipos de prenda: los publica el POS (no se guardan en la web).
-
-  // Conjunto (Set) de piezas
-  isSet           Boolean        @default(false)
-
-  // Relaciones Clave
-  images          ProductImage[] // Imágenes generales o por defecto
-  colors          ProductColor[] // Definición de colores disponibles
-  variants        ProductVariant[] // Inventario real (SKUs)
-  items           ProductItem[]  // Solo cuando isSet=true
-
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-
-  @@index([status])
-  @@index([slug])
-  @@index([isSuggested, status])
-  @@map("products")
-}
-
-// ============================================================
-// VARIANTES & IMÁGENES (Lógica de Colores)
-// ============================================================
-
-model ProductColor {
-  id        String         @id @default(cuid())
-  productId String
-  product   Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  name      String         // Ej: "Verde Militar"
-  hexCode   String         // Ej: "#4B5320"
-
-  // Las imágenes se atan al color. Si selecciono "Verde", cargo estas fotos.
-  images    ProductImage[] 
-  variants  ProductVariant[]
-
-  @@unique([productId, name])
-  @@map("product_colors")
-}
-
-model ProductImage {
-  id        String        @id @default(cuid())
-  productId String
-  product   Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  url       String
-  altText   String?
-  order     Int           @default(0)
-  isCover   Boolean       @default(false) // true = portada del producto para este color
-
-  // Relación opcional: Si es null, es imagen general. Si tiene colorId, es específica.
-  colorId   String?
-  color     ProductColor? @relation(fields: [colorId], references: [id], onDelete: SetNull)
-
-  createdAt DateTime      @default(now())
-
-  @@index([productId])
-  @@index([colorId, isCover])
-  @@map("product_images")
-}
-
-model ProductVariant {
-  id            String             @id @default(cuid())
-  productId     String
-  product       Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  colorId       String
-  color         ProductColor       @relation(fields: [colorId], references: [id], onDelete: Cascade)
-
-  size          Size
-  sku           String             @unique // Identificador único de inventario
-  priceOverride Decimal?           @db.Decimal(10, 2) // Opcional: Si la XXL vale más
-
-  // Gestión de Inventario
-  stock         Int                @default(0)
-  minStock      Int                @default(2) // Alerta de stock bajo
-  reserved      Int                @default(0) // Stock temporalmente en carritos
-
-  // Integración POS: el POS no envía cantidades, solo disponibilidad
-  posAvailable  Boolean            @default(false)
-  posLowStock   Boolean            @default(false)
-
-  isActive      Boolean            @default(true)
-
-  reservations  StockReservation[]
-
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-
-  @@unique([productId, colorId, size]) // Evita duplicados de la misma combinación
-  @@map("product_variants")
-}
-
-// ============================================================
-// CONJUNTOS (Sets) — Piezas de un producto compuesto
-// ============================================================
-
-model ProductItem {
-  id        String             @id @default(cuid())
-  productId String
-  product   Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  name         String             // Ej: "Short", "Pantalón"
-  description  String?            @db.Text
-  price        Decimal?           @db.Decimal(10, 2) // Precio propio (opcional)
-  comparePrice Decimal?           @db.Decimal(10, 2) // Precio tachado (oferta)
-  videoUrl     String?
-  // Portada principal de la pieza (URL ya subida en algún color de la pieza)
-  coverImageUrl String?
-  // Pieza que representa el set en Home (precio + portada + colores)
-  isCardFeatured Boolean            @default(false)
-  order        Int                @default(0)
-
-  colors    ProductItemColor[]
-
-  createdAt DateTime           @default(now())
-
-  @@index([productId])
-  @@map("product_items")
-}
-
-model ProductItemColor {
-  id      String               @id @default(cuid())
-  itemId  String
-  item    ProductItem          @relation(fields: [itemId], references: [id], onDelete: Cascade)
-
-  name    String               // Ej: "Verde Militar"
-  hexCode String               // Ej: "#4B5320"
-
-  images   ProductItemImage[]
-  variants ProductItemVariant[]
-
-  @@unique([itemId, name])
-  @@map("product_item_colors")
-}
-
-model ProductItemImage {
-  id      String           @id @default(cuid())
-  colorId String
-  color   ProductItemColor @relation(fields: [colorId], references: [id], onDelete: Cascade)
-
-  url     String
-  altText String?
-  order   Int              @default(0)
-  isCover Boolean          @default(false) // true = portada de esta subcategoría para este color
-
-  @@index([colorId])
-  @@index([colorId, isCover])
-  @@map("product_item_images")
-}
-
-model ProductItemVariant {
-  id       String           @id @default(cuid())
-  colorId  String
-  color    ProductItemColor @relation(fields: [colorId], references: [id], onDelete: Cascade)
-
-  size     Size
-  sku      String           @unique
-  stock    Int              @default(0)
-  isActive Boolean          @default(true)
-
-  @@unique([colorId, size])
-  @@map("product_item_variants")
-}
-
-// ============================================================
-// SISTEMA DE RESERVAS & PAGOS
-// ============================================================
-
-model StockReservation {
-  id        String         @id @default(cuid())
-  variantId String
-  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-
-  quantity  Int
-  expiresAt DateTime       // Se libera automáticamente después de 15 min
-  released  Boolean        @default(false)
-
-  createdAt DateTime       @default(now())
-
-  @@index([expiresAt])
-  @@map("stock_reservations")
-}
 
 model Order {
   id                 String        @id @default(cuid())
@@ -487,7 +261,7 @@ model OrderItem {
   order       Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   productId   String // Referencia al producto (sin FK para soportar sets)
-  variantId   String // ProductVariant.id o ProductItemVariant.id
+  variantId   String // SKU del POS (pos-<slug>-<colorId>-<sizeId>); pedidos viejos: id de Neon
 
   // Snapshot del ítem (Nombre, precio, etc. congelados al momento de compra)
   name        String

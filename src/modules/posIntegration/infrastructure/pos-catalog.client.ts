@@ -14,6 +14,7 @@ import {
   posProductSchema,
   posPromotionValidationSchema,
   posStockCheckSchema,
+  posStockReservationSchema,
   type PosCategory,
   type PosColorFacet,
   type PosCustomerOrder,
@@ -27,6 +28,7 @@ import {
   type PosOrderStatus,
   type PosOrderStatusUpdate,
   type PosStockCheck,
+  type PosStockReservation,
   type PosOrderResult,
   type PosProduct,
   type PosProductQuery,
@@ -376,6 +378,31 @@ export async function checkPosStock(lines: PosOrderLine[]): Promise<PosStockChec
   const parsed = posStockCheckSchema.safeParse(result.data);
   if (!parsed.success) throw new PosApiError("Respuesta inesperada del POS en /orders/check", 502);
   return parsed.data;
+}
+
+/**
+ * Aparta en el POS las unidades del pedido mientras el cliente paga (POST /orders/reserve), todo o nada. Volver a
+ * reservar el mismo pedido reemplaza su reserva. Vence sola a los `minutes` (30 por defecto, máximo 60); el pedido
+ * pagado la consume. Lanza si el POS no responde.
+ */
+export async function reservePosStock(
+  orderNumber: string,
+  lines: PosOrderLine[],
+  minutes?: number,
+): Promise<PosStockReservation> {
+  const result = await postToOrders("/reserve", { orderNumber, lines, minutes });
+  if (!result.ok) throw new PosApiError(result.message, result.httpStatus);
+  const parsed = posStockReservationSchema.safeParse(result.data);
+  if (!parsed.success) throw new PosApiError("Respuesta inesperada del POS en /orders/reserve", 502);
+  return parsed.data;
+}
+
+/** Libera la reserva de un pedido que no se pagó (POST /orders/{n}/release). Devuelve cuántas filas soltó. */
+export async function releasePosStock(orderNumber: string): Promise<number> {
+  const result = await postToOrders(`/${encodeURIComponent(orderNumber)}/release`, {});
+  if (!result.ok) throw new PosApiError(result.message, result.httpStatus);
+  const released = (result.data as { released?: unknown } | null)?.released;
+  return typeof released === "number" ? released : 0;
 }
 
 /**

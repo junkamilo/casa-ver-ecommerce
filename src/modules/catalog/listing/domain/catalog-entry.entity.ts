@@ -1,7 +1,6 @@
 import type { PosProduct } from "@/modules/posIntegration/contracts/pos-catalog.schema";
 import { mapPosProduct } from "@/modules/posIntegration/domain/pos-mapper";
 import type { PosCollection, PosTaxonomy } from "@/modules/posIntegration/domain/pos-category-view";
-import { restrictToPosPalette, type PosColorPalette } from "@/modules/posIntegration/domain/pos-color-palette";
 import type { RawCollectionProduct } from "@/modules/collections/domain/product-mapper.entity";
 import {
   resolveWebCover,
@@ -17,13 +16,12 @@ import {
 
 // ── Catálogo de lectura de la tienda ─────────────────────────────────────────
 //
-// Una entrada por producto visible, venga del POS (API + capa web) o de la web (productos creados aquí,
-// guardados en Neon). Los listados, la búsqueda, los sugeridos y los recomendados filtran y ordenan
+// Una entrada por producto visible del POS (API + capa web). Los listados, la búsqueda, los sugeridos y los recomendados filtran y ordenan
 // estas entradas en memoria; la tarjeta sale por el mismo `transformProduct` de siempre.
 
 export interface CatalogEntry {
   slug: string;
-  source: "POS" | "NEON";
+  source: "POS";
   /** Tarjeta con `variants.stock` por color (el home la usa para el badge "Agotado"). */
   card: RawCollectionProduct;
   /** Alta en la tienda: ordena los listados (más nuevo primero). */
@@ -103,77 +101,6 @@ export function posToCatalogEntry(
       garmentTypeNames,
       categoryNames: [...new Set(categories.map((c) => c.name))],
       itemNames: [],
-    },
-  };
-}
-
-/**
- * Fila de Neon (producto de la web, o copia de uno del POS si el POS no responde). No trae categorías
- * ni tipos de prenda: esos los publica el POS, así que un producto de Neon no aparece en colecciones.
- */
-export interface NeonCatalogRow extends RawCollectionProduct {
-  description: string;
-  metaTitle: string | null;
-  metaDescription: string | null;
-  isFeatured: boolean;
-  isNew: boolean;
-  isSuggested: boolean;
-  suggestedAt: Date | null;
-  createdAt: Date;
-  /** Slug del POS si es la copia de un producto del POS; `null` = creado en la web. */
-  posSlug: string | null;
-  items: (RawCollectionProduct["items"][number] & { name: string })[];
-}
-
-/**
- * Colores de un producto creado en la web limitados a la paleta del POS (la web ya no tiene colores propios).
- * La copia de un producto del POS ya trae los colores del POS y no se toca; sin integración (`null`) tampoco.
- */
-export function restrictWebRowColors(row: NeonCatalogRow, palette: PosColorPalette | null): NeonCatalogRow {
-  if (!palette || row.posSlug) return row;
-  return {
-    ...row,
-    colors: restrictToPosPalette(row.colors, palette),
-    items: row.items.map((item) => ({ ...item, colors: restrictToPosPalette(item.colors, palette) })),
-  };
-}
-
-export function neonToCatalogEntry(row: NeonCatalogRow): CatalogEntry {
-  const { description, metaTitle, metaDescription, isFeatured, isNew, isSuggested, suggestedAt, createdAt } = row;
-  const card: RawCollectionProduct = {
-    name: row.name,
-    slug: row.slug,
-    basePrice: row.basePrice,
-    comparePrice: row.comparePrice,
-    isSet: row.isSet,
-    isProductNew: row.isProductNew,
-    isProductNewAt: row.isProductNewAt,
-    isOnSale: row.isOnSale,
-    coverImageUrl: row.coverImageUrl,
-    images: row.images,
-    items: row.items,
-    colors: row.colors,
-  };
-  return {
-    slug: row.slug,
-    source: "NEON",
-    card,
-    publishedAt: createdAt,
-    isFeatured,
-    isNew,
-    isSuggested,
-    suggestedAt,
-    categorySlugs: [],
-    garmentTypeSlugs: [],
-    search: {
-      name: row.name,
-      slug: row.slug,
-      metaTitle,
-      metaDescription,
-      description,
-      garmentTypeNames: [],
-      categoryNames: [],
-      itemNames: row.items.map((item) => item.name),
     },
   };
 }

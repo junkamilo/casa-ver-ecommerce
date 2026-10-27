@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { findProductsByKeys } from "@/lib/product-keys";
 import { buildPosOrderPayload, parsePosLineId } from "../domain/pos-mapper";
 import { isPosCatalogConfigured, postOrder, postOrderCancellation } from "../infrastructure/pos-catalog.client";
 
@@ -19,22 +18,14 @@ const CANCELLED_STATUSES = ["CANCELLED", "REFUNDED"] as const;
 type OrderLineIds = { productId: string; variantId: string };
 
 /**
- * Productos del pedido que vienen del POS: productId → slug del POS. Un ítem con el SKU del POS como
- * `variantId` trae el slug en sí mismo; los demás se buscan en Neon (por slug o id) y cuentan si tienen posSlug.
+ * Productos del pedido que vienen del POS: productId → slug del POS (lo trae el SKU del POS en el `variantId`).
+ * Un ítem sin SKU del POS (pedido anterior a la integración) no viaja al POS.
  */
 async function posSlugsOf(items: OrderLineIds[]): Promise<Map<string, string>> {
   const slugs = new Map<string, string>();
-  const neonKeys = new Set<string>();
   for (const item of items) {
     const ref = parsePosLineId(item.variantId);
     if (ref) slugs.set(item.productId, ref.slug);
-    else neonKeys.add(item.productId);
-  }
-  if (neonKeys.size === 0) return slugs;
-  const products = await findProductsByKeys(prisma, [...neonKeys]);
-  for (const key of neonKeys) {
-    const posSlug = products.get(key)?.posSlug;
-    if (posSlug) slugs.set(key, posSlug);
   }
   return slugs;
 }

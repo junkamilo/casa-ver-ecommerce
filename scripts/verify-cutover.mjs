@@ -49,13 +49,9 @@ const prisma = new PrismaClient();
 
 const checks = [
   ["users", () => prisma.user.count()],
-  ["products", () => prisma.product.count()],
-  ["product_colors", () => prisma.productColor.count()],
-  ["product_images", () => prisma.productImage.count()],
-  ["product_variants", () => prisma.productVariant.count()],
-  ["product_item_colors", () => prisma.productItemColor.count()],
   ["orders", () => prisma.order.count()],
   ["order_items", () => prisma.orderItem.count()],
+  ["product_web_settings", () => prisma.productWebSettings.count()],
   ["webhook_logs", () => prisma.webhookLog.count()],
   ["promo_popups", () => prisma.promoPopup.count()],
   ["hero_slides", () => prisma.heroSlide.count()],

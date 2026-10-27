@@ -12,11 +12,9 @@ import {
   type RawProductDetail,
 } from "../domain/product-detail.entity";
 import { posToRawProductDetail } from "../domain/pos-product-detail.entity";
-import type { ProductDetailResultDTO } from "../contracts/product-detail.dto";
+import type { ProductDetailResultDTO, SetComponentDTO } from "../contracts/product-detail.dto";
 import { transformProduct } from "@/modules/collections/domain/product-mapper.entity";
-import { mapPosProduct } from "@/modules/posIntegration/domain/pos-mapper";
-import { restrictToPosPalette } from "@/modules/posIntegration/domain/pos-color-palette";
-import { getPosColorPalette } from "@/modules/posIntegration/application/get-pos-colors.use-case";
+import { mapPosProduct, normalizePosSlug } from "@/modules/posIntegration/domain/pos-mapper";
 import { getRecommendedEntries } from "@/modules/catalog/listing/application/get-catalog";
 import { toCard } from "@/modules/catalog/listing/domain/catalog-entry.entity";
 import { resolveProductSource } from "./resolve-product-source";
@@ -35,28 +33,23 @@ export interface GetProductDetailInput {
   userEmail: string | null;
 }
 
-/** Producto a pintar: del POS (+ capa web) o de Neon (productos de la web / POS sin respuesta). */
-async function loadProduct(slug: string): Promise<RawProductDetail | null> {
+/** Producto a pintar (del POS + capa web) y, si es un conjunto, sus piezas. */
+async function loadProduct(
+  slug: string,
+): Promise<{ product: RawProductDetail; setComponents: SetComponentDTO[] } | null> {
   const resolved = await resolveProductSource(slug);
   if (!resolved) return null;
-
-  if (resolved.source === "POS") {
-    console.info(`[catalog] /product/${slug} source=POS`);
-    return posToRawProductDetail(mapPosProduct(resolved.pos), resolved.overlay);
-  }
-
-  const legacy = await repository.getProductDetail(slug);
-  if (!legacy) return null;
-  console.info(`[catalog] /product/${slug} source=NEON_LEGACY`);
-  // La identidad del producto en carrito, pedidos y reseñas es el slug también para los de la web.
-  const product: RawProductDetail = { ...legacy, id: legacy.slug };
-  // Producto creado en la web: solo los colores que existen en el POS (la web no tiene colores propios).
-  const palette = legacy.posSlug ? null : await getPosColorPalette();
-  if (!palette) return product;
   return {
-    ...product,
-    colors: restrictToPosPalette(product.colors, palette),
-    items: (product.items ?? []).map((item) => ({ ...item, colors: restrictToPosPalette(item.colors, palette) })),
+    product: posToRawProductDetail(mapPosProduct(resolved.pos), resolved.overlay),
+    setComponents: [...resolved.pos.components]
+      .sort((a, b) => a.position - b.position)
+      .map((piece) => ({
+        slug: piece.slug ? normalizePosSlug(piece.slug) : null,
+        name: piece.name,
+        position: piece.position,
+        price: piece.salePrice,
+        imageUrl: piece.coverImageUrl,
+      })),
   };
 }
 
@@ -65,8 +58,7 @@ async function loadProduct(slug: string): Promise<RawProductDetail | null> {
  * está activo (la page usa `notFound()` en ese caso).
  *
  * Internamente:
- *   1. Resuelve el producto: POS primero (cacheado por tag) o Neon para los
- *      productos de la web / si el POS no responde. Su `id` es el slug.
+ *   1. Resuelve el producto en el POS (cacheado por tag) + capa web. Su `id` es el slug.
  *   2. Mapea a `UIProduct`/`UIProductItem`/`UIColor` para el cliente.
  *   3. Recomendados: productos del catálogo que comparten categoría, con
  *      `transformProduct` del módulo `collections`.
@@ -76,8 +68,9 @@ async function loadProduct(slug: string): Promise<RawProductDetail | null> {
 export async function getProductDetailUseCase(
   input: GetProductDetailInput,
 ): Promise<ProductDetailResultDTO | null> {
-  const product = await loadProduct(input.slug);
-  if (!product) return null;
+  const loaded = await loadProduct(input.slug);
+  if (!loaded) return null;
+  const { product, setComponents } = loaded;
 
   const [userId, productReviews, buyerOrders, recommended] = await Promise.all([
     input.userEmail ? repository.getUserIdByEmail(input.userEmail) : null,
@@ -110,6 +103,7 @@ export async function getProductDetailUseCase(
 
   return {
     product: uiProduct,
+    setComponents,
     recommended: recommended.map((entry) => transformProduct(toCard(entry))),
     existingReview: userReview,
     reviews: mapProductReviews(productReviews),

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getCatalog } from "@/modules/catalog/listing/application/get-catalog";
+import { listPosCatalogForAlerts, variantAlertsOf } from "@/modules/adminCatalog/stockAlerts/application/pos-stock-alerts";
 import { parsePosLineId } from "@/modules/posIntegration/domain/pos-mapper";
 import { getPosCategoriesBySlug } from "@/modules/posIntegration/application/get-pos-product-categories.use-case";
 import { getPosOrderSummary, isPosCatalogConfigured } from "@/modules/posIntegration/infrastructure/pos-catalog.client";
@@ -468,23 +469,15 @@ export async function getOrdersFunnel(): Promise<FunnelItem[]> {
     .sort((a, b) => a.order - b.order);
 }
 
+/**
+ * Variantes del POS agotadas o en su mínimo (la web ya no guarda stock). La API pública del POS no da
+ * cantidades, solo si hay unidades libres y si está en su mínimo de alerta.
+ */
 export async function getLowStockAlerts(limit = 10): Promise<StockAlert[]> {
-  const candidates = await prisma.productVariant.findMany({
-    where: { isActive: true, stock: { lte: 5 } },
-    select: { stock: true, minStock: true, size: true, sku: true, color: { select: { name: true, product: { select: { name: true } } } } },
-    orderBy: { stock: "asc" },
-    take: limit * 2,
-  });
-
-  return candidates
-    .filter((v) => v.stock <= v.minStock)
-    .slice(0, limit)
-    .map((v) => ({
-      productName: v.color.product.name,
-      colorName: v.color.name,
-      size: v.size === "ONESIZE" ? "Unica" : v.size,
-      sku: v.sku,
-      stock: v.stock,
-      minStock: v.minStock,
-    }));
+  try {
+    return variantAlertsOf(await listPosCatalogForAlerts()).slice(0, limit);
+  } catch (error) {
+    console.warn("[Stats] El POS no respondió (stock crítico):", error);
+    return [];
+  }
 }

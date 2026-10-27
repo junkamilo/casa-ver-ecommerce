@@ -1,5 +1,6 @@
-import { AlertTriangle, CheckCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle, ExternalLink } from "lucide-react";
 import type { StockAlert } from "../types/types";
+import { posProductsUrl } from "@/lib/pos-links";
 
 interface Props {
   alerts: StockAlert[];
@@ -18,7 +19,17 @@ export function LowStockAlerts({ alerts }: Props) {
             )}
             Stock Crítico
           </h3>
-          <p className="text-xs text-gray-400 mt-0.5">Variantes en o por debajo del mínimo</p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Variantes agotadas o en su mínimo en el POS ·{" "}
+            <a
+              href={posProductsUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-0.5 font-semibold text-gray-600 hover:text-gray-900"
+            >
+              Inventario en el POS <ExternalLink className="w-3 h-3" />
+            </a>
+          </p>
         </div>
         {alerts.length > 0 && (
           <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full">
@@ -37,9 +48,9 @@ export function LowStockAlerts({ alerts }: Props) {
         <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
           {alerts.map((alert) => (
             <div
-              key={alert.sku}
+              key={`${alert.productSlug}-${alert.colorName}-${alert.size}`}
               className={`flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 border ${
-                alert.stock === 0
+                alert.status === "out"
                   ? "bg-red-50 border-red-200"
                   : "bg-amber-50 border-amber-200"
               }`}
@@ -50,12 +61,11 @@ export function LowStockAlerts({ alerts }: Props) {
                   {alert.colorName} · {alert.size}
                 </p>
               </div>
-              <div className="shrink-0 text-right">
-                <p className={`text-sm font-black ${alert.stock === 0 ? "text-red-600" : "text-amber-600"}`}>
-                  {alert.stock}
-                </p>
-                <p className="text-[10px] text-gray-400">mín. {alert.minStock}</p>
-              </div>
+              <p
+                className={`shrink-0 text-[11px] font-black ${alert.status === "out" ? "text-red-600" : "text-amber-600"}`}
+              >
+                {alert.status === "out" ? "Agotado" : "Pocas unidades"}
+              </p>
             </div>
           ))}
         </div>

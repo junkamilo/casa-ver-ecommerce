@@ -1,13 +1,11 @@
 /** @jest-environment node */
 jest.mock("server-only", () => ({}));
 jest.mock("@/lib/prisma", () => ({ prisma: {} }));
-jest.mock("@/lib/product-keys", () => ({ findProductsByKeys: jest.fn() }));
 jest.mock("@/modules/posIntegration/infrastructure/pos-catalog.client", () => ({
   isPosCatalogConfigured: jest.fn(() => true),
   validatePosPromotion: jest.fn(),
 }));
 
-import { findProductsByKeys } from "@/lib/product-keys";
 import {
   isPosCatalogConfigured,
   validatePosPromotion,
@@ -25,12 +23,11 @@ jest.mock("@/modules/shipping/application/pos-shipping", () => ({}));
 jest.mock("../infrastructure/pos-line-prices", () => ({}));
 
 const mockValidate = validatePosPromotion as jest.Mock;
-const mockFind = findProductsByKeys as jest.Mock;
 const mockConfigured = isPosCatalogConfigured as jest.Mock;
 
 const lines = [
   { variantId: "pos-vestido-lino-2-3", productId: "vestido-lino", price: 120000, quantity: 1 },
-  { variantId: "clxneonvariant01", productId: "clxneonproduct01", price: 30000, quantity: 2 },
+  { variantId: "pos-set-lino-4-5", productId: "set-lino", price: 30000, quantity: 2 },
 ];
 
 function posResult(overrides: Record<string, unknown> = {}) {
@@ -48,7 +45,7 @@ function posResult(overrides: Record<string, unknown> = {}) {
     discountAmount: 45000,
     lineDiscounts: [
       { index: 0, productSlug: "vestido-lino", discount: 30000 },
-      { index: 1, productSlug: "set-neon", discount: 15000 },
+      { index: 1, productSlug: "set-lino", discount: 15000 },
     ],
     reason: null,
     message: null,
@@ -59,7 +56,6 @@ function posResult(overrides: Record<string, unknown> = {}) {
 beforeEach(() => {
   jest.clearAllMocks();
   mockConfigured.mockReturnValue(true);
-  mockFind.mockResolvedValue(new Map([["clxneonproduct01", { id: "clxneonproduct01", slug: "set", posSlug: "set-neon" }]]));
 });
 
 describe("quoteCouponWithPos", () => {
@@ -74,7 +70,7 @@ describe("quoteCouponWithPos", () => {
       customerDocument: "1098",
       lines: [
         { index: 0, productSlug: "vestido-lino", colorId: 2, sizeId: 3, quantity: 1, unitPrice: 120000 },
-        { index: 1, productSlug: "set-neon", colorId: null, sizeId: null, quantity: 2, unitPrice: 30000 },
+        { index: 1, productSlug: "set-lino", colorId: 4, sizeId: 5, quantity: 2, unitPrice: 30000 },
       ],
     });
     expect(quote).toEqual(

@@ -9,6 +9,7 @@ import ColorSelector from "./ColorSelector";
 import SizeSelector from "./SizeSelector";
 import QuantityPicker from "./QuantityPicker";
 import ProductAccordion from "./ProductAccordion";
+import SetComponents from "./SetComponents";
 import ProductDescriptionContent from "./ProductDescriptionContent";
 import ReviewsSection from "./ReviewsSection";
 import RecommendedProducts from "./RecommendedProducts";
@@ -23,6 +24,7 @@ import { useProductClient } from "../hooks/useProductClient";
 
 export default function ProductClient({
   product,
+  setComponents = [],
   recommended,
   existingReview,
   isAuthenticated,
@@ -305,6 +307,8 @@ export default function ProductClient({
                 </div>
               ))}
             </div>
+
+            <SetComponents components={setComponents} />
 
             {/* Acordeones */}
             <ProductAccordion

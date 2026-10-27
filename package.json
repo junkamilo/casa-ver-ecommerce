@@ -16,8 +16,6 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "email:test": "ts-node scripts/email-test.ts",
-    "seed:perf-catalog": "npx --yes tsx scripts/seed-perf-catalog.ts",
-    "seed:perf-catalog:cleanup": "npx --yes tsx scripts/seed-perf-catalog.ts --cleanup",
     "bench:shop-listing": "k6 run k6/shop-listing.js",
     "bench:shop-search": "k6 run k6/shop-search.js",
     "bench:shop-baseline": "node scripts/bench-shop-baseline.mjs"

@@ -10,6 +10,5 @@ export async function deleteReviewUseCase(id: string) {
   }
 
   await reviewRepository.deleteReview(id);
-  await reviewRepository.recalcProductRating(review.productSlug);
   return { success: true };
 }

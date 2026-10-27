@@ -120,11 +120,11 @@ export interface FunnelItem {
   order: number;
 }
 
+/** Variante del POS agotada (`out`) o en su mínimo de alerta (`low`). */
 export interface StockAlert {
+  productSlug: string;
   productName: string;
   colorName: string;
   size: string;
-  sku: string;
-  stock: number;
-  minStock: number;
+  status: "out" | "low";
 }

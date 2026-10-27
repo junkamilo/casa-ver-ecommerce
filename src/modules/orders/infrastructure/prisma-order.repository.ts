@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { isOrderWithinPaymentGrace } from "@/modules/checkout/domain/order-payment-grace";
-import { parsePosLineId } from "@/modules/posIntegration/domain/pos-mapper";
 import { OrderPaymentGraceExpiredError } from "../application/order.errors";
 import type { PaidOrderDTO, ReleaseOrderTargetStatus } from "../contracts/order-payment.dto";
 
@@ -24,9 +23,10 @@ export class PrismaOrderRepository {
   //   1. Buscar la orden por transactionId (con items + user).
   //   2. Si ya está PAID → return.
   //   3. Update status=PAID, paymentId, paidAt.
-  //   4. Por cada item: si existe ProductVariant → decrementar stock y reserved.
-  //      (ProductItemVariant ya descontó stock al crear la orden — no se toca)
-  //   5. Crear notificación de admin "Pedido pagado".
+  //   4. Crear notificación de admin "Pedido pagado".
+  //
+  // El inventario no se toca en la web: el POS consume la reserva del pedido y descuenta el stock al
+  // registrar la venta (reportPaidOrderToPos).
   //
   // El uso del cupón no se registra aquí: lo registra el POS (sales.promotion_redemptions) cuando la web
   // le reporta el pedido pagado (reportPaidOrderToPos), y lo revierte si se anula.
@@ -61,31 +61,6 @@ export class PrismaOrderRepository {
         include: { items: true, user: true },
       });
 
-      // IMPORTANTE: los ítems de un conjunto (isSet) usan ProductItemVariant
-      // (sin campo `reserved`), mientras que los productos normales usan
-      // ProductVariant (con `stock` y `reserved`). Probamos primero
-      // ProductVariant; si no existe, asumimos ProductItemVariant y NO
-      // decrementamos de nuevo (ya se descontó al crear la orden).
-      // Ítems con el SKU del POS como variantId: no tienen reserva en la web; el POS descuenta su
-      // inventario al registrar la venta (postOrder).
-      for (const item of order.items) {
-        if (parsePosLineId(item.variantId)) continue;
-        const productVariant = await tx.productVariant.findUnique({
-          where: { id: item.variantId },
-          select: { id: true },
-        });
-
-        if (productVariant) {
-          await tx.productVariant.update({
-            where: { id: item.variantId },
-            data: {
-              stock: { decrement: item.quantity },
-              reserved: { decrement: item.quantity },
-            },
-          });
-        }
-      }
-
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (tx as any).adminNotification.create({
         data: {
@@ -102,16 +77,10 @@ export class PrismaOrderRepository {
   // -------------------------------------------------------------------------
   // releaseStockByTransactionId
   //
-  // Libera reservas de stock cuando el pago falla, se cancela o se reembolsa
-  // (el cupón no se consumió: el POS solo registra el uso de pedidos pagados). Idempotente: si la orden no existe o ya está en estado terminal
-  // (no PENDING/PROCESSING), no hace nada.
-  //
-  // Pasos dentro de la transacción:
-  //   1. Buscar orden + items.
-  //   2. Si no existe o no está PENDING/PROCESSING → return.
-  //   3. Update status (+ cancelledAt si CANCELLED).
-  //   4. Por cada item: ProductVariant → decrement reserved (clamp);
-  //      ProductItemVariant → increment stock (re-poner lo descontado al crear).
+  // Cierra un pedido sin pagar cuando el pago falla, se cancela o se reembolsa (el cupón no se consumió:
+  // el POS solo registra el uso de pedidos pagados). Idempotente: si la orden no existe o ya está en
+  // estado terminal (no PENDING/PROCESSING), no hace nada. Devuelve el número del pedido cerrado para
+  // soltar su reserva en el POS (null si no cambió nada).
   // -------------------------------------------------------------------------
   // -------------------------------------------------------------------------
   // markPaidOrderRefundedByTransactionId
@@ -131,17 +100,17 @@ export class PrismaOrderRepository {
   async releaseStockByTransactionId(
     transactionId: string,
     newStatus: ReleaseOrderTargetStatus,
-  ): Promise<void> {
+  ): Promise<string | null> {
     try {
-      await prisma.$transaction(async (tx) => {
+      return await prisma.$transaction(async (tx) => {
         const order = await tx.order.findUnique({
           where: { transactionId },
-          include: { items: true },
+          select: { id: true, orderNumber: true, status: true },
         });
 
         if (!order) {
           console.warn(`[releaseOrderStock] Orden no encontrada: ${transactionId}`);
-          return;
+          return null;
         }
 
         // Idempotencia: solo actuar sobre órdenes aún en estado transitorio
@@ -149,7 +118,7 @@ export class PrismaOrderRepository {
           console.log(
             `[releaseOrderStock] Orden ${order.orderNumber} ya en estado ${order.status} — sin acción`
           );
-          return;
+          return null;
         }
 
         await tx.order.update({
@@ -161,44 +130,19 @@ export class PrismaOrderRepository {
           },
         });
 
-        for (const item of order.items) {
-          // Ítem del POS (SKU como variantId): no se reservó nada en la web.
-          if (parsePosLineId(item.variantId)) continue;
-          const productVariant = await tx.productVariant.findUnique({
-            where: { id: item.variantId },
-            select: { id: true, reserved: true },
-          });
-
-          if (productVariant) {
-            // Producto normal: solo tenía reserva (reserved), nunca se descontó stock físico
-            const safeDecrement = Math.min(item.quantity, productVariant.reserved);
-            if (safeDecrement > 0) {
-              await tx.productVariant.update({
-                where: { id: item.variantId },
-                data: { reserved: { decrement: safeDecrement } },
-              });
-            }
-          } else {
-            // ProductItemVariant (conjunto): el stock fue descontado en createOrder
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await (tx as any).productItemVariant.update({
-              where: { id: item.variantId },
-              data: { stock: { increment: item.quantity } },
-            });
-          }
-        }
-
         console.log(
-          `[releaseOrderStock] ✓ Stock liberado — orden ${order.orderNumber} → ${newStatus}`
+          `[releaseOrderStock] ✓ Orden ${order.orderNumber} → ${newStatus}`
         );
+        return order.orderNumber;
       });
     } catch (err) {
       // No relanzar — el estado de la orden ya fue actualizado antes de este
       // punto en los webhooks; los webhooks NO deben fallar por esto.
       console.error(
-        "[releaseOrderStock] Error liberando stock:",
+        "[releaseOrderStock] Error cerrando la orden:",
         err instanceof Error ? err.message : err
       );
+      return null;
     }
   }
 }

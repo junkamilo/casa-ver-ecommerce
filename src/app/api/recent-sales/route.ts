@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { findProductsByKeys } from "@/lib/product-keys";
+import { parsePosLineId } from "@/modules/posIntegration/domain/pos-mapper";
 
 export const revalidate = 60; // cache 60s
 
@@ -41,20 +41,11 @@ export async function GET() {
         select: {
           name: true,
           imageUrl: true,
-          productId: true,
+          variantId: true,
         },
       },
     },
   });
-
-  const productIds = [...new Set(orders.flatMap((o) => o.items.map((i) => i.productId)))];
-  if (productIds.length === 0) {
-    return NextResponse.json([]);
-  }
-
-  // productId es el slug (o el id de Neon en pedidos anteriores); solo se muestran productos que existan.
-  const products = await findProductsByKeys(prisma, productIds);
-  const slugMap = Object.fromEntries(productIds.map((key) => [key, products.get(key)?.slug ?? null]));
 
   const now = Date.now();
 
@@ -62,7 +53,8 @@ export async function GET() {
     .filter((o) => o.items.length > 0 && o.paidAt)
     .map((o) => {
       const item = o.items[0];
-      const slug = slugMap[item.productId] ?? null;
+      // Solo productos del POS (su slug viene en el SKU del POS).
+      const slug = parsePosLineId(item.variantId)?.slug ?? null;
       if (!slug) return null;
 
       const parts = (o.shippingName ?? "").trim().split(" ");

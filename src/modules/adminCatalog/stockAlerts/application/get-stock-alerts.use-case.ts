@@ -1,13 +1,12 @@
 import { RATE_LIMIT_CONFIGS, rateLimit } from "@/lib/ratelimit";
 import type { StockAlertsQueryDTO, StockAlertsResponseDTO } from "../contracts/stock-alert.dto";
-import { PrismaStockAlertRepository } from "../infrastructure/prisma-stock-alert.repository";
+import { listPosCatalogForAlerts } from "./pos-stock-alerts";
 import {
   STOCK_ALERT_CACHE_TTL,
   StockAlertCacheRepository,
 } from "../infrastructure/stock-alert-cache.repository";
 import { StockAlertRateLimitError, StockAlertValidationError } from "./stock-alert.errors";
 
-const stockAlertRepository = new PrismaStockAlertRepository();
 const stockAlertCacheRepository = new StockAlertCacheRepository();
 
 export async function getStockAlertsUseCase(input: { ip: string; page?: number; limit?: number }) {
@@ -29,37 +28,26 @@ export async function getStockAlertsUseCase(input: { ip: string; page?: number; 
     return { payload: cached, cache: "HIT" as const, ttl: STOCK_ALERT_CACHE_TTL };
   }
 
-  const [products, totalProducts] = await Promise.all([
-    stockAlertRepository.getActiveProductsWithColors(query),
-    stockAlertRepository.countActiveProducts(),
-  ]);
-
-  type ProductColor = { id: string; name: string; variants: { stock: number }[] };
-  type ProductWithColors = { id: string; name: string; colors: ProductColor[] };
+  // Inventario del POS (la web ya no guarda stock): prenda agotada o un color agotado en todas sus tallas.
+  const catalog = await listPosCatalogForAlerts();
+  const totalProducts = catalog.length;
+  const pageProducts = catalog.slice((query.page - 1) * query.limit, query.page * query.limit);
 
   const alerts: StockAlertsResponseDTO["alerts"] = [];
-  for (const product of products as ProductWithColors[]) {
-    const colorsWithVariants = product.colors.filter((c) => c.variants.length > 0);
-    if (colorsWithVariants.length === 0) continue;
-
-    const productTotalStock = colorsWithVariants.reduce(
-      (acc, c) => acc + c.variants.reduce((s, v) => s + v.stock, 0),
-      0
-    );
-
-    if (productTotalStock === 0) {
-      alerts.push({ type: "product", productId: product.id, productName: product.name });
+  for (const product of pageProducts) {
+    if (product.variants.length === 0) continue;
+    if (!product.available) {
+      alerts.push({ type: "product", productId: product.slug, productName: product.name });
       continue;
     }
-
-    for (const color of colorsWithVariants) {
-      const colorStock = color.variants.reduce((s, v) => s + v.stock, 0);
-      if (colorStock === 0) {
+    for (const color of product.colors) {
+      const variants = product.variants.filter((v) => v.colorId === color.colorId);
+      if (variants.length > 0 && variants.every((v) => !v.available)) {
         alerts.push({
           type: "color",
-          productId: product.id,
+          productId: product.slug,
           productName: product.name,
-          colorId: color.id,
+          colorId: String(color.colorId),
           colorName: color.name,
         });
       }

@@ -79,6 +79,19 @@ export const posVariantSchema = z.object({
   lowStock: z.boolean(),
 });
 
+/** Pieza de un conjunto (subproducto): `slug` nulo si la pieza no se publica sola en la tienda. */
+export const posComponentSchema = z.object({
+  slug: nullableString,
+  name: z.string().min(1),
+  position: z.number().int(),
+  cardFeatured: z.boolean().default(false),
+  salePrice: decimal,
+  displayPrice: decimal.nullish().transform((v) => v ?? null),
+  coverImageUrl: nullableString,
+});
+
+export type PosComponent = z.infer<typeof posComponentSchema>;
+
 export const posProductSchema = z.object({
   slug: z.string().min(1),
   name: z.string().min(1),
@@ -95,6 +108,7 @@ export const posProductSchema = z.object({
   sizes: z.array(posSizeSchema).default([]),
   variants: z.array(posVariantSchema).default([]),
   labels: z.array(posLabelSchema).default([]),
+  components: z.array(posComponentSchema).default([]),
   updatedAt: nullableString,
 });
 
@@ -318,6 +332,18 @@ export const posStockCheckSchema = z.object({
 });
 
 export type PosStockCheck = z.infer<typeof posStockCheckSchema>;
+
+/**
+ * Resultado de POST /api/public/orders/reserve: el POS aparta las unidades del carrito mientras el cliente paga
+ * (todo o nada). `reserved = false` trae lo que no alcanza, con el mismo formato de /orders/check.
+ */
+export const posStockReservationSchema = z.object({
+  reserved: z.boolean(),
+  expiresAt: nullableString,
+  problems: posStockCheckSchema.shape.problems,
+});
+
+export type PosStockReservation = z.infer<typeof posStockReservationSchema>;
 
 /** Resultado de POST /api/public/orders/{orderNumber}/cancel. */
 export const posOrderCancelResultSchema = z.object({
