@@ -103,7 +103,6 @@ export interface SearchRelevanceFields {
   metaTitle?: string | null;
   metaDescription?: string | null;
   description?: string | null;
-  garmentTypeNames?: string[];
   categoryNames?: string[];
   itemNames?: string[];
 }
@@ -130,7 +129,6 @@ export function scoreSearchRelevance(fields: SearchRelevanceFields, query: strin
     fields.slug,
     fields.metaTitle,
     fields.metaDescription,
-    ...(fields.garmentTypeNames ?? []),
   ]
     .filter(Boolean)
     .join(" ");

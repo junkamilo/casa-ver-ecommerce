@@ -66,7 +66,6 @@ export function useProductClient(
   const activeComparePrice = activeItem
     ? activeItem.comparePrice
     : product.comparePrice;
-  const activeStock = activeItem ? activeItem.stock : product.stock;
   const activeDescription = activeItem
     ? (activeItem.description ?? product.description)
     : product.description;
@@ -203,7 +202,6 @@ export function useProductClient(
     activeVideoUrl,
     activePrice,
     activeComparePrice,
-    activeStock,
     activeDescription,
     masterGallery,
     galleryUrls,

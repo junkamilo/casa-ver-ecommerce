@@ -3,6 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { SavedAddress, AddressFormValues, UseAddressesResult } from "../types";
 
+async function requestAddresses(): Promise<SavedAddress[]> {
+  const res = await fetch("/api/profile/addresses");
+  if (!res.ok) throw new Error("Error al cargar direcciones");
+  return res.json();
+}
+
 export function useAddresses(): UseAddressesResult {
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
   const [loading, setLoading] = useState(true);
@@ -12,19 +18,19 @@ export function useAddresses(): UseAddressesResult {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<SavedAddress | null>(null);
 
-  const fetchAddresses = useCallback(async () => {
-    try {
-      setError(null);
-      const res = await fetch("/api/profile/addresses");
-      if (!res.ok) throw new Error("Error al cargar direcciones");
-      const data = await res.json();
-      setAddresses(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const fetchAddresses = useCallback(
+    () =>
+      requestAddresses()
+        .then((data) => {
+          setError(null);
+          setAddresses(data);
+        })
+        .catch((err) => {
+          setError(err instanceof Error ? err.message : "Error desconocido");
+        })
+        .finally(() => setLoading(false)),
+    []
+  );
 
   useEffect(() => {
     fetchAddresses();

@@ -22,6 +22,9 @@ import type { ProductClientProps } from "../types";
 import { formatPrice } from "../constants";
 import { useProductClient } from "../hooks/useProductClient";
 
+// Sobre pedido: sin existencias que topar; límite razonable de unidades por compra.
+const CANTIDAD_MAXIMA_SOBRE_PEDIDO = 10
+
 export default function ProductClient({
   product,
   setComponents = [],
@@ -47,7 +50,6 @@ export default function ProductClient({
     activeVideoUrl,
     activePrice,
     activeComparePrice,
-    activeStock,
     activeDescription,
     galleryUrls,
     handleViewSelect,
@@ -78,7 +80,6 @@ export default function ProductClient({
               productName={product.name}
               onSelect={handleImageSelect}
               activeColorHex={selectedColor?.hex}
-              isColorOutOfStock={selectedColor?.isOutOfStock ?? false}
               altByUrl={selectedColor?.imageAlts}
             />
           </div>
@@ -99,21 +100,6 @@ export default function ProductClient({
               >
                 {product.name}
               </h1>
-
-              {/* Banner prenda completamente agotada */}
-              {product.stock === 0 && (
-                <div className="flex items-center gap-2.5 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-3">
-                  <span className="shrink-0 w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-red-600">
-                      Prenda Agotada
-                    </p>
-                    <p className="text-[10px] text-red-400 font-light mt-0.5">
-                      Todos los colores y tallas están agotados. Puedes explorar los colores disponibles.
-                    </p>
-                  </div>
-                </div>
-              )}
 
               {/* Precio / Antes — móvil */}
               <div className="flex sm:hidden items-stretch pt-1">
@@ -145,9 +131,6 @@ export default function ProductClient({
                     <p className="text-base text-gray-400 line-through mb-1">{formatPrice(activeComparePrice)}</p>
                   )}
                 </div>
-                {activeStock === 0 && (
-                  <p className="text-xs font-semibold uppercase tracking-widest text-red-500 mt-2">Agotado</p>
-                )}
               </div>
             </div>
 
@@ -223,9 +206,6 @@ export default function ProductClient({
                       }`}
                     >
                       {item.name}
-                      {item.stock === 0 && (
-                        <span className="ml-2 text-[10px] font-normal opacity-60">(agotado)</span>
-                      )}
                     </button>
                   ))}
                 </div>
@@ -253,24 +233,22 @@ export default function ProductClient({
               <div className="flex gap-3">
                 <QuantityPicker
                   quantity={quantity}
-                  stock={activeStock}
+                  stock={CANTIDAD_MAXIMA_SOBRE_PEDIDO}
                   onDecrease={() => setQuantity(Math.max(1, quantity - 1))}
                   onIncrease={() => {
-                    if (quantity < activeStock) setQuantity((prev) => prev + 1);
+                    if (quantity < CANTIDAD_MAXIMA_SOBRE_PEDIDO) setQuantity((prev) => prev + 1);
                   }}
                 />
                 <button
                   onClick={handleAddToCart}
-                  disabled={!selectedSize || activeStock === 0}
+                  disabled={!selectedSize}
                   className={`flex-1 font-bold uppercase tracking-widest text-xs sm:text-sm rounded-lg transition-all h-14 duration-300 ${
-                    selectedSize && activeStock > 0
+                    selectedSize
                       ? "bg-[color:var(--theme-primary)] hover:bg-[color:color-mix(in_srgb,var(--theme-primary)_80%,black)] text-[color:var(--theme-primary-fg)] shadow-lg shadow-[color:var(--theme-primary)]/20 hover:shadow-[color:var(--theme-primary)]/40 active:scale-[0.98]"
                       : "bg-gray-100 text-gray-400 cursor-not-allowed"
                   }`}
                 >
-                  {activeStock === 0
-                    ? "Producto Agotado"
-                    : !selectedSize
+                  {!selectedSize
                     ? "Selecciona una talla"
                     : showAddedNotification
                     ? "✓ Agregado"
@@ -281,14 +259,14 @@ export default function ProductClient({
               <button
                 type="button"
                 onClick={handleBuyNow}
-                disabled={!selectedSize || activeStock === 0}
+                disabled={!selectedSize}
                 className={`w-full font-bold py-4 rounded-lg uppercase tracking-widest text-sm transition-all duration-300 ${
-                  selectedSize && activeStock > 0
+                  selectedSize
                     ? "bg-[color:var(--theme-accent)] hover:bg-[color:color-mix(in_srgb,var(--theme-accent)_85%,black)] text-[color:var(--theme-accent-fg)] shadow-md hover:shadow-xl hover:shadow-[color:var(--theme-accent)]/25 active:scale-[0.98]"
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                {activeStock === 0 ? "Producto Agotado" : !selectedSize ? "Selecciona una talla" : "Comprar Ahora"}
+                {!selectedSize ? "Selecciona una talla" : "Comprar Ahora"}
               </button>
             </div>
 

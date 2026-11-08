@@ -1,24 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ProfileSection, UseProfileNavResult } from "../types";
+
+const VALID_SECTIONS: ProfileSection[] = ["perfil", "pedidos", "direcciones"];
 
 export function useProfileNav(initial: ProfileSection = "perfil"): UseProfileNavResult {
   const searchParams = useSearchParams();
   const paramSection = searchParams.get("section") as ProfileSection | null;
-  const validSections: ProfileSection[] = ["perfil", "pedidos", "direcciones"];
-  const resolved =
-    paramSection && validSections.includes(paramSection) ? paramSection : initial;
+  const isValidParam = paramSection !== null && VALID_SECTIONS.includes(paramSection);
 
-  const [activeSection, setActiveSection] = useState<ProfileSection>(resolved);
+  const [activeSection, setActiveSection] = useState<ProfileSection>(
+    isValidParam ? paramSection : initial
+  );
 
-  useEffect(() => {
-    if (paramSection && validSections.includes(paramSection)) {
-      setActiveSection(paramSection);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paramSection]);
+  // Si cambia ?section= en la URL, se ajusta durante el render (sin efecto).
+  const [prevParamSection, setPrevParamSection] = useState(paramSection);
+  if (paramSection !== prevParamSection) {
+    setPrevParamSection(paramSection);
+    if (isValidParam) setActiveSection(paramSection);
+  }
 
   const isActive = (section: ProfileSection) => activeSection === section;
 

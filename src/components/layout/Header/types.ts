@@ -11,12 +11,6 @@ export interface NavProduct {
   slug: string;
 }
 
-export interface NavGarmentType {
-  id: string;
-  name: string;
-  slug: string;
-}
-
 export interface NavCategory {
   id: string;
   name: string;
@@ -25,7 +19,6 @@ export interface NavCategory {
   source?: "pos" | "web";
   subcategories: NavSubcategory[];
   products: NavProduct[];
-  garmentTypes: NavGarmentType[];
 }
 
 // ── Component Props ──────────────────────────────────────────────────────────

@@ -8,24 +8,12 @@ export interface SecondLevelLink {
 }
 
 /**
- * Segundo nivel del menú: subcategorías para las categorías del POS,
- * tipos de prenda (`?tipo=`) para las de la web.
+ * Segundo nivel del menú: las subcategorías de la categoría. Cada subcategoría es una colección
+ * (`/collections/<slug>`); la prenda física es la subcategoría.
  */
-export function getSecondLevelLinks(
-  category: NavCategory,
-  pathname: string | null,
-  activeTipo: string | null,
-): SecondLevelLink[] {
-  if (category.source === "pos") {
-    return category.subcategories.map((sub) => {
-      const href = `/collections/${sub.slug}`;
-      return { id: sub.id, name: sub.name, href, active: pathname === href };
-    });
-  }
-  return category.garmentTypes.map((gt) => ({
-    id: gt.id,
-    name: gt.name,
-    href: `/collections/${category.slug}?tipo=${gt.slug}`,
-    active: pathname === `/collections/${category.slug}` && activeTipo === gt.slug,
-  }));
+export function getSecondLevelLinks(category: NavCategory, pathname: string | null): SecondLevelLink[] {
+  return category.subcategories.map((sub) => {
+    const href = `/collections/${sub.slug}`;
+    return { id: sub.id, name: sub.name, href, active: pathname === href };
+  });
 }

@@ -60,22 +60,13 @@ export default async function CollectionPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ tipo?: string; q?: string }>;
+  searchParams: Promise<{ q?: string }>;
 }) {
   const { slug } = await params;
-  const { tipo, q } = await searchParams;
-  const { category, garmentTypeName, products, filterOptions } =
-    await getCollectionProductsUseCase(slug, tipo, q);
-  const title = (
-    garmentTypeName ??
-    category?.name ??
-    slug.replace(/-/g, " ")
-  ).toUpperCase();
-  const scopeName = (
-    garmentTypeName ??
-    category?.name ??
-    "esta colección"
-  ).toLowerCase();
+  const { q } = await searchParams;
+  const { category, products, filterOptions } = await getCollectionProductsUseCase(slug, q);
+  const title = (category?.name ?? slug.replace(/-/g, " ")).toUpperCase();
+  const scopeName = (category?.name ?? "esta colección").toLowerCase();
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFA] selection:bg-[color:var(--theme-accent)]/20 relative overflow-hidden">
@@ -105,7 +96,7 @@ export default async function CollectionPage({
             <CollectionClient
               products={products}
               filterOptions={filterOptions}
-              setItemKey={tipo ?? null}
+              setItemKey={slug}
               emptyMessage={catalogSearchEmptyMessage(q)}
             />
           </div>

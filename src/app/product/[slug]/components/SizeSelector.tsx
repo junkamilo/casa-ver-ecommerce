@@ -124,14 +124,7 @@ export default function SizeSelector({ availableSizes, selectedSize, onSelect }:
         </div>
 
         {/* Botones de talla / estado agotado */}
-        {availableSizes.length === 0 ? (
-          <div className="flex items-center gap-2 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
-            <p className="text-xs font-semibold text-red-500 uppercase tracking-[0.15em]">
-              Color agotado — sin tallas disponibles
-            </p>
-          </div>
-        ) : (
+        {availableSizes.length === 0 ? null : (
           <div className="flex flex-nowrap overflow-x-auto gap-2 pb-2 scrollbar-hide sm:flex-wrap sm:overflow-x-visible sm:pb-0 sm:gap-3">
             {availableSizes.map((size) => {
               const isSelected = selectedSize === size;

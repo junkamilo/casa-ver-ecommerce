@@ -20,9 +20,13 @@ function ResenasContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
-  const [state, setState] = useState<PageState>("loading");
+  const [fetchState, setState] = useState<PageState>("loading");
   const [info, setInfo] = useState<ReviewInfo | null>(null);
-  const [errorMsg, setErrorMsg] = useState("");
+  const [fetchErrorMsg, setErrorMsg] = useState("");
+
+  // Sin token no hay nada que cargar: el error se deriva en el render.
+  const state: PageState = token ? fetchState : "error";
+  const errorMsg = token ? fetchErrorMsg : "No se encontró un enlace válido.";
 
   // Form state
   const [rating, setRating] = useState(5);
@@ -32,11 +36,7 @@ function ResenasContent() {
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
-    if (!token) {
-      setErrorMsg("No se encontró un enlace válido.");
-      setState("error");
-      return;
-    }
+    if (!token) return;
 
     fetch(`/api/reviews/${token}`)
       .then((r) => r.json())

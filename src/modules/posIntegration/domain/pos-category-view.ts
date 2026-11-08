@@ -20,7 +20,6 @@ export interface PosNavCategory {
   source: "pos";
   subcategories: { id: string; name: string; slug: string }[];
   products: { id: string; name: string; slug: string }[];
-  garmentTypes: { id: string; name: string; slug: string }[];
 }
 
 const posId = (webId: string) => `${POS_CATEGORY_ID_PREFIX}${webId}`;
@@ -55,21 +54,12 @@ export function toPosNavCategories(tree: PosCategory[]): PosNavCategory[] {
     source: "pos",
     subcategories: category.subcategories.map((sub) => ({ id: posId(sub.webId), name: sub.name, slug: sub.slug })),
     products: [],
-    // Tipos de prenda de sus subcategorías, sin repetir (filtro ?tipo= de la colección).
-    garmentTypes: [
-      ...new Map(
-        category.subcategories
-          .map((sub) => sub.garmentType)
-          .filter((type): type is NonNullable<typeof type> => type != null)
-          .map((type) => [type.slug, { id: `${POS_CATEGORY_ID_PREFIX}gt-${type.slug}`, name: type.name, slug: type.slug }]),
-      ).values(),
-    ],
   }));
 }
 
 // ── Taxonomía de la tienda ───────────────────────────────────────────────────
 //
-// Categorías, subcategorías y tipos de prenda de la tienda: salen SOLO del árbol que publica el POS
+// Categorías y subcategorías de la tienda: salen SOLO del árbol que publica el POS
 // (la web ya no guarda categorías). Cada categoría y cada subcategoría es una colección en
 // `/collections/<slug>`; el POS garantiza que un slug no se repite en toda la vitrina (V104).
 
@@ -86,16 +76,9 @@ export interface PosCollection {
   parentSlug: string | null;
 }
 
-export interface PosGarmentType {
-  slug: string;
-  name: string;
-  sortOrder: number;
-}
-
 export interface PosTaxonomy {
   bySlug: Map<string, PosCollection>;
   byWebId: Map<string, PosCollection>;
-  garmentTypes: Map<string, PosGarmentType>;
 }
 
 export const normalizeCollectionSlug = (slug: string) => slug.trim().toLowerCase();
@@ -103,7 +86,6 @@ export const normalizeCollectionSlug = (slug: string) => slug.trim().toLowerCase
 export function buildPosTaxonomy(tree: PosCategory[]): PosTaxonomy {
   const bySlug = new Map<string, PosCollection>();
   const byWebId = new Map<string, PosCollection>();
-  const garmentTypes = new Map<string, PosGarmentType>();
 
   const add = (collection: PosCollection) => {
     byWebId.set(collection.webId, collection);
@@ -136,15 +118,9 @@ export function buildPosTaxonomy(tree: PosCategory[]): PosTaxonomy {
         metaDescription: sub.metaDescription,
         parentSlug: categorySlug,
       });
-      if (sub.garmentType) {
-        const slug = normalizeCollectionSlug(sub.garmentType.slug);
-        if (!garmentTypes.has(slug)) {
-          garmentTypes.set(slug, { slug, name: sub.garmentType.name.trim(), sortOrder: sub.garmentType.sortOrder });
-        }
-      }
     }
   }
-  return { bySlug, byWebId, garmentTypes };
+  return { bySlug, byWebId };
 }
 
 /** Firma del árbol: cambia si el POS agrega, quita, renombra o reordena algo (polling del header). */
@@ -153,7 +129,7 @@ export function posCategoryTreeSignature(tree: PosCategory[]): string {
     `${category.webId}:${category.slug}:${category.name}:${category.sortOrder}:${category.updatedAt ?? ""}`,
     ...category.subcategories.map(
       (sub) =>
-        `${sub.webId}:${sub.slug}:${sub.name}:${sub.sortOrder}:${sub.updatedAt ?? ""}:${sub.garmentType?.slug ?? ""}:${sub.garmentType?.name ?? ""}`,
+        `${sub.webId}:${sub.slug}:${sub.name}:${sub.sortOrder}:${sub.updatedAt ?? ""}`,
     ),
   ]);
   let hash = 0;

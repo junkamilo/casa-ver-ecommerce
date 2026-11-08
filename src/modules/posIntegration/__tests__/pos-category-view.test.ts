@@ -56,7 +56,6 @@ describe("toPosNavCategories", () => {
         { id: "pos-sub-2", name: "Camisas", slug: "camisas" },
       ],
       products: [],
-      garmentTypes: [],
     });
   });
 });
@@ -75,7 +74,6 @@ describe("buildPosTaxonomy", () => {
           parentWebId: "cat-a",
           slug: "conjuntos-mujer",
           name: "Mujer",
-          garmentType: { slug: "Pantalon", name: "Pantalón", sortOrder: 1 },
         },
         { webId: "sub-2", parentWebId: "cat-a", slug: "conjuntos-hombre", name: "Hombre" },
       ],
@@ -93,16 +91,9 @@ describe("buildPosTaxonomy", () => {
     expect(taxonomy.byWebId.get("sub-2")?.slug).toBe("conjuntos-hombre");
   });
 
-  it("toma los tipos de prenda de las subcategorías", () => {
-    expect([...buildPosTaxonomy(withTypes).garmentTypes.values()]).toEqual([
-      { slug: "pantalon", name: "Pantalón", sortOrder: 1 },
-    ]);
-  });
-
   it("sin categorías en el POS queda vacía (la tienda no muestra categorías)", () => {
     const empty = buildPosTaxonomy([]);
     expect(empty.bySlug.size).toBe(0);
-    expect(empty.garmentTypes.size).toBe(0);
   });
 });
 

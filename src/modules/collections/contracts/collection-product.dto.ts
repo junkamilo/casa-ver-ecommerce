@@ -53,7 +53,6 @@ export interface NewProductsResultDTO {
 
 export interface CategoryProductsResultDTO {
   category: { name: string } | null;
-  garmentTypeName?: string;
   products: import("@/components/shared/ProductCollection/types").CollectionProduct[];
   filterOptions: import("@/components/shared/ProductCollection/types").FilterOptions;
 }

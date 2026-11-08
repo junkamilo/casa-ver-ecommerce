@@ -42,13 +42,12 @@ export function getProductBadgeClassName(
 
 /**
  * Calcula el badge a mostrar en la tarjeta de un producto.
- * - "Agotado"          → stock === 0
  * - "Nuevo Producto"   → isProductNew=true && isProductNewAt dentro de 7 días
  * - "En Oferta"        → isOnSale=true
  * - "Nuevo y en Oferta"→ ambas condiciones anteriores activas
  */
 export function computeProductBadge(p: ProductBadgeInput): ProductBadgeLabel | undefined {
-  if (p.stock === 0) return "Agotado";
+  // Sobre pedido: no existe el estado "Agotado".
 
   const isNewActive =
     p.isProductNew === true &&

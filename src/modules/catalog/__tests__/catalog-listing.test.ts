@@ -7,10 +7,10 @@ jest.mock("../product/infrastructure/prisma-product-web-settings.repository", ()
   const repo = { findAll: jest.fn() };
   return { PrismaProductWebSettingsRepository: jest.fn(() => repo), __settings: repo };
 });
-// Categorías y tipos de prenda: el árbol del POS (la web no los guarda).
+// Categorías y subcategorías: el árbol del POS (la web no las guarda).
 jest.mock("@/modules/posIntegration/application/get-pos-taxonomy.use-case", () => ({ getPosTaxonomy: jest.fn() }));
 jest.mock("@/modules/collections/infrastructure/pos-collection.repository", () => {
-  const repo = { getCategoryBasicBySlug: jest.fn(), getGarmentTypeBySlug: jest.fn() };
+  const repo = { getCategoryBasicBySlug: jest.fn() };
   return { PosCollectionRepository: jest.fn(() => repo), __collections: repo };
 });
 
@@ -47,7 +47,7 @@ function pos(slug: string, overrides: Record<string, unknown> = {}) {
     available: true,
     categoryWebId: "CAT-MUJER",
     subcategoryWebId: "SUB-BLUSAS",
-    classifications: [{ categoryWebId: "CAT-MUJER", subcategoryWebId: "SUB-BLUSAS", garmentTypeSlug: "blusa" }],
+    classifications: [{ categoryWebId: "CAT-MUJER", subcategoryWebId: "SUB-BLUSAS" }],
     colors: [{ colorId: 1, name: "Arena", hexCode: "#d2b48c", media: [{ url: `/media/${slug}-arena.jpg` }] }],
     sizes: [{ sizeId: 2, name: "M" }],
     variants: [{ colorId: 1, sizeId: 2, available: true, lowStock: false }],
@@ -56,7 +56,7 @@ function pos(slug: string, overrides: Record<string, unknown> = {}) {
   });
 }
 
-const sub = (webId: string, slug: string, name: string, garmentType: { slug: string; name: string } | null = null) => ({
+const sub = (webId: string, slug: string, name: string) => ({
   webId,
   parentWebId: "CAT-MUJER",
   slug,
@@ -67,10 +67,9 @@ const sub = (webId: string, slug: string, name: string, garmentType: { slug: str
   metaDescription: null,
   sortOrder: 0,
   updatedAt: null,
-  garmentType: garmentType ? { ...garmentType, sortOrder: 0 } : null,
 });
 
-/** Árbol publicado por el POS: Mujer › Blusas (tipo de prenda «Blusa»). */
+/** Árbol publicado por el POS: Mujer › Blusas. */
 const taxonomy: CatalogTaxonomy = buildPosTaxonomy([
   {
     webId: "CAT-MUJER",
@@ -82,7 +81,7 @@ const taxonomy: CatalogTaxonomy = buildPosTaxonomy([
     metaDescription: null,
     sortOrder: 0,
     updatedAt: null,
-    subcategories: [sub("SUB-BLUSAS", "blusas", "Blusas", { slug: "blusa", name: "Blusa" })],
+    subcategories: [sub("SUB-BLUSAS", "blusas", "Blusas")],
   },
 ]);
 
@@ -113,7 +112,6 @@ describe("posToCatalogEntry", () => {
         isFeatured: true,
         isNew: true,
         categorySlugs: ["mujer", "blusas"],
-        garmentTypeSlugs: ["blusa"],
         publishedAt: new Date("2026-09-01T00:00:00Z"),
       }),
     );
@@ -136,7 +134,7 @@ describe("posToCatalogEntry", () => {
       pos("vestido", {
         categoryWebId: "CAT-OCULTA",
         subcategoryWebId: null,
-        classifications: [{ categoryWebId: "CAT-OCULTA", subcategoryWebId: null, garmentTypeSlug: null }],
+        classifications: [{ categoryWebId: "CAT-OCULTA", subcategoryWebId: null }],
       }),
       null,
       taxonomy,
@@ -201,30 +199,21 @@ describe("listados sobre el catálogo", () => {
     mockFetchCatalog.mockResolvedValue([
       pos("blusa-lino"),
       pos("pantalon-lino", {
-        classifications: [{ categoryWebId: "CAT-MUJER", subcategoryWebId: null, garmentTypeSlug: "pantalon" }],
+        classifications: [{ categoryWebId: "CAT-MUJER", subcategoryWebId: null }],
         subcategoryWebId: null,
         labels: [{ code: "BEST_SELLER" }],
       }),
     ]);
   });
 
-  it("colección por categoría y tipo de prenda", async () => {
+  it("colección por categoría y por subcategoría", async () => {
     collections.getCategoryBasicBySlug.mockResolvedValue({ name: "Blusas" });
-    collections.getGarmentTypeBySlug.mockResolvedValue({ slug: "blusa", name: "Blusa" });
-
     const blusas = await getCollectionProductsUseCase("blusas");
     expect(blusas.products.map((p) => p.slug)).toEqual(["blusa-lino"]);
 
-    const mujerBlusa = await getCollectionProductsUseCase("mujer", "blusa");
-    expect(mujerBlusa).toEqual(expect.objectContaining({ garmentTypeName: "Blusa" }));
-    expect(mujerBlusa.products.map((p) => p.slug)).toEqual(["blusa-lino"]);
-  });
-
-  it("un ?tipo= inexistente no filtra", async () => {
     collections.getCategoryBasicBySlug.mockResolvedValue({ name: "Mujer" });
-    collections.getGarmentTypeBySlug.mockResolvedValue(null);
-    const result = await getCollectionProductsUseCase("mujer", "no-existe");
-    expect(result.products.map((p) => p.slug).sort()).toEqual(["blusa-lino", "pantalon-lino"]);
+    const mujer = await getCollectionProductsUseCase("mujer");
+    expect(mujer.products.map((p) => p.slug).sort()).toEqual(["blusa-lino", "pantalon-lino"]);
   });
 
   it("una colección que el POS no publica responde vacía", async () => {

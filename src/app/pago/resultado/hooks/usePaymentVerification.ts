@@ -29,7 +29,9 @@ function resolveReferenceId(params: URLSearchParams): string | null {
 async function fetchVerifyPayment(referenceId: string): Promise<VerifyResult> {
   try {
     const res = await fetch(
-      `${BOLD_VERIFY_ENDPOINT}?reference_id=${encodeURIComponent(referenceId)}`
+      `${BOLD_VERIFY_ENDPOINT}?reference_id=${encodeURIComponent(referenceId)}`,
+      // En desarrollo por el túnel ngrok: sin este encabezado ngrok responde con su página de advertencia (HTML).
+      { headers: { "ngrok-skip-browser-warning": "1" } }
     );
     const data = await res.json();
     const s = (data.status ?? "UNKNOWN").toUpperCase();
@@ -56,21 +58,21 @@ export function usePaymentVerification(): UsePaymentVerificationReturn {
 
   const boldTxStatus = params.get(QUERY_PARAMS.boldTxStatus);
 
-  const [status, setStatus] = useState<PaymentStatus>("loading");
+  // Sin referencia, o con rechazo ya confirmado por Bold, no se llama al API.
+  const immediateStatus: PaymentStatus | null = !referenceId
+    ? "error"
+    : boldTxStatus === "rejected"
+      ? "REJECTED"
+      : null;
+
+  const [fetchedStatus, setStatus] = useState<PaymentStatus>("loading");
+  const status = immediateStatus ?? fetchedStatus;
   const [orderId, setOrderId] = useState<string | undefined>();
   const [pollCount, setPollCount] = useState(0);
 
   // Verificación inicial al montar
   useEffect(() => {
-    if (!referenceId) {
-      setStatus("error");
-      return;
-    }
-    // Si Bold ya confirmó rechazo, no llamamos al API
-    if (boldTxStatus === "rejected") {
-      setStatus("REJECTED");
-      return;
-    }
+    if (immediateStatus || !referenceId) return;
     fetchVerifyPayment(referenceId).then((result) => {
       setStatus(result.status);
       if (result.orderId) setOrderId(result.orderId);

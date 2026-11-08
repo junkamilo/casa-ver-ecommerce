@@ -35,9 +35,4 @@ export class PosCollectionRepository {
       image: collection.imageUrl,
     };
   }
-
-  async getGarmentTypeBySlug(slug: string): Promise<{ slug: string; name: string } | null> {
-    const type = (await getPosTaxonomy()).garmentTypes.get(normalizeCollectionSlug(slug));
-    return type ? { slug: type.slug, name: type.name } : null;
-  }
 }

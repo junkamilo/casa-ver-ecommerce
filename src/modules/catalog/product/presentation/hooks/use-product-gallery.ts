@@ -21,9 +21,12 @@ export function useProductGallery(
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
 
-  useEffect(() => {
+  // Sync con el padre: si cambia `selectedImage`, se ajusta durante el render (sin efecto).
+  const [prevSelectedImage, setPrevSelectedImage] = useState(selectedImage);
+  if (selectedImage !== prevSelectedImage) {
+    setPrevSelectedImage(selectedImage);
     setCurrentIndex(selectedImage);
-  }, [selectedImage]);
+  }
 
   useEffect(() => {
     if (isZoomOpen) {

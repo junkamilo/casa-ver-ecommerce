@@ -105,8 +105,6 @@ export interface MappedPosProduct {
   coverImageUrl: string | null;
   /** webIds de todas las categorías y subcategorías donde se ubica (principal + adicionales). */
   categoryWebIds: string[];
-  /** Tipos de prenda de sus ubicaciones (filtro ?tipo=). */
-  garmentTypeSlugs: string[];
   labels: MappedPosLabels;
   colors: MappedPosColor[];
   /** Variantes descartadas (color o talla sin equivalente en la web). */
@@ -229,7 +227,6 @@ export function mapPosProduct(pos: PosProduct): MappedPosProduct {
       pos.subcategoryWebId,
       ...pos.classifications.flatMap((c) => [c.categoryWebId, c.subcategoryWebId]),
     ]),
-    garmentTypeSlugs: uniqueStrings(pos.classifications.map((c) => c.garmentTypeSlug?.toLowerCase())),
     labels: mapPosLabels(pos.labels),
     colors,
     skipped,

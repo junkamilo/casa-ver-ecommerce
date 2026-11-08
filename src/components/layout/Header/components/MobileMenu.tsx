@@ -2,15 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Search, User, ChevronRight, ChevronDown } from "lucide-react";
 import type { MobileMenuProps } from "../types";
 import { getSecondLevelLinks } from "../utils/secondLevelLinks";
 
 export default function MobileMenu({ categories, onClose, onSearchOpen }: MobileMenuProps) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const activeTipo = searchParams.get("tipo");
 
   // Nivel 1: sección CATEGORÍAS abierta/cerrada
   const [categoriesOpen, setCategoriesOpen] = useState(false);
@@ -122,7 +120,7 @@ export default function MobileMenu({ categories, onClose, onSearchOpen }: Mobile
 
               {categories.map((category) => {
                 const isOpen = openCategoryId === category.id;
-                const links = getSecondLevelLinks(category, pathname, activeTipo);
+                const links = getSecondLevelLinks(category, pathname);
                 const hasTypes = links.length > 0;
 
                 return (
@@ -170,7 +168,7 @@ export default function MobileMenu({ categories, onClose, onSearchOpen }: Mobile
                       </Link>
                     )}
 
-                    {/* Tipos de prenda — desliza bajo la categoría */}
+                    {/* Subcategorías — desliza bajo la categoría */}
                     {hasTypes && (
                       <div
                         className={`overflow-hidden transition-all duration-300 ease-out ${

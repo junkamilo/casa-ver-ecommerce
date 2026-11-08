@@ -91,7 +91,7 @@ describe("slug helpers", () => {
 // ── mapUIColor ────────────────────────────────────────────────────────────────
 
 describe("mapUIColor", () => {
-  it("ordena tallas por prioridad (XS, S, M, L, XL, XXL) y filtra stock 0", () => {
+  it("ordena tallas por prioridad (XS, S, M, L, XL, XXL) y no filtra las de stock 0 (sobre pedido)", () => {
     const color = mapUIColor({
       id: "c1",
       name: "Negro",
@@ -105,13 +105,13 @@ describe("mapUIColor", () => {
       ],
     });
 
-    expect(color.availableSizes).toEqual(["XS", "S", "L"]);
-    expect(color.variants.map((v) => v.variantId)).toEqual(["v4", "v2", "v1"]);
+    expect(color.availableSizes).toEqual(["XS", "S", "M", "L"]);
+    expect(color.variants.map((v) => v.variantId)).toEqual(["v4", "v2", "v3", "v1"]);
     expect(color.images).toEqual(["/a.jpg", "/v.mp4"]);
     expect(color.isOutOfStock).toBe(false);
   });
 
-  it("isOutOfStock=true cuando todas las variants tienen stock 0", () => {
+  it("nunca queda agotado en la vitrina: sobre pedido mantiene todas las tallas", () => {
     const color = mapUIColor({
       id: "c2",
       name: "Rojo",
@@ -122,8 +122,8 @@ describe("mapUIColor", () => {
         { id: "v2", sku: "M1", size: "M", stock: 0 },
       ],
     });
-    expect(color.isOutOfStock).toBe(true);
-    expect(color.availableSizes).toEqual([]);
+    expect(color.isOutOfStock).toBe(false);
+    expect(color.availableSizes).toEqual(["S", "M"]);
   });
 
   it("ordena tallas no est\u00e1ndar alfab\u00e9ticamente despu\u00e9s de las est\u00e1ndar", () => {
@@ -218,9 +218,9 @@ describe("mapUIProduct badge integration", () => {
     reviews: [],
   };
 
-  it("badge 'Agotado' cuando totalStock=0", () => {
+  it("sin badge 'Agotado' aunque totalStock=0 (sobre pedido)", () => {
     const result = mapUIProduct(baseProduct, [], 0, 0, 0, null, []);
-    expect(result.badge).toBe("Agotado");
+    expect(result.badge).not.toBe("Agotado");
   });
 
   it("badge 'En Oferta' cuando hay stock + isOnSale", () => {

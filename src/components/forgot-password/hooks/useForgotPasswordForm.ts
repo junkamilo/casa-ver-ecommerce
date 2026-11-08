@@ -23,21 +23,21 @@ interface UseForgotPasswordFormOptions {
 export function useForgotPasswordForm(
   { initialTokenId, initialCode }: UseForgotPasswordFormOptions = {}
 ): UseForgotPasswordFormReturn {
-  const [step, setStep]         = useState<ForgotPasswordStep>("email");
+  // Con tokenId + code del enlace del email se arranca ya verificando
+  const autoVerify = Boolean(initialTokenId && initialCode);
+
+  const [step, setStep]         = useState<ForgotPasswordStep>(autoVerify ? "verify" : "email");
   const [error, setError]       = useState<string | null>(null);
   const [success, setSuccess]   = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(autoVerify);
   const [pendingRecoveryEmail, setPendingRecoveryEmail] = useState("");
 
   // tokenId del PasswordResetToken (opaco, nunca expone userId)
-  const pendingTokenId = useRef<string | null>(null);
+  const pendingTokenId = useRef<string | null>(autoVerify ? initialTokenId! : null);
 
   // Auto-verificar cuando llegan tokenId + code desde el enlace del email
   useEffect(() => {
-    if (!initialTokenId || !initialCode) return;
-    pendingTokenId.current = initialTokenId;
-    setIsLoading(true);
-    setStep("verify");
+    if (!autoVerify) return;
 
     fetch("/api/auth/verify-reset-code", {
       method:  "POST",

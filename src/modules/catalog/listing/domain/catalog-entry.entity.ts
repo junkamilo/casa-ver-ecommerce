@@ -32,12 +32,11 @@ export interface CatalogEntry {
   suggestedAt: Date | null;
   /** Slugs de las colecciones del POS donde aparece (categorías y subcategorías). */
   categorySlugs: string[];
-  garmentTypeSlugs: string[];
   search: Required<SearchRelevanceFields>;
 }
 
-/** Categorías y tipos de prenda de la tienda: los del árbol publicado por el POS. */
-export type CatalogTaxonomy = Pick<PosTaxonomy, "byWebId" | "garmentTypes">;
+/** Categorías y subcategorías de la tienda: las del árbol publicado por el POS. */
+export type CatalogTaxonomy = Pick<PosTaxonomy, "byWebId">;
 
 export type WebSettings = ProductWebOverlay & { isNew: boolean; publishedAt: Date };
 
@@ -58,9 +57,6 @@ export function posToCatalogEntry(
   const categories = mapped.categoryWebIds
     .map((webId) => taxonomy.byWebId.get(webId))
     .filter((c): c is PosCollection => Boolean(c));
-  const garmentTypeNames = mapped.garmentTypeSlugs
-    .map((slug) => taxonomy.garmentTypes.get(slug)?.name)
-    .filter((name): name is string => Boolean(name));
 
   return {
     slug: mapped.posSlug,
@@ -91,14 +87,12 @@ export function posToCatalogEntry(
     isSuggested: mapped.labels.isSuggested,
     suggestedAt: mapped.labels.suggestedAt,
     categorySlugs: [...new Set(categories.map((c) => c.slug))],
-    garmentTypeSlugs: mapped.garmentTypeSlugs,
     search: {
       name: mapped.name,
       slug: mapped.posSlug,
       metaTitle: settings?.metaTitle ?? null,
       metaDescription: settings?.metaDescription ?? null,
       description: mapped.description,
-      garmentTypeNames,
       categoryNames: [...new Set(categories.map((c) => c.name))],
       itemNames: [],
     },
@@ -120,7 +114,6 @@ function searchableText(entry: CatalogEntry): string {
     s.slug,
     s.metaTitle,
     s.metaDescription,
-    ...s.garmentTypeNames,
     ...s.categoryNames,
     ...s.itemNames,
   ]

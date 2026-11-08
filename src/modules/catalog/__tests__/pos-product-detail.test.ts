@@ -57,8 +57,11 @@ describe("posToRawProductDetail", () => {
     expect(ui.basePrice).toBe(89000);
     expect(ui.comparePrice).toBe(120000);
     expect(ui.generalImages).toEqual(["/media/blusa-cover.jpg"]);
-    expect(ui.colors[0].variants).toEqual([{ size: "M", variantId: "pos-blusa-lino-1-2", sku: "pos-blusa-lino-1-2" }]);
-    expect(ui.colors[0].availableSizes).toEqual(["M"]);
+    expect(ui.colors[0].variants).toEqual([
+      { size: "M", variantId: "pos-blusa-lino-1-2", sku: "pos-blusa-lino-1-2" },
+      { size: "L", variantId: "pos-blusa-lino-1-3", sku: "pos-blusa-lino-1-3" },
+    ]);
+    expect(ui.colors[0].availableSizes).toEqual(["M", "L"]);
   });
 
   it("respeta la portada puesta a mano en la web y la oferta manual", () => {

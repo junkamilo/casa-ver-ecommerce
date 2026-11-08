@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { TEXT_BRAND } from "../constants/constants";
 import type { MegaMenuProps } from "../types";
 import { getSecondLevelLinks } from "../utils/secondLevelLinks";
@@ -11,8 +11,6 @@ const COLUMN_DELAYS = ["0ms", "60ms", "120ms", "180ms", "240ms", "300ms"];
 
 export default function MegaMenu({ visible, categories, onEnter, onLeave, onClose }: MegaMenuProps) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const activeTipo = searchParams.get("tipo");
 
   return (
     <div
@@ -70,8 +68,8 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
         >
           {categories.map((category, colIdx) => {
             const isCategoryActive = pathname === `/collections/${category.slug}`;
-            const links = getSecondLevelLinks(category, pathname, activeTipo);
-            const hasGarmentTypes = links.length > 0;
+            const links = getSecondLevelLinks(category, pathname);
+            const hasSubcategories = links.length > 0;
 
             return (
               <div
@@ -103,8 +101,8 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
                 {/* ── Separador ── */}
                 <div className="h-px bg-border/40 w-full" />
 
-                {/* ── Tipos de prenda ── */}
-                {hasGarmentTypes && (
+                {/* ── Subcategorías ── */}
+                {hasSubcategories && (
                   <div className="flex flex-col gap-2">
                     {links.map((gt) => {
                       const isGarmentActive = gt.active;
@@ -145,7 +143,7 @@ export default function MegaMenu({ visible, categories, onEnter, onLeave, onClos
                 )}
 
                 {/* ── Fallback: enlace "Ver todo" si no hay tipos de prenda ── */}
-                {!hasGarmentTypes && (
+                {!hasSubcategories && (
                   <Link
                     href={`/collections/${category.slug}`}
                     className="text-sm text-gray-400 hover:text-[color:var(--theme-accent)] pl-3 transition-colors duration-200"

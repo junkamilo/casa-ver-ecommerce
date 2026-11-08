@@ -176,13 +176,12 @@ describe("ubicaciones, etiquetas y slug", () => {
     const mapped = mapPosProduct(
       product({
         classifications: [
-          { categoryWebId: "cat-mujer", subcategoryWebId: "sub-blusas", garmentTypeSlug: "Blusa", primary: true },
-          { categoryWebId: "cat-verano", subcategoryWebId: "sub-sets", garmentTypeSlug: "pantalon", primary: false },
+          { categoryWebId: "cat-mujer", subcategoryWebId: "sub-blusas", primary: true },
+          { categoryWebId: "cat-verano", subcategoryWebId: "sub-sets", primary: false },
         ],
       }),
     );
     expect(mapped.categoryWebIds).toEqual(["cat-mujer", "sub-blusas", "cat-verano", "sub-sets"]);
-    expect(mapped.garmentTypeSlugs).toEqual(["blusa", "pantalon"]);
   });
 
   it("traduce las etiquetas del POS a las banderas de la web", () => {

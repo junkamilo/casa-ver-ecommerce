@@ -6,12 +6,6 @@ const nullableString = z.string().nullish().transform((v) => v ?? null);
 const decimal = z.union([z.number(), z.string()]).transform((v) => Number(v));
 
 /** Tipo de prenda global del POS (filtro ?tipo=): lo comparten subcategorías de distintas categorías. */
-export const posGarmentTypeSchema = z.object({
-  slug: z.string().min(1),
-  name: z.string().min(1),
-  sortOrder: z.number().int().default(0),
-});
-
 export const posSubcategorySchema = z.object({
   webId: z.string().min(1),
   parentWebId: nullableString,
@@ -23,18 +17,16 @@ export const posSubcategorySchema = z.object({
   metaDescription: nullableString,
   sortOrder: z.number().int().default(0),
   updatedAt: nullableString,
-  garmentType: posGarmentTypeSchema.nullish().transform((v) => v ?? null),
 });
 
-export const posCategorySchema = posSubcategorySchema.omit({ parentWebId: true, garmentType: true }).extend({
+export const posCategorySchema = posSubcategorySchema.omit({ parentWebId: true }).extend({
   subcategories: z.array(posSubcategorySchema).default([]),
 });
 
-/** Ubicación del producto en la tienda: la principal del POS y las «Mostrar también en». */
+/** Ubicación del producto en la tienda: la principal del POS y las adicionales. */
 export const posClassificationSchema = z.object({
   categoryWebId: nullableString,
   subcategoryWebId: nullableString,
-  garmentTypeSlug: nullableString,
   primary: z.boolean().default(false),
 });
 

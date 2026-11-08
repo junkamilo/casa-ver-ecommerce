@@ -105,11 +105,8 @@ export interface RawProductDetail {
 // ── Mappers de UI ─────────────────────────────────────────────────────────────
 
 export function mapUIColor(color: RawColor): UIColor {
-  const allVariants = color.variants;
-  const activeVariants = allVariants
-    .filter((v) => v.stock > 0)
-    .sort((a, b) => compareSizes(a.size, b.size));
-  const totalStock = allVariants.reduce((s, v) => s + v.stock, 0);
+  // Sobre pedido: todas las tallas de la prenda siguen disponibles aunque no haya existencias.
+  const activeVariants = [...color.variants].sort((a, b) => compareSizes(a.size, b.size));
   return {
     id: color.id,
     name: color.name,
@@ -124,7 +121,7 @@ export function mapUIColor(color: RawColor): UIColor {
       variantId: v.id,
       sku: v.sku,
     })),
-    isOutOfStock: totalStock === 0,
+    isOutOfStock: false,
   };
 }
 
