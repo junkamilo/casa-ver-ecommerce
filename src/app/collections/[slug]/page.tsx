@@ -28,9 +28,8 @@ export async function generateMetadata({
 
   if (!category) return { title: "Colección no encontrada" };
 
-  const title = category.metaTitle ?? category.name;
+  const title = category.name;
   const description =
-    category.metaDescription ??
     category.description ??
     `Explora la colección ${category.name} de ${SITE_NAME}.`;
 

@@ -9,8 +9,6 @@ import LaunchLockWrapper from "@/components/LaunchLock/LaunchLockWrapper";
 import { Providers } from "@/components/Providers";
 import WhatsAppFloatingButton from "@/components/WhatsAppFloatingButton";
 import ThemePreviewBanner from "@/components/ThemePreviewBanner";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Analytics } from "@vercel/analytics/next";
 import { BASE_METADATA, BASE_VIEWPORT } from "@/lib/seo";
 import { buildThemeCssVariables } from "@/modules/posIntegration/contracts/pos-themes.schema";
 import { fetchActiveThemeTokens } from "@/modules/posIntegration/infrastructure/pos-theme.client";
@@ -51,8 +49,6 @@ export default async function RootLayout({
             <WhatsAppFloatingButton />
           </CartProvider>
         </Providers>
-        <SpeedInsights />
-        <Analytics />
       </body>
     </html>
   );

@@ -23,7 +23,8 @@ export async function GET(req: NextRequest) {
 
   } catch (error) {
     if (error instanceof BoldFallbackUnauthorizedError) {
-      return toErrorResponse(error);
+      // 401 como el resto de /api/cron/* (toErrorResponse daría 403 por el nombre de la clase).
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     if (error instanceof BoldFallbackConfigError) {
       return toErrorResponse(error);

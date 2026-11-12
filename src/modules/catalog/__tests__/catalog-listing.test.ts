@@ -63,8 +63,6 @@ const sub = (webId: string, slug: string, name: string) => ({
   name,
   description: null,
   imageUrl: null,
-  metaTitle: null,
-  metaDescription: null,
   sortOrder: 0,
   updatedAt: null,
 });
@@ -77,8 +75,6 @@ const taxonomy: CatalogTaxonomy = buildPosTaxonomy([
     name: "Mujer",
     description: null,
     imageUrl: null,
-    metaTitle: null,
-    metaDescription: null,
     sortOrder: 0,
     updatedAt: null,
     subcategories: [sub("SUB-BLUSAS", "blusas", "Blusas")],

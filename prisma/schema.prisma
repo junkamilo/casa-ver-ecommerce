@@ -4,8 +4,8 @@ generator client {
 
 datasource db {
   provider     = "postgresql"
-  url          = env("DATABASE_URL")        // Pooler de Neon (puerto 6543)
-  directUrl    = env("DIRECT_URL")          // Conexión directa para migrations (puerto 5432)
+  url          = env("DATABASE_URL")        // Contenedor local casa-verde-web-postgres (docker-compose.web-db.yml, puerto 5434)
+  directUrl    = env("DIRECT_URL")          // Igual que DATABASE_URL: el contenedor no tiene pooler
 
   // PRODUCCIÓN: DATABASE_URL debe incluir estos parámetros para soportar 50+ usuarios simultáneos:
   //   ?pgbouncer=true&connection_limit=1

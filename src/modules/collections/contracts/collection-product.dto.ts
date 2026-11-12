@@ -24,8 +24,6 @@ export interface CategoryListItemDTO {
 export interface CategoryDetailDTO {
   name: string;
   description: string | null;
-  metaTitle: string | null;
-  metaDescription: string | null;
   image: string | null;
 }
 

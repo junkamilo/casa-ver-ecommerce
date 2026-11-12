@@ -1,4 +1,4 @@
-import { sendEmail } from "./resend";
+import { sendEmail } from "./smtp";
 import { welcomeTemplate } from "./templates/welcome";
 import { verificationTemplate } from "./templates/verification";
 import { passwordResetTemplate } from "./templates/password-reset";
@@ -195,7 +195,8 @@ export async function sendReviewRequestEmail(
 
 export function validateEmailConfig(): { isConfigured: boolean; warnings: string[] } {
   const warnings: string[] = [];
-  if (!process.env.RESEND_API_KEY) warnings.push("RESEND_API_KEY no está configurado");
+  if (!process.env.SMTP_HOST) warnings.push("SMTP_HOST no está configurado");
+  if (!process.env.SMTP_PORT) warnings.push("SMTP_PORT no está configurado");
   return { isConfigured: warnings.length === 0, warnings };
 }
 

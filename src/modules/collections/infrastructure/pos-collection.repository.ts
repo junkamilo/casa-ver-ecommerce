@@ -30,8 +30,6 @@ export class PosCollectionRepository {
     return {
       name: collection.name,
       description: collection.description,
-      metaTitle: collection.metaTitle,
-      metaDescription: collection.metaDescription,
       image: collection.imageUrl,
     };
   }

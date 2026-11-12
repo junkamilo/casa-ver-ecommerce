@@ -67,7 +67,6 @@ describe("buildPosTaxonomy", () => {
       slug: " Conjuntos ",
       name: "Conjuntos",
       description: "Sets",
-      metaTitle: "Conjuntos | Casa Verde",
       subcategories: [
         {
           webId: "sub-1",
@@ -83,7 +82,7 @@ describe("buildPosTaxonomy", () => {
   it("indexa categorías y subcategorías por slug (minúsculas) y por webId", () => {
     const taxonomy = buildPosTaxonomy(withTypes);
     expect(taxonomy.bySlug.get("conjuntos")).toEqual(
-      expect.objectContaining({ kind: "category", webId: "cat-a", name: "Conjuntos", metaTitle: "Conjuntos | Casa Verde" }),
+      expect.objectContaining({ kind: "category", webId: "cat-a", name: "Conjuntos" }),
     );
     expect(taxonomy.bySlug.get("conjuntos-mujer")).toEqual(
       expect.objectContaining({ kind: "subcategory", webId: "sub-1", parentSlug: "conjuntos" }),

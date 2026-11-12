@@ -11,8 +11,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import * as Sentry from "@sentry/nextjs";
+import { sendEmail } from "@/services/email/smtp";
 
-const ALERT_ADMIN_EMAIL = process.env.AUDIT_ADMIN_EMAIL ?? process.env.RESEND_FROM_EMAIL ?? "admin@casaverdeoficial.com";
+const ALERT_ADMIN_EMAIL = process.env.AUDIT_ADMIN_EMAIL ?? process.env.SMTP_FROM_EMAIL ?? "admin@casaverdeoficial.com";
 
 function verifyCronSecret(request: Request): boolean {
   const secret = process.env.CRON_SECRET;
@@ -138,10 +139,7 @@ export async function GET(request: Request) {
   }
 
   // ── Enviar resumen por email al admin ────────────────────────────────────
-  if (process.env.RESEND_API_KEY) {
-    const { Resend } = await import("resend");
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
+  if (process.env.SMTP_HOST) {
     const statusColor = hasCritical ? "#dc2626" : "#154734";
     const statusLabel  = hasCritical ? "⚠ Requiere atención" : "✓ Sin anomalías críticas";
 
@@ -234,14 +232,14 @@ export async function GET(request: Request) {
 </div>
 </body></html>`;
 
-    await resend.emails.send({
-      from:    "Casa Verde Admin <noreply@casaverdeoficial.com>",
+    const result = await sendEmail({
       to:      ALERT_ADMIN_EMAIL,
       subject: `[Auditoría] Semana ${now.toLocaleDateString("es-CO")} — ${hasCritical ? "⚠ Requiere atención" : "✓ Sin anomalías"}`,
       html,
-    }).catch((err: unknown) => {
-      console.error("[Cron/PaymentAudit] Error enviando email de auditoría:", err);
     });
+    if (!result.success) {
+      console.error("[Cron/PaymentAudit] Error enviando email de auditoría:", result.error);
+    }
   }
 
   console.log(

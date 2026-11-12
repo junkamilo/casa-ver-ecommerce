@@ -13,8 +13,6 @@ export const posSubcategorySchema = z.object({
   name: z.string().min(1),
   description: nullableString,
   imageUrl: nullableString,
-  metaTitle: nullableString,
-  metaDescription: nullableString,
   sortOrder: z.number().int().default(0),
   updatedAt: nullableString,
 });

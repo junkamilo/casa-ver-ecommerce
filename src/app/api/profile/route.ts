@@ -50,7 +50,6 @@ export async function GET() {
 
     return NextResponse.json({
       ...userData,
-      role: "USER",
       createdAt: createdAt.toISOString(),
       hasPassword: !!password,
       linkedProviders: accounts.map((a) => a.provider),
@@ -164,7 +163,6 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({
       ...updatedData,
-      role: "USER",
       createdAt: createdAt.toISOString(),
       hasPassword: !!pw,
       linkedProviders: accounts.map((a) => a.provider),

@@ -1,0 +1,27 @@
+# Crons de la web de Casa Verde para el VPS. Instalar en el crontab del usuario que ejecuta cv-cron.sh.
+# CRON_TZ requiere cron con soporte de zona horaria (cronie y cron de Debian lo tienen; comprobar con: man 5 crontab).
+# Los horarios se escriben en hora de Bogotá.
+CRON_TZ=America/Bogota
+
+# Respaldo de pagos Bold y reintento de correos de confirmación (diario 21:00)
+0 21 * * *   /usr/local/bin/cv-cron.sh bold-fallback
+
+# Carrito abandonado (diario 22:00)
+0 22 * * *   /usr/local/bin/cv-cron.sh abandoned-cart
+
+# Checkout abandonado (diario 23:00)
+0 23 * * *   /usr/local/bin/cv-cron.sh abandoned-checkout
+
+# Auditoría de pagos (lunes 04:00)
+0 4 * * 1    /usr/local/bin/cv-cron.sh payment-audit
+
+# Sincronización de catálogo desde el POS (diario 01:00)
+0 1 * * *    /usr/local/bin/cv-cron.sh pos-sync
+
+# Reenvío de pedidos al POS (diario 01:30)
+30 1 * * *   /usr/local/bin/cv-cron.sh pos-orders
+
+# Solicitud de reseña 7 días después de la entrega (diario 10:00). Pendiente de confirmar.
+0 10 * * *   /usr/local/bin/cv-cron.sh review-requests
+
+# No programado: retry-order-emails. bold-fallback ya reintenta los correos de confirmación.

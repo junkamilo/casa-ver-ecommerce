@@ -10,6 +10,8 @@ COPY prisma ./prisma
 RUN npm ci
 
 FROM base AS build
+ARG IMAGES_UNOPTIMIZED=""
+ENV IMAGES_UNOPTIMIZED=$IMAGES_UNOPTIMIZED
 ARG NEXT_PUBLIC_APP_URL
 ARG NEXT_PUBLIC_POS_MEDIA_BASE_URL
 ARG NEXT_PUBLIC_POS_APP_URL
@@ -43,6 +45,8 @@ COPY . .
 RUN --mount=type=secret,id=db_build_url sh -c 'export DATABASE_URL="$(cat /run/secrets/db_build_url)" && export DIRECT_URL="$DATABASE_URL" && npx prisma generate && npx next build'
 
 FROM base AS runtime
+ARG IMAGES_UNOPTIMIZED=""
+ENV IMAGES_UNOPTIMIZED=$IMAGES_UNOPTIMIZED
 # next start vuelve a evaluar next.config.ts, así que la variable también hace falta aquí
 ARG EXTRA_SERVER_ACTION_ORIGINS=""
 ENV EXTRA_SERVER_ACTION_ORIGINS=$EXTRA_SERVER_ACTION_ORIGINS

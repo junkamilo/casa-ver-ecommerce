@@ -8,7 +8,6 @@ export interface UserProfile {
   name: string | null;
   email: string;
   image: string | null;
-  role: string;
   createdAt: string;
   phone: string | null;
   cedula: string | null;

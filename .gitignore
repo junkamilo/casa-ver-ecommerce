@@ -47,3 +47,6 @@ next-env.d.ts
 # local tools
 ngrok.exe
 ngrok-v3-stable-windows-amd64/
+
+# secretos de build y runtime (no versionar)
+secrets/

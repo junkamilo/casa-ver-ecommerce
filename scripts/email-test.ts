@@ -1,96 +1,71 @@
-#!/usr/bin/env ts-node
-
 /**
- * 📧 Script de Diagnóstico de Emails
+ * Diagnóstico del correo transaccional por SMTP (Postfix del VPS en producción, Mailpit/MailHog en local).
  *
- * Uso:
- *   npm run email:test                    - Solo validar configuración
- *   npm run email:test -- --send          - Enviar email de prueba
- *   npm run email:test -- --email=xxx@yyy.com --name="Test User"
- *
- * Nota: Requiere que el servidor esté corriendo en localhost:3000
+ *   npm run email:test                              - Solo verifica la conexión y la autenticación SMTP
+ *   npm run email:test -- --send                    - Además envía un correo de prueba
+ *   npm run email:test -- --send --email=xxx@yyy.com
  */
+import { readFileSync, existsSync } from "fs";
+import path from "path";
+import { sendEmail, verifySmtpConnection } from "../src/services/email/smtp";
 
-const BASE_URL = "http://localhost:3000";
-const CLI_SECRET = process.env.CLI_SECRET || "";
-const ARGS = process.argv.slice(2);
-
-const args = {
-  send: ARGS.includes("--send"),
-  email: ARGS.find((a) => a.startsWith("--email="))?.split("=")[1] || "test@example.com",
-  name: ARGS.find((a) => a.startsWith("--name="))?.split("=")[1] || "Test User",
-};
-
-async function main() {
-  console.log("📧 Diagnóstico de Emails - Casa Verde\n");
-
-  // 1. Verificar configuración
-  console.log("🔍 Validando configuración...\n");
-  try {
-    const response = await fetch(`${BASE_URL}/api/admin/email-test`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-
-    if (!response.ok) {
-      console.error("❌ Error al validar configuración:", response.status);
-      process.exit(1);
-    }
-
-    const config = (await response.json()) as {
-      status?: string;
-      apiKeyConfigured?: boolean;
-      warnings?: string[];
-    };
-
-    console.log("Status:", config.status);
-    console.log("API Key Configured:", config.apiKeyConfigured ? "✅ Yes" : "❌ No");
-
-    if (config.warnings && config.warnings.length > 0) {
-      console.log("\n⚠️  Warnings:");
-      config.warnings.forEach((w) => console.log(`  - ${w}`));
-    } else {
-      console.log("✅ No warnings found\n");
-    }
-
-    // 2. Enviar email de prueba si se solicita
-    if (args.send) {
-      console.log(`📤 Enviando email de prueba a ${args.email}...\n`);
-
-      const emailResponse = await fetch(`${BASE_URL}/api/admin/email-test`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-cli-secret": CLI_SECRET },
-        body: JSON.stringify({
-          customerEmail: args.email,
-          customerName: args.name,
-        }),
-      });
-
-      const result = (await emailResponse.json()) as {
-        success?: boolean;
-        message?: string;
-        error?: string;
-        messageId?: string;
-      };
-
-      if (emailResponse.ok) {
-        console.log("✅ Email enviado correctamente!");
-        console.log(`   Message ID: ${result.messageId}`);
-        console.log(`   Destinatario: ${args.email}`);
-      } else {
-        console.error("❌ Error al enviar email:");
-        console.error(`   ${result.error}`);
-        process.exit(1);
-      }
-    } else {
-      console.log("💡 Tip: Usa 'npm run email:test -- --send' para enviar un email de prueba");
-    }
-  } catch (error) {
-    console.error("❌ Error de conexión:", error);
-    console.error("\n💡 ¿El servidor está corriendo en localhost:3000?");
-    console.error("   Ejecuta: npm run dev");
-    process.exit(1);
+// ts-node no carga .env: se lee aquí sin sobrescribir lo que ya venga del entorno.
+function loadDotEnv() {
+  const file = path.resolve(process.cwd(), ".env");
+  if (!existsSync(file)) return;
+  for (const raw of readFileSync(file, "utf-8").split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#") || !line.includes("=")) continue;
+    const idx = line.indexOf("=");
+    const key = line.slice(0, idx).trim();
+    const value = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+    if (process.env[key] === undefined) process.env[key] = value;
   }
 }
 
-main().catch(console.error);
+const ARGS = process.argv.slice(2);
+const args = {
+  send: ARGS.includes("--send"),
+  email: ARGS.find((a) => a.startsWith("--email="))?.split("=")[1] || process.env.ADMIN_ORDER_EMAIL || "",
+};
+
+async function main() {
+  loadDotEnv();
+  console.log("📧 Diagnóstico de correo SMTP - Casa Verde\n");
+  console.log(`Servidor: ${process.env.SMTP_HOST || "(sin SMTP_HOST)"}:${process.env.SMTP_PORT || 587}`);
+  console.log(`Autenticación: ${process.env.SMTP_USER ? "usuario configurado" : "sin usuario (relay local)"}\n`);
+
+  const conexion = await verifySmtpConnection();
+  if (!conexion.success) {
+    console.error("❌ Conexión SMTP fallida:", conexion.error);
+    process.exit(1);
+  }
+  console.log("✅ Conexión y autenticación SMTP correctas.\n");
+
+  if (!args.send) {
+    console.log("💡 Para enviar un correo de prueba: npm run email:test -- --send --email=tu_correo@gmail.com");
+    return;
+  }
+  if (!args.email) {
+    console.error("❌ Indica el destinatario con --email=... (o ADMIN_ORDER_EMAIL en .env)");
+    process.exit(1);
+  }
+
+  console.log(`📤 Enviando correo de prueba a ${args.email}...`);
+  const envio = await sendEmail({
+    to: args.email,
+    subject: "Prueba SMTP - Casa Verde",
+    html: "<p>Si recibes este correo, el servidor SMTP de Casa Verde funciona.</p>",
+  });
+  if (!envio.success) {
+    console.error("❌ Error al enviar:", envio.error);
+    process.exit(1);
+  }
+  console.log(`✅ Enviado. messageId: ${envio.messageId}`);
+  console.log("   Revisa en Gmail: «Mostrar original» → SPF, DKIM y DMARC deben decir PASS.");
+}
+
+main().catch((error) => {
+  console.error("❌ Error inesperado:", error);
+  process.exit(1);
+});

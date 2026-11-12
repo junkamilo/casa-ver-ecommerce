@@ -1,0 +1,26 @@
+# Base de datos local de la web (casa-ver-ecommerce). Reemplaza a Neon en desarrollo y se lleva tal cual al VPS.
+# Puerto 5434 en el host: el POS usa 5433 y la web-qa no expone su base.
+name: casa-verde-web-db
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: casa-verde-web-postgres
+    environment:
+      POSTGRES_DB: casa_verde_web
+      POSTGRES_USER: webdb
+      POSTGRES_PASSWORD: ${WEB_DB_PASSWORD:?falta WEB_DB_PASSWORD (ver .env.webdb)}
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - casa-verde-web-pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U webdb -d casa_verde_web"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  casa-verde-web-pgdata:
+    name: casa-verde-web-pgdata

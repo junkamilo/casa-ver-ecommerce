@@ -60,7 +60,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!user.emailVerified) throw new EmailNotVerified();
 
-        return { id: user.id, name: user.name, email: user.email, role: "USER" };
+        return { id: user.id, name: user.name, email: user.email };
       },
     }),
   ],
@@ -86,7 +86,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
-        token.role = "USER";
       }
 
       // Sesiones JWT antiguas pueden no tener id — NextAuth lo guarda en sub
@@ -103,9 +102,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
       }
 
-      // La web ya no tiene administradores: una sesión de admin anterior (id del POS) se cierra.
-      if (token.role === "ADMIN") return null;
-      token.role = "USER";
+      // La web ya no tiene administradores (se administra en el POS). Una sesión de admin emitida antes de ese cambio se cierra.
+      if ((token as { role?: string }).role === "ADMIN") return null;
 
       return token;
     },
@@ -114,7 +112,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         const userId = (token.id ?? token.sub) as string | undefined;
         (session.user as { id?: string }).id = userId;
-        (session.user as { role?: string }).role = token.role as string | undefined;
       }
       return session;
     },

@@ -70,8 +70,6 @@ export interface PosCollection {
   name: string;
   description: string | null;
   imageUrl: string | null;
-  metaTitle: string | null;
-  metaDescription: string | null;
   /** Slug de la categoría padre (solo subcategorías). */
   parentSlug: string | null;
 }
@@ -102,8 +100,6 @@ export function buildPosTaxonomy(tree: PosCategory[]): PosTaxonomy {
       name: category.name.trim(),
       description: category.description,
       imageUrl: cardImage(category.imageUrl),
-      metaTitle: category.metaTitle,
-      metaDescription: category.metaDescription,
       parentSlug: null,
     });
     for (const sub of category.subcategories) {
@@ -114,8 +110,6 @@ export function buildPosTaxonomy(tree: PosCategory[]): PosTaxonomy {
         name: sub.name.trim(),
         description: sub.description,
         imageUrl: cardImage(sub.imageUrl),
-        metaTitle: sub.metaTitle,
-        metaDescription: sub.metaDescription,
         parentSlug: categorySlug,
       });
     }

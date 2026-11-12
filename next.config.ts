@@ -34,6 +34,8 @@ const nextConfig: NextConfig = {
       // Fotos del POS (NEXT_PUBLIC_POS_MEDIA_BASE_URL).
       ...(posMediaPattern ? [posMediaPattern] : []),
     ],
+    // Local (Docker): sin optimizador, las imágenes salen tal cual y el navegador las carga directo del POS.
+    unoptimized: process.env.IMAGES_UNOPTIMIZED === "true",
     // Solo en desarrollo, cuando el POS corre en localhost.
     dangerouslyAllowLocalIP: process.env.NODE_ENV !== "production" && isPosMediaLocal(),
   },

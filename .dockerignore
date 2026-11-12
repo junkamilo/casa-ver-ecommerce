@@ -1,0 +1,18 @@
+# Nada de secretos ni artefactos locales dentro de la imagen.
+.env
+.env.*
+.env*
+secrets
+node_modules
+.next
+.git
+.gitignore
+.swc
+.claude
+md
+k6
+deploy
+docker-compose*.yml
+ngrok.exe
+tsconfig.tsbuildinfo
+*.log

@@ -1,0 +1,53 @@
+# Web de Casa Verde en contenedor (local). Usa la base del contenedor casa-verde-web-postgres (docker-compose.web-db.yml)
+# y Mailpit como SMTP de pruebas. Variables: .env (públicas y de integraciones) + .env.docker (base y correo del contenedor).
+name: casa-verde-web
+
+services:
+  web:
+    build:
+      context: .
+      secrets:
+        - db_build_url
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-}
+        NEXT_PUBLIC_POS_MEDIA_BASE_URL: ${NEXT_PUBLIC_POS_MEDIA_BASE_URL:-}
+        NEXT_PUBLIC_POS_APP_URL: ${NEXT_PUBLIC_POS_APP_URL:-}
+        NEXT_PUBLIC_WHATSAPP_NUMBER: ${NEXT_PUBLIC_WHATSAPP_NUMBER:-}
+        NEXT_PUBLIC_LAUNCH_AT: ${NEXT_PUBLIC_LAUNCH_AT:-}
+        NEXT_PUBLIC_LAUNCH_LOCK_ENABLED: ${NEXT_PUBLIC_LAUNCH_LOCK_ENABLED:-}
+        NEXT_PUBLIC_BOLD_IDENTITY_KEY: ${NEXT_PUBLIC_BOLD_IDENTITY_KEY:-}
+        NEXT_PUBLIC_BUNNY_CDN_URL: ${NEXT_PUBLIC_BUNNY_CDN_URL:-}
+        NEXT_PUBLIC_RECAPTCHA_SITE_KEY: ${NEXT_PUBLIC_RECAPTCHA_SITE_KEY:-}
+        NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+        SENTRY_ORG: ${SENTRY_ORG:-}
+        SENTRY_PROJECT: ${SENTRY_PROJECT:-}
+        EXTRA_SERVER_ACTION_ORIGINS: ${EXTRA_SERVER_ACTION_ORIGINS:-}
+        IMAGES_UNOPTIMIZED: ${IMAGES_UNOPTIMIZED:-}
+    container_name: casa-verde-web
+    env_file:
+      - .env
+      - .env.docker
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - default
+      - webdb
+    depends_on:
+      - mailpit
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: casa-verde-mailpit
+    ports:
+      - "127.0.0.1:8025:8025"
+    restart: unless-stopped
+
+networks:
+  webdb:
+    external: true
+    name: casa-verde-web-db_default
+
+secrets:
+  db_build_url:
+    file: ./secrets/db_build_url.txt
