@@ -15,10 +15,27 @@ export function isAllowedMediaHost(hostname: string): boolean {
   return ALLOWED_MEDIA_HOSTS.has(hostname.toLowerCase());
 }
 
+/**
+ * Foto que el POS sirve bajo `<NEXT_PUBLIC_POS_MEDIA_BASE_URL>/media/...`. Los productos y sus fotos viven en el POS,
+ * así que el pedido web debe conservar esa URL (si no, la foto se pierde al pagar y "Mis pedidos" la muestra rota).
+ */
+function esMedioDelPos(u: URL): boolean {
+  const base = (process.env.NEXT_PUBLIC_POS_MEDIA_BASE_URL ?? "").trim();
+  if (!base) return false;
+  try {
+    const b = new URL(base);
+    const prefijo = `${b.pathname.replace(/\/+$/, "")}/media/`;
+    return u.origin === b.origin && u.pathname.startsWith(prefijo);
+  } catch {
+    return false;
+  }
+}
+
 export function isValidMediaUrl(v: unknown): boolean {
   if (typeof v !== "string" || !v.trim()) return false;
   try {
     const u = new URL(v);
+    if (esMedioDelPos(u)) return true;
     return u.protocol === "https:" && isAllowedMediaHost(u.hostname);
   } catch {
     return false;

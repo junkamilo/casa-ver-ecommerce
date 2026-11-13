@@ -138,3 +138,67 @@ Para el VPS:
 - **Pendiente de decidir:** `AGENTS.md` lo genera `next dev` y aparece sin seguimiento. No es parte del cambio.
 - **Datos personales en docs:** este archivo y `deploy/cron/README.md` mencionan correos de prueba. Revisarlos antes
   de publicar el repositorio.
+
+## 10. Cambios de QA (imágenes de pedidos, envío en caja)
+
+**Hecho en local, pendiente de desplegar en QA:**
+- **Web, imágenes de «Mis pedidos»** (`src/lib/media-url.ts`): al pagar, la web conservaba la foto solo si era de
+  Bunny. Las fotos del POS (`NEXT_PUBLIC_POS_MEDIA_BASE_URL/media/...`) se descartaban y el pedido quedaba sin imagen.
+  Ahora se conservan. **Los pedidos ya creados en QA siguen sin foto**: no se recuperan solos.
+- **POS, envío en caja** (V150 + `PaymentLedgerService.recordShippingCost` + `WebOrderFulfillmentService`): al pasar
+  un pedido web a «Enviado», caja registra un egreso del valor del envío (`sales.sales.shipping_cost`), tipo
+  «Envíos», desde el medio **Efectivo**, responsable SISTEMA/POS, código `ENVIO_PAGADO_CAJA`. Una sola vez por pedido.
+  Si falta el medio «Efectivo» o el tipo «Envíos», el cambio a enviado falla con un mensaje claro.
+  Pendiente de confirmar: qué medio debe pagar los envíos (hoy Efectivo) y si el valor es el del cliente o el de la transportadora.
+
+**Pendiente de investigar con datos reales de QA (no reproducido en local):**
+- Estado de «Mis pedidos» que no se actualiza después de cambiarlo en el POS. El código consulta el estado en vivo al POS
+  (cada 30 s); revisar en QA la respuesta de `/api/profile/orders` (`posAvailable`) y el log `[Mis pedidos]`.
+- Nombres mostrados como códigos en la compra: no se encontró el camino que lo produce en el código. Necesita la pantalla exacta.
+
+**En el VPS:**
+1. Desplegar el backend del POS (aplica V150 automáticamente al arrancar).
+2. Confirmar que existe el medio «Efectivo» activo y que no es de crédito.
+3. Desplegar la web con este cambio (la imagen se construye de nuevo).
+
+## 11. Reportes → Egresos eliminado; Caja con filtro de egresos
+
+- **Eliminado (frontend POS):** la pantalla Reportes → Egresos, su ruta, su entrada de menú, sus exportaciones
+  (Excel, PDF) y sus pruebas. El botón «Ver detalles» de Reportes → Ingresos ahora abre Tienda → Caja con el filtro
+  «Egreso» (`/treasury?movimiento=OUT`).
+- **Caja (POS):** la fecha se muestra como `12/11/2026`; la columna «Descripción» reemplaza a «Nombre» y muestra los
+  productos de la venta (nombre · color · talla × cantidad) o el concepto del movimiento; se quitó el texto pequeño
+  de referencia debajo.
+- **Ver detalle (POS):** muestra la descripción del movimiento y los números de venta y de pedido web con etiquetas
+  «(sistema)», para que se entienda que son referencias internas.
+- **Backend (POS):** el libro de caja incluye `productos` (solo ventas). Requiere desplegar el backend del POS.
+- **Pruebas que ya fallaban antes de este cambio (no relacionadas):** 7 pruebas de `treasury.test.tsx` sobre el
+  formulario de ingreso o egreso y el filtro «Movimiento» (verificado contra la versión de HEAD).
+
+## 12. Reportes → Ingresos eliminado (frontend POS)
+
+- Eliminado: la pantalla Reportes → Ingresos, su ruta, su entrada de menú, sus exportaciones (Excel y PDF), el hook
+  de reporte de ingresos y sus pruebas. Las pantallas de Reportes que quedan son Ventas, Costos Productos,
+  Rentabilidad de productos, Kardex y Medios de pago.
+- Para ver los ingresos se usa Tienda → Caja con el filtro «Ingreso» (`/treasury?movimiento=IN`).
+- El endpoint del backend `/reports/ingresos` queda en el backend; ya no lo consume el frontend.
+
+## 13. Endpoints de Ingresos y Egresos eliminados (backend POS)
+
+- Eliminados: `GET /api/reports/egresos` y `GET /api/reports/ingresos`, con su servicio (`CashFlowReportService`),
+  su repositorio (`JdbcCashFlowReportRepository`), sus DTO (`CashFlowReportDtos`) y su prueba de integración.
+- Frontend: sin `cashFlow.ts` ni fixtures de ingresos o egresos. El único uso que quedaba, el formato de fecha, está en
+  `src/lib/formatDay.ts`.
+- Caja (`GET /api/treasury/...`, filtros `movimiento=IN|OUT`) es la única fuente de ingresos y egresos.
+- Requiere desplegar el backend del POS en QA; si la web QA aún llama a `/reports/egresos` o `/reports/ingresos`, no
+  debe hacerlo después de este cambio.
+
+## 14. Proveedores: pestaña dentro de Tienda → Usuarios (frontend POS)
+
+- Configuraciones → Proveedores eliminado (ruta, entrada de menú y título). La ruta `/settings/suppliers` redirige a `/usuarios`.
+- Tienda → Usuarios tiene la pestaña «Proveedores» (listado, búsqueda, filtro de estado, Nuevo, Editar, Información,
+  Activar/Desactivar, exportación PDF/Excel). El formulario es el mismo de antes (`SupplierForm`).
+- Roles: Usuarios se muestra a ADMIN, SUPERADMIN y CONTABILIDAD. Cada rol ve solo sus pestañas: Clientes, Administradores
+  y Trabajadores para ADMIN/SUPERADMIN; Proveedores para ADMIN, SUPERADMIN y CONTABILIDAD.
+- Sin cambios de backend: los endpoints de proveedores son los mismos.
+- Prueba conocida intermitente: `login.test.tsx` («recargar la página con la IP bloqueada»), depende de la hora.
